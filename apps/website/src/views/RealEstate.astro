@@ -18,31 +18,37 @@ const img = (name: string, w: number) => `/images/realestate/${name}-${lang}-${w
 const set = (name: string) => `${img(name, 1000)} 1000w, ${img(name, 1800)} 1800w`;
 const pset = (name: string) => `${img(name, 420)} 420w, ${img(name, 840)} 840w`;
 
-const KEYS = ['match', 'pages', 'wa', 'collections', 'followups', 'viewings', 'owners', 'funnel', 'ai', 'qr', 'docs', 'team'] as const;
-const WIDE = ['match', 'funnel', 'owners', 'team'];
+// the features, as the four things that happen to every property; a line icon for each feature
 const ICON: Record<string, string> = {
-  match: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM3 20c.8-3.3 3-5 6-5M14 17l2 2 4-4',
   pages: 'M5 3.5h14v17H5zM5 13h14M9 7.5h6',
   wa: 'M4 20l1.3-4A8 8 0 1 1 8 18.7zM9 9.5c0 3 2.5 5.5 5.5 5.5l1-1.5-2-1-1 .8c-1-.5-1.8-1.3-2.3-2.3l.8-1-1-2z',
+  qr: 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 18h2v2h-2zM14 18h2M18 14h2',
+  ai: 'M12 3l1.8 4.6L18.5 9l-4.7 1.8L12 15.5l-1.8-4.7L5.5 9l4.7-1.4zM18 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z',
+  match: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM3 20c.8-3.3 3-5 6-5M14 17l2 2 4-4',
   collections: 'M4 7h16v13H4zM7 4h10M9 12l2 2 4-4',
   followups: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2',
   viewings: 'M4 6h16v14H4zM4 10h16M8 3.5V7M16 3.5V7M9 15l2 2 4-4',
+  deals: 'M3 7h18v10H3zM12 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM6.5 12h.01M17.5 12h.01',
+  status: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8 12l3 3 5-6',
   owners: 'M4 20V9l8-5 8 5v11M9 20v-6h6v6',
-  funnel: 'M4 5h16l-6 7v6l-4 2v-8z',
-  ai: 'M12 3l1.8 4.6L18.5 9l-4.7 1.8L12 15.5l-1.8-4.7L5.5 9l4.7-1.4zM18 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z',
-  qr: 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 18h2v2h-2zM14 18h2M18 14h2',
   docs: 'M7 3.5h7l4 4v13H7zM14 3.5v4h4M10 12h5M10 15.5h5',
+  today: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2.5v2M12 19.5v2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M2.5 12h2M19.5 12h2M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4',
+  funnel: 'M4 5h16l-6 7v6l-4 2v-8z',
   team: 'M12 3l7 3v6c0 4-3 7.5-7 9-4-1.5-7-5-7-9V6zM9 12l2 2 4-4',
+  devices: 'M3 5h13v10H3zM1.5 18h16M18.5 9h4v11h-4z',
 };
 const V = ar ? {
-  lead: 'أحمد صالح', want: 'فيلا · دريم سيتي · حتى $220k', score: 'تطابق', why: ['السعر', 'النوع', 'المنطقة', 'الغرف', 'المساحة'],
+  title: 'فيلا بحديقة في دريم ستي', area: 'دريم ستي · أربيل', opened: 'أحمد فتح الصفحة · 3 مرات',
+  leads: [['أحمد صالح', 100, 'السعر · المنطقة · الغرف'], ['ريم سعد', 89, 'السعر · النوع · المساحة']] as [string, number, string][],
+  deal: [['سعر الطلب', '$345,000'], ['عرض المشتري', '$300,000'], ['ردّ المالك', '$335,000'], ['المتفق عليه', '$318,000']], closed: 'العمولة',
   funnel: [['مشاهدات', 380], ['استفسارات', 14], ['معاينات', 3], ['عروض', 2]] as [string, number][],
-  report: 'تقرير المالك', reportLine: '٣٨٠ مشاهدة · ٣ معاينات · عرضان', roles: [['م', 'المدير', 'كل شيء'], ['و', 'الوسيط', 'عقاراته وزبائنه'], ['س', 'الاستقبال', 'الزبائن والمواعيد'], ['ح', 'المحاسب', 'الصفقات والعمولة']],
 } : {
-  lead: 'Ahmed Saleh', want: 'Villa · Dream City · up to $220k', score: 'match', why: ['Price', 'Type', 'Area', 'Bedrooms', 'Size'],
+  title: 'Villa with a garden in Dream City', area: 'Dream City · Erbil', opened: 'Ahmed opened it · 3 times',
+  leads: [['Ahmed Saleh', 100, 'Price · area · bedrooms'], ['Reem Saad', 89, 'Price · type · size']] as [string, number, string][],
+  deal: [['Asking', '$345,000'], ['Buyer’s offer', '$300,000'], ['Owner’s counter', '$335,000'], ['Agreed', '$318,000']], closed: 'Commission',
   funnel: [['Views', 380], ['Inquiries', 14], ['Viewings', 3], ['Offers', 2]] as [string, number][],
-  report: 'Owner report', reportLine: '380 views · 3 viewings · 2 offers', roles: [['M', 'Manager', 'Everything'], ['A', 'Agent', 'Their listings and leads'], ['D', 'Desk', 'Leads and viewings'], ['C', 'Accountant', 'Deals and commission']],
 };
+type Group = { key: 'show' | 'match' | 'close' | 'run'; title: string; sub: string; items: [string, string, string][] };
 
 const S = ar ? {
   title: 'هيملو للعقارات', live: 'متاح الآن · ٣٠ يوماً مجاناً',
@@ -57,21 +63,33 @@ const S = ar ? {
     ['today', 'يومك', 'صباحك، بنظرة واحدة.', 'المتابعات المتأخرة، معاينات اليوم، طلبات المعاينة الجديدة، المفاوضات التي تنتظر ردّك، والزبائن الذين لم تكلّمهم منذ مدة. تبدأ يومك وأنت تعرف ما يهم.'],
     ['deals', 'الصفقات', 'من أول عرض إلى العمولة.', 'سعر الطلب، عرض المشتري، ردّ المالك، والسعر المتفق عليه على خط واضح. حين تُغلق الصفقة يُعلَّم العقار مباعاً، وتُحسب العمولة وحصة الوسيط، وتسجّل الدفعات.'],
   ] as [string, string, string, string][],
-  insideTitle: 'كل ما يحتاجه مكتب العقارات.',
-  inside: [
-    ['مطابقة تشرح نفسها', 'لكل زبون العقارات التي تناسبه مع درجة وسبب: السعر، النوع، المنطقة، الغرف، المساحة.'],
-    ['صفحة لكل عقار', 'رابط قصير جاهز للمشاركة، يظهر بصورة وعنوان على واتساب وفيسبوك.'],
-    ['واتساب بضغطة', 'رسالة جاهزة بقالبك تفتح في واتساب. وتعرف متى فتح الزبون الرابط.'],
-    ['المجموعات', 'اختر عدة عقارات لزبون وأرسلها في رابط واحد، ويحفظ ما يعجبه.'],
-    ['المتابعات', 'تذكير بمن تتصل اليوم، ومن تأخرت عليه، ومن أصبح هادئاً.'],
-    ['المعاينات', 'مواعيد بلا تعارض، رسالة تأكيد وتذكير، ونتيجة كل معاينة.'],
-    ['تقرير للمالك', 'رابط يرى فيه المالك المشاهدات والمعاينات والعروض، بلا أسماء المشترين.'],
-    ['أداء كل عقار', 'من المشاهدة إلى الاستفسار إلى المعاينة إلى العرض: أين يتوقف كل عقار.'],
-    ['مساعد الكتابة', 'يكتب وصف العقار بالعربية والإنجليزية من مواصفاته، وأنت تراجع.'],
-    ['QR وورقة إعلان', 'ورقة جاهزة للطباعة برمز يفتح صفحة العقار، للواجهة أو للافتة.'],
-    ['المستندات', 'السند والعقد والهوية مع العقار، لا تظهر لأحد خارج المكتب.'],
-    ['الفريق والصلاحيات', 'المدير والوسيط والاستقبال والمحاسب: كل واحد يرى ما يخصه.'],
-  ] as [string, string][],
+  insideTitle: 'كل ما يحتاجه مكتب العقارات.', insideSub: 'أربع مراحل يمرّ بها كل عقار، ولكل مرحلة ما تحتاجه.',
+  groups: [
+    { key: 'show', title: 'اعرضه', sub: 'كل عقار بصفحته، جاهز للمشاركة.', items: [
+      ['pages', 'صفحة لكل عقار', 'رابط قصير يظهر بصورة وعنوان على واتساب وفيسبوك.'],
+      ['wa', 'واتساب بضغطة', 'رسالة جاهزة بقالبك، وتعرف متى فتح الزبون الرابط.'],
+      ['qr', 'QR وورقة إعلان', 'ورقة للطباعة برمز يفتح الصفحة، للواجهة أو للافتة.'],
+      ['ai', 'مساعد الكتابة', 'يكتب الوصف بالعربية والإنجليزية من المواصفات، وأنت تراجع.'],
+    ] },
+    { key: 'match', title: 'جِد من يريده', sub: 'المطابقة والمتابعة، بلا زبون منسي.', items: [
+      ['match', 'مطابقة تشرح نفسها', 'لكل زبون العقارات التي تناسبه، مع الدرجة والسبب.'],
+      ['collections', 'المجموعات', 'عدة عقارات في رابط واحد، ويحفظ الزبون ما يعجبه.'],
+      ['followups', 'المتابعات', 'بمن تتصل اليوم، ومن تأخرت عليه، ومن أصبح هادئاً.'],
+      ['viewings', 'المعاينات', 'مواعيد بلا تعارض، تأكيد وتذكير، ونتيجة كل معاينة.'],
+    ] },
+    { key: 'close', title: 'أغلق الصفقة', sub: 'من أول عرض إلى العمولة، والمالك على اطلاع.', items: [
+      ['deals', 'العروض والعمولة', 'كل عرض وردّ على خط واحد، والعمولة والدفعات تُحسب وحدها.'],
+      ['status', 'حالة تتحدّث وحدها', 'بيع العقار؟ يُبلَّغ المهتمون وتُلغى المعاينات القادمة.'],
+      ['owners', 'تقرير للمالك', 'المشاهدات والمعاينات والعروض، بلا أسماء المشترين.'],
+      ['docs', 'المستندات', 'السند والعقد والهوية مع العقار، داخل المكتب فقط.'],
+    ] },
+    { key: 'run', title: 'أدِر المكتب', sub: 'الفريق والأرقام، في مكان واحد.', items: [
+      ['today', 'صباحك جاهز', 'المتأخر والمعاينات والطلبات الجديدة في قائمة واحدة.'],
+      ['funnel', 'أداء كل عقار', 'من المشاهدة إلى العرض: أين يتوقف كل عقار.'],
+      ['team', 'الفريق والصلاحيات', 'المدير والوسيط والاستقبال والمحاسب، كلٌّ بما يخصه.'],
+      ['devices', 'الموبايل أو الكمبيوتر', 'النظام نفسه على كل جهاز، بالعربية والإنجليزية.'],
+    ] },
+  ] as Group[],
   howTitle: 'كيف تبدأ.',
   how: [['ادخل بحساب هيملو', 'برقم هاتفك أو بريدك. دقيقة واحدة.'], ['سمِّ مكتبك', 'الاسم والمدينة ورقم الواتساب. قالب الرسالة والعمولة جاهزان، فعدّلهما كما تريد.'], ['أضف أول عقار', 'صوره وسعره ومنطقته، وانشر صفحته. شهرك الأول مجاني بالكامل.']] as [string, string][],
   endTitle: 'افتح مكتبك على هيملو اليوم.', endSub: 'ثلاثون يوماً مجاناً، بكل المزايا. بلا بطاقة ولا التزام.',
@@ -88,21 +106,33 @@ const S = ar ? {
     ['today', 'Your day', 'Your morning, at a glance.', 'Overdue follow-ups, today’s viewings, new viewing requests, negotiations waiting on you, and the leads you haven’t spoken to in a while. You start the day knowing what matters.'],
     ['deals', 'Deals', 'From the first offer to the commission.', 'The asking price, the buyer’s offer, the owner’s counter and the agreed price on one clear line. Close the deal and the property is marked sold, the commission and the agent’s share are counted, and payments are logged.'],
   ] as [string, string, string, string][],
-  insideTitle: 'Everything a real estate office needs.',
-  inside: [
-    ['Matching that explains itself', 'For every lead, the properties that fit, with a score and a reason: price, type, area, bedrooms, size.'],
-    ['A page for every property', 'A short link ready to share, with a photo and title on WhatsApp and Facebook.'],
-    ['WhatsApp in one tap', 'A message from your template opens in WhatsApp. And you see when the customer opened the link.'],
-    ['Collections', 'Pick several properties for a lead and send them as one link; they save the ones they like.'],
-    ['Follow-ups', 'Who to call today, who you’re late with, and who has gone quiet.'],
-    ['Viewings', 'Appointments without clashes, a confirm and reminder message, and the outcome of each.'],
-    ['Owner reports', 'A link where the owner sees views, viewings and offers, without buyers’ names.'],
-    ['Every property’s funnel', 'From view to inquiry to viewing to offer: where each property stalls.'],
-    ['A writing helper', 'Writes the description in Arabic and English from the details; you review it.'],
-    ['QR and a flyer', 'A print-ready flyer with a code that opens the property’s page, for a window or a sign.'],
-    ['Documents', 'Title deed, contract and ID with the property, never shown outside the office.'],
-    ['Team and permissions', 'Manager, agent, desk, accountant: each sees what’s theirs.'],
-  ] as [string, string][],
+  insideTitle: 'Everything a real estate office needs.', insideSub: 'Four stages every property goes through, and what you need at each.',
+  groups: [
+    { key: 'show', title: 'Show it', sub: 'Every property with its own page, ready to share.', items: [
+      ['pages', 'A page for every property', 'A short link that shows a photo and title on WhatsApp and Facebook.'],
+      ['wa', 'WhatsApp in one tap', 'A message from your template, and you see when the link was opened.'],
+      ['qr', 'QR and a flyer', 'A print-ready flyer with a code that opens the page, for a window or a sign.'],
+      ['ai', 'A writing helper', 'Writes the description in Arabic and English from the details; you review it.'],
+    ] },
+    { key: 'match', title: 'Find who wants it', sub: 'Matching and follow-up, with no lead forgotten.', items: [
+      ['match', 'Matching that explains itself', 'For every lead, the properties that fit, with a score and the reason.'],
+      ['collections', 'Collections', 'Several properties in one link; the lead saves the ones they like.'],
+      ['followups', 'Follow-ups', 'Who to call today, who you’re late with, and who has gone quiet.'],
+      ['viewings', 'Viewings', 'No clashes, a confirm and a reminder, and the outcome of each.'],
+    ] },
+    { key: 'close', title: 'Close the deal', sub: 'From the first offer to the commission, with the owner kept informed.', items: [
+      ['deals', 'Offers and commission', 'Every offer and counter on one line; commission and payments counted for you.'],
+      ['status', 'Status that updates itself', 'Sold? Interested leads are told and upcoming viewings cancelled.'],
+      ['owners', 'Owner reports', 'Views, viewings and offers, without buyers’ names.'],
+      ['docs', 'Documents', 'Title deed, contract and ID with the property, inside the office only.'],
+    ] },
+    { key: 'run', title: 'Run the office', sub: 'Your team and your numbers, in one place.', items: [
+      ['today', 'Your morning, ready', 'What’s late, today’s viewings and new requests, in one list.'],
+      ['funnel', 'Every property’s funnel', 'From view to offer: where each property stalls.'],
+      ['team', 'Team and permissions', 'Manager, agent, desk, accountant: each sees what’s theirs.'],
+      ['devices', 'Phone or computer', 'The same system on every device, in Arabic and English.'],
+    ] },
+  ] as Group[],
   howTitle: 'How to start.',
   how: [['Sign in with Hemlo', 'With your phone number or email. One minute.'], ['Name your agency', 'Its name, city and WhatsApp number. The message template and commission come ready; change them as you like.'], ['Add your first property', 'Photos, price and area, and publish its page. Your first month is completely free.']] as [string, string][],
   endTitle: 'Open your agency on Hemlo today.', endSub: 'Thirty days free, with everything. No card, no commitment.',
@@ -148,39 +178,51 @@ const fmax = V.funnel[0][1];
     ))}
 
     <section id="features" class="scroll-mt-24 wrap border-t border-line py-24 sm:py-32">
-      <h2 class="reveal max-w-3xl text-display font-semibold tracking-tight">{S.insideTitle}</h2>
-      <div class="bento mt-14">
-        {S.inside.map(([title, body], i) => {
-          const k = KEYS[i];
-          return (
-            <article class:list={['reveal card', WIDE.includes(k) && 'wide']}>
-              <div class="ct">
-                <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d={ICON[k]} /></svg></span>
-                <h3>{title}</h3>
-                <p>{body}</p>
-              </div>
-              {k === 'match' && (
-                <div class="viz mcard" aria-hidden="true">
-                  <div class="m-top"><span class="ring"><b>100</b></span><div><b>{V.lead}</b><small>{V.want}</small></div></div>
-                  <div class="whys">{V.why.map((w) => <span>✓ {w}</span>)}</div>
+      <div class="feat-head">
+        <h2 class="reveal text-display font-semibold tracking-tight">{S.insideTitle}</h2>
+        <p class="reveal text-lead text-fg-2">{S.insideSub}</p>
+      </div>
+      <div class="chapters">
+        {S.groups.map((g, gi) => (
+          <article class="reveal chapter" style={`--d:${gi}`}>
+            <header class="ch-head">
+              <span class="ch-n">{num(gi)}</span>
+              <div><h3>{g.title}</h3><p>{g.sub}</p></div>
+            </header>
+            <div class="ch-pic" aria-hidden="true">
+              {g.key === 'show' && (
+                <div class="p-show">
+                  <div class="p-card">
+                    <img src="/images/realestate/villa-1-sm.webp" width="700" height="467" alt="" loading="lazy" decoding="async" />
+                    <div><b>{V.title}</b><small>{V.area}</small><em dir="ltr">$185,000</em></div>
+                  </div>
+                  <p class="p-seen"><span>✓✓</span> {V.opened}</p>
                 </div>
               )}
-              {k === 'funnel' && (
-                <div class="viz fun" aria-hidden="true">
-                  {V.funnel.map(([l, n]) => <div><span>{l}</span><i style={`--w:${Math.max(6, Math.round(Math.sqrt(n / fmax) * 100))}%`}></i><b>{n}</b></div>)}
+              {g.key === 'match' && (
+                <div class="p-list">
+                  {V.leads.map(([n, p, why]) => <div><span class="p-ring" style={`--p:${p}`}><b>{p}</b></span><span class="p-who"><b>{n}</b><small>✓ {why}</small></span></div>)}
                 </div>
               )}
-              {k === 'owners' && (
-                <div class="viz rep" aria-hidden="true">
-                  <small>{V.report}</small>
-                  <b>{V.reportLine}</b>
-                  <div class="bars">{[3, 5, 4, 7, 6, 9, 8, 11, 9, 12, 10, 14].map((h) => <i style={`height:${h * 7}%`}></i>)}</div>
+              {g.key === 'close' && (
+                <div class="p-deal">
+                  {V.deal.map(([k, v], i) => <div class={`d${i}`}><i></i><span>{k}</span><b dir="ltr">{v}</b></div>)}
+                  <p><span>{V.closed}</span><b dir="ltr">$6,360</b></p>
                 </div>
               )}
-              {k === 'team' && <div class="viz roles" aria-hidden="true">{V.roles.map(([a, r, d]) => <div><span class="av">{a}</span><span><b>{r}</b><small>{d}</small></span></div>)}</div>}
-            </article>
-          );
-        })}
+              {g.key === 'run' && (
+                <div class="p-fun">
+                  {V.funnel.map(([l, n]) => <div><span>{l}</span><i style={`--w:${Math.max(5, Math.round(Math.sqrt(n / fmax) * 100))}%`}></i><b>{n}</b></div>)}
+                </div>
+              )}
+            </div>
+            <ul class="ch-items">
+              {g.items.map(([k, t, b]) => (
+                <li><span class="ch-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d={ICON[k]} /></svg></span><div><h4>{t}</h4><p>{b}</p></div></li>
+              ))}
+            </ul>
+          </article>
+        ))}
       </div>
     </section>
 
@@ -268,48 +310,67 @@ const fmax = V.funnel[0][1];
   .story.flip:not(.dark) { background: #F2F1EC; border-top: 0; }
   @media (prefers-color-scheme: dark) { .story.flip:not(.dark) { background: var(--ink-2); } }
 
-  .bento { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); }
-  @media (min-width: 640px) { .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); } .card.wide { grid-column: span 2; } }
-  @media (min-width: 1024px) { .bento { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-  .card { position: relative; display: flex; flex-direction: column; gap: 1.4rem; padding: 1.6rem; border-radius: 1.5rem; background: var(--surface); border: 1px solid var(--line); overflow: hidden; transition: transform .35s var(--ease), border-color .25s, box-shadow .35s var(--ease); }
-  @media (min-width: 640px) { .card.wide { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 1.75rem; } }
-  @media (hover: hover) and (pointer: fine) { .card:hover { transform: translateY(-3px); border-color: color-mix(in oklab, var(--em) 35%, var(--line)); box-shadow: 0 28px 50px -34px rgb(31 111 92 / .45); } }
-  .ic { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: .85rem; background: color-mix(in oklab, var(--em) 12%, transparent); color: var(--em); }
-  @media (prefers-color-scheme: dark) { .ic, .kicker { color: var(--em-l); } }
-  .ic svg { width: 1.45rem; height: 1.45rem; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-  .card h3 { margin-top: 1.15rem; font-size: 1.12rem; font-weight: 600; letter-spacing: -.01em; }
-  .card p { margin-top: .4rem; font-size: .95rem; line-height: 1.6; color: var(--fg-2); }
-  .viz { margin-top: auto; }
+  /* everything an office needs: four chapters, one per stage of a property's life; each with a small picture of
+     that stage and its four features */
+  .feat-head { display: grid; gap: 1rem; max-width: 46rem; }
+  .chapters { display: grid; gap: 1.25rem; margin-top: 3.5rem; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 900px) { .chapters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .chapter { display: flex; flex-direction: column; gap: 1.4rem; padding: 1.4rem; border-radius: 1.75rem; background: var(--surface); border: 1px solid var(--line); }
+  @media (min-width: 640px) { .chapter { padding: 1.75rem; } }
+  .ch-head { display: flex; align-items: flex-start; gap: 1rem; }
+  .ch-n { display: grid; place-items: center; flex: none; width: 2.4rem; height: 2.4rem; border-radius: 999px; background: var(--em); color: #fff; font-weight: 600; font-size: .95rem; }
+  .ch-head h3 { font-size: clamp(1.35rem, 2.2vw, 1.6rem); font-weight: 600; letter-spacing: -.02em; line-height: 1.2; }
+  :global(html[lang="ar"]) .ch-head h3 { letter-spacing: 0; }
+  .ch-head p { margin-top: .25rem; color: var(--fg-2); }
+  .ch-pic { display: grid; place-items: center; height: 13.5rem; padding: 1.1rem; border-radius: 1.25rem; overflow: hidden;
+    background: radial-gradient(80% 90% at 85% 0%, color-mix(in oklab, var(--em) 13%, transparent), transparent 70%), var(--sunken); }
+  .ch-items { display: grid; gap: 1.25rem 1.5rem; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 560px) { .ch-items { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .ch-items li { display: grid; grid-template-columns: 2.1rem minmax(0, 1fr); gap: .75rem; align-items: start; }
+  .ch-ic { display: grid; place-items: center; width: 2.1rem; height: 2.1rem; border-radius: .7rem; background: color-mix(in oklab, var(--em) 11%, transparent); color: var(--em); }
+  .ch-ic svg { width: 1.15rem; height: 1.15rem; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  @media (prefers-color-scheme: dark) { .ch-ic, .kicker { color: var(--em-l); } .ch-n { background: var(--em-l); color: #08130F; } }
+  .ch-items h4 { font-size: 1rem; font-weight: 600; line-height: 1.35; }
+  .ch-items p { margin-top: .2rem; font-size: .9rem; line-height: 1.55; color: var(--fg-2); }
 
-  .mcard { padding: 1rem; border-radius: 1.1rem; background: var(--sunken); }
-  .m-top { display: flex; align-items: center; gap: .8rem; }
-  .m-top b { display: block; font-size: .95rem; font-weight: 600; }
-  .m-top small { display: block; font-size: .75rem; color: var(--muted); }
-  .ring { display: grid; place-items: center; width: 3rem; height: 3rem; flex: none; border-radius: 999px; border: 3px solid var(--em); background: var(--surface); }
-  .ring b { font-size: .85rem !important; }
-  .whys { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .8rem; }
-  .whys span { padding: .2rem .55rem; border-radius: 999px; background: color-mix(in oklab, var(--em) 13%, transparent); color: var(--em); font-size: .74rem; font-weight: 600; }
-  @media (prefers-color-scheme: dark) { .whys span { color: var(--em-l); } .ring { border-color: var(--em-l); } }
-
-  .fun { display: grid; gap: .45rem; }
-  .fun div { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr) 2.2rem; align-items: center; gap: .6rem; font-size: .8rem; color: var(--fg-2); }
-  .fun i { display: block; height: .7rem; width: var(--w); border-radius: 999px; background: var(--em); }
-  .fun div:nth-child(n+2) i { opacity: .75; }
-  .fun b { font-variant-numeric: tabular-nums; color: var(--fg); text-align: end; }
-
-  .rep { padding: 1rem; border-radius: 1.1rem; background: var(--sunken); }
-  .rep small { display: block; font-size: .72rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-  .rep b { display: block; margin-top: .25rem; font-size: .92rem; font-weight: 600; }
-  .bars { display: flex; align-items: flex-end; gap: 4px; height: 3.2rem; margin-top: .8rem; }
-  .bars i { flex: 1; border-radius: 3px 3px 0 0; background: color-mix(in oklab, var(--em) 70%, transparent); }
-
-  .roles { display: grid; gap: .4rem; }
-  .roles > div { display: flex; align-items: center; gap: .65rem; padding: .5rem .75rem .5rem .5rem; border-radius: .9rem; background: var(--sunken); }
-  .roles > div > span:last-child { display: flex; align-items: baseline; justify-content: space-between; gap: .75rem; flex: 1; min-width: 0; }
-  .roles .av { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 999px; background: var(--surface); border: 1px solid var(--line-strong); font-size: .8rem; font-weight: 700; flex: none; }
-  .roles > div:first-child .av { background: var(--em); border-color: var(--em); color: #fff; }
-  .roles b { display: block; font-size: .85rem; font-weight: 600; }
-  .roles small { display: block; font-size: .72rem; color: var(--muted); }
+  /* 1 · a property sent on WhatsApp, and opened */
+  .p-show { display: grid; gap: .5rem; width: min(22rem, 100%); }
+  .p-card { display: grid; grid-template-columns: 42% minmax(0, 1fr); align-items: center; overflow: hidden; border-radius: 1rem; background: #fff; color: #0E1420; box-shadow: 0 16px 34px -18px rgb(14 26 22 / .45); }
+  .p-card img { display: block; width: 100%; height: 100%; aspect-ratio: 1; object-fit: cover; }
+  .p-card div { display: grid; gap: .15rem; padding: .7rem .85rem; min-width: 0; }
+  .p-card b { font-size: .88rem; font-weight: 600; line-height: 1.3; }
+  .p-card small { font-size: .72rem; color: #5B6472; }
+  .p-card em { margin-top: .2rem; font-style: normal; font-size: 1.05rem; font-weight: 700; }
+  .p-seen { justify-self: end; padding: .35rem .7rem; border-radius: 999px; background: var(--surface); font-size: .76rem; font-weight: 600; color: var(--em); box-shadow: 0 6px 16px -10px rgb(14 26 22 / .4); }
+  .p-seen span { color: #34B7F1; letter-spacing: -.15em; margin-inline-end: .25rem; }
+  /* 2 · who wants it, and why */
+  .p-list { display: grid; gap: .5rem; width: min(22rem, 100%); }
+  .p-list > div { display: flex; align-items: center; gap: .75rem; padding: .7rem .85rem; border-radius: 1rem; background: var(--surface); box-shadow: 0 10px 24px -18px rgb(14 26 22 / .45); }
+  .p-ring { display: grid; place-items: center; flex: none; width: 2.6rem; height: 2.6rem; border-radius: 999px; background: conic-gradient(var(--em) calc(var(--p) * 1%), var(--line) 0); }
+  .p-ring b { display: grid; place-items: center; width: 2.05rem; height: 2.05rem; border-radius: 999px; background: var(--surface); font-size: .74rem; font-weight: 700; }
+  .p-who { display: grid; min-width: 0; }
+  .p-who b { font-size: .92rem; font-weight: 600; }
+  .p-who small { font-size: .74rem; color: var(--em); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* 3 · the negotiation, closed */
+  .p-deal { display: grid; width: min(22rem, 100%); padding: .5rem .9rem .75rem; border-radius: 1rem; background: var(--surface); box-shadow: 0 10px 24px -18px rgb(14 26 22 / .45); font-size: .84rem; }
+  .p-deal div { display: flex; align-items: center; gap: .6rem; padding: .42rem 0; border-bottom: 1px solid var(--line); }
+  .p-deal div span { flex: 1; color: var(--fg-2); }
+  .p-deal div b { font-variant-numeric: tabular-nums; }
+  .p-deal i { flex: none; width: .55rem; height: .55rem; border-radius: 999px; border: 2px solid var(--muted); }
+  .p-deal .d1 i { border-color: #2F6FB0; } .p-deal .d2 i { border-color: #C77D16; } .p-deal .d3 i { border-color: var(--em); background: var(--em); }
+  .p-deal .d3 span { color: var(--fg); font-weight: 600; }
+  .p-deal p { display: flex; justify-content: space-between; padding-top: .55rem; font-weight: 700; font-size: 1rem; color: var(--em); }
+  /* 4 · every property's funnel */
+  .p-fun { display: grid; gap: .6rem; width: min(22rem, 100%); }
+  .p-fun div { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr) 2.2rem; align-items: center; gap: .6rem; font-size: .82rem; color: var(--fg-2); }
+  .p-fun i { display: block; height: .75rem; width: var(--w); border-radius: 999px; background: var(--em); }
+  .p-fun div + div i { opacity: .7; }
+  .p-fun b { font-variant-numeric: tabular-nums; color: var(--fg); text-align: end; }
+  @media (prefers-color-scheme: dark) {
+    .p-ring { background: conic-gradient(var(--em-l) calc(var(--p) * 1%), var(--line) 0); }
+    .p-who small, .p-seen, .p-deal p { color: var(--em-l); }
+    .p-fun i, .p-deal .d3 i { background: var(--em-l); border-color: var(--em-l); }
+  }
 
   .how { display: grid; gap: 1.6rem; }
   .how li { display: grid; grid-template-columns: 2.6rem 1fr; gap: 1.1rem; align-items: start; }
@@ -317,5 +378,5 @@ const fmax = V.funnel[0][1];
   .how li:first-child .n { border-color: var(--em); background: var(--em); color: #fff; }
   .end { background: radial-gradient(60% 90% at 100% 0%, rgb(92 196 162 / .22), transparent 70%), var(--ink); }
   .end :global(.end-mark) { position: absolute; inset-inline-end: -2rem; bottom: -3rem; height: 20rem; width: auto; color: var(--em-l); opacity: .12; }
-  @media (prefers-reduced-motion: reduce) { .dot::after, .float { animation: none; } .card { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .dot::after, .float { animation: none; } }
 </style>
