@@ -22,6 +22,7 @@ const SYS: Record<string, Sys> = ar ? {
   dental: { points: ['المواعيد ولوحة اليوم المباشرة', 'مخطط الأسنان وخطط العلاج بالدينار والدولار', 'المختبر وحصص الأطباء', 'شاشة انتظار للمرضى'], page: href(lang, 'dental'), demo: `${SYSTEM_URL}?demo=dental&lang=ar`, pic: '/images/dental/chart-ar-1000.webp' },
   stores: { points: ['كاشير بالباركود: القطعة والكارتون والميزان', 'دفتر الديون مع تذكير واتساب', 'البضاعة والموردون والمصاريف والصندوق', 'يعمل بدون إنترنت'], page: href(lang, 'stores'), demo: `${SYSTEM_URL}?demo=1&lang=ar`, pic: '/images/stores/sell-ar-1000.webp' },
   gym: { points: ['الاستقبال بمسحة بطاقة، وأوقات السيدات', 'الاشتراكات والإيقاف المؤقت والتجديد بالواتساب', 'التدريب الشخصي وحصة المدرب، والكلاسات', 'شاشة عند الباب ترحّب بكل مشترك'], page: href(lang, 'gym'), demo: `${SYSTEM_URL}?demo=gym&lang=ar`, pic: '/images/gym/desk-ar-1000.webp' },
+  realestate: { points: ['صفحة لكل عقار تُرسل على واتساب', 'مطابقة الزبائن مع العقارات، مع السبب', 'المعاينات والمتابعات في يومك', 'الصفقات والعروض والعمولة'], page: href(lang, 'realestate'), demo: `${SYSTEM_URL}?demo=realestate&lang=ar`, pic: '/images/realestate/property-ar-1000.webp' },
   'phone-repair': { points: ['بطاقة لكل جهاز: العطل والحالة', 'القطع والأجرة في فاتورة واحدة', 'رسالة للزبون حين يجهز جهازه'] },
   'clinic-salon': { points: ['المواعيد حسب الموظف', 'الخدمات والباقات', 'ملف لكل زبون'] },
   'cafe-restaurant': { points: ['الطاولات والطلبات', 'شاشة للمطبخ', 'المنيو والأسعار'] },
@@ -30,12 +31,13 @@ const SYS: Record<string, Sys> = ar ? {
   dental: { points: ['Appointments and a live board of the day', 'Tooth chart and treatment plans in dinars and dollars', 'The lab and dentists’ shares', 'A waiting-room screen for patients'], page: href(lang, 'dental'), demo: `${SYSTEM_URL}?demo=dental&lang=en`, pic: '/images/dental/chart-en-1000.webp' },
   stores: { points: ['A barcode till: piece, carton and scale', 'The debt book, with WhatsApp reminders', 'Stock, suppliers, expenses and the drawer', 'Keeps working without internet'], page: href(lang, 'stores'), demo: `${SYSTEM_URL}?demo=1&lang=en`, pic: '/images/stores/sell-en-1000.webp' },
   gym: { points: ['Check-in with a scan, and ladies’ hours', 'Memberships, pauses, renewals on WhatsApp', 'Personal training with the coach’s share, and classes', 'A screen at the door that greets every member'], page: href(lang, 'gym'), demo: `${SYSTEM_URL}?demo=gym&lang=en`, pic: '/images/gym/desk-en-1000.webp' },
+  realestate: { points: ['A page for every property, sent on WhatsApp', 'Leads matched to properties, with the reason', 'Viewings and follow-ups in your day', 'Deals, offers and commission'], page: href(lang, 'realestate'), demo: `${SYSTEM_URL}?demo=realestate&lang=en`, pic: '/images/realestate/property-en-1000.webp' },
   'phone-repair': { points: ['A job card for every device: fault and status', 'Parts and labour on one bill', 'A message to the customer when it’s ready'] },
   'clinic-salon': { points: ['Appointments by staff member', 'Services and packages', 'A file for every client'] },
   'cafe-restaurant': { points: ['Tables and orders', 'A screen for the kitchen', 'The menu and prices'] },
   other: { points: ['Rooms and bookings', 'Check-in and check-out', 'The stay’s bill'] },
 };
-const ORDER = ['dental', 'stores', 'gym', 'phone-repair', 'clinic-salon', 'cafe-restaurant', 'other'];
+const ORDER = ['dental', 'stores', 'gym', 'realestate', 'phone-repair', 'clinic-salon', 'cafe-restaurant', 'other'];
 const systems = ORDER.map((k) => s.trades.find(([, , , kind]) => kind === k)!).filter(Boolean);
 const L = L2({ open: 'صفحة النظام', demo: 'جرّبه الآن', ask: 'أريده لعملي', soon: 'ما سيفعله' }, { open: 'See the system', demo: 'Try it now', ask: 'I want this', soon: 'What it will do' });
 
@@ -100,8 +102,8 @@ const HELPER = L2(
   { lead: 'ومعه مساعد هادئ.', body: 'يقرأ فواتير المورّدين، ويجيب عن أسئلتك عن أرقامك. هو يكتب المسودة، وأنت تقرّر. ويصل قريباً إلى العيادات أيضاً.' },
   { lead: 'And a quiet helper.', body: 'It reads supplier invoices and answers questions about your numbers. It drafts; you decide. Clinics get theirs soon.' });
 const END = L2(
-  { title: 'نظام لمهنتك، لا العكس.', sub: 'المتاجر والعيادات والأندية الرياضية متاحة الآن. ولكل مهنة أخرى، أخبرنا كيف يسير عملك ونبني إصدارها.' },
-  { title: 'A system for your trade, not the other way round.', sub: 'Shops, clinics and gyms are live now. For any other trade, tell us how your work runs and we’ll build its edition.' });
+  { title: 'نظام لمهنتك، لا العكس.', sub: 'المتاجر والعيادات والأندية الرياضية ومكاتب العقارات متاحة الآن. ولكل مهنة أخرى، أخبرنا كيف يسير عملك ونبني إصدارها.' },
+  { title: 'A system for your trade, not the other way round.', sub: 'Shops, clinics, gyms and real estate offices are live now. For any other trade, tell us how your work runs and we’ll build its edition.' });
 const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
 ---
 <Base lang={lang} page="systems" title={t(lang).nav.systems} description={s.sub}>
@@ -547,6 +549,7 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
   .sys-item { --k: var(--c); position: relative; overflow: hidden; border-radius: 1.25rem; border: 1px solid var(--line); background: var(--surface); transition: border-color .2s ease, box-shadow .2s ease; }
   .sys-item[open] { border-color: color-mix(in oklab, var(--k) 35%, var(--line)); box-shadow: 0 24px 50px -36px color-mix(in oklab, var(--k) 55%, transparent); }
   .sys-dental { --k: #B38B3A; }
+  .sys-realestate { --k: #1F6F5C; }
   /* the open trade carries its colour on the edge */
   .sys-item::before { content: ""; position: absolute; inset-block: 0; inset-inline-start: 0; width: 3px; background: var(--k); transform: scaleY(0); transition: transform .4s var(--ease-soft); }
   .sys-item[open]::before { transform: scaleY(1); }

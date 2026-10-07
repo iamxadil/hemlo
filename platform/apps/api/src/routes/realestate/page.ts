@@ -121,8 +121,8 @@ dl.tbl dt{color:var(--muted)}dl.tbl dd{margin:0;font-weight:500;text-align:end}
 .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:50px;border-radius:14px;border:1px solid var(--line);background:var(--surface);font-weight:600;font-size:16px;text-decoration:none;transition:transform .15s,filter .2s}
 .btn:active{transform:scale(.98)}.btn.wa{background:var(--wa);border-color:var(--wa);color:#fff}.btn.wa:hover{filter:brightness(1.05)}.btn.dark{background:var(--ink);border-color:var(--ink);color:var(--bg)}
 .stack{display:grid;gap:10px;margin-top:18px}
-.bar{position:fixed;inset-inline:0;bottom:0;z-index:30;display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:8px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:color-mix(in oklab,var(--bg) 92%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line)}
-.bar .btn{height:48px;font-size:15px}@media (min-width:860px){.bar{display:none}}
+.bar{position:fixed;inset-inline:0;bottom:0;z-index:30;display:grid;grid-template-columns:1.2fr .9fr 1.3fr;gap:8px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:color-mix(in oklab,var(--bg) 92%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line)}
+.bar .btn{height:48px;font-size:14px;white-space:nowrap;padding:0 8px}.bar .btn .ic{width:18px;height:18px}@media (min-width:860px){.bar{display:none}}
 @media (max-width:859px){.card{display:none}}
 .note{margin-top:16px;padding:12px 14px;border-radius:14px;background:var(--soft);color:var(--ink2);font-size:14px}
 .cards{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}

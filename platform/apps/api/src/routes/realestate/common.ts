@@ -12,7 +12,7 @@ import type { Deps } from '../../types';
 export { RE_TYPES, RE_STATUSES, RE_SOURCES };
 export const inRe = <T>(d: Deps, a: Actor, fn: (tx: Database) => Promise<T>) => withOrg(d.db, a.organizationId, fn);
 export const rowsOf = (r: any): any[] => (Array.isArray(r) ? r : r?.rows ?? []);
-export const SITE = (d: Deps) => (d.env as any).PUBLIC_SITE_URL ?? 'https://hemlohq.com';
+export const SITE = (d: Deps) => d.env.PUBLIC_SITE_URL ?? 'https://hemlohq.com';
 
 // ---------- input ----------
 export const CURRENCIES = ['USD', 'IQD'] as const;

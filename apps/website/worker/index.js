@@ -12,6 +12,18 @@ export default {
     if (moved) return Response.redirect(`${url.origin}/${moved[1] ?? ''}${moved[2] === 'stores' ? 'store' : moved[2]}/${url.search}`, 301);
     // Studio moved to its own site
     if (/^\/(en\/)?studio\/?$/.test(url.pathname)) return Response.redirect('https://studio.hemlohq.com/' + (url.pathname.startsWith('/en/') ? 'en/' : ''), 301);
+    // Hemlo Real Estate's public pages: a property (/p/slug), a lead's collection (/c/token), an owner's report (/r/token)
+    if (/^\/(p|c|r)\/[A-Za-z0-9-]+(\/(event|request|fav))?\/?$/.test(url.pathname) && env.API) {
+      const to = new URL(`https://api.hemlohq.com/v1/re/pub${url.pathname.replace(/\/$/, '')}${url.search}`);
+      const headers = new Headers(request.headers);
+      const ip = request.headers.get('cf-connecting-ip');
+      if (ip) headers.set('x-forwarded-for', ip);
+      const res = await env.API.fetch(new Request(to, { method: request.method, headers, body: request.body, redirect: 'manual' }));
+      const out = new Response(res.body, res);
+      out.headers.set('X-Content-Type-Options', 'nosniff');
+      out.headers.set('Strict-Transport-Security', 'max-age=31536000');
+      return out;
+    }
     const isVideo = url.pathname.endsWith('.mp4');
     let res = await env.ASSETS.fetch(isVideo ? new Request(url.toString(), { method: 'GET' }) : request);
     if (isVideo && res.status === 200) res = videoPart(request, res, ctx, VIDEO_SIZES[url.pathname]);

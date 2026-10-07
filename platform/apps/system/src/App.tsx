@@ -8,7 +8,7 @@ import { Icon, LangPick, Logo } from './components/ui';
 import { CounterLock } from './components/Counter';
 import { DrawerButton } from './components/Drawer';
 import { More } from './views/More';
-import { STORE_PAGES, DENTAL_PAGES, GYM_PAGES, type Page } from './pages';
+import { STORE_PAGES, DENTAL_PAGES, GYM_PAGES, RE_PAGES, type Page } from './pages';
 import { productPath, readTrade, rememberTrade, type Trade } from './lib/trade';
 
 const Start = lazy(() => import('./dental/Start').then((x) => ({ default: x.Start })));
@@ -16,13 +16,15 @@ const StoreStart = lazy(() => import('./views/StoreStart').then((x) => ({ defaul
 const DentalShell = lazy(() => import('./dental/Shell').then((x) => ({ default: x.DentalShell })));
 const GymShell = lazy(() => import('./gym/Shell').then((x) => ({ default: x.GymShell })));
 const GymStart = lazy(() => import('./gym/Start').then((x) => ({ default: x.GymStart })));
+const ReShell = lazy(() => import('./realestate/Shell').then((x) => ({ default: x.ReShell })));
+const ReStart = lazy(() => import('./realestate/Start').then((x) => ({ default: x.ReStart })));
 
 const WEBSITE = 'https://hemlohq.com';
 const site = (lang: Lang, path: string) => `${WEBSITE}${lang === 'en' ? '/en' : ''}${path}`;
 const wantsDemo = () => new URLSearchParams(location.search).has('demo');
 // ?demo=dental | ?demo=gym (or &kind=…): the demo clinic or gym; anything else: the demo shop
-const demoKind = () => { const q = new URLSearchParams(location.search), k = q.get('kind') ?? q.get('demo'); return k === 'dental' || k === 'gym' ? k : 'store'; };
-const homeOf = (kind: string) => (kind === 'dental' ? 'today' : kind === 'gym' ? 'desk' : 'home');
+const demoKind = () => { const q = new URLSearchParams(location.search), k = q.get('kind') ?? q.get('demo'); return k === 'dental' || k === 'gym' || k === 'realestate' ? k : 'store'; };
+const homeOf = (kind: string) => (kind === 'dental' || kind === 'realestate' ? 'today' : kind === 'gym' ? 'desk' : 'home');
 /** A demo of the kind asked for is already open on this device. */
 const haveDemo = () => { const x = demo.get(); return !!x && (x.kind ?? 'store') === demoKind(); };
 let demoStarting: Promise<unknown> | null = null; // once, even when React runs effects twice
@@ -47,6 +49,8 @@ export function App() {
   const [startShop, setStartShop] = useState(() => new URLSearchParams(location.search).get('start') === 'store');
   // ?start=gym: the same, for a gym
   const [startGym, setStartGym] = useState(() => new URLSearchParams(location.search).get('start') === 'gym');
+  // ?start=realestate: a real-estate agency
+  const [startEstate, setStartEstate] = useState(() => new URLSearchParams(location.search).get('start') === 'realestate');
   useEffect(() => {
     if (!wantsDemo()) return;
     const kind = demoKind();
@@ -90,7 +94,7 @@ export function App() {
   );
 
   if (starting) {
-    if (!demoError) return demoKind() === 'dental' ? gate(t.demo.startingDental, t.demo.startingBodyDental, <span className="spinner mt-6 inline-block" aria-hidden />) : demoKind() === 'gym' ? gate(t.demo.startingGym, t.demo.startingBodyGym, <span className="spinner mt-6 inline-block" aria-hidden />) : gate(t.demo.starting, t.demo.startingBody, <span className="spinner mt-6 inline-block" aria-hidden />);
+    if (!demoError) return demoKind() === 'realestate' ? gate(t.demo.startingRe, t.demo.startingBodyRe, <span className="spinner mt-6 inline-block" aria-hidden />) : demoKind() === 'dental' ? gate(t.demo.startingDental, t.demo.startingBodyDental, <span className="spinner mt-6 inline-block" aria-hidden />) : demoKind() === 'gym' ? gate(t.demo.startingGym, t.demo.startingBodyGym, <span className="spinner mt-6 inline-block" aria-hidden />) : gate(t.demo.starting, t.demo.startingBody, <span className="spinner mt-6 inline-block" aria-hidden />);
     const msg = demoError === 'DEMO_LIMIT' ? t.demo.limit : demoError === 'DEMO_BUSY' ? t.demo.busy : demoError === 'NETWORK' ? t.errors.network : t.errors.generic;
     return gate(t.gate.error, msg, <a className="btn btn-secondary" href={site(lang, productPath(trade))}>hemlohq.com</a>);
   }
@@ -98,7 +102,7 @@ export function App() {
   if (me.isLoading || device.isLoading) return gate(t.gate.loading, '');
   if (me.error && !counter) {
     if (me.error instanceof ApiError && me.error.status === 401) {
-      const [title, body] = trade === 'gym' ? [t.gate.signInGym, t.gate.signInGymBody] : trade === 'dental' ? [t.gate.signInDental, t.gate.signInDentalBody] : trade === 'store' ? [t.gate.signInTitle, t.gate.signInBody] : [t.gate.signInAny, t.gate.signInAnyBody];
+      const [title, body] = trade === 'realestate' ? [t.gate.signInRe, t.gate.signInReBody] : trade === 'gym' ? [t.gate.signInGym, t.gate.signInGymBody] : trade === 'dental' ? [t.gate.signInDental, t.gate.signInDentalBody] : trade === 'store' ? [t.gate.signInTitle, t.gate.signInBody] : [t.gate.signInAny, t.gate.signInAnyBody];
       return gate(title, body, <a className="btn btn-accent" href={signInUrl(lang)}>{t.gate.signIn}</a>);
     }
     return gate(t.gate.error, '', <button className="btn btn-accent" onClick={() => me.refetch()}>{t.gate.retry}</button>);
@@ -120,6 +124,11 @@ export function App() {
     const started = async (orgId: string) => { await api('/v1/auth/organization/set-active', { body: { organizationId: orgId } }); leave(); qc.clear(); await qc.invalidateQueries(); };
     return <Suspense fallback={gate(t.gate.loading, '')}><GymStart lang={lang} setLang={setLang} userName={me.data.user?.name ?? ''} onStarted={started} onSkip={me.data.organizations?.length ? leave : undefined} /></Suspense>;
   }
+  if (startEstate && !counter && !inDemo) {
+    const leave = () => { history.replaceState(null, '', `${location.pathname}#/today`); setStartEstate(false); };
+    const started = async (orgId: string) => { await api('/v1/auth/organization/set-active', { body: { organizationId: orgId } }); history.replaceState(null, '', `${location.pathname}#/studio`); setStartEstate(false); qc.clear(); await qc.invalidateQueries(); };
+    return <Suspense fallback={gate(t.gate.loading, '')}><ReStart lang={lang} setLang={setLang} userName={me.data.user?.name ?? ''} onStarted={started} onSkip={me.data.organizations?.length ? leave : undefined} /></Suspense>;
+  }
   const orgs: any[] = counter ? [device.data.device.organization] : me.data.organizations ?? [];
   if (!orgs.length) {
     // no business yet: the product they came for first; the other kinds only if they ask
@@ -130,8 +139,10 @@ export function App() {
         <span className="thumb"><Icon n="sell" /></span><span className="min-w-0 flex-1"><b className="block font-medium">{t.gate.shop}</b><span className="sub">{t.gate.shopSub}</span></span></button>,
       gym: <button key="gym" className="row panel" onClick={() => { history.replaceState(null, '', '/?start=gym'); setStartGym(true); }}>
         <span className="thumb"><Icon n="dumbbell" /></span><span className="min-w-0 flex-1"><b className="block font-medium">{t.gate.gym}</b><span className="sub">{t.gate.gymSub}</span></span></button>,
+      realestate: <button key="realestate" className="row panel" onClick={() => { history.replaceState(null, '', '/?start=realestate'); setStartEstate(true); }}>
+        <span className="thumb"><Icon n="home" /></span><span className="min-w-0 flex-1"><b className="block font-medium">{t.gate.estate}</b><span className="sub">{t.gate.estateSub}</span></span></button>,
     };
-    const all: Trade[] = ['dental', 'store', 'gym'];
+    const all: Trade[] = ['dental', 'store', 'gym', 'realestate'];
     const shown = trade && !otherKinds ? [trade] : trade ? [trade, ...all.filter((k) => k !== trade)] : all;
     return gate(t.gate.noBizTitle, t.gate.noBizBody, (
       <div className="grid w-full gap-2 text-start">
@@ -156,11 +167,12 @@ export function App() {
 function Shell({ orgs, choose }: { orgs: any[]; choose(id: string): Promise<void> }) {
   const { t, lang, setLang, sys, me, can, toast } = useApp();
   const { path } = useRoute();
-  const dental = sys.business.kind === 'dental', gym = sys.business.kind === 'gym';
+  const dental = sys.business.kind === 'dental', gym = sys.business.kind === 'gym', estate = sys.business.kind === 'realestate';
+  const tradeOf = (): Trade => (dental ? 'dental' : gym ? 'gym' : estate ? 'realestate' : 'store');
   // remember the kind of business opened here, so the next sign-in screen speaks to it
-  useEffect(() => { if (!sys.business.demo) rememberTrade(dental ? 'dental' : gym ? 'gym' : 'store'); }, [sys.business.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!sys.business.demo) rememberTrade(tradeOf()); }, [sys.business.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const MORE: Page = { path: 'more', icon: 'more', need: null, view: More, label: (x) => x.more.title };
-  const pages = [...(dental ? DENTAL_PAGES : gym ? GYM_PAGES : STORE_PAGES), MORE].filter((p) => !p.need || can(p.need));
+  const pages = [...(dental ? DENTAL_PAGES : gym ? GYM_PAGES : estate ? RE_PAGES : STORE_PAGES), MORE].filter((p) => !p.need || can(p.need));
   const current = pages.find((p) => p.path === path) ?? pages.find((p) => p.path === homeOf(sys.business.kind ?? 'store')) ?? pages.find((p) => p.path === 'sell') ?? pages[0];
   useEffect(() => { if (current.path !== path) history.replaceState(null, '', `#/${current.path}`); }, [current.path, path]);
   const counter = sys.counter;
@@ -177,9 +189,9 @@ function Shell({ orgs, choose }: { orgs: any[]; choose(id: string): Promise<void
     return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); window.removeEventListener('hemlo-outbox', count); clearInterval(every); };
   }, [qc]);
 
-  const exitDemo = () => { demo.end(); qc.clear(); location.href = site(lang, productPath(dental ? 'dental' : gym ? 'gym' : 'store')); };
+  const exitDemo = () => { demo.end(); qc.clear(); location.href = site(lang, productPath(tradeOf())); };
   // from the demo clinic to a real one: leave the demo, sign in, start the trial
-  const startReal = () => { demo.end(); qc.clear(); location.href = `/?start=${dental ? 'dental' : gym ? 'gym' : 'store'}&lang=${lang}`; };
+  const startReal = () => { demo.end(); qc.clear(); location.href = `/?start=${tradeOf()}&lang=${lang}`; };
   const signOut = async () => {
     if (sys.business.demo) return exitDemo();
     if (counter) { await api('/v1/counter/lock', { body: {} }).catch(() => {}); qc.invalidateQueries(); return; }
@@ -192,12 +204,19 @@ function Shell({ orgs, choose }: { orgs: any[]; choose(id: string): Promise<void
   const moreLinks = pages.filter((p) => !p.tab && !p.hidden && p.path !== 'more');
   const banner = <>
     {sys.business.demo && <div className="demo-bar" role="note">
-      <span className="demo-text">{dental ? t.demo.bannerDental : gym ? t.demo.bannerGym : t.demo.banner}</span>
-      <button className="btn btn-accent btn-sm" onClick={startReal}>{dental ? t.demo.wantDental : gym ? t.demo.wantGym : t.demo.want}</button>
+      <span className="demo-text">{dental ? t.demo.bannerDental : gym ? t.demo.bannerGym : estate ? t.demo.bannerRe : t.demo.banner}</span>
+      <button className="btn btn-accent btn-sm" onClick={startReal}>{dental ? t.demo.wantDental : gym ? t.demo.wantGym : estate ? t.demo.wantRe : t.demo.want}</button>
       <button className="btn btn-secondary btn-sm" onClick={exitDemo}>{t.demo.exit}</button>
     </div>}
     <PlanBar />
   </>;
+  // a real-estate agency: its own frame (the day's work first, a property one tap from WhatsApp)
+  if (estate) return (
+    <Suspense fallback={<div className="grid h-dvh place-items-center"><span className="spinner" /></div>}>
+      <ReShell pages={pages} current={current} label={label} banner={banner} orgs={counter ? [] : orgs} choose={choose} signOut={signOut}
+        signOutLabel={counter ? `${t.counter.lock} · ${me.user.name}` : sys.business.demo ? t.demo.exit : t.nav.signOut} />
+    </Suspense>
+  );
   // a gym too: iron and chalk, the front desk first
   if (gym) return (
     <Suspense fallback={<div className="grid h-dvh place-items-center"><span className="spinner" /></div>}>

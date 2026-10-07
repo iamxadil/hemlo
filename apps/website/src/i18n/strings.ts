@@ -9,16 +9,17 @@ export const accountUrl = (lang: Lang, page: 'sign-in' | 'sign-up' | 'business' 
 export const studioUrl = (lang: Lang) => 'https://studio.hemlohq.com/' + (lang === 'ar' ? '' : 'en/');
 
 // page paths without language prefix
-export const PATHS = { home: '/', earlyAccess: '/early-access/', systems: '/systems/', dental: '/dental/', stores: '/store/', gym: '/gym/', school: '/school/', about: '/about/', contact: '/contact/' } as const;
+export const PATHS = { home: '/', earlyAccess: '/early-access/', systems: '/systems/', dental: '/dental/', stores: '/store/', gym: '/gym/', realestate: '/realestate/', school: '/school/', about: '/about/', contact: '/contact/' } as const;
 export type PageKey = keyof typeof PATHS;
 
 // Each business is its own product with its own page and short link (hemlohq.com/gym): a gym owner sees a gym product
 // and nothing else. The overview of all of them stays at /systems/, but it is not the front door.
-export type Trade = 'gym' | 'dental' | 'stores';
-export const TRADES_PAGES: Trade[] = ['gym', 'dental', 'stores'];
+export type Trade = 'gym' | 'dental' | 'stores' | 'realestate';
+export const TRADES_PAGES: Trade[] = ['gym', 'dental', 'stores', 'realestate'];
 export const PRODUCT: Record<Trade, { label: Record<Lang, string>; full: Record<Lang, string>; app: string; color: string }> = {
   gym: { label: { ar: 'الأندية الرياضية', en: 'Gym' }, full: { ar: 'هيملو للأندية الرياضية', en: 'Hemlo Gym' }, app: 'gym', color: '#E4572E' },
   dental: { label: { ar: 'عيادات الأسنان', en: 'Dental' }, full: { ar: 'هيملو لعيادات الأسنان', en: 'Hemlo Dental' }, app: 'dental', color: '#B38B3A' },
+  realestate: { label: { ar: 'العقارات', en: 'Real Estate' }, full: { ar: 'هيملو للعقارات', en: 'Hemlo Real Estate' }, app: 'realestate', color: '#1F6F5C' },
   stores: { label: { ar: 'المتاجر', en: 'Store' }, full: { ar: 'هيملو للمتاجر', en: 'Hemlo Store' }, app: 'store', color: '#A8532E' },
 };
 export const productLinks = (t: Trade, lang: Lang) => ({
@@ -97,6 +98,7 @@ const ar = {
       ['المتاجر والماركتات', 'البقالات، الماركتات، الصيدليات، محلات الملابس والأجهزة', 'متاح', 'stores'],
       ['عيادات الأسنان', 'المواعيد، ملف المريض ومخطط الأسنان، خطط العلاج، المختبر، حصص الأطباء', 'متاح · ٣٠ يوماً مجاناً', 'dental'],
       ['الأندية الرياضية', 'الجيم، اللياقة، الكيك بوكسينغ، الكروس فت، أندية السيدات', 'متاح · ٣٠ يوماً مجاناً', 'gym'],
+      ['مكاتب العقارات', 'العقارات وصفحاتها، الزبائن والمطابقة، المعاينات، الصفقات والعمولة', 'متاح · ٣٠ يوماً مجاناً', 'realestate'],
       ['الورش', 'الهواتف والإلكترونيات، السيارات، التبريد، الأجهزة', 'التالي', 'phone-repair'],
       ['الصالونات ومراكز التجميل', 'المواعيد، الخدمات، ملف كل زبون', 'مخطّط', 'clinic-salon'],
       ['المقاهي والمطاعم', 'الطاولات، المنيو، طلبات المطبخ', 'مخطّط', 'cafe-restaurant'],
@@ -272,6 +274,7 @@ const en: typeof ar = {
       ['Stores and markets', 'Groceries, markets, pharmacies, clothing and electronics shops', 'Live', 'stores'],
       ['Dental clinics', 'Appointments, patient files and tooth charts, treatment plans, the lab, dentists’ shares', 'Live · 30 days free', 'dental'],
       ['Gyms', 'Gyms, fitness clubs, kickboxing, CrossFit, ladies’ clubs', 'Live · 30 days free', 'gym'],
+      ['Real estate offices', 'Listings and their pages, leads and matching, viewings, deals and commission', 'Live · 30 days free', 'realestate'],
       ['Workshops', 'Phones and electronics, cars, AC, appliances', 'Next', 'phone-repair'],
       ['Salons and beauty clinics', 'Appointments, services, a file for every client', 'Planned', 'clinic-salon'],
       ['Cafés and restaurants', 'Tables, the menu, kitchen orders', 'Planned', 'cafe-restaurant'],

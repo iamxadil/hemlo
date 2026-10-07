@@ -10,5 +10,7 @@
     { "pattern": "www.hemlohq.com", "custom_domain": true }
   ],
   "workers_dev": false,
+  // property, collection and owner-report pages (hemlohq.com/p/…, /c/…, /r/…) come from the API, worker to worker
+  "services": [{ "binding": "API", "service": "hemlo-api" }],
   "observability": { "enabled": true }
 }

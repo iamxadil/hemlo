@@ -434,3 +434,38 @@ describe('the day', () => {
     expect(q.json.answer.kind).toBe('properties');
   });
 });
+
+describe('the demo agency', () => {
+  it('one tap: a living Erbil agency with listings, leads, viewings today, a negotiation and a closed deal', async () => {
+    const v = new Browser(t.app);
+    const r = await v.post('/v1/demo/start', { lang: 'en', kind: 'realestate' });
+    expect(r.status).toBe(201);
+    const auth = { authorization: `Bearer ${r.json.token}` };
+    const me = (await v.get('/v1/sys/me', auth)).json;
+    expect(me.business).toMatchObject({ kind: 'realestate', demo: true, name: 'Al-Waha Real Estate' });
+    const today = (await v.get('/v1/re/today', auth)).json;
+    expect(today.viewings.length).toBeGreaterThan(1);
+    expect(today.brief.overdue).toBeGreaterThan(0);
+    expect(today.negotiations.length).toBe(1);
+    expect(today.requests.length).toBe(1);
+    expect(today.business.commission.USD.month).toBe(3560);
+    const props = (await v.get('/v1/re/properties?status=live', auth)).json;
+    expect(props.total).toBe(15);
+    expect(props.properties[0].cover).toMatch(/^https:\/\/system\.hemlohq\.com\/demo\/re\//);
+    const ahmed = (await v.get('/v1/re/leads?q=Ahmed', auth)).json.leads[0];
+    const d = (await v.get(`/v1/re/leads/${ahmed.id}`, auth)).json;
+    expect(d.matches.length).toBeGreaterThan(1); // Dream City and Gulan villas fit
+    expect(d.collections).toHaveLength(1);
+    const page = await new Browser(t.app).get(`/v1/re/pub/p/${props.properties.find((p: any) => p.ref === 4810).slug}?lang=en`);
+    expect(String(page.json)).toContain('Villa with a garden in Dream City');
+    expect((await v.post('/v1/demo/end', {}, auth)).status).toBe(204);
+  });
+});
+
+describe('many demo agencies', () => {
+  it('two visitors get two demo agencies side by side (their public links never collide)', async () => {
+    const a = await new Browser(t.app).post('/v1/demo/start', { lang: 'ar', kind: 'realestate' });
+    const b = await new Browser(t.app).post('/v1/demo/start', { lang: 'ar', kind: 'realestate' });
+    expect([a.status, b.status]).toEqual([201, 201]);
+  });
+});

@@ -32,6 +32,8 @@
     "TRUSTED_ORIGINS": "https://hemlohq.com,https://account.hemlohq.com,https://admin.hemlohq.com,https://*.hemlohq.com",
     "PASSKEY_RP_ID": "hemlohq.com",
     "PHONE_SIGN_IN": "0",
-    "EMAIL_FROM": "Hemlo <no-reply@hemlohq.com>"
+    "EMAIL_FROM": "Hemlo <no-reply@hemlohq.com>",
+    "SYSTEM_URL": "https://system.hemlohq.com", // the demo agency's photos live with the app (public/demo/re)
+    "PUBLIC_SITE_URL": "https://hemlohq.com" // property pages: hemlohq.com/p/…, proxied to /v1/re/pub by the website's worker
   }
 }

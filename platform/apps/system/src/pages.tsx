@@ -57,6 +57,28 @@ export const GYM_PAGES: Page[] = [
   { path: 'settings', icon: 'gear', need: null, label: (t) => t.settings.title, view: Settings },
 ];
 
+// ---- Real Estate: its own chunk ----
+const estate = () => import('./realestate');
+const R = (name: string) => lazy(() => estate().then((m: any) => ({ default: m[name] })));
+const rl = (k: string) => (t: any) => t.renav[k] as string;
+export const RE_PAGES: Page[] = [
+  { path: 'today', icon: 'home', need: 'listings.read', tab: true, view: R('Today'), label: rl('today') },
+  { path: 'properties', icon: 'store', need: 'listings.read', tab: true, view: R('Properties'), label: rl('properties') },
+  { path: 'property', icon: 'store', need: 'listings.read', hidden: true, view: R('PropertyFile'), label: rl('property') },
+  { path: 'studio', icon: 'plus', need: 'listings.create', hidden: true, view: R('Studio'), label: rl('studio') },
+  { path: 'leads', icon: 'customers', need: 'leads.read', tab: true, view: R('Leads'), label: rl('leads') },
+  { path: 'lead', icon: 'user', need: 'leads.read', hidden: true, view: R('LeadFile'), label: rl('lead') },
+  { path: 'agenda', icon: 'calendar', need: 'viewings.read', tab: true, view: R('Agenda'), label: rl('agenda') },
+  { path: 'deals', icon: 'wallet', need: 'deals.read', view: R('Deals'), label: rl('deals') },
+  { path: 'owners', icon: 'user', need: 'listings.read', view: R('Owners'), label: rl('owners'), gapBefore: true },
+  { path: 'collections', icon: 'clip', need: 'listings.read', view: R('Collections'), label: rl('collections') },
+  { path: 'map', icon: 'globe', need: 'listings.read', view: R('MapView'), label: rl('map') },
+  { path: 'reports', icon: 'chart', need: 'reports.read', view: R('Reports'), label: rl('reports') },
+  { path: 'agency', icon: 'gear', need: 'agency.configure', view: R('Setup'), label: rl('agency') },
+  PLAN,
+  { path: 'settings', icon: 'gear', need: null, label: (t) => t.settings.title, view: Settings },
+];
+
 // ---- Dental: its own chunk ----
 const dental = () => import('./dental');
 const D = (name: string) => lazy(() => dental().then((m: any) => ({ default: m[name] })));

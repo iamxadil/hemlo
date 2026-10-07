@@ -3,7 +3,7 @@
 // Hemlo's price list (edited in the admin dashboard): read at build time, then refreshed in the browser, so a price
 // changed in the dashboard shows here within minutes without rebuilding the site. Every plan has every feature.
 import { API_URL, SYSTEM_URL, studioUrl, type Lang } from '../i18n/strings';
-interface Props { lang: Lang; edition: 'store' | 'dental' | 'gym'; color?: string; dark?: boolean }
+interface Props { lang: Lang; edition: 'store' | 'dental' | 'gym' | 'realestate'; color?: string; dark?: boolean }
 const { lang, edition, color = '#A8532E', dark = false } = Astro.props;
 type Plan = { id: string; code: string; name: Record<string, string>; tagline: Record<string, string> | null; priceMonth: number; priceYear: number; limits: Record<string, number>; popular: boolean };
 let plans: Plan[] = [];
@@ -13,8 +13,8 @@ const L = ar ? {
   title: 'الأسعار', sub: 'كل الخطط فيها كل المزايا والتحديثات والدعم. الفرق في الحجم فقط. ابدأ بثلاثين يوماً مجاناً على أكبر خطة، بلا بطاقة.',
   monthly: 'شهري', yearly: 'سنوي', twoFree: 'شهران مجاناً', month: 'شهرياً', year: 'سنوياً', popular: 'الأكثر اختياراً', iqd: 'د.ع', start: 'ابدأ 30 يوماً مجاناً',
   upTo: 'حتى {n} {w}', unlimited: '{w} بلا حد', all: 'كل المزايا',
-  limits: { users: 'حسابات موظفين', devices: 'أجهزة كاشير مشتركة', dentists: 'أطباء', members: 'مشتركين فعّالين', ai: 'مهمة ذكاء اصطناعي شهرياً' } as Record<string, string>,
-  one: { users: 'حساب موظف واحد', devices: 'جهاز كاشير واحد', dentists: 'طبيب واحد', members: 'مشترك واحد', ai: 'مهمة واحدة' } as Record<string, string>,
+  limits: { users: 'حسابات موظفين', devices: 'أجهزة كاشير مشتركة', dentists: 'أطباء', members: 'مشتركين فعّالين', listings: 'عقار معروض', ai: 'مهمة ذكاء اصطناعي شهرياً' } as Record<string, string>,
+  one: { users: 'حساب موظف واحد', devices: 'جهاز كاشير واحد', dentists: 'طبيب واحد', members: 'مشترك واحد', listings: 'عقار واحد', ai: 'مهمة واحدة' } as Record<string, string>,
   ent: 'المؤسسات', entTag: 'للسلاسل والفروع والاحتياجات الخاصة', quote: 'بسعر متفق عليه', entGo: 'تحدّث مع هيملو ستوديو',
   entList: ['عدة فروع في حساب واحد', 'ربط بأجهزة وأنظمة أخرى', 'ميزات وتقارير خاصة يبنيها ستوديو', 'مدير حساب ودعم مقدّم'],
   pay: 'الدفع عبر FIB أو زين كاش أو نقداً أو تحويل. بعد انتهاء المدة لديك 7 أيام سماح، وسجلاتك تبقى لك دائماً.',
@@ -22,15 +22,15 @@ const L = ar ? {
   title: 'Pricing', sub: 'Every plan has every feature, updates and support; they differ by size. Start with 30 days free on the biggest plan, no card.',
   monthly: 'Monthly', yearly: 'Yearly', twoFree: '2 months free', month: 'a month', year: 'a year', popular: 'Most chosen', iqd: 'IQD', start: 'Start 30 days free',
   upTo: 'Up to {n} {w}', unlimited: 'Unlimited {w}', all: 'Every feature',
-  limits: { users: 'staff accounts', devices: 'shared till devices', dentists: 'dentists', members: 'active members', ai: 'AI tasks a month' } as Record<string, string>,
-  one: { users: 'One staff account', devices: 'One till device', dentists: 'One dentist', members: 'One member', ai: 'One AI task' } as Record<string, string>,
+  limits: { users: 'staff accounts', devices: 'shared till devices', dentists: 'dentists', members: 'active members', listings: 'live listings', ai: 'AI tasks a month' } as Record<string, string>,
+  one: { users: 'One staff account', devices: 'One till device', dentists: 'One dentist', members: 'One member', listings: 'One listing', ai: 'One AI task' } as Record<string, string>,
   ent: 'Enterprise', entTag: 'For chains, branches and special needs', quote: 'By quote', entGo: 'Talk to Hemlo Studio',
   entList: ['Several branches in one account', 'Links to devices and other systems', 'Custom features and reports built by Studio', 'An account manager and priority support'],
   pay: 'Pay by FIB, Zain Cash, cash or transfer. When a period ends you have 7 days of grace, and your records are always yours.',
 };
 const nf = new Intl.NumberFormat('en-US');
 const fill = (s: string, v: Record<string, string>) => s.replace(/\{(\w+)\}/g, (_, k) => v[k] ?? '');
-const lines = (p: Plan) => [...(['dentists', 'members', 'users', 'devices', 'ai'] as const).filter((k) => p.limits[k] != null || (k === 'members' && edition === 'gym'))
+const lines = (p: Plan) => [...(['dentists', 'members', 'users', 'listings', 'devices', 'ai'] as const).filter((k) => p.limits[k] != null || (k === 'members' && edition === 'gym') || (k === 'listings' && edition === 'realestate'))
   .map((k) => (p.limits[k] == null ? fill(L.unlimited, { w: L.limits[k] }) : p.limits[k] === 1 ? L.one[k] : fill(L.upTo, { n: nf.format(p.limits[k]), w: L.limits[k] }))), L.all];
 const start = `${SYSTEM_URL}?start=${edition}&lang=${lang}`;
 const studio = `${studioUrl(lang)}?from=systems&edition=${edition}`;

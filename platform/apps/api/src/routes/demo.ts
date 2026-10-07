@@ -10,6 +10,7 @@ import { HttpError, forgetPrincipal, forgetAllPrincipals } from '../principal';
 import { seedDemoShop, DEMO_BARCODES } from '../demo-data';
 import { seedDemoClinic, DEMO_CLINIC } from '../demo-dental';
 import { seedDemoGym, DEMO_GYM } from '../demo-gym';
+import { seedDemoRealEstate, DEMO_AGENCY } from '../demo-realestate';
 import type { AppEnv, Deps } from '../types';
 import { fileKey, type FileStore } from '../files';
 
@@ -73,8 +74,8 @@ export function demoRoutes(d: Deps) {
   r.post('/start', async (c) => {
     const b = await c.req.json<{ lang?: string; kind?: string }>().catch(() => ({} as any));
     const lang = b.lang === 'en' ? 'en' as const : 'ar' as const;
-    const kind = b.kind === 'dental' || b.kind === 'gym' ? b.kind : 'store';
-    const dental = kind === 'dental', gym = kind === 'gym';
+    const kind = b.kind === 'dental' || b.kind === 'gym' || b.kind === 'realestate' ? b.kind : 'store';
+    const dental = kind === 'dental', gym = kind === 'gym', estate = kind === 'realestate';
     const ctx = await d.auth.$context;
     // how long each part takes, in the Server-Timing header (browser dev tools show it)
     const marks: string[] = []; let last = Date.now();
@@ -98,16 +99,16 @@ export function demoRoutes(d: Deps) {
 
     // a visitor, their own shop, a week of history, a session
     const user = await ctx.internalAdapter.createUser({
-      email: `visitor-${newId().toLowerCase().replace(/[^a-z0-9]/g, '')}@${DEMO_DOMAIN}`, name: dental ? DEMO_CLINIC[lang].owner : gym ? DEMO_GYM[lang].owner : lang === 'ar' ? 'أبو علي' : 'Abu Ali', emailVerified: true, locale: lang,
+      email: `visitor-${newId().toLowerCase().replace(/[^a-z0-9]/g, '')}@${DEMO_DOMAIN}`, name: dental ? DEMO_CLINIC[lang].owner : gym ? DEMO_GYM[lang].owner : estate ? DEMO_AGENCY[lang].owner : lang === 'ar' ? 'أبو علي' : 'Abu Ali', emailVerified: true, locale: lang,
     } as any, {} as any);
     mark('visitor');
     // the business is made directly (demo visitors can't create businesses themselves), with the visitor as owner,
     // in the same transaction and round trip as its stock and history
-    const org = { id: newId(), name: dental ? DEMO_CLINIC[lang].name : gym ? DEMO_GYM[lang].name : lang === 'ar' ? 'ماركت النور' : 'Al-Noor Market', slug: `demo-${newId().toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 12)}`, createdAt: new Date(),
+    const org = { id: newId(), name: dental ? DEMO_CLINIC[lang].name : gym ? DEMO_GYM[lang].name : estate ? DEMO_AGENCY[lang].name : lang === 'ar' ? 'ماركت النور' : 'Al-Noor Market', slug: `demo-${newId().toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 12)}`, createdAt: new Date(),
       metadata: JSON.stringify({ demo: true, kind, city: lang === 'ar' ? 'بغداد' : 'Baghdad' }) };
     const owner = { id: newId(), organizationId: org.id, userId: user.id, role: 'owner', createdAt: new Date() };
     const first: Parameters<typeof seedDemoShop>[4] = [[organization, [org]], [member, [owner]]];
-    const seeded: Record<string, number> = await withOrg(d.db, org.id, (tx): Promise<Record<string, number>> => (dental ? seedDemoClinic(tx, org.id, user.id, owner.id, lang, first) : gym ? seedDemoGym(tx, org.id, user.id, owner.id, lang, first) : seedDemoShop(tx, org.id, user.id, lang, first)));
+    const seeded: Record<string, number> = await withOrg(d.db, org.id, (tx): Promise<Record<string, number>> => (dental ? seedDemoClinic(tx, org.id, user.id, owner.id, lang, first) : gym ? seedDemoGym(tx, org.id, user.id, owner.id, lang, first) : estate ? seedDemoRealEstate(tx, org.id, user.id, owner.id, lang, first, d.env.SYSTEM_URL) : seedDemoShop(tx, org.id, user.id, lang, first)));
     mark('shop');
     const session = await ctx.internalAdapter.createSession(user.id, false, { activeOrganizationId: org.id, loginMethod: 'demo' } as any);
     mark('session');

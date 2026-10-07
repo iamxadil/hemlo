@@ -23,7 +23,7 @@ const pages = links.filter(([, , ext]) => !ext);
 const product = (TRADES_PAGES as string[]).includes(page) ? (page as Trade) : undefined;
 const P = product ? productLinks(product, lang) : null;
 const productNav: [string, string, boolean?][] = product ? [['#features', s.product.features], ['#pricing', s.product.pricing], [P!.demo, s.product.demo, true]] : [];
-const isCurrent = (u: string) => u === href(lang, pageKey) || ((pageKey === 'dental' || pageKey === 'stores' || pageKey === 'gym') && u === href(lang, 'systems'));
+const isCurrent = (u: string) => u === href(lang, pageKey) || ((pageKey === 'dental' || pageKey === 'stores' || pageKey === 'gym' || pageKey === 'realestate') && u === href(lang, 'systems'));
 ---
 <!doctype html>
 <html lang={lang} dir={lang === 'ar' ? 'rtl' : 'ltr'}>

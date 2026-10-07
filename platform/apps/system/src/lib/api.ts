@@ -84,6 +84,18 @@ export async function upload(purpose: string, img: { blob: Blob; width: number; 
   return json.file;
 }
 
+/** Send a file's bytes to any route (listing photos, documents), as whoever is signed in here (session, device or demo). */
+export async function postBlob<T = any>(path: string, blob: Blob): Promise<T> {
+  const { headers, credentials } = whoHeaders();
+  headers['content-type'] = blob.type || 'application/octet-stream';
+  let res: Response;
+  try { res = await fetch(API + path, { method: 'POST', body: blob, headers, credentials }); }
+  catch { throw new ApiError(0, 'NETWORK'); }
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new ApiError(res.status, json.error ?? 'ERROR');
+  return json as T;
+}
+
 /** Remember the last good answer, and fall back to it when there's no internet (so the app still opens offline). */
 export async function remembered<T>(key: string, fn: () => Promise<T>): Promise<T> {
   try { const v = await fn(); try { localStorage.setItem(`hemlo.cache.${key}`, JSON.stringify(v)); } catch {} return v; }
