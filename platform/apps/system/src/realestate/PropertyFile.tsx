@@ -8,6 +8,7 @@ import { go, useRoute } from '../lib/app';
 import { Icon, Sheet } from '../components/ui';
 import { useR } from './i18n';
 import { Avatar, Empty, Pill, RIcon, Score, Sec, ShareSheet, StatusPill, Timeline, Why, Qr, LeadPicker } from './ui';
+import { NewContract } from './Contracts';
 import { ViewingForm } from './Agenda';
 import { LiveSheet } from './Studio';
 import { fmt, price, titleOf, waLink, telLink, localPhone, ago, useTeam, useSetup, stageTone, type Property, type Photo, type Card, type Activity, type Deal, type Viewing, type Share, type Owner } from './data';
@@ -28,7 +29,7 @@ export function PropertyFile() {
   const setup = useSetup();
   const q = useQuery<Full>({ queryKey: ['re-property', id], queryFn: () => api(`/v1/re/properties/${id}`), enabled: !!id });
   const [tab, setTab] = useState<string>(params.get('tab') ?? 'overview');
-  const [sheet, setSheet] = useState<null | 'share' | 'status' | 'viewing' | 'deal' | 'collection' | 'report' | 'photos' | 'doc'>(null);
+  const [sheet, setSheet] = useState<null | 'share' | 'status' | 'viewing' | 'deal' | 'collection' | 'report' | 'photos' | 'doc' | 'contract'>(null);
   const [live, setLive] = useState<any>(null), [photoAt, setPhotoAt] = useState(0);
   const refresh = () => { qc.invalidateQueries({ queryKey: ['re-property', id] }); qc.invalidateQueries({ queryKey: ['re-props'] }); qc.invalidateQueries({ queryKey: ['re-today'] }); };
   const publish = useMutation({ mutationFn: (on: boolean) => api<any>(`/v1/re/properties/${id}/publish`, { body: { on } }), onSuccess: (x, on) => { refresh(); if (on) setLive(x); }, onError: (e) => toast(err(e), 'bad') });
@@ -70,6 +71,7 @@ export function PropertyFile() {
         {can('listings.update') && <button className="btn btn-secondary" onClick={() => setSheet('status')}><RIcon n="key" />{r.prop.status}</button>}
         {can('listings.update') && <a className="btn btn-secondary" href={`#/studio?id=${p.id}`}><Icon n="edit" />{r.prop.edit}</a>}
         {owner && <button className="btn btn-secondary" onClick={() => setSheet('report')}><Icon n="chart" />{r.prop.report}</button>}
+        {can('deals.manage') && <button className="btn btn-secondary" onClick={() => setSheet('contract')}><Icon n="pen" />{r.contract.new}</button>}
       </div>
       {facts.length > 0 && <div className="re-facts">{facts.map(([ic, v, t], i) => <span key={i} className="re-fact"><RIcon n={ic === 'car' ? 'truck' : ic} /><b>{v}</b><span className="sub">{t}</span></span>)}</div>}
 
@@ -147,6 +149,7 @@ export function PropertyFile() {
       {sheet === 'viewing' && <ViewingForm property={p} onClose={() => { setSheet(null); refresh(); }} />}
       {sheet === 'deal' && <DealStart propertyId={p.id} title={titleOf(p, lang)} onClose={() => setSheet(null)} />}
       {sheet === 'collection' && <AddToCollection propertyId={p.id} onClose={() => setSheet(null)} />}
+      {sheet === 'contract' && <NewContract propertyId={p.id} purpose={p.purpose} onClose={() => setSheet(null)} />}
       {sheet === 'report' && <OwnerReport propertyId={p.id} title={titleOf(p, lang)} onClose={() => setSheet(null)} />}
       {sheet === 'photos' && <Sheet title={titleOf(p, lang)} sub={`${photoAt + 1} / ${photos.length}`} onClose={() => setSheet(null)}>
         <div className="grid gap-2">{photos.map((ph, i) => <img key={ph.id} src={ph.url} alt="" loading={Math.abs(i - photoAt) > 2 ? 'lazy' : 'eager'} className="w-full rounded-xl" ref={(el) => { if (el && i === photoAt) el.scrollIntoView({ block: 'start' }); }} />)}</div>

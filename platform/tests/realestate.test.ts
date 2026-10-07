@@ -469,3 +469,76 @@ describe('many demo agencies', () => {
     expect([a.status, b.status]).toEqual([201, 201]);
   });
 });
+
+describe('contracts', () => {
+  it('amounts are written out in words, the way contracts write them', async () => {
+    const { inWords } = await import('../apps/system/src/realestate/words');
+    expect(inWords(185000, 'USD', 'ar')).toBe('فقط مئة وخمسة وثمانون ألف دولار أمريكي لا غير');
+    expect(inWords(2500000, 'IQD', 'ar')).toBe('فقط مليونان وخمسمئة ألف دينار عراقي لا غير');
+    expect(inWords(3000, 'USD', 'ar')).toBe('فقط ثلاثة آلاف دولار أمريكي لا غير');
+    expect(inWords(185000, 'USD', 'en')).toBe('One hundred eighty-five thousand US dollars only');
+    expect(inWords(450_000_000, 'IQD', 'en')).toBe('Four hundred fifty million Iraqi dinars only');
+  });
+  it('a sale contract from the closed deal: the parties, the property, the price and the commission are already in', async () => {
+    const r = await owner.post('/v1/re/contracts', { kind: 'sale', dealId: ids.deal, lang: 'en' });
+    expect(r.status).toBe(201);
+    const c = r.json.contract;
+    ids.contract = c.id;
+    expect(c).toMatchObject({ number: 1, kind: 'sale', status: 'draft', lang: 'en', dealId: ids.deal, propertyId: ids.villa, leadId: ids.ahmed, ownerId: ids.owner });
+    expect(c.data.first.name).toBe('Hajji Kamal');
+    expect(c.data.second.name).toBe('Ahmed Saleh');
+    expect(c.data.agency.name).toBe('Nakhla Homes');
+    expect(c.data.property).toMatchObject({ type: 'Villa', ref: 1001, address: 'Street 12, house 44', size: 320 });
+    expect(c.data.money).toMatchObject({ currency: 'USD', price: 176000, commission: 3520 });
+    expect(c.data.clauses.length).toBeGreaterThan(5);
+    expect(c.data.clauses[0]).toMatch(/^The First Party sells/);
+    expect((await owner.get(`/v1/re/contracts?dealId=${ids.deal}`)).json.contracts).toHaveLength(1);
+  });
+  it('the editor saves what is typed; nonsense is refused', async () => {
+    const c = (await owner.get(`/v1/re/contracts/${ids.contract}`)).json.contract;
+    const data = { ...c.data, first: { ...c.data.first, idNo: '199012345678' }, money: { ...c.data.money, paid: 50000, restDue: '2026-11-01' }, clauses: [...c.data.clauses, 'The keys are handed over on full payment.'] };
+    const p = await owner.req('PATCH', `/v1/re/contracts/${ids.contract}`, { data });
+    expect(p.status).toBe(200);
+    expect(p.json.contract.data.first.idNo).toBe('199012345678');
+    expect(p.json.contract.data.money).toMatchObject({ paid: 50000, restDue: '2026-11-01' });
+    expect(p.json.contract.data.clauses.at(-1)).toBe('The keys are handed over on full payment.');
+    expect((await owner.req('PATCH', `/v1/re/contracts/${ids.contract}`, { data: { ...data, clauses: 'all of them' } })).status).toBe(400);
+    expect((await owner.req('PATCH', `/v1/re/contracts/${ids.contract}`, { data: { ...data, money: { ...data.money, price: -5 } } })).status).toBe(400);
+    expect((await owner.get(`/v1/re/contracts?q=Kamal`)).json.contracts[0].id).toBe(ids.contract);
+  });
+  it('the agency keeps its own terms; the next contract starts from them', async () => {
+    expect((await owner.req('PUT', '/v1/re/contracts/terms', { kind: 'deposit', lang: 'ar', clauses: ['بند المكتب الأول.', 'بند المكتب الثاني.'] })).status).toBe(200);
+    expect((await owner.get('/v1/re/contracts/terms?kind=deposit&lang=ar')).json).toMatchObject({ own: true, clauses: ['بند المكتب الأول.', 'بند المكتب الثاني.'] });
+    const d = await owner.post('/v1/re/contracts', { kind: 'deposit', propertyId: ids.flat, lang: 'ar' });
+    expect(d.status).toBe(201);
+    expect(d.json.contract.number).toBe(2);
+    expect(d.json.contract.data.clauses).toEqual(['بند المكتب الأول.', 'بند المكتب الثاني.']);
+    expect(d.json.contract.data.money.holdUntil).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect((await agentB.req('PUT', '/v1/re/contracts/terms', { kind: 'sale', lang: 'ar', clauses: ['x'] })).status).toBe(403); // the agency's template is a manager's call
+    expect((await owner.post('/v1/re/contracts', { kind: 'brokerage' })).json.error ?? (await owner.post('/v1/re/contracts', { kind: 'brokerage' })).json.code).toBe('NEEDS_PROPERTY');
+    const del = await owner.req('DELETE', `/v1/re/contracts/${d.json.contract.id}`);
+    expect(del.status).toBe(200);
+  });
+  it('signed, it is fixed; void, it stays on the record', async () => {
+    const s = await owner.req('PATCH', `/v1/re/contracts/${ids.contract}`, { status: 'signed' });
+    expect(s.json.contract).toMatchObject({ status: 'signed' });
+    expect(s.json.contract.signedAt).toBeTruthy();
+    const c = s.json.contract;
+    expect((await owner.req('PATCH', `/v1/re/contracts/${ids.contract}`, { data: c.data })).status).toBe(409);
+    expect((await owner.req('DELETE', `/v1/re/contracts/${ids.contract}`)).status).toBe(409);
+    const tl = (await owner.get(`/v1/re/deals/${ids.deal}`)).json.activity.map((a: any) => a.kind);
+    expect(tl).toContain('contract.signed');
+    expect((await owner.req('PATCH', `/v1/re/contracts/${ids.contract}`, { status: 'void' })).json.contract.status).toBe('void');
+    expect((await owner.req('PATCH', `/v1/re/contracts/${ids.contract}`, { status: 'signed' })).status).toBe(409);
+  });
+  it('who sees a contract: not another agent, not the desk, not another agency', async () => {
+    expect((await agentB.get(`/v1/re/contracts/${ids.contract}`)).status).toBe(404);
+    expect((await agentB.get('/v1/re/contracts')).json.contracts.map((x: any) => x.id)).not.toContain(ids.contract);
+    expect((await desk.get('/v1/re/contracts')).status).toBe(403);
+    expect((await other.get(`/v1/re/contracts/${ids.contract}`)).status).toBe(404);
+    expect((await other.get('/v1/re/contracts')).json.contracts).toHaveLength(0);
+    const mine = await agentB.post('/v1/re/contracts', { kind: 'brokerage', propertyId: ids.flat });
+    expect(mine.status).toBe(201);
+    expect((await agentB.get(`/v1/re/contracts/${mine.json.contract.id}`)).status).toBe(200); // the contracts they write are theirs to see
+  });
+});

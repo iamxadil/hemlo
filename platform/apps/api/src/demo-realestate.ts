@@ -9,8 +9,9 @@ import { newId } from '@hemlo/core';
 import type { Database } from '@hemlo/db';
 import {
   sysSettings, reSettings, reAgent, reOwner, reProperty, reMedia, reLead, reLeadProperty, reCollection, reCollectionItem, reViewing, reFollowup,
-  reDeal, reOffer, rePayment, reActivity, reStat, reNotice, sysSequence,
+  reDeal, reOffer, rePayment, reActivity, reStat, reNotice, reContract, sysSequence,
 } from '@hemlo/db/schema';
+import { contractDraft } from './routes/realestate/contracts';
 import { insertAll, rng, type Batch } from './demo-data';
 import { newSlug, token } from './routes/realestate/common';
 
@@ -195,6 +196,25 @@ export async function seedDemoRealEstate(tx: Database, org: string, userId: stri
   act('commission.paid', { dealId: nadiaDeal.id, propertyId: byKey.sold.id }, 5, { amount: 1780, from: 'owner', currency: 'USD' });
   act('viewing.requested', { leadId: layla.id, propertyId: byKey['ankawa-flat'].id }, 0, { preferred: 'Tomorrow evening' }, 9);
 
+  // contracts: Nadia's sale, signed the day it closed; the English Village owner's authorisation; Omar's deposit receipt, being drafted
+  const ownerOf = (id: string) => { const o = owners.find((x) => x.id === id)!; return { name: o.name, phone: o.phone, commission: o.commission }; };
+  const base = { lang, agencyName: DEMO_AGENCY[lang].name, agentName: DEMO_AGENCY[lang].owner,
+    settings: { phone: '+9647501234567', address: L('أربيل، شارع 100، بناية الواحة', 'Erbil, 100m Street, Al-Waha building'), city: L('أربيل', 'Erbil'), contractTerms: null, defaultCommission: 200 } };
+  const sale = contractDraft({ ...base, kind: 'sale', property: byKey.sold, owner: ownerOf(nadiaDeal.ownerId), lead: { name: nadia.name, phone: nadia.phone }, deal: { ...nadiaDeal }, day: ymd(-6) });
+  sale.first.idNo = '198812345671'; sale.second.idNo = '199309876542'; sale.first.address = L('أربيل، عنكاوة', 'Erbil, Ankawa'); sale.second.address = L('أربيل، دريم ستي', 'Erbil, Dream City');
+  sale.property.plot = L('3/412 مقاطعة 51 أربيل', '3/412, district 51, Erbil'); Object.assign(sale.money, { paid: 178000, commissionBy: 'both' });
+  sale.witnesses = [{ name: L('كاوه أحمد', 'Kawa Ahmed') }, { name: L('رنا سعيد', 'Rana Saeed') }];
+  const auth = contractDraft({ ...base, kind: 'brokerage', property: byKey.english, owner: ownerOf(byKey.english.ownerId), lead: null, deal: null, day: ymd(-34) });
+  auth.first.idNo = '197501928374'; auth.money.exclusive = true;
+  const deposit = contractDraft({ ...base, kind: 'deposit', property: byKey.english, owner: ownerOf(omarDeal.ownerId), lead: { name: omar.name, phone: omar.phone }, deal: { ...omarDeal, agreed: 318000 }, day: ymd(0) });
+  deposit.money.deposit = 10000;
+  const contracts = [
+    { id: newId(), organizationId: org, number: 1, kind: 'brokerage', status: 'signed', lang, propertyId: byKey.english.id, ownerId: byKey.english.ownerId, data: auth, signedAt: at(-34, 13), createdBy: userId, createdAt: at(-34, 12), updatedAt: at(-34, 13) },
+    { id: newId(), organizationId: org, number: 2, kind: 'sale', status: 'signed', lang, dealId: nadiaDeal.id, propertyId: byKey.sold.id, leadId: nadia.id, ownerId: nadiaDeal.ownerId, data: sale, signedAt: at(-6, 13), createdBy: userId, createdAt: at(-6, 11), updatedAt: at(-6, 13) },
+    { id: newId(), organizationId: org, number: 3, kind: 'deposit', status: 'draft', lang, dealId: omarDeal.id, propertyId: byKey.english.id, leadId: omar.id, ownerId: omarDeal.ownerId, data: deposit, createdBy: userId, createdAt: at(0, 9), updatedAt: at(0, 9) },
+  ];
+  act('contract.signed', { dealId: nadiaDeal.id, propertyId: byKey.sold.id, leadId: nadia.id, ownerId: nadiaDeal.ownerId }, 6, { title: '#2', kind: 'sale' }, 13);
+
   const notices = [
     { id: newId(), organizationId: org, kind: 'request', agentId: me, leadId: layla.id, propertyId: byKey['ankawa-flat'].id, viewingId: viewings[viewings.length - 1].id, detail: { name: layla.name, ref: byKey['ankawa-flat'].ref, title: byKey['ankawa-flat'].title }, createdAt: at(0, 9) },
     { id: newId(), organizationId: org, kind: 'match', agentId: me, propertyId: byKey.gulan.id, detail: { leads: 2, ref: byKey.gulan.ref, title: byKey.gulan.title }, createdAt: at(-4, 10) },
@@ -209,8 +229,8 @@ export async function seedDemoRealEstate(tx: Database, org: string, userId: stri
     [reAgent, [{ memberId: me, organizationId: org, userId, name: DEMO_AGENCY[lang].owner, phone: '+9647501234567', whatsapp: '+9647501234567', title: L('مديرة المكتب', 'Managing agent'), agentShare: 4000 }]],
     [reOwner, owners], [reProperty, props], [reMedia, media], [reLead, leads], [reLeadProperty, lp], [reCollection, [col]], [reCollectionItem, colItems],
     [reViewing, viewings], [reFollowup, followups], [reDeal, [omarDeal, nadiaDeal, johnDeal]], [reOffer, offers], [rePayment, payments],
-    [reActivity, activities], [reStat, stats], [reNotice, notices],
-    [sysSequence, [{ organizationId: org, name: 're_property', value: 4810 + LISTINGS.length }]],
+    [reActivity, activities], [reStat, stats], [reNotice, notices], [reContract, contracts],
+    [sysSequence, [{ organizationId: org, name: 're_property', value: 4810 + LISTINGS.length }, { organizationId: org, name: 're_contract', value: 3 }]],
   ]);
   return { listings: props.length, leads: leads.length };
 }

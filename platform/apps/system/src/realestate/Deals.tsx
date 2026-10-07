@@ -9,6 +9,7 @@ import { Icon, Sheet, toLatin } from '../components/ui';
 import { useR } from './i18n';
 import { Avatar, Empty, Pill, RIcon, Timeline } from './ui';
 import { Documents } from './PropertyFile';
+import { DealContracts } from './Contracts';
 import { fmt, price, titleOf, ago, waLink, stageTone, type Deal } from './data';
 
 const STAGES = ['interested', 'viewing', 'offer', 'negotiation', 'reserved', 'closed'] as const;
@@ -117,6 +118,7 @@ export function DealSheet({ id, onClose }: { id: string; onClose(): void }) {
         {can('commission.manage') && <CommissionTerms d={d} onSave={(b) => move.mutate(b)} />}
       </div>}
 
+      <div><p className="sec-t">{r.contract.ofDeal}</p><DealContracts dealId={id} purpose={d.purpose} /></div>
       <div><p className="sec-t">{r.prop.documents}</p><Documents docs={q.data.documents} dealId={id} onChanged={refresh} /></div>
       <div><p className="sec-t">{r.lead.activity}</p><div className="panel"><Timeline items={activity} /></div></div>
     </Sheet>

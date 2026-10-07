@@ -58,7 +58,7 @@ const ar = {
     count: '{n} فاتورة', total: 'المجموع',
   },
   receipt: { thanks: 'شكراً لزيارتكم', no: 'فاتورة', date: 'التاريخ', cashier: 'البائع', paid: 'المدفوع', due: 'المتبقي على الحساب', change: 'الباقي' },
-  renav: { today: 'اليوم', properties: 'العقارات', property: 'العقار', studio: 'إضافة عقار', leads: 'الزبائن', lead: 'الزبون', agenda: 'المواعيد', deals: 'الصفقات', owners: 'المالكون', collections: 'المجموعات', reports: 'التقارير', map: 'الخريطة', agency: 'إعداد المكتب' },
+  renav: { today: 'اليوم', properties: 'العقارات', property: 'العقار', studio: 'إضافة عقار', leads: 'الزبائن', lead: 'الزبون', agenda: 'المواعيد', deals: 'الصفقات', contracts: 'العقود', contract: 'العقد', owners: 'المالكون', collections: 'المجموعات', reports: 'التقارير', map: 'الخريطة', agency: 'إعداد المكتب' },
   gnav: { desk: 'الاستقبال', members: 'المشتركون', member: 'المشترك', renewals: 'التجديدات', classes: 'الكلاسات', reports: 'التقارير', shop: 'المتجر', accounts: 'الحسابات', gym: 'إعداد النادي' },
   dnav: { today: 'اليوم', schedule: 'المواعيد', patients: 'المرضى', patient: 'ملف المريض', lab: 'المختبر', accounts: 'الحسابات', reports: 'التقارير', materials: 'المواد', clinic: 'إعداد العيادة' },
   startShop: {"title":"ابدأ محلك على هيملو","sub":"30 يوماً مجاناً، بكل المزايا. لا بطاقة ولا التزام.","name":"اسم المحل","city":"المدينة","kind":"نوع المحل","kinds":{"market":"ماركت","grocery":"بقالة","pharmacy":"صيدلية","clothes":"ملابس","electronics":"أجهزة وإلكترونيات","other":"غير ذلك"},"go":"ابدأ التجربة المجانية","used":"استخدمت تجربتك المجانية من قبل. تواصل معنا لتفعيل محلك.","namePh":"ماركت {name}","cityPh":"بغداد","back":"رجوع"},
@@ -207,7 +207,7 @@ const ar = {
 
 const en: typeof ar = {
   app: 'Hemlo Systems', iqd: 'IQD', switchTo: 'العربية',
-  renav: { today: 'Today', properties: 'Properties', property: 'Property', studio: 'Add property', leads: 'Leads', lead: 'Lead', agenda: 'Agenda', deals: 'Deals', owners: 'Owners', collections: 'Collections', reports: 'Reports', map: 'Map', agency: 'Agency set-up' },
+  renav: { today: 'Today', properties: 'Properties', property: 'Property', studio: 'Add property', leads: 'Leads', lead: 'Lead', agenda: 'Agenda', deals: 'Deals', contracts: 'Contracts', contract: 'Contract', owners: 'Owners', collections: 'Collections', reports: 'Reports', map: 'Map', agency: 'Agency set-up' },
   gnav: { desk: 'Front desk', members: 'Members', member: 'Member', renewals: 'Renewals', classes: 'Classes', reports: 'Reports', shop: 'Shop', accounts: 'Accounts', gym: 'Gym set-up' },
   dnav: { today: 'Today', schedule: 'Schedule', patients: 'Patients', patient: 'Patient file', lab: 'Lab', accounts: 'Accounts', reports: 'Reports', materials: 'Materials', clinic: 'Clinic setup' },
   startShop: {"title":"Start your shop on Hemlo","sub":"30 days free, with everything. No card, no commitment.","name":"Shop name","city":"City","kind":"Type of shop","kinds":{"market":"Market","grocery":"Grocery","pharmacy":"Pharmacy","clothes":"Clothing","electronics":"Electronics","other":"Other"},"go":"Start the free trial","used":"You’ve already used your free trial. Talk to us to activate your shop.","namePh":"{name}’s Market","cityPh":"Baghdad","back":"Back"},

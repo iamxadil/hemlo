@@ -28,6 +28,7 @@ export const reSettings = pgTable('re_settings', {
   usdRate: integer('usd_rate').notNull().default(1450),   // dinars to a dollar, to compare a budget in one currency with a price in the other
   defaultCommission: integer('default_commission').notNull().default(200), // basis points: 2% (Iraqi agencies: 1–2.5%)
   autoMatch: boolean('auto_match').notNull().default(false), // never sends by itself: only lists who may want a new listing
+  contractTerms: jsonb('contract_terms').$type<Record<string, { ar?: string[]; en?: string[] }>>(), // the agency's own default terms, per kind of contract
   waApi: jsonb('wa_api').$type<{ status: 'off' | 'requested' | 'connected'; phoneId?: string; requestedAt?: string } | null>(),
   updatedAt: at('updated_at').notNull().defaultNow(),
 });
@@ -374,3 +375,43 @@ export const reReport = pgTable('re_report', {
   createdAt: at('created_at').notNull().defaultNow(),
   expiresAt: at('expires_at').notNull(),
 }, (t) => [uniqueIndex('re_report_token').on(t.token), index('re_report_property').on(t.organizationId, t.propertyId)]);
+
+/** A contract the agency drew up: a sale, a rent, a deposit (عربون) receipt, or the owner's brokerage agreement.
+ *  Its words live in `data` (the parties, the property, the money, the terms), so a signed contract never changes when
+ *  the deal or the property does. A draft can be edited; signed or void, it is fixed. */
+export const RE_CONTRACT_KINDS = ['sale', 'rent', 'deposit', 'brokerage'] as const;
+export type ReParty = { name: string; idNo?: string | null; address?: string | null; phone?: string | null; rep?: string | null };
+export type ReContractData = {
+  purpose: 'sale' | 'rent';
+  date: string; place?: string | null;
+  first: ReParty; second: ReParty;
+  agency: { name: string; phone?: string | null; address?: string | null; agent?: string | null };
+  property: { type?: string | null; ref?: number | null; title?: string | null; address?: string | null; area?: string | null; city?: string | null; plot?: string | null;
+    size?: number | null; land?: number | null; rooms?: string | null; details?: string | null };
+  money: { currency: 'USD' | 'IQD'; price?: number | null; paid?: number | null; restDue?: string | null;
+    rent?: number | null; period?: 'month' | 'year'; start?: string | null; end?: string | null; payEvery?: 'month' | 'quarter' | 'half' | 'year'; insurance?: number | null;
+    deposit?: number | null; holdUntil?: string | null;
+    commission?: number | null; commissionNote?: string | null; commissionBy?: 'first' | 'second' | 'both' | null; exclusive?: boolean; validUntil?: string | null };
+  clauses: string[];
+  witnesses: { name: string; idNo?: string | null }[];
+  notes?: string | null;
+};
+export const reContract = pgTable('re_contract', {
+  id: text('id').primaryKey(),
+  organizationId: org(),
+  number: integer('number').notNull(),                    // the agency's own numbering: 1, 2, 3…
+  kind: text('kind').notNull(),                           // RE_CONTRACT_KINDS
+  status: text('status').notNull().default('draft'),      // draft | signed | void
+  lang: text('lang').notNull().default('ar'),             // the language it is written in
+  dealId: text('deal_id'),
+  propertyId: text('property_id'),
+  leadId: text('lead_id'),
+  ownerId: text('owner_id'),
+  data: jsonb('data').$type<ReContractData>().notNull(),
+  documentId: text('document_id'),                        // the signed copy, scanned (re_document)
+  signedAt: at('signed_at'),
+  createdBy: text('created_by'),
+  createdAt: at('created_at').notNull().defaultNow(),
+  updatedAt: at('updated_at').notNull().defaultNow(),
+}, (t) => [uniqueIndex('re_contract_number').on(t.organizationId, t.number), index('re_contract_org').on(t.organizationId, t.updatedAt),
+  index('re_contract_deal').on(t.organizationId, t.dealId), index('re_contract_property').on(t.organizationId, t.propertyId)]);

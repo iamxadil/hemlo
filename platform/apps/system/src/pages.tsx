@@ -70,6 +70,8 @@ export const RE_PAGES: Page[] = [
   { path: 'lead', icon: 'user', need: 'leads.read', hidden: true, view: R('LeadFile'), label: rl('lead') },
   { path: 'agenda', icon: 'calendar', need: 'viewings.read', tab: true, view: R('Agenda'), label: rl('agenda') },
   { path: 'deals', icon: 'wallet', need: 'deals.read', view: R('Deals'), label: rl('deals') },
+  { path: 'contracts', icon: 'pen', need: 'deals.read', view: R('Contracts'), label: rl('contracts') },
+  { path: 'contract', icon: 'pen', need: 'deals.read', hidden: true, view: R('ContractEditor'), label: rl('contract') },
   { path: 'owners', icon: 'user', need: 'listings.read', view: R('Owners'), label: rl('owners'), gapBefore: true },
   { path: 'collections', icon: 'clip', need: 'listings.read', view: R('Collections'), label: rl('collections') },
   { path: 'map', icon: 'globe', need: 'listings.read', view: R('MapView'), label: rl('map') },

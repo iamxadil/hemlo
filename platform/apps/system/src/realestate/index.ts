@@ -9,6 +9,7 @@ export { Leads } from './Leads';
 export { LeadFile } from './LeadFile';
 export { Agenda } from './Agenda';
 export { Deals } from './Deals';
+export { Contracts, ContractEditor } from './Contracts';
 export { Owners, Collections, Reports } from './Owners';
 export { Setup } from './Setup';
 export { RSTRINGS } from './i18n';
