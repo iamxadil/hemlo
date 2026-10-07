@@ -19,21 +19,24 @@ const cols: { id: BranchId; verb: string; name: string; like: string; ready: str
   { id: 'studio', verb: 'Own', name: 'A website or app, built for you', like: 'Like a house built to your plan: it takes time, and it’s yours. A website, an online store or an app.', ready: 'On a date we agree', price: 'One price per project', own: 'Fully yours', go: 'Work out the price', url: `${studioUrl(lang)}#build`, ext: true },
 ];
 ---
+<!-- one panel, three columns: the verb large in its branch colour, then the same facts in the same rows, so they read across -->
 <div class="cmp">
   {title && <div class="cmp-head reveal"><h2 class="text-[clamp(1.6rem,3.2vw,2.4rem)] font-semibold tracking-tight">{T.title}</h2><p class="mt-2 text-fg-2">{T.sub}</p></div>}
-  <div class="cmp-grid">
-    {cols.map((c) => {
+  <div class="cmp-panel reveal">
+    {cols.map((c, i) => {
       const b = BRANCH[c.id];
       return (
-        <a class:list={['cmp-col reveal', here === c.id && 'is-here']} href={c.url} rel={c.ext ? 'noopener' : undefined} style={`--c:${b.color};--cd:${b.dark};--t:${b.tint};--td:${b.tintDark}`}>
-          <span class="cmp-top"><span class="cmp-verb">{c.verb}</span>{here === c.id && <span class="cmp-here">{T.here}</span>}</span>
+        <a class:list={['cmp-col', here === c.id && 'is-here']} href={c.url} rel={c.ext ? 'noopener' : undefined} style={`--c:${b.color};--cd:${b.dark};--t:${b.tint};--td:${b.tintDark}`}>
+          <span class="cmp-top">
+            <span class="cmp-n" aria-hidden="true">{ar ? '١٢٣'[i] : `0${i + 1}`}</span>
+            {here === c.id && <span class="cmp-here">{T.here}</span>}
+          </span>
+          <span class="cmp-verb">{c.verb}</span>
           <span class="cmp-name">{c.name}</span>
           <span class="cmp-like">{c.like}</span>
-          <dl class="cmp-facts">
-            <div><dt>{T.ready}</dt><dd>{c.ready}</dd></div>
-            <div><dt>{T.price}</dt><dd>{c.price}</dd></div>
-            <div><dt>{T.own}</dt><dd>{c.own}</dd></div>
-          </dl>
+          <span class="cmp-fact"><span class="k">{T.ready}</span><span class="v">{c.ready}</span></span>
+          <span class="cmp-fact"><span class="k">{T.price}</span><span class="v">{c.price}</span></span>
+          <span class="cmp-fact"><span class="k">{T.own}</span><span class="v">{c.own}</span></span>
           <span class="cmp-go">{c.go}<span class="arr" aria-hidden="true">→</span></span>
         </a>
       );
@@ -42,32 +45,58 @@ const cols: { id: BranchId; verb: string; name: string; like: string; ready: str
 </div>
 
 <style>
-  .cmp-head { margin-bottom: 1.6rem; text-align: center; }
-  .cmp-grid { display: grid; gap: .9rem; }
-  /* side by side, rows lined up across the three (subgrid), so "Ready", "Price" and "Whose" read like a table */
-  .cmp-col { position: relative; display: flex; flex-direction: column; gap: .7rem; padding: 1.5rem 1.5rem 1.3rem; border-radius: var(--radius-tile); border: 1px solid var(--line); background: var(--surface); color: var(--fg); text-align: start;
-    transition: border-color .2s ease, box-shadow .2s ease, transform .3s var(--ease-soft); }
-  @media (hover: hover) and (pointer: fine) { .cmp-col:hover { border-color: var(--c); transform: translateY(-2px); box-shadow: 0 20px 44px -28px rgb(14 20 32 / .3); } }
-  .cmp-col.is-here { border-color: color-mix(in oklab, var(--c) 45%, var(--line)); background: color-mix(in oklab, var(--t) 60%, var(--surface)); }
-  @media (prefers-color-scheme: dark) { .cmp-col.is-here { background: color-mix(in oklab, var(--td) 70%, var(--surface)); } }
-  .cmp-top { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
-  .cmp-verb { display: inline-block; padding: .28rem .8rem; border-radius: 999px; font-size: .85rem; font-weight: 600; background: var(--t); color: var(--c); }
-  .cmp-here { font-size: .78rem; font-weight: 600; color: var(--c); }
-  @media (prefers-color-scheme: dark) { .cmp-verb { background: var(--td); color: var(--cd); } .cmp-here { color: var(--cd); } }
-  .cmp-name { font-size: clamp(1.15rem, 1.8vw, 1.35rem); font-weight: 600; letter-spacing: -.015em; line-height: 1.25; }
+  .cmp-head { margin-bottom: 1.8rem; text-align: center; }
+  .cmp-panel { display: grid; overflow: hidden; border-radius: var(--radius-tile); border: 1px solid var(--line); background: var(--surface); box-shadow: 0 1px 2px rgb(14 20 32 / .04), 0 30px 60px -44px rgb(14 20 32 / .35); }
+  .cmp-col { position: relative; display: flex; flex-direction: column; padding: 1.6rem 1.6rem 1.5rem; color: var(--fg); text-align: start; transition: background-color .3s var(--ease-soft); }
+  .cmp-col + .cmp-col { border-top: 1px solid var(--line); }
+  /* a line of the branch colour grows along the top on hover, and stays on the column you're in */
+  .cmp-col::before { content: ""; position: absolute; inset-inline: 0; top: 0; height: 3px; background: var(--c); transform: scaleX(0); transform-origin: var(--from, left); transition: transform .5s var(--ease-soft); }
+  :global(html[dir="rtl"]) .cmp-col::before { --from: right; }
+  @media (prefers-color-scheme: dark) { .cmp-col::before { background: var(--cd); } }
+  @media (hover: hover) and (pointer: fine) { .cmp-col:hover { background: color-mix(in oklab, var(--t) 45%, var(--surface)); } .cmp-col:hover::before { transform: scaleX(1); } }
+  .cmp-col.is-here { background: linear-gradient(180deg, color-mix(in oklab, var(--t) 75%, var(--surface)), var(--surface) 70%); }
+  .cmp-col.is-here::before { transform: scaleX(1); }
+  @media (prefers-color-scheme: dark) {
+    @media (hover: hover) and (pointer: fine) { .cmp-col:hover { background: color-mix(in oklab, var(--td) 60%, var(--surface)); } }
+    .cmp-col.is-here { background: linear-gradient(180deg, color-mix(in oklab, var(--td) 90%, var(--surface)), var(--surface) 70%); }
+  }
+
+  .cmp-top { display: flex; align-items: center; justify-content: space-between; gap: .5rem; min-height: 1.5rem; }
+  .cmp-n { font-size: .78rem; font-weight: 500; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .cmp-here { padding: .2rem .65rem; border-radius: 999px; font-size: .75rem; font-weight: 600; background: var(--c); color: #fff; }
+  @media (prefers-color-scheme: dark) { .cmp-here { background: var(--cd); color: #0B0F16; } }
+  /* the verb is the headline: Use · Run · Own */
+  .cmp-verb { margin-top: .9rem; font-size: clamp(2rem, 3.4vw, 2.6rem); font-weight: 600; line-height: 1.1; letter-spacing: -.035em; color: var(--c); }
+  :global(html[lang="ar"]) .cmp-verb { letter-spacing: 0; line-height: 1.35; }
+  @media (prefers-color-scheme: dark) { .cmp-verb { color: var(--cd); } }
+  .cmp-name { margin-top: .35rem; font-size: 1.12rem; font-weight: 600; letter-spacing: -.01em; line-height: 1.3; }
   :global(html[lang="ar"]) .cmp-name { letter-spacing: 0; }
-  .cmp-like { color: var(--fg-2); line-height: 1.55; font-size: .97rem; }
-  .cmp-facts { display: grid; gap: 0; margin-top: .2rem; border-top: 1px solid var(--line); }
-  .cmp-facts > div { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: .75rem; padding: .6rem 0; border-bottom: 1px solid var(--line); font-size: .93rem; }
-  .cmp-facts dt { color: var(--muted); }
-  .cmp-facts dd { font-weight: 500; }
-  .cmp-go { display: inline-flex; align-items: center; gap: .4rem; margin-top: .3rem; font-weight: 600; color: var(--c); }
+  .cmp-like { margin-top: .6rem; margin-bottom: 1.1rem; color: var(--fg-2); line-height: 1.6; font-size: .95rem; }
+  .cmp-fact { display: grid; align-content: start; gap: .1rem; padding: .7rem 0; border-top: 1px solid var(--line); font-size: .95rem; }
+  .cmp-fact .k { font-size: .78rem; color: var(--muted); }
+  .cmp-fact .v { font-weight: 500; }
+  .cmp-go { display: inline-flex; align-items: center; gap: .45rem; padding-top: 1rem; border-top: 1px solid var(--line); font-weight: 600; color: var(--c); }
   @media (prefers-color-scheme: dark) { .cmp-go { color: var(--cd); } }
-  .cmp-go .arr { transition: transform .2s var(--ease-soft); }
-  @media (hover: hover) and (pointer: fine) { .cmp-col:hover .cmp-go .arr { transform: translateX(3px); } }
+  .cmp-go .arr { transition: transform .25s var(--ease-soft); }
+  @media (hover: hover) and (pointer: fine) { .cmp-col:hover .cmp-go .arr { transform: translateX(4px); } }
   :global(html[dir="rtl"]) .cmp-go .arr { transform: scaleX(-1); }
-  :global(html[dir="rtl"]) .cmp-col:hover .cmp-go .arr { transform: scaleX(-1) translateX(3px); }
-  @media (prefers-reduced-motion: reduce) { .cmp-col, .cmp-go .arr { transition: none; } }
-  /* desktop: side by side, every row lined up across the three (subgrid). Last, so it overrides the rules above. */
-  @media (min-width: 860px) { .cmp-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(7, auto); gap: 0 1rem; } .cmp-col { grid-row: span 7; display: grid; grid-template-rows: subgrid; row-gap: 0; } .cmp-col > :not(.cmp-facts) { margin-bottom: .7rem; } .cmp-facts { display: contents; } .cmp-facts > div:first-child { border-top: 1px solid var(--line); } .cmp-go { margin-top: .9rem; } }
+  :global(html[dir="rtl"]) .cmp-col:hover .cmp-go .arr { transform: scaleX(-1) translateX(4px); }
+  @media (prefers-reduced-motion: reduce) { .cmp-col, .cmp-col::before, .cmp-go .arr { transition: none; } }
+
+  /* phones: three cards to swipe through, the next one peeking in */
+  @media (max-width: 859px) {
+    .cmp-panel { display: flex; gap: .75rem; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none;
+      margin-inline: -1.25rem; padding: .25rem 1.25rem 1rem; scroll-padding-inline: 1.25rem; background: none; border: 0; border-radius: 0; box-shadow: none; }
+    .cmp-panel::-webkit-scrollbar { display: none; }
+    .cmp-col { flex: 0 0 min(84%, 22rem); scroll-snap-align: start; overflow: hidden; border: 1px solid var(--line); border-radius: 1.4rem; background: var(--surface); box-shadow: 0 24px 50px -40px rgb(14 20 32 / .4); }
+    .cmp-col + .cmp-col { border-top: 1px solid var(--line); }
+    .cmp-like { flex: 1; }
+  }
+
+  /* laptops: side by side, hairlines between, every row lined up across the three (subgrid) */
+  @media (min-width: 860px) {
+    .cmp-panel { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(8, auto); }
+    .cmp-col { grid-row: span 8; display: grid; grid-template-rows: subgrid; padding: 2rem 2rem 1.8rem; }
+    .cmp-col + .cmp-col { border-top: 0; border-inline-start: 1px solid var(--line); }
+  }
 </style>

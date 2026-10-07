@@ -102,7 +102,7 @@ const HELPER = L2(
 const END = L2(
   { title: 'نظام لمهنتك، لا العكس.', sub: 'المتاجر والعيادات والأندية الرياضية متاحة الآن. ولكل مهنة أخرى، أخبرنا كيف يسير عملك ونبني إصدارها.' },
   { title: 'A system for your trade, not the other way round.', sub: 'Shops, clinics and gyms are live now. For any other trade, tell us how your work runs and we’ll build its edition.' });
-const num = (i: number) => (ar ? ['١', '٢', '٣', '٤', '٥'][i] : String(i + 1));
+const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
 ---
 <Base lang={lang} page="systems" title={t(lang).nav.systems} description={s.sub}>
   <div class="sys" style={`--c:${b.color};--cd:${b.dark};--t:${b.tint};--td:${b.tintDark}`}>
@@ -117,22 +117,26 @@ const num = (i: number) => (ar ? ['١', '٢', '٣', '٤', '٥'][i] : String(i + 
           <p class="mt-6 max-w-xl text-lead text-fg-2 rise rise-3">{H.sub}</p>
           <p class="mt-9 text-sm font-semibold text-fg-2 rise rise-4">{H.pick}</p>
           <div class="hx-pick rise rise-4" role="tablist" aria-label={H.pick}>
+            <span class="hx-hl" aria-hidden="true"></span>
             {TRADES.map((x, i) => (
               <button type="button" role="tab" aria-selected={i === 0 ? 'true' : 'false'} data-pick={x.kind} style={`--k:${x.color}`}>
-                <b>{x.title}</b><span>{x.need}</span>
+                <span class="hx-n" aria-hidden="true">{ar ? '١٢٣'[i] : `0${i + 1}`}</span>
+                <span class="hx-t"><b>{x.title}</b><span>{x.need}</span></span>
+                <svg class="hx-ch" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" /></svg>
               </button>
             ))}
-            <a class="hx-other" href="#trades"><b>{L2('شيء آخر', 'Something else')}</b><span>{L2('ورشة، صالون، مقهى، فندق…', 'Workshop, salon, café, hotel…')}</span></a>
           </div>
+          <a class="hx-other rise rise-5" href="#trades"><span>{L2('شيء آخر؟', 'Something else?')}</span> <b>{L2('ورشة، صالون، مقهى، فندق…', 'A workshop, salon, café, hotel…')}</b><span class="arr" aria-hidden="true">→</span></a>
         </div>
 
         <!-- one stage per trade; three scenes each, playing in turn (tap a step to jump) -->
         <div class="hx-side rise rise-3">
+          <span class="hx-bigh" aria-hidden="true"><Mark /></span>
           {TRADES.map((x, ti) => (
             <div class="hx-stage" data-stage={x.kind} hidden={ti !== 0} style={`--k:${x.color}`}>
               <div class="hx-bar">
-                <span class="hx-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-                <span class="hx-name">Hemlo · {x.title}</span>
+                <span class="hx-logo" aria-hidden="true"><Mark /></span>
+                <span class="hx-name"><b>Hemlo</b> <span>{x.title}</span></span>
                 <span class="hx-steps" role="tablist">
                   {x.scenes.map((_, i) => <button type="button" role="tab" aria-selected={i === 0 ? 'true' : 'false'} data-step={i} aria-label={`${H.step} ${i + 1}`}><span class="hx-prog"></span></button>)}
                 </span>
@@ -201,7 +205,7 @@ const num = (i: number) => (ar ? ['١', '٢', '٣', '٤', '٥'][i] : String(i + 
               <div class="hx-caps">
                 {x.scenes.map((sc, i) => (
                   <div class="hx-cap" data-cap={i} hidden={i !== 0}>
-                    <p class="hx-cap-t"><span class="n">{num(i)}</span>{sc.title}</p>
+                    <p class="hx-cap-k">{ar ? `الخطوة ${num(i)} من ٣` : `Step ${i + 1} of 3`}</p><p class="hx-cap-t">{sc.title}</p>
                     <p class="hx-cap-l">{sc.line}</p>
                   </div>
                 ))}
@@ -217,7 +221,7 @@ const num = (i: number) => (ar ? ['١', '٢', '٣', '٤', '٥'][i] : String(i + 
     </section>
 
     <!-- how it works -->
-    <section class="wrap border-t border-line py-20 sm:py-24">
+    <section class="wrap border-t border-line py-20 sm:py-24" id="how">
       <h2 class="reveal text-[clamp(1.8rem,3.6vw,2.8rem)] font-semibold tracking-tight">{HOW.title}</h2>
       <ol class="how3 mt-10">
         {HOW.steps.map(([title, body], i) => (
@@ -228,7 +232,7 @@ const num = (i: number) => (ar ? ['١', '٢', '٣', '٤', '٥'][i] : String(i + 
     </section>
 
     <!-- a system, or a website built for you? the difference at a glance -->
-    <section class="wrap py-20 sm:py-24"><Compare lang={lang} here="systems" /></section>
+    <section class="wrap py-20 sm:py-24" id="compare"><Compare lang={lang} here="systems" /></section>
 
     <!-- every system -->
     <section class="wrap border-t border-line py-20 sm:py-24" id="trades">
@@ -243,6 +247,7 @@ const num = (i: number) => (ar ? ['١', '٢', '٣', '٤', '٥'][i] : String(i + 
           return (
             <details name="systems" class:list={['reveal sys-item', `sys-${kind}`, live && 'is-live']} open={i === 0}>
               <summary>
+                <span class="sys-n" aria-hidden="true">{ar ? num(i) : String(i + 1).padStart(2, '0')}</span>
                 <span class="sys-name">{name}</span>
                 <span class="sys-ex">{examples}</span>
                 <span class="sys-status">{live && <span class="dot" aria-hidden="true"></span>}{status}</span>
@@ -317,9 +322,13 @@ const num = (i: number) => (ar ? ['١', '٢', '٣', '٤', '٥'][i] : String(i + 
       const x = root.querySelector<HTMLElement>(`[data-pick="${k}"]`)!;
       root.style.setProperty('--acc', x.style.getPropertyValue('--k'));
       root.querySelectorAll('[data-pick]').forEach((b) => b.setAttribute('aria-selected', String(b === x)));
+      place();
       root.querySelectorAll<HTMLElement>('[data-stage]').forEach((s) => { s.hidden = s.dataset.stage !== k; });
       show(0);
     };
+    const hl = root.querySelector<HTMLElement>('.hx-hl')!;
+    const place = () => { const x = root.querySelector<HTMLElement>(`[data-pick="${trade}"]`)!; hl.style.height = `${x.offsetHeight}px`; hl.style.transform = `translateY(${x.offsetTop}px)`; };
+    place(); document.fonts?.ready.then(place); addEventListener('resize', place);
     root.querySelectorAll<HTMLElement>('[data-pick]').forEach((b) => b.addEventListener('click', () => pickTrade(b.dataset.pick!)));
     root.querySelectorAll<HTMLElement>('[data-step]').forEach((b) => b.addEventListener('click', () => show(Number(b.dataset.step))));
     const side = root.querySelector<HTMLElement>('.hx-side')!;
@@ -331,7 +340,7 @@ const num = (i: number) => (ar ? ['١', '٢', '٣', '٤', '٥'][i] : String(i + 
     const vis = () => { visible = !document.hidden; schedule(); };
     document.addEventListener('visibilitychange', vis);
     show(0);
-    stop = () => { clearTimeout(timer); io.disconnect(); document.removeEventListener('visibilitychange', vis); };
+    stop = () => { clearTimeout(timer); io.disconnect(); document.removeEventListener('visibilitychange', vis); removeEventListener('resize', place); };
   };
   document.addEventListener('astro:page-load', init);
   document.addEventListener('astro:before-swap', () => { stop?.(); stop = null; });
@@ -353,25 +362,49 @@ const num = (i: number) => (ar ? ['١', '٢', '٣', '٤', '٥'][i] : String(i + 
   .hx-grid { position: relative; display: grid; gap: 2.5rem; align-items: center; }
   @media (min-width: 1024px) { .hx-grid { grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); gap: 3rem; } }
   .hx-acc { color: var(--acc); transition: color .5s ease; }
-  .hx-pick { display: grid; gap: .55rem; margin-top: .8rem; }
-  @media (min-width: 560px) { .hx-pick { grid-template-columns: 1fr 1fr; } }
-  .hx-pick button, .hx-other { display: grid; gap: .15rem; padding: .85rem 1rem; border-radius: 1rem; border: 1px solid var(--line); background: var(--surface); text-align: start; color: var(--fg);
-    transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease, transform .16s var(--out); }
-  .hx-pick button:active, .hx-other:active, .hx-steps button:active, .btn-k:active { transform: scale(.97); }
-  .hx-pick b, .hx-other b { font-weight: 600; }
-  .hx-pick span, .hx-other span { font-size: .88rem; color: var(--fg-2); }
-  .hx-pick button[aria-selected="true"] { border-color: var(--k); background: color-mix(in oklab, var(--k) 7%, var(--surface)); box-shadow: 0 0 0 3px color-mix(in oklab, var(--k) 16%, transparent); }
-  .hx-other { padding-block: .7rem; }
-  @media (hover: hover) and (pointer: fine) { .hx-pick button:not([aria-selected="true"]):hover, .hx-other:hover { border-color: var(--line-strong); } }
+  /* the picker: a numbered index; a soft highlight slides to the chosen trade, with its colour on the edge */
+  .hx-pick { position: relative; display: grid; margin-top: .9rem; border-top: 1px solid var(--line); }
+  .hx-pick button { position: relative; z-index: 1; display: grid; grid-template-columns: 2.4rem minmax(0, 1fr) auto; align-items: center; gap: .2rem .6rem; padding: 1rem .9rem; border-bottom: 1px solid var(--line); text-align: start; color: var(--fg-2); transition: color .25s ease; }
+  .hx-pick button:active { transform: scale(.99); }
+  .hx-n { font-size: .78rem; font-weight: 500; font-variant-numeric: tabular-nums; color: var(--muted); transition: color .25s ease; }
+  .hx-t { display: grid; gap: .1rem; min-width: 0; }
+  .hx-t b { font-size: 1.08rem; font-weight: 600; color: var(--fg); letter-spacing: -.01em; transition: color .25s ease; }
+  :global(html[lang="ar"]) .hx-t b { letter-spacing: 0; }
+  .hx-t span { font-size: .88rem; color: var(--muted); }
+  .hx-ch { width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; opacity: 0; transform: translateX(-4px); transition: opacity .25s, transform .35s var(--out); }
+  :global(html[dir="rtl"]) .hx-ch { scale: -1 1; }
+  .hx-pick button[aria-selected="true"] .hx-n, .hx-pick button[aria-selected="true"] .hx-t b { color: var(--k); }
+  .hx-pick button[aria-selected="true"] .hx-ch { opacity: 1; transform: none; color: var(--k); }
+  @media (hover: hover) and (pointer: fine) { .hx-pick button:hover .hx-ch { opacity: .6; transform: none; } }
+  [data-pick="dental"][aria-selected="true"] .hx-t b, [data-pick="dental"][aria-selected="true"] .hx-n { color: #8A6A22; }
+  @media (prefers-color-scheme: dark) { [data-pick="dental"][aria-selected="true"] .hx-t b, [data-pick="dental"][aria-selected="true"] .hx-n { color: #D7B46A; } }
+  .hx-hl { position: absolute; z-index: 0; inset-inline: 0; top: 0; height: 0; background: linear-gradient(to right, color-mix(in oklab, var(--acc) 10%, transparent), transparent 90%); pointer-events: none; transition: transform .55s var(--out), height .55s var(--out); }
+  :global(html[dir="rtl"]) .hx-hl { background: linear-gradient(to left, color-mix(in oklab, var(--acc) 10%, transparent), transparent 90%); }
+  .hx-hl::before { content: ""; position: absolute; inset-block: 0; inset-inline-start: 0; width: 2px; background: var(--acc); }
+  .hx-other { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: .35rem; margin-top: 1rem; padding-inline: .9rem; font-size: .92rem; color: var(--muted); }
+  .hx-other b { font-weight: 500; color: var(--fg); text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 4px; transition: text-decoration-color .2s; }
+  .hx-other:hover b { text-decoration-color: currentColor; }
+  .hx-other .arr { color: var(--fg); }
+  :global(html[dir="rtl"]) .hx-other .arr { transform: scaleX(-1); }
 
-  .hx-side { min-width: 0; }
-  .hx-stage { border-radius: 1.6rem; background: var(--surface); border: 1px solid var(--line); box-shadow: 0 40px 90px -46px rgb(30 20 10 / .45); overflow: hidden; }
+  .hx-side { position: relative; min-width: 0; }
+  /* the founder's H, huge and faint behind the window, in the chosen trade's colour */
+  .hx-bigh { position: absolute; left: 50%; top: 50%; height: 118%; translate: -50% -50%; color: var(--acc); opacity: .07; pointer-events: none; }
+  .hx-bigh :global(svg) { display: block; height: 100%; width: auto; }
+  @media (prefers-color-scheme: dark) { .hx-bigh { opacity: .1; } }
+  .hx-stage { position: relative; border-radius: 1.6rem; background: var(--surface); border: 1px solid var(--line); overflow: hidden;
+    box-shadow: 0 1px 2px rgb(14 20 32 / .05), 0 50px 100px -50px color-mix(in oklab, var(--acc) 55%, rgb(14 20 32 / .6)); }
   .hx-stage[hidden] { display: none; }
-  .hx-bar { display: flex; align-items: center; gap: .75rem; padding: .7rem 1rem; border-bottom: 1px solid var(--line); }
-  .hx-dots { display: inline-flex; gap: .3rem; } .hx-dots i { width: .5rem; height: .5rem; border-radius: 999px; background: var(--line-strong); }
-  .hx-name { flex: 1; font-size: .8rem; font-weight: 600; color: var(--fg-2); }
+  /* the title bar: ink, like the brand, with the H in the trade's colour */
+  .hx-bar { display: flex; align-items: center; gap: .6rem; padding: .75rem 1rem; background: #0E1420; color: #F2F1EC; }
+  .hx-logo { display: grid; place-items: center; width: 1.7rem; height: 1.7rem; border-radius: .5rem; background: rgb(255 255 255 / .07); color: var(--k); }
+  .hx-logo :global(svg) { height: .95rem; width: auto; }
+  .hx-name { flex: 1; display: inline-flex; align-items: baseline; gap: .4rem; font-size: .82rem; }
+  .hx-name b { font-weight: 600; }
+  .hx-name span { color: rgb(242 241 236 / .6); font-weight: 300; }
+  [data-stage="dental"] .hx-logo { color: #D7B46A; }
   .hx-steps { display: inline-flex; gap: .35rem; }
-  .hx-steps button { position: relative; width: 2.1rem; height: .4rem; border-radius: 999px; background: var(--sunken); overflow: hidden; cursor: pointer; }
+  .hx-steps button { position: relative; width: 2.1rem; height: .3rem; border-radius: 999px; background: rgb(255 255 255 / .14); overflow: hidden; cursor: pointer; }
   .hx-steps button::before { content: ""; position: absolute; inset: -.6rem -.1rem; } /* a bigger tap target */
   .hx-prog { position: absolute; inset: 0; background: var(--acc); transform-origin: left; transform: scaleX(0); }
   :global(html[dir="rtl"]) .hx-prog { transform-origin: right; }
@@ -385,14 +418,18 @@ const num = (i: number) => (ar ? ['١', '٢', '٣', '٤', '٥'][i] : String(i + 
   .sc { position: absolute; inset: 0; display: grid; place-items: center; padding: 1.2rem; opacity: 0; visibility: hidden; transform: scale(.98); filter: blur(3px);
     transition: opacity .35s var(--out), transform .35s var(--out), filter .35s var(--out), visibility 0s .35s; }
   .sc.on { opacity: 1; visibility: visible; transform: none; filter: none; transition: opacity .5s var(--out), transform .5s var(--out), filter .5s var(--out); }
-  .hx-caps { padding: 1rem 1.2rem .3rem; min-height: 6.2rem; }
-  .hx-cap-t { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; font-weight: 600; font-size: 1.05rem; }
-  .hx-cap-t .n { display: grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 999px; background: var(--acc); color: #fff; font-size: .75rem; }
+  .hx-caps { padding: 1.1rem 1.3rem .3rem; min-height: 6.6rem; border-top: 1px solid var(--line); }
+  .hx-cap-k { font-size: .75rem; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--acc); }
+  :global(html[lang="ar"]) .hx-cap-k { letter-spacing: 0; font-size: .8rem; }
+  [data-stage="dental"] .hx-cap-k { color: #8A6A22; }
+  @media (prefers-color-scheme: dark) { [data-stage="dental"] .hx-cap-k { color: #D7B46A; } }
+  .hx-cap-t { margin-top: .25rem; font-weight: 600; font-size: 1.1rem; letter-spacing: -.01em; }
+  :global(html[lang="ar"]) .hx-cap-t { letter-spacing: 0; }
   .hx-cap-l { margin-top: .35rem; color: var(--fg-2); line-height: 1.5; font-size: .95rem; }
-  .hx-go { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1.2rem; padding: .7rem 1.2rem 1.2rem; }
+  .hx-go { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1.2rem; padding: .8rem 1.3rem 1.3rem; }
   .btn-k { background: var(--k); color: #fff; padding: .75rem 1.2rem; transition: transform .16s var(--out), filter .2s ease; }
   .btn-k:hover { filter: brightness(1.07); }
-  [data-stage="dental"] .btn-k, [data-stage="dental"] .hx-cap-t .n { color: #0B1019; } /* ink on brass reads; white doesn't */
+  [data-stage="dental"] .btn-k { color: #0B1019; } /* ink on brass reads; white doesn't */
   :global(html[dir="rtl"]) .btn-k .arr { transform: scaleX(-1); }
   .ok { display: grid; place-items: center; width: 1.1rem; height: 1.1rem; border-radius: 999px; background: color-mix(in oklab, #1F9D5B 16%, transparent); color: #1F9D5B; font-size: .65rem; flex: none; }
 
@@ -507,15 +544,22 @@ const num = (i: number) => (ar ? ['١', '٢', '٣', '٤', '٥'][i] : String(i + 
 
   /* ---------- every system: an accordion ---------- */
   .acc { display: grid; gap: .6rem; }
-  .sys-item { --k: var(--c); border-radius: 1.25rem; border: 1px solid var(--line); background: var(--surface); transition: border-color .2s ease, box-shadow .2s ease; }
+  .sys-item { --k: var(--c); position: relative; overflow: hidden; border-radius: 1.25rem; border: 1px solid var(--line); background: var(--surface); transition: border-color .2s ease, box-shadow .2s ease; }
   .sys-item[open] { border-color: color-mix(in oklab, var(--k) 35%, var(--line)); box-shadow: 0 24px 50px -36px color-mix(in oklab, var(--k) 55%, transparent); }
   .sys-dental { --k: #B38B3A; }
-  .sys-item summary { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: .35rem 1rem; padding: 1.15rem 1.35rem; cursor: pointer; list-style: none; border-radius: inherit; }
+  /* the open trade carries its colour on the edge */
+  .sys-item::before { content: ""; position: absolute; inset-block: 0; inset-inline-start: 0; width: 3px; background: var(--k); transform: scaleY(0); transition: transform .4s var(--ease-soft); }
+  .sys-item[open]::before { transform: scaleY(1); }
+  .sys-item summary { display: grid; grid-template-columns: 2.2rem minmax(0, 1fr) auto auto; align-items: center; gap: .35rem .8rem; padding: 1.15rem 1.35rem; cursor: pointer; list-style: none; border-radius: inherit; }
+  .sys-n { font-size: .78rem; font-weight: 500; font-variant-numeric: tabular-nums; color: var(--muted); transition: color .25s; }
+  .sys-item[open] .sys-n { color: var(--k); }
+  .sys-dental[open] .sys-n { color: #8A6A22; }
+  @media (prefers-color-scheme: dark) { .sys-dental[open] .sys-n { color: #D7B46A; } }
   .sys-item summary::-webkit-details-marker { display: none; }
   .sys-name { font-size: clamp(1.15rem, 2vw, 1.4rem); font-weight: 600; letter-spacing: -.015em; }
   :global(html[lang="ar"]) .sys-name { letter-spacing: 0; }
-  .sys-ex { grid-column: 1 / -1; grid-row: 2; font-size: .92rem; color: var(--fg-2); }
-  @media (min-width: 900px) { .sys-item summary { grid-template-columns: 15rem minmax(0, 1fr) auto auto; } .sys-ex { grid-column: auto; grid-row: auto; } }
+  .sys-ex { grid-column: 2 / -1; grid-row: 2; font-size: .92rem; color: var(--fg-2); }
+  @media (min-width: 900px) { .sys-item summary { grid-template-columns: 2.2rem 15rem minmax(0, 1fr) auto auto; } .sys-ex { grid-column: auto; grid-row: auto; } }
   .sys-status { display: inline-flex; align-items: center; gap: .45rem; padding: .28rem .75rem; border-radius: 999px; font-size: .78rem; font-weight: 500; white-space: nowrap; background: var(--sunken); color: var(--muted); }
   .is-live .sys-status { background: color-mix(in oklab, var(--k) 14%, transparent); color: var(--k); }
   .sys-dental.is-live .sys-status { color: #8A6A22; }
@@ -528,7 +572,8 @@ const num = (i: number) => (ar ? ['١', '٢', '٣', '٤', '٥'][i] : String(i + 
   .sys-item::details-content { height: 0; overflow: clip; opacity: 0; transition: height .22s var(--ease-soft), opacity .22s var(--ease-soft), content-visibility .22s allow-discrete; }
   .sys-item[open]::details-content { height: auto; opacity: 1; }
   @supports (interpolate-size: allow-keywords) { .acc { interpolate-size: allow-keywords; } }
-  .sys-body { display: grid; gap: 1.5rem; padding: .2rem 1.35rem 1.4rem; }
+  .sys-body { display: grid; gap: 1.5rem; padding: .2rem 1.35rem 1.4rem; padding-inline-start: calc(1.35rem + 3rem); }
+  @media (max-width: 640px) { .sys-body { padding-inline-start: 1.35rem; } }
   @media (min-width: 900px) { .sys-item.is-live .sys-body { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); align-items: center; gap: 2.5rem; } }
   .sys-soon { font-size: .8rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: .6rem; }
   :global(html[lang="ar"]) .sys-soon { letter-spacing: 0; font-size: .9rem; }

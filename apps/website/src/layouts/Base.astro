@@ -162,6 +162,20 @@ const isCurrent = (u: string) => u === href(lang, pageKey) || ((pageKey === 'den
       if (el.closest('#menu-btn')) menu();
       else if (el.closest('#menu-panel a')) menu(false);
     });
+    // the language switch: the header stays between pages (transition:persist), so its link would still point at the
+    // first page's translation. Read the current page's own <link rel="alternate"> at click time instead, and keep the
+    // visitor's place: the section they're reading (or the #hash they're on) goes along.
+    const toOtherLang = (a: HTMLAnchorElement) => {
+      const alt = document.querySelector<HTMLLinkElement>(`link[rel="alternate"][hreflang="${a.hreflang}"]`);
+      if (!alt) return;
+      let hash = location.hash;
+      if (!hash && scrollY > 200) {
+        const here = [...document.querySelectorAll<HTMLElement>('main [id], body > div [id]')].filter((s) => s.getBoundingClientRect().top <= innerHeight * 0.4 && s.offsetHeight > 120).pop();
+        if (here) hash = `#${here.id}`;
+      }
+      a.href = new URL(alt.href).pathname + location.search + hash;
+    };
+    document.addEventListener('click', (e) => { const a = (e.target as Element).closest<HTMLAnchorElement>('a[hreflang]'); if (a) toOtherLang(a); }, true);
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') menu(false); });
     matchMedia('(min-width: 768px)').addEventListener('change', (m) => { if (m.matches) menu(false); });
 
