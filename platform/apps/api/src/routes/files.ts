@@ -14,6 +14,7 @@ import type { AppEnv, Deps } from '../types';
 const PERM: Record<Purpose, [Resource, string]> = {
   logo: ['settings', 'update'], product: ['products', 'manage'], purchase: ['purchases', 'create'], expense: ['expenses', 'create'],
   clinical: ['clinical', 'write'], consent: ['patients', 'update'], member: ['members', 'update'],
+  property: ['listings', 'update'], redoc: ['listings', 'update'], // uploaded through /v1/re (they belong to a listing or a document)
 };
 const QUOTA_BYTES = 1024 * 1024 * 1024; // 1 GB of images per shop, far more than a shop needs
 const DEMO_FILES = 30;

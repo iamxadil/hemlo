@@ -30,7 +30,9 @@ describe('the price list', () => {
   it('three plans per system, in dinars, a year for ten months', async () => {
     const all = (await new Browser(t.app).get('/v1/plans')).json;
     expect(all.trialDays).toBe(30);
-    expect(all.plans).toHaveLength(9);
+    expect(all.plans).toHaveLength(12); // store, dental, gym, real estate: three each
+    const re = (await new Browser(t.app).get('/v1/plans?edition=realestate')).json.plans;
+    expect(re.map((p: any) => [p.code, p.priceMonth])).toEqual([['office', 35000], ['agency', 69000], ['group', 129000]]);
     const gym = (await new Browser(t.app).get('/v1/plans?edition=gym')).json.plans;
     expect(gym.map((p: any) => [p.code, p.priceMonth, p.priceYear])).toEqual([['starter', 25000, 250000], ['standard', 45000, 450000], ['pro', 75000, 750000]]);
     expect(gym[1]).toMatchObject({ popular: true, limits: { members: 500 } });

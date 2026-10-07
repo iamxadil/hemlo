@@ -155,7 +155,7 @@ export const hemloSubscription = pgTable('hemlo_subscription', {
 /** Hemlo's price list: plans per edition, edited from the admin dashboard and shown on the website and in the app.
  *  limits: users (staff accounts), devices (shared tills), dentists, members (active gym members), ai (tasks a month);
  *  a missing limit means no limit. Every plan has every feature: the plans differ by size. */
-export type PlanLimits = { users?: number; devices?: number; dentists?: number; members?: number; ai?: number };
+export type PlanLimits = { users?: number; devices?: number; dentists?: number; members?: number; listings?: number; ai?: number };
 export type Words = { ar: string; en: string; ckb?: string };
 export const hemloPlan = pgTable('hemlo_plan', {
   id: text('id').primaryKey(),

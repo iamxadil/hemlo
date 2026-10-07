@@ -14,7 +14,7 @@ import type { AppEnv } from './types';
 
 export const TRIAL_DAYS = 30;
 export const GRACE_DAYS = 7;
-export const EDITIONS = ['store', 'dental', 'gym'] as const;
+export const EDITIONS = ['store', 'dental', 'gym', 'realestate'] as const;
 export type Plan = typeof hemloPlan.$inferSelect;
 export type SubState = {
   edition: string; status: 'free' | 'trial' | 'active' | 'grace' | 'ended'; seats: number;

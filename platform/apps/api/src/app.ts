@@ -24,6 +24,7 @@ import { publicPlanRoutes, billingRoutes } from './routes/pricing';
 import type { Engine } from './ai/engine';
 import { dentalRoutes } from './routes/dental';
 import { gymRoutes } from './routes/gym';
+import { reRoutes } from './routes/realestate';
 import type { AppEnv, Deps, Env } from './types';
 
 const originAllowed = (origin: string, patterns: string[]) =>
@@ -107,6 +108,9 @@ export function createApp(opts: { db: Database; env: Env; waitUntil?: (p: Promis
   // the door screen's own routes (and starting a gym) are not a gym member's changes
   v1.use('/gym/*', async (c, next) => (/\/gym\/(start|door|door\/checkin)$/.test(c.req.path) ? next() : subscriptionGuard(c, next)));
   v1.route('/gym', gymRoutes(deps));
+  // the real-estate agency: starting one and its public pages aren't an agency member's changes
+  v1.use('/re/*', async (c, next) => (/\/re\/(start$|pub\/)/.test(c.req.path) ? next() : subscriptionGuard(c, next)));
+  v1.route('/re', reRoutes(deps));
   v1.route('/sys/ai', aiRoutes(deps));
   v1.route('/sys/files', sysFileRoutes(deps));
   v1.route('/files', publicFileRoutes(deps));

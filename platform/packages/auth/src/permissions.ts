@@ -35,6 +35,14 @@ export const statements = {
   memberships: ['sell', 'manage'],
   training: ['read', 'write'],
   gym: ['configure'],
+  // Real Estate edition: listings (add, edit, publish), leads (an agent sees their own unless they may read-all),
+  // viewings and follow-ups, deals (offers, stages), commission (money: managers and accountants), and the agency's set-up
+  listings: ['create', 'read', 'update', 'publish', 'archive'],
+  leads: ['create', 'read', 'read-all', 'update', 'assign'],
+  viewings: ['read', 'manage'],
+  deals: ['read', 'manage'],
+  commission: ['read', 'manage'],
+  agency: ['configure'],
 } as const;
 
 export type Resource = keyof typeof statements;
@@ -52,6 +60,11 @@ export const ROLE_PERMISSIONS = {
     jobs: ['create', 'read', 'update'], warranty: ['approve'], parts: ['use'], counter: ['manage'],
     patients: ['create', 'read', 'update'], appointments: ['read', 'manage'], lab: ['read', 'manage'],
     members: ['create', 'read', 'update'], checkin: ['create'], memberships: ['sell', 'manage'], training: ['read', 'write'],
+    listings: ['create', 'read', 'update', 'publish', 'archive'], leads: ['create', 'read', 'read-all', 'update', 'assign'], viewings: ['read', 'manage'], deals: ['read', 'manage'], commission: ['read', 'manage'],
+  },
+  // the real-estate agent: their listings and leads, viewings, follow-ups and deals; their own commission is shown to them
+  agent: {
+    listings: ['create', 'read', 'update', 'publish'], leads: ['create', 'read', 'update'], viewings: ['read', 'manage'], deals: ['read', 'manage'], reports: ['read'],
   },
   // the dental clinic
   dentist: {
@@ -60,23 +73,26 @@ export const ROLE_PERMISSIONS = {
   },
   assistant: { patients: ['read', 'update'], clinical: ['read'], appointments: ['read', 'manage'], lab: ['read'], stock: ['read', 'adjust'] },
   receptionist: { patients: ['create', 'read', 'update'], appointments: ['read', 'manage'], customers: ['create', 'read', 'update'], sales: ['create', 'read'], lab: ['read'], stock: ['read'],
-    members: ['create', 'read', 'update'], checkin: ['create'], memberships: ['sell'], training: ['read'] },
+    members: ['create', 'read', 'update'], checkin: ['create'], memberships: ['sell'], training: ['read'],
+    listings: ['read'], leads: ['create', 'read', 'read-all', 'update', 'assign'], viewings: ['read', 'manage'] },
   // the gym's coaches: their members, the door, measurements, sessions and classes; no money
   trainer: { members: ['read', 'update'], checkin: ['create'], training: ['read', 'write'], stock: ['read'] },
   cashier: { customers: ['create', 'read'], sales: ['create', 'read'], stock: ['read'], jobs: ['read'], members: ['read'], checkin: ['create'] },
   technician: { customers: ['read'], jobs: ['read', 'update-own'], parts: ['use'], stock: ['read'] },
-  accountant: { sales: ['read'], reports: ['read', 'export'], customers: ['read'], stock: ['read'], purchases: ['read'], expenses: ['read'], patients: ['read'], lab: ['read'], members: ['read'], training: ['read'] },
-  viewer: { customers: ['read'], sales: ['read'], stock: ['read'], jobs: ['read'], reports: ['read'], members: ['read'] },
+  accountant: { sales: ['read'], reports: ['read', 'export'], customers: ['read'], stock: ['read'], purchases: ['read'], expenses: ['read'], patients: ['read'], lab: ['read'], members: ['read'], training: ['read'],
+    listings: ['read'], deals: ['read'], commission: ['read', 'manage'] },
+  viewer: { customers: ['read'], sales: ['read'], stock: ['read'], jobs: ['read'], reports: ['read'], members: ['read'], listings: ['read'] },
 } satisfies Record<string, Permissions>;
 
 export type RoleName = keyof typeof ROLE_PERMISSIONS;
 export const ROLES = Object.keys(ROLE_PERMISSIONS) as RoleName[];
 /** Roles ordered by power: someone may only give roles below their own (owners may give any). */
-export const ROLE_RANK: Record<RoleName, number> = { owner: 6, admin: 5, manager: 4, dentist: 3, accountant: 3, assistant: 2, receptionist: 2, cashier: 2, technician: 2, trainer: 2, viewer: 1 };
+export const ROLE_RANK: Record<RoleName, number> = { owner: 6, admin: 5, manager: 4, agent: 3, dentist: 3, accountant: 3, assistant: 2, receptionist: 2, cashier: 2, technician: 2, trainer: 2, viewer: 1 };
 /** Which roles make sense for which kind of business (the others are hidden when inviting). */
 export const ROLES_FOR: Record<string, RoleName[]> = {
   dental: ['admin', 'manager', 'dentist', 'assistant', 'receptionist', 'accountant', 'viewer'],
   gym: ['admin', 'manager', 'receptionist', 'trainer', 'cashier', 'accountant', 'viewer'],
+  realestate: ['admin', 'manager', 'agent', 'receptionist', 'accountant', 'viewer'],
   default: ['admin', 'manager', 'cashier', 'technician', 'accountant', 'viewer'],
 };
 export const PRIVILEGED: RoleName[] = ['owner', 'admin'];

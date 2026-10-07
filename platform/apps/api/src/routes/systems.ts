@@ -51,7 +51,8 @@ export function systemsRoutes(d: Deps) {
 
   /** The business this screen works for, and what this person may do in it. */
   r.get('/me', async (c) => {
-    const a = actor(c, 'stock', 'read');
+    // any member of the business: a shop's staff read stock, an estate agent reads listings
+    let a: Actor; try { a = actor(c, 'stock', 'read'); } catch (e) { try { a = actor(c, 'listings', 'read'); } catch { throw e; } }
     const ctx = await d.auth.$context;
     const org = await ctx.adapter.findOne<any>({ model: 'organization', where: [{ field: 'id', value: a.organizationId }] });
     let meta: any = {}; try { meta = typeof org?.metadata === 'string' ? JSON.parse(org.metadata) : org?.metadata ?? {}; } catch {}
@@ -65,6 +66,10 @@ export function systemsRoutes(d: Deps) {
       ['appointments.read', 'appointments', 'read'], ['appointments.manage', 'appointments', 'manage'], ['clinic.configure', 'clinic', 'configure'], ['lab.read', 'lab', 'read'], ['lab.manage', 'lab', 'manage'], ['settings.update', 'settings', 'update'],
       ['members.read', 'members', 'read'], ['members.create', 'members', 'create'], ['members.update', 'members', 'update'], ['checkin.create', 'checkin', 'create'],
       ['memberships.sell', 'memberships', 'sell'], ['memberships.manage', 'memberships', 'manage'], ['training.read', 'training', 'read'], ['training.write', 'training', 'write'], ['gym.configure', 'gym', 'configure'],
+      ['listings.create', 'listings', 'create'], ['listings.read', 'listings', 'read'], ['listings.update', 'listings', 'update'], ['listings.publish', 'listings', 'publish'], ['listings.archive', 'listings', 'archive'],
+      ['leads.create', 'leads', 'create'], ['leads.read', 'leads', 'read'], ['leads.read-all', 'leads', 'read-all'], ['leads.update', 'leads', 'update'], ['leads.assign', 'leads', 'assign'],
+      ['viewings.read', 'viewings', 'read'], ['viewings.manage', 'viewings', 'manage'], ['deals.read', 'deals', 'read'], ['deals.manage', 'deals', 'manage'],
+      ['commission.read', 'commission', 'read'], ['commission.manage', 'commission', 'manage'], ['agency.configure', 'agency', 'configure'],
     ] as const).map(([k, res, act]) => [k, may(p, res, act)]));
     const member = a.userId ? await findMember(d, a.organizationId, { userId: a.userId }) : null;
     const logo = await inOrg(a, (tx) => logoUrl(d, tx, a.organizationId));

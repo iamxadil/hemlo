@@ -33,13 +33,16 @@ export function memoryStore(): FileStore & { size(): number } {
   };
 }
 
-export const PURPOSES = ['logo', 'product', 'purchase', 'expense', 'clinical', 'consent', 'member'] as const;
+export const PURPOSES = ['logo', 'product', 'purchase', 'expense', 'clinical', 'consent', 'member', 'property', 'redoc'] as const;
 /** Medical pictures (X-rays, clinical photos, signed consents) get links that last about an hour, not a month. */
-export const SHORT_LIVED: Purpose[] = ['clinical', 'consent'];
+export const SHORT_LIVED: Purpose[] = ['clinical', 'consent', 'redoc']; // a real-estate document (deed, contract, ID): private
 export type Purpose = (typeof PURPOSES)[number];
 export const MAX_BYTES = 4 * 1024 * 1024;          // the app shrinks photos to ~150 KB first; this is only a ceiling
 export const MAX_ATTACHMENTS = 10;                  // per purchase or expense
 export const fileKey = (org: string, id: string) => `o/${org}/${id}`;
+
+/** A PDF (real-estate documents: deeds, contracts): checked by its first bytes, like images. */
+export const isPdf = (buf: ArrayBuffer) => { const b = new Uint8Array(buf.slice(0, 5)); return b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46 && b[4] === 0x2d; };
 
 /** What the bytes really are (never trust the declared type): JPEG, PNG or WebP only. */
 export function sniffImage(buf: ArrayBuffer): 'image/jpeg' | 'image/png' | 'image/webp' | null {

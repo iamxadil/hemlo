@@ -4,3 +4,4 @@ export * from './hemlo-schema';
 export * from './systems-schema';
 export * from './dental-schema';
 export * from './gym-schema';
+export * from './realestate-schema';
