@@ -1,0 +1,308 @@
+---
+// Hemlo Systems for dental clinics: the second edition. Start a 7-day free trial yourself, or open a private demo clinic.
+import Base from '../layouts/Base.astro';
+import Mark from '../components/Mark.astro';
+import Pricing from '../components/Pricing.astro';
+import { BRANCH } from '../brand/brand';
+import { href, EMAIL, SYSTEM_URL, type Lang } from '../i18n/strings';
+interface Props { lang: Lang; }
+const { lang } = Astro.props;
+const b = BRANCH.systems;
+const start = `${SYSTEM_URL}?start=dental&lang=${lang}`;
+const demo = `${SYSTEM_URL}?demo=dental&lang=${lang}`;
+const talk = `${href(lang, 'contact')}?topic=dental`;
+// real screenshots of the clinic, per language (platform/scripts/marketing-dental-shots.ts → scripts/dental-images.mjs)
+const img = (name: string, w: number) => `/images/dental/${name}-${lang}-${w}.webp`;
+const set = (name: string) => `${img(name, 1000)} 1000w, ${img(name, 1800)} 1800w`;
+const num = (i: number) => (lang === 'ar' ? ['١', '٢', '٣', '٤', '٥', '٦'][i] : String(i + 1));
+
+const S = {
+  ar: {
+    title: 'هيملو لعيادات الأسنان',
+    label: 'متاح الآن · عيادات الأسنان',
+    hero: ['عيادتك كلها،', 'في مكان واحد.'],
+    sub: 'المواعيد، ملف كل مريض ومخطط أسنانه، خطط العلاج بالدينار والدولار، المختبر، حصص الأطباء، وتذكير المرضى بالواتساب. بالعربي، على الحاسبة والموبايل.',
+    start: 'ابدأ مجاناً ٣٠ يوماً', demo: 'جرّب عيادة جاهزة',
+    note: 'بدون بطاقة ولا التزام. كل المزايا مفتوحة في التجربة.',
+    call: ['نور ا. ← كرسي 1', 'شاشة الانتظار تنادي المريض'],
+    show: [
+      ['today', 'اليوم، مباشرة', 'يومك كله أمامك.', 'من قادم، من ينتظر، ومن على أي كرسي. اسحب المريض للمرحلة التالية أو اضغط زراً واحداً. المتأخر والمنتظر طويلاً والزيارة التي طالت تظهر لك قبل أن يشتكي أحد.'],
+      ['chart', 'مخطط الأسنان', 'مخطط تفخر بعرضه على مرضاك.', 'كل سن مرسوم كأنه من كتاب تشريح، من الجانب ومن الأعلى. اضغط السن، اختر الأسطح، وانتهى. المريض يرى بالضبط ما تقصده، فيوافق على الخطة.'],
+      ['tv', 'شاشة الانتظار', 'صالة انتظار تشعر بالاهتمام.', 'تلفزيون يعرض من على كل كرسي ومن التالي، ينادي كل مريض بنغمة هادئة، ويعرض نصائح للعناية بالأسنان بينهما. بالاسم الأول فقط، وبرابط خاص لا يفتح شيئاً غير الشاشة. أي تلفزيون يكفي.'],
+      ['reports', 'لصاحب العيادة', 'اعرف أين ذهب كل دينار.', 'المقبوض والمنجز اليوم، ديون المرضى، حصة كل طبيب بعد كلفة المختبر، نسبة عدم الحضور والخطط المقبولة. في نهاية اليوم، لا نهاية الشهر.'],
+    ],
+    chipA: 'وصل التاج من المختبر', chipB: 'أُرسل التذكير بالواتساب',
+    insideTitle: 'كل ما تحتاجه العيادة، ولا شيء زائد.',
+    inside: [
+      ['جدول المواعيد', 'حسب الكرسي أو الطبيب، يوم أو أسبوع. لا يسمح بحجزين على نفس الكرسي أو الطبيب.'],
+      ['ملف المريض', 'التاريخ الطبي والتنبيهات (حساسية، سكري، مميعات، حمل) تظهر أينما ظهر اسمه.'],
+      ['مخطط الأسنان', 'ترقيم FDI بخمسة أسطح، للكبار والأطفال: الموجود والمخطط والمنجز، مع التاريخ.'],
+      ['خطط العلاج', 'خياران للمريض (زرعة أو جسر)، بالدولار أو بالدينار بسعر صرفك، عرض سعر يُطبع أو يُرسل بالواتساب، وأقساط.'],
+      ['الزيارات والحساب', 'ما أُنجز، الملاحظات، الفاتورة والإيصال. الباقي يُسجّل على حساب المريض تلقائياً.'],
+      ['المختبر', 'كل عمل مرسل، موعد تسليمه، والمتأخر بالأحمر. الكلفة تُسجّل على حساب المختبر عند الوصول.'],
+      ['حصص الأطباء', 'نسبة كل طبيب من المقبوض أو المنجز، تُخصم كلفة المختبر أولاً، وكشف يُطبع آخر الشهر.'],
+      ['الأشعة والموافقات', 'صور الأشعة بعارض مع تكبير وتباين، وموافقة يوقّعها المريض على الشاشة.'],
+      ['الوصفات', 'أدوية شائعة بنقرة، وتحذير إذا كان المريض يتحسس من البنسلين.'],
+      ['شاشة الانتظار', 'تلفزيون ينادي كل مريض إلى كرسيه بنغمة هادئة، ويعرض من التالي ونصائح العناية، بالاسم الأول فقط.'],
+      ['الفحص الدوري', 'من حان موعد فحصه ولم يحجز بعد، في قائمة واحدة للاتصال.'],
+      ['خصوصية الملفات', 'كل عيادة معزولة عن غيرها في قاعدة البيانات، ويُسجّل من فتح كل ملف ومتى.'],
+    ],
+    dayTitle: 'يوم في العيادة',
+    daySub: 'من أول موعد حتى إغلاق الصندوق.',
+    day: [
+      ['13:30', 'الاستقبال يؤكد مواعيد اليوم', 'تذكير واتساب جاهز لكل مريض بنقرة، باسم العيادة والطبيب والوقت.'],
+      ['14:00', 'المريض يصل', 'اضغط «حضر». تنبيهاته الطبية تظهر للطبيب قبل أن يجلس.'],
+      ['14:05', 'على الكرسي', 'الطبيب يسجّل ما وجده على المخطط، ويبني خطة العلاج مع خيارين وسعر واضح.'],
+      ['14:50', 'انتهت الزيارة', 'ما أُنجز يتحول إلى فاتورة وإيصال. ما لم يُدفع يذهب لحساب المريض، والخطة تتحدث وحدها.'],
+      ['17:00', 'وصل العمل من المختبر', 'ضغطة واحدة: الكلفة على حساب المختبر، والمريض جاهز لموعد التركيب.'],
+      ['21:00', 'إغلاق اليوم', 'المقبوض، المنجز، الديون، وحصة كل طبيب. بدون دفتر ولا آلة حاسبة.'],
+    ],
+    priceTitle: 'السعر',
+    price: [
+      ['٣٠ يوماً مجاناً', 'كل شيء مفتوح: المواعيد، الملفات، المخطط، المختبر، التقارير. لا بطاقة.'],
+      ['خطة واحدة بكل المزايا', 'بعد التجربة، السعر حسب عدد الأطباء في العيادة. لا إضافات مخفية.'],
+      ['سجلاتك تبقى لك', 'إذا انتهت المدة تبقى الملفات مفتوحة للقراءة. لا نحجز سجلات مرضاك أبداً.'],
+    ],
+    talk: 'اسأل عن السعر',
+    endTitle: 'افتح عيادتك على هيملو اليوم.',
+    endSub: 'خمس دقائق: اسم العيادة، عدد الكراسي، وتبدأ. قائمة أسعار الإجراءات الشائعة في العراق جاهزة، عدّلها كما تشاء.',
+  },
+  en: {
+    title: 'Hemlo for dental clinics',
+    label: 'Live now · Dental clinics',
+    hero: ['Your whole clinic,', 'in one place.'],
+    sub: 'Appointments, every patient’s file and tooth chart, treatment plans in dinars and dollars, lab work, dentists’ shares and WhatsApp reminders. In Arabic and English, on the computer and the phone.',
+    start: 'Start free for 30 days', demo: 'Try a ready-made clinic',
+    note: 'No card, no commitment. Everything is open during the trial.',
+    call: ['Noor A. → Chair 1', 'The waiting room calls them in'],
+    show: [
+      ['today', 'Today, live', 'Your whole day, in front of you.', 'Who’s coming, who’s waiting, who’s in which chair. Drag a patient to the next step, or tap one button. Late arrivals, long waits and visits running over show up before anyone complains.'],
+      ['chart', 'The tooth chart', 'A chart you’ll want to show patients.', 'Every tooth drawn like an anatomy book, from the side and from above. Tap a tooth, pick the surfaces, done. Patients see exactly what you mean, and say yes to the plan.'],
+      ['tv', 'The waiting-room screen', 'A waiting room that feels looked after.', 'A TV shows who’s in each chair and who’s next, calls each patient in with a soft chime, and shares care tips in between. First names only, on a private link that opens nothing but the screen. Any TV will do.'],
+      ['reports', 'For the owner', 'Know where every dinar went.', 'Collected and done today, what patients owe, each dentist’s share after lab costs, no-shows and accepted plans. At the end of the day, not the end of the month.'],
+    ],
+    chipA: 'Crown back from the lab', chipB: 'WhatsApp reminder sent',
+    insideTitle: 'Everything a clinic needs, nothing it doesn’t.',
+    inside: [
+      ['The schedule', 'By chair or by dentist, day or week. It won’t double-book a chair or a dentist.'],
+      ['Patient files', 'Medical history and alerts (allergies, diabetes, blood thinners, pregnancy) show wherever the name does.'],
+      ['The tooth chart', 'FDI numbering with five surfaces, adult and child: existing, planned and done, with history.'],
+      ['Treatment plans', 'Two options for the patient (implant or bridge), in dollars or dinars at your rate, a quote to print or send on WhatsApp, and instalments.'],
+      ['Visits and billing', 'What was done, the notes, the bill and receipt. Anything unpaid goes on the patient’s account by itself.'],
+      ['The lab', 'Every piece of work sent, when it’s due, and the late ones in red. Its cost goes on the lab’s account when it arrives.'],
+      ['Dentists’ shares', 'Each dentist’s percentage of what’s collected or done, lab costs off first, and a statement to print at month end.'],
+      ['X-rays and consents', 'X-rays in a viewer with zoom and contrast, and consent the patient signs on the screen.'],
+      ['Prescriptions', 'Common drugs in a tap, and a warning if the patient is allergic to penicillin.'],
+      ['Waiting-room screen', 'A TV that calls each patient to their chair with a soft chime, and shows who’s next and care tips, by first name only.'],
+      ['Check-ups', 'Who’s due a check-up and hasn’t booked, in one list to call.'],
+      ['Private files', 'Each clinic is sealed off from the others in the database, and every file opened is logged.'],
+    ],
+    dayTitle: 'A day in the clinic',
+    daySub: 'From the first appointment to closing the drawer.',
+    day: [
+      ['13:30', 'Reception confirms today’s list', 'A WhatsApp reminder for each patient in one tap, with the clinic, dentist and time.'],
+      ['14:00', 'The patient arrives', 'Tap “Arrived”. Their medical alerts are in front of the dentist before they sit down.'],
+      ['14:05', 'In the chair', 'The dentist charts what they find and builds the plan, with two options and a clear price.'],
+      ['14:50', 'The visit is done', 'What was done becomes a bill and a receipt. Anything unpaid goes on the patient’s account; the plan updates itself.'],
+      ['17:00', 'Work back from the lab', 'One tap: the cost is on the lab’s account, and the patient is ready to book the fitting.'],
+      ['21:00', 'Close the day', 'Collected, work done, what’s owed, and each dentist’s share. No notebook, no calculator.'],
+    ],
+    priceTitle: 'Price',
+    price: [
+      ['30 days free', 'Everything open: appointments, files, the chart, the lab, reports. No card.'],
+      ['One plan, everything in it', 'After the trial, priced by the number of dentists in the clinic. No hidden extras.'],
+      ['Your records stay yours', 'If your plan ends, your files stay open to read. We never hold your patients’ records hostage.'],
+    ],
+    talk: 'Ask about the price',
+    endTitle: 'Open your clinic on Hemlo today.',
+    endSub: 'Five minutes: the clinic’s name, how many chairs, and you’re in. A price list of the procedures Iraqi clinics do every day is ready; change it as you like.',
+  },
+}[lang];
+---
+<Base lang={lang} page="dental" title={S.title} description={S.sub}>
+  <div class="dent">
+
+    <!-- the hero: ink and brass, the clinic itself on a laptop and a phone -->
+    <section class="hero">
+      <div class="hero-glow" aria-hidden="true"></div>
+      <div class="wrap relative pt-14 pb-10 sm:pt-20">
+        <div class="max-w-3xl">
+          <p class="live rise"><span class="dot" aria-hidden="true"></span>{S.label}</p>
+          <h1 class="mt-7 text-[clamp(2.6rem,6.4vw,5.4rem)] font-semibold leading-[1.03] tracking-tight rise rise-2"><span class="block">{S.hero[0]}</span><span class="block gold">{S.hero[1]}</span></h1>
+          <p class="mt-7 max-w-2xl text-lead hero-sub rise rise-3">{S.sub}</p>
+          <div class="mt-10 flex flex-wrap items-center gap-x-6 gap-y-4 rise rise-4">
+            <a class="btn btn-gold" href={start}>{S.start}<span class="arr" aria-hidden="true">→</span></a>
+            <a class="btn btn-ghost" href={demo}>{S.demo}</a>
+          </div>
+          <p class="mt-5 text-[.92rem] hero-note rise rise-4">{S.note}</p>
+        </div>
+
+        <div class="devices rise rise-3" aria-hidden="true">
+          <div class="laptop"><img src={img('today', 1800)} srcset={set('today')} sizes="(min-width: 1152px) 900px, 88vw" width="1800" height="1125" alt="" fetchpriority="high" decoding="async" /></div>
+          <div class="phone"><img src={img('phone-today', 840)} srcset={`${img('phone-today', 420)} 420w, ${img('phone-today', 840)} 840w`} sizes="210px" width="840" height="1818" alt="" decoding="async" /></div>
+          <div class="float chip-call"><span class="ring"></span><span><b>{S.call[0]}</b><small>{S.call[1]}</small></span></div>
+          <div class="float chip-wa"><span class="wa"></span>{S.chipB}</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- four stories, each with the real screen -->
+    {S.show.map(([key, kicker, title, body], i) => (
+      <section class:list={['story', key === 'tv' || key === 'reports' ? 'story-dark' : '', i % 2 ? 'flip' : '']}>
+        <div class="wrap story-grid">
+          <div class="story-text">
+            <p class="reveal kicker">{kicker}</p>
+            <h2 class="reveal mt-4 text-[clamp(2rem,3.9vw,3.3rem)] font-semibold leading-[1.08] tracking-tight">{title}</h2>
+            <p class="reveal mt-6 text-lead story-body">{body}</p>
+          </div>
+          <div class:list={['reveal shot', key === 'tv' ? 'tv' : 'screen']}>
+            <img src={img(key, 1800)} srcset={set(key)} sizes="(min-width: 1152px) 680px, 92vw" width="1800" height={key === 'tv' ? 1013 : 1125} alt={title} loading="lazy" decoding="async" />
+            {key === 'tv' && <img class="tv-call" src={img('tv-call', 1000)} width="1000" height="563" alt="" loading="lazy" decoding="async" />}
+            {key === 'chart' && <div class="phone phone-sm"><img src={img('phone-chart', 420)} width="420" height="909" alt="" loading="lazy" decoding="async" /></div>}
+          </div>
+        </div>
+      </section>
+    ))}
+
+    <section id="features" class="scroll-mt-24 wrap border-t border-line py-24 sm:py-28">
+      <h2 class="reveal max-w-3xl text-display font-semibold tracking-tight">{S.insideTitle}</h2>
+      <div class="mt-14 grid gap-x-10 gap-y-11 sm:grid-cols-2 lg:grid-cols-4">
+        {S.inside.map(([title, body]) => (
+          <div class="reveal inside"><h3 class="text-lg font-medium tracking-tight">{title}</h3><p class="mt-1.5 text-[.97rem] leading-relaxed text-fg-2">{body}</p></div>
+        ))}
+      </div>
+    </section>
+
+    <section class="wrap border-t border-line py-24 sm:py-32">
+      <div class="grid gap-14 lg:grid-cols-[1fr_1.55fr]">
+        <div class="self-start lg:sticky lg:top-28">
+          <h2 class="reveal text-display font-semibold tracking-tight">{S.dayTitle}</h2>
+          <p class="reveal mt-5 max-w-md text-lead text-fg-2">{S.daySub}</p>
+          <a class="reveal btn btn-secondary mt-8" href={demo}>{S.demo}</a>
+        </div>
+        <ol class="day">
+          {S.day.map(([time, title, body], i) => (
+            <li class:list={['reveal', (i === 0 || i === S.day.length - 1) && 'edge']}>
+              <span class="time"><bdi>{time}</bdi></span>
+              <div class="step"><h3 class="text-xl font-medium tracking-tight">{title}</h3><p class="mt-2 leading-relaxed text-fg-2">{body}</p></div>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+
+    <Pricing lang={lang} edition="dental" color="#B38B3A" />
+
+    <section class="wrap pb-24 sm:pb-32">
+      <div class="reveal end relative overflow-hidden rounded-[2rem] p-10 sm:p-16">
+        <Mark class="end-mark" />
+        <div class="relative max-w-2xl">
+          <h2 class="text-display font-semibold tracking-tight">{S.endTitle}</h2>
+          <p class="mt-4 text-lead end-sub">{S.endSub}</p>
+          <div class="mt-9 flex flex-wrap items-center gap-x-7 gap-y-4">
+            <a class="btn btn-gold" href={start}>{S.start}<span class="arr" aria-hidden="true">→</span></a>
+            <a class="btn btn-ghost" href={demo}>{S.demo}</a>
+            <a class="link-quiet" href={`mailto:${EMAIL}?subject=${encodeURIComponent('Hemlo Dental')}`} dir="ltr">{EMAIL}</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</Base>
+
+<style>
+  /* Hemlo Dental's own look inside Hemlo Systems: ink and brass, like the clinic app and its waiting-room screen */
+  .dent { --ink: #0B1019; --ink-2: #131B29; --gold: #C9A55A; --gold-2: #E3C88A; --paper: #F4F1EA; --line-d: rgb(255 255 255 / .09); }
+  .gold { color: var(--gold); }
+  :global(html:not(.dark)) .border-line .gold, .price .gold { color: var(--gold-2); }
+
+  /* hero */
+  .hero { position: relative; overflow: hidden; background: var(--ink); color: var(--paper); }
+  .hero-glow { position: absolute; inset: -20% -10% auto; height: 120%; pointer-events: none;
+    background: radial-gradient(40% 40% at 18% 22%, rgb(201 165 90 / .2), transparent 70%), radial-gradient(34% 36% at 85% 60%, rgb(192 103 63 / .16), transparent 70%), radial-gradient(40% 30% at 55% 0%, rgb(80 110 160 / .14), transparent 70%);
+    animation: drift 40s ease-in-out infinite alternate; }
+  @keyframes drift { to { transform: translate3d(3%, 2%, 0) rotate(3deg); } }
+  .hero-sub { color: rgb(244 241 234 / .74); }
+  .hero-note { color: rgb(244 241 234 / .5); }
+  .crumb { font-size: .92rem; font-weight: 500; color: rgb(244 241 234 / .62); text-decoration: underline; text-decoration-color: rgb(255 255 255 / .2); text-underline-offset: 5px; }
+  .crumb:hover { color: var(--paper); }
+  .live { display: inline-flex; align-items: center; gap: .55rem; padding: .4rem .9rem .4rem .75rem; border-radius: 999px; border: 1px solid var(--line-d); background: rgb(255 255 255 / .05); font-size: .92rem; font-weight: 500; }
+  .dot { position: relative; width: .5rem; height: .5rem; border-radius: 999px; background: #3FBF7F; flex: none; }
+  .dot::after { content: ""; position: absolute; inset: -4px; border-radius: 999px; background: #3FBF7F; opacity: .35; animation: pulse 2.2s var(--ease-soft) infinite; }
+  @keyframes pulse { 0% { transform: scale(.6); opacity: .5 } 80%, 100% { transform: scale(1.8); opacity: 0 } }
+
+  .btn-gold { background: var(--gold); color: var(--ink); padding: .95rem 1.5rem; font-weight: 600; }
+  .btn-gold:hover { background: var(--gold-2); }
+  .btn-ghost { padding: .95rem 1.5rem; border: 1px solid rgb(255 255 255 / .22); color: var(--paper); }
+  .btn-ghost:hover { background: rgb(255 255 255 / .06); }
+  .btn-gold .arr, .price-talk .arr { transition: transform .2s var(--ease-soft); }
+  .btn-gold:hover .arr { transform: translateX(3px); }
+  :global(html[dir="rtl"]) .btn-gold .arr, :global(html[dir="rtl"]) .price-talk .arr { transform: scaleX(-1); }
+  :global(html[dir="rtl"]) .btn-gold:hover .arr { transform: scaleX(-1) translateX(3px); }
+
+  /* the devices: the clinic on a laptop, the phone in front */
+  .devices { position: relative; margin: 4.5rem auto 0; max-width: 60rem; padding-bottom: 2rem; }
+  .laptop { position: relative; border-radius: 1.1rem; padding: .55rem; background: linear-gradient(180deg, #2A3242, #171E2B); box-shadow: 0 60px 120px -40px rgb(0 0 0 / .8), 0 0 0 1px rgb(255 255 255 / .08) inset; }
+  .laptop img { display: block; width: 100%; height: auto; border-radius: .65rem; }
+  .laptop::after { content: ""; position: absolute; inset: auto -4% -1.1rem; height: 1.1rem; border-radius: 0 0 1.4rem 1.4rem; background: linear-gradient(180deg, #3A4354, #1C2330); box-shadow: 0 24px 40px -20px rgb(0 0 0 / .9); }
+  .phone { position: absolute; width: clamp(7.5rem, 21%, 13rem); inset-inline-end: -2.5%; bottom: -1.5rem; padding: .35rem; border-radius: 1.9rem; background: #0A0E15;
+    box-shadow: 0 40px 70px -24px rgb(0 0 0 / .85), 0 0 0 1px rgb(255 255 255 / .12) inset; }
+  .phone img { display: block; width: 100%; height: auto; border-radius: 1.6rem; }
+  .float { position: absolute; display: inline-flex; align-items: center; gap: .65rem; padding: .7rem 1rem; border-radius: 1.1rem; background: rgb(19 27 41 / .82); color: var(--paper);
+    border: 1px solid var(--line-d); backdrop-filter: blur(14px); box-shadow: 0 20px 40px -18px rgb(0 0 0 / .7); font-size: .88rem; font-weight: 500; white-space: nowrap; }
+  .float small { display: block; font-size: .78rem; font-weight: 400; color: rgb(244 241 234 / .6); }
+  .chip-call { top: 16%; inset-inline-start: -3%; animation: bob 6s var(--ease-soft) infinite; }
+  .chip-wa { top: -1.4rem; inset-inline-end: 12%; animation: bob 7s var(--ease-soft) -2s infinite; }
+  .ring { position: relative; width: .75rem; height: .75rem; border-radius: 999px; background: var(--gold); }
+  .ring::after { content: ""; position: absolute; inset: -5px; border-radius: 999px; border: 2px solid var(--gold); animation: pulse 2s var(--ease-soft) infinite; }
+  .wa { width: .55rem; height: .55rem; border-radius: 999px; background: #25D366; }
+  @keyframes bob { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-7px) } }
+  @media (max-width: 640px) { .devices { margin-top: 3rem; } .chip-call { inset-inline-start: 0; top: auto; bottom: -2.4rem; } .chip-wa { display: none; } .phone { inset-inline-end: -.5rem; } }
+
+  /* the stories */
+  .story { padding: clamp(5rem, 11vw, 9rem) 0; border-top: 1px solid var(--line); overflow: hidden; }
+  .story-grid { display: grid; gap: 3.5rem; align-items: center; }
+  @media (min-width: 1024px) { .story-grid { grid-template-columns: minmax(0, .8fr) minmax(0, 1.3fr); gap: 4.5rem; } .flip .story-grid { grid-template-columns: minmax(0, 1.3fr) minmax(0, .8fr); } .flip .story-text { order: 2; } }
+  .kicker { font-size: .9rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--brass); }
+  :global(html[lang="ar"]) .kicker { letter-spacing: 0; font-size: 1rem; }
+  .story-body { color: var(--fg-2); }
+  .shot { position: relative; }
+  .screen img { display: block; width: 100%; height: auto; border-radius: 1.1rem; border: 1px solid var(--line); box-shadow: 0 50px 100px -45px rgb(40 30 10 / .45); }
+  .story-dark { background: var(--ink); color: var(--paper); border-top: 0; }
+  .story-dark .story-body { color: rgb(244 241 234 / .72); }
+  .story-dark .kicker { color: var(--gold); }
+  .story-dark .screen img { border-color: var(--line-d); box-shadow: 0 50px 110px -40px rgb(0 0 0 / .9); }
+  .tv { padding: .7rem .7rem 1.6rem; border-radius: 1rem; background: linear-gradient(180deg, #1C2230, #0E131C); box-shadow: 0 60px 120px -40px rgb(0 0 0 / .9), 0 0 0 1px rgb(255 255 255 / .07) inset; }
+  .tv > img:first-child { display: block; width: 100%; height: auto; border-radius: .35rem; }
+  .tv::after { content: ""; position: absolute; left: 50%; bottom: -1.6rem; width: 26%; height: 1.6rem; translate: -50% 0; background: linear-gradient(180deg, #232A38, #121722); clip-path: polygon(18% 0, 82% 0, 100% 100%, 0 100%); }
+  .tv-call { position: absolute; width: 46%; height: auto; inset-inline-end: -6%; bottom: -12%; border-radius: .8rem; border: 1px solid var(--line-d); box-shadow: 0 30px 60px -20px rgb(0 0 0 / .9); }
+  .phone-sm { width: 24%; bottom: -10%; inset-inline-end: -4%; }
+  @media (max-width: 640px) { .tv-call { width: 52%; inset-inline-end: 0; bottom: -20%; } .phone-sm { inset-inline-end: -1rem; } }
+
+  .inside { padding-top: 1.1rem; border-top: 2px solid var(--line); }
+  .inside:hover { border-color: var(--gold); }
+
+  .day li { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); }
+  .day .time { padding-top: .2rem; font-size: .9rem; font-weight: 500; color: var(--brass); font-variant-numeric: tabular-nums; text-align: start; }
+  .day .step { position: relative; padding: 0 0 2.6rem 0; padding-inline-start: 2rem; border-inline-start: 1px solid var(--line-strong); }
+  .day li:last-child .step { padding-bottom: 0; border-color: transparent; }
+  .day .step::before { content: ""; position: absolute; top: .45rem; inset-inline-start: -5px; width: 9px; height: 9px; border-radius: 999px; background: var(--canvas); border: 2px solid var(--gold); }
+  .day li.edge .step::before { background: var(--gold); }
+  @media (max-width: 520px) { .day li { grid-template-columns: 1fr; } .day .time { padding: 0 0 .4rem; padding-inline-start: 2rem; border-inline-start: 1px solid var(--line-strong); } }
+
+  .price { background: var(--ink); color: var(--paper); background-image: radial-gradient(50% 80% at 100% 0%, rgb(201 165 90 / .14), transparent 70%); }
+  .price-talk { display: inline-flex; align-items: center; gap: .5rem; font-weight: 500; color: var(--gold-2); text-decoration: underline; text-underline-offset: 5px; }
+  @media (min-width: 768px) {
+    .free-col { padding-inline: 2rem; }
+    .free-col:first-child { padding-inline-start: 0; }
+    .free-col + .free-col { border-inline-start: 1px solid rgb(255 255 255 / .12); }
+  }
+
+  .end { background: var(--ink); color: var(--paper); }
+  .end-sub { color: rgb(244 241 234 / .72); }
+  .end :global(.end-mark) { position: absolute; inset-inline-end: -2rem; bottom: -3rem; height: 20rem; width: auto; color: var(--gold); opacity: .12; }
+  .link-quiet { color: rgb(244 241 234 / .7); font-weight: 500; text-decoration: underline; text-decoration-color: rgb(255 255 255 / .25); text-underline-offset: 5px; }
+  .link-quiet:hover { color: var(--paper); }
+
+  @media (prefers-reduced-motion: reduce) { .dot::after, .float, .hero-glow, .ring::after { animation: none; } }
+</style>

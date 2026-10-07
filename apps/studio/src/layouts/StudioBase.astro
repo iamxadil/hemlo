@@ -1,0 +1,90 @@
+---
+import '../styles/studio.css';
+import StudioLogo from '../components/StudioLogo.astro';
+import Mark from '../components/Mark.astro';
+import { t, home, EMAIL, MAIN, type Lang } from '../i18n';
+
+interface Props { lang: Lang; notFound?: boolean; }
+const { lang, notFound = false } = Astro.props;
+const s = t(lang);
+const site = 'https://studio.hemlohq.com';
+const other: Lang = lang === 'ar' ? 'en' : 'ar';
+const links: [string, string][] = [['#build', s.nav.build], ['#prices', s.nav.prices], ['#work', s.nav.work], ['#how', s.nav.how]];
+const at = (hash: string) => (notFound ? home(lang) + hash : hash);
+---
+<!doctype html>
+<html lang={lang} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>{notFound ? '404 · Hemlo Studio' : s.meta.title}</title>
+  <meta name="description" content={s.meta.desc} />
+  {!notFound && <link rel="canonical" href={site + home(lang)} />}
+  {!notFound && <link rel="alternate" hreflang="ar" href={site + '/'} />}
+  {!notFound && <link rel="alternate" hreflang="en" href={site + '/en/'} />}
+  {!notFound && <link rel="alternate" hreflang="x-default" href={site + '/'} />}
+  <meta name="theme-color" content="#0A0E15" />
+  <meta name="color-scheme" content="dark" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="preload" href={lang === 'ar' ? '/fonts/vazirmatn-arabic.woff2' : '/fonts/readex-pro-latin.woff2'} as="font" type="font/woff2" crossorigin />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Hemlo Studio" />
+  <meta property="og:title" content={s.meta.title} />
+  <meta property="og:description" content={s.meta.desc} />
+  <meta property="og:url" content={site + home(lang)} />
+  <meta property="og:image" content={site + (lang === 'ar' ? '/og-ar.png' : '/og.png')} />
+  <meta property="og:locale" content={lang === 'ar' ? 'ar_IQ' : 'en_US'} />
+  <meta name="twitter:card" content="summary_large_image" />
+  {!notFound && <script type="application/ld+json" set:html={JSON.stringify({ '@context': 'https://schema.org', '@type': 'ProfessionalService', name: 'Hemlo Studio', alternateName: 'هيملو ستوديو', url: site, logo: site + '/icon-512.png', email: EMAIL, currenciesAccepted: 'IQD, USD', parentOrganization: { '@type': 'Organization', name: 'Hemlo', url: 'https://hemlohq.com' }, address: { '@type': 'PostalAddress', addressLocality: 'Baghdad', addressCountry: 'IQ' } })} />}
+  <script is:inline>document.documentElement.classList.add('js')</script>
+</head>
+<body class="min-h-dvh flex flex-col">
+  <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:start-3 focus:z-50 btn btn-teal">{lang === 'ar' ? 'انتقل إلى المحتوى' : 'Skip to content'}</a>
+
+  <header id="nav" class="sticky top-0 z-40 border-b border-transparent bg-[var(--nav)] backdrop-blur-xl backdrop-saturate-150 transition-colors duration-300">
+    <nav class="wrap flex h-16 items-center gap-8" aria-label={lang === 'ar' ? 'الرئيسية' : 'Main'}>
+      <a href={home(lang)} class="shrink-0 text-fg" aria-label="Hemlo Studio"><StudioLogo lang={lang} class="h-[30px]" /></a>
+      <ul class="hidden md:flex items-center gap-7 text-[13.5px] text-fg-2">
+        {links.map(([u, label]) => <li><a href={at(u)} class="transition-colors hover:text-fg">{label}</a></li>)}
+      </ul>
+      <div class="ms-auto flex items-center gap-5 text-[13.5px]">
+        <a href={home(other)} hreflang={other} lang={other} class="text-fg-2 hover:text-fg">{s.nav.switchTo}</a>
+        <a href={`mailto:${EMAIL}`} class="btn btn-secondary !py-2 !px-4 text-[13.5px]">{s.nav.write}</a>
+      </div>
+    </nav>
+  </header>
+
+  <main id="main" class="flex-1">
+    <slot />
+  </main>
+
+  <footer class="border-t border-line">
+    <div class="wrap flex flex-col gap-8 py-12 sm:flex-row sm:items-center sm:justify-between">
+      <StudioLogo lang={lang} class="!block h-9 text-fg" />
+      <a href={MAIN[lang]} class="flex items-center gap-3 self-start rounded-full border border-line px-4 py-2.5 text-sm text-fg-2 hover:border-line-strong hover:text-fg sm:self-auto">
+        <Mark class="h-5 w-auto text-fg" /><span>{s.footer.part} <span class="font-medium text-fg">Hemlo</span></span>
+      </a>
+    </div>
+    <div class="wrap flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-between border-t border-line py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-[13px] text-muted">
+      <span>© {new Date().getFullYear()} Hemlo. {s.footer.rights}</span>
+      <span class="">{s.footer.founder} <a href="https://xadil.is-a.dev" target="_blank" rel="noopener" class="founder">{s.footer.founderName}<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 8.5l5-5M4.5 3.5h4v4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a></span>
+      <span>{s.footer.made}</span>
+    </div>
+  </footer>
+
+  <script>
+    // nav hairline on scroll, and reveal-on-scroll
+    const nav = document.getElementById('nav');
+    const onScroll = () => nav?.classList.toggle('!border-line', window.scrollY > 8);
+    onScroll(); window.addEventListener('scroll', onScroll, { passive: true });
+    const els = document.querySelectorAll('.reveal');
+    if (!('IntersectionObserver' in window)) els.forEach((e) => e.classList.add('in'));
+    else {
+      const io = new IntersectionObserver((entries) => entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -8% 0px' });
+      els.forEach((e) => io.observe(e));
+    }
+  </script>
+</body>
+</html>

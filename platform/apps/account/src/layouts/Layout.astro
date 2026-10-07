@@ -1,0 +1,55 @@
+---
+import '../styles/account.css';
+import Lockup from '../components/Lockup.astro';
+import Mark from '../components/Mark.astro';
+import { STRINGS, pathFor, type Lang } from '../lib/i18n';
+interface Props { lang: Lang; title: string; page?: string; wide?: boolean; auth?: boolean; }
+const { lang, title, page = '', wide = false, auth = false } = Astro.props;
+const s = STRINGS[lang];
+const other: Lang = lang === 'ar' ? 'en' : 'ar';
+---
+<!doctype html>
+<html lang={lang} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>{title} · {s.brand}</title>
+  <meta name="robots" content="noindex" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta name="theme-color" content="#FAFAF7" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0B0F16" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="preload" href={lang === 'ar' ? '/fonts/vazirmatn-arabic.woff2' : '/fonts/readex-pro-latin.woff2'} as="font" type="font/woff2" crossorigin />
+</head>
+<body class:list={['min-h-dvh', auth ? 'lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]' : 'flex flex-col']}>
+  {auth && (
+    <aside class="brand-panel hidden lg:flex" aria-hidden="true">
+      <a href="https://hemlohq.com" class="text-white"><Lockup class="h-[26px] w-auto" /></a>
+      <div>
+        <Mark class="brand-h" />
+        <p class="brand-tag">{s.panel.tagline[0]}<br />{s.panel.tagline[1]}</p>
+        <ul class="brand-points">
+          {s.panel.points.map((p) => <li><span></span>{p}</li>)}
+        </ul>
+      </div>
+      <p class="brand-foot">{s.panel.foot}</p>
+    </aside>
+  )}
+  <div class:list={['flex min-h-dvh flex-col', auth && 'auth-side']}>
+    <header class="wrap flex h-16 items-center justify-between">
+      <a href="https://hemlohq.com" class:list={['text-fg', auth && 'lg:invisible']} aria-label="Hemlo"><Lockup class="h-[22px] w-auto" /></a>
+      <a id="lang-switch" href={pathFor(other, page)} hreflang={other} lang={other} class="lang-btn"><svg viewBox="0 0 24 24" aria-hidden="true" class="h-[17px] w-[17px]"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>{s.langSwitch}</a>
+    </header>
+    <main id="main" class:list={['wrap flex-1 pb-16', auth ? 'max-w-[26rem] lg:flex lg:flex-col lg:justify-center lg:pb-24' : wide ? 'max-w-3xl' : 'max-w-md']}>
+      <slot />
+    </main>
+    <footer class="wrap pb-8 text-center text-[13px] muted">Hemlo ID · <span class="ltr">account.hemlohq.com</span></footer>
+  </div>
+  <script>
+    // keep the query (return_to, invitation token) when switching language
+    const a = document.getElementById('lang-switch') as HTMLAnchorElement | null;
+    if (a && location.search) a.href += location.search;
+  </script>
+</body>
+</html>

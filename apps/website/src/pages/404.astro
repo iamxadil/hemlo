@@ -1,0 +1,12 @@
+---
+import Base from '../layouts/Base.astro';
+import Mark from '../components/Mark.astro';
+---
+<Base lang="ar" page="404" title="404">
+  <section class="wrap py-32 text-center">
+    <Mark class="mx-auto h-16 w-auto text-fg" />
+    <h1 class="mt-8 text-display font-semibold">هذه الصفحة غير موجودة.</h1>
+    <p class="mt-3 text-lead text-fg-2" lang="en" dir="ltr">This page doesn’t exist.</p>
+    <div class="mt-8 flex justify-center gap-3"><a class="btn btn-primary" href="/">العودة للرئيسية</a><a class="btn btn-secondary" href="/en/" lang="en">Back to home</a></div>
+  </section>
+</Base>

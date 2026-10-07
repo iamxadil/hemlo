@@ -1,0 +1,172 @@
+/* Hemlo Studio: the Hemlo system in its own key. Ink canvas, Studio teal, and one paper object: the receipt.
+   Base tokens and components come from base.css (copied from the main site). */
+@import "./base.css";
+
+html:root{
+  --canvas:#0A0E15; --surface:#10161F; --sunken:#151C27; --fg:#F2F1EC; --fg-2:#B9C0CA; --muted:#7F8896; --line:#1E2632; --line-strong:#2D3746;
+  --brass:#4FC1B3; --brass-soft:#4FC1B3; --glow:rgba(79,193,179,.12); --nav:rgba(10,14,21,.75); --invert:#F2F1EC; --on-invert:#0A0E15;
+  --teal:#4FC1B3; --teal-deep:#0F766E; --paper:#F3EFE6; --paper-ink:#141A24; --paper-muted:#6E6A60; --paper-line:#CFC8B8;
+  color-scheme:dark;
+}
+@theme inline{ --color-teal:var(--teal); --color-teal-deep:var(--teal-deep); --color-paper:var(--paper); --color-paper-ink:var(--paper-ink); --color-paper-muted:var(--paper-muted); }
+
+@layer components{
+  .btn-teal{background:var(--teal);color:#05221E}
+  .btn-teal:hover{filter:brightness(1.07)}
+  .price{font-variant-numeric:tabular-nums}
+
+  /* the sentence */
+  .sentence{font-size:clamp(1.55rem,3.3vw,2.6rem);line-height:1.75;font-weight:500;letter-spacing:-.02em;color:var(--fg-2)}
+  html[lang="ar"] .sentence{letter-spacing:0;line-height:1.9}
+  .blank{position:relative;display:inline;color:var(--fg);text-decoration:underline;text-decoration-color:color-mix(in oklab,var(--teal) 55%,transparent);text-decoration-thickness:2px;text-underline-offset:.2em;text-decoration-skip-ink:none;transition:text-decoration-color .2s,color .2s}
+  .blank::after{content:"";display:inline-block;width:.3em;height:.3em;border:solid var(--teal);border-width:0 .09em .09em 0;transform:translateY(-.22em) rotate(45deg);margin-inline:.3em .1em}
+  .blank:hover,.blank:focus-within{text-decoration-color:var(--teal);color:#fff}
+  .blank select{position:absolute;inset:0;width:100%;opacity:0;cursor:pointer;font-size:16px}
+  .blank select option{color:#000}
+  .stepper{display:inline-flex;align-items:center;gap:.25em;white-space:nowrap;color:var(--fg);border-bottom:2px solid color-mix(in oklab,var(--teal) 55%,transparent);line-height:1.2}
+  .stepper button{display:inline-grid;place-items:center;width:1.1em;height:1.1em;border-radius:999px;border:1px solid var(--line-strong);color:var(--teal);font-size:.8em;line-height:1;transition:background-color .15s,border-color .15s}
+  .stepper button:hover{background:var(--sunken);border-color:var(--teal)}
+  .stepper output{min-width:4.2ch;text-align:center}
+  .chips{display:inline;line-height:1.9}
+  .chip{display:inline-flex;align-items:center;gap:.35em;margin:.15em .08em;padding:.3em .85em .34em;border-radius:999px;border:1px dashed var(--line-strong);font-size:max(.5em,.8125rem);font-weight:500;letter-spacing:0;color:var(--muted);cursor:pointer;vertical-align:middle;transition:all .18s var(--ease-soft);user-select:none}
+  .chip::before{content:"+";font-weight:400;color:var(--muted)}
+  .chip:hover{color:var(--fg);border-color:var(--fg-2)}
+  .chip:has(input:checked){border-style:solid;border-color:var(--teal);background:color-mix(in oklab,var(--teal) 14%,transparent);color:var(--fg)}
+  .chip:has(input:checked)::before{content:"✓";color:var(--teal)}
+  .chip:has(input:focus-visible){outline:2px solid var(--teal);outline-offset:2px}
+  .chip input{position:absolute;opacity:0;pointer-events:none}
+
+  /* the receipt: a paper slip with perforated ends */
+  .receipt-wrap{filter:drop-shadow(0 30px 40px rgba(0,0,0,.45)) drop-shadow(0 2px 3px rgba(0,0,0,.3))}
+  .receipt{position:relative;background:var(--paper);color:var(--paper-ink);padding:2.1rem 1.6rem 1.9rem;
+    -webkit-mask:radial-gradient(circle 5px at 50% 0,#0000 97%,#000) 50% 0/14px 51% repeat-x,radial-gradient(circle 5px at 50% 100%,#0000 97%,#000) 50% 100%/14px 51% repeat-x;
+    mask:radial-gradient(circle 5px at 50% 0,#0000 97%,#000) 50% 0/14px 51% repeat-x,radial-gradient(circle 5px at 50% 100%,#0000 97%,#000) 50% 100%/14px 51% repeat-x}
+  .receipt .rule{border:0;border-top:1.5px dashed var(--paper-line);margin:1.1rem 0}
+  .receipt .muted{color:var(--paper-muted)}
+  .receipt .code{font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;letter-spacing:.08em}
+  .barcode{display:flex;align-items:stretch;gap:1.5px;height:34px}
+  .barcode i{display:block;background:var(--paper-ink)}
+
+  /* price list rows: name .......... price */
+  .leader{display:flex;align-items:baseline;gap:.6rem;padding:.55rem 0}
+  .leader::after{content:"";order:1;flex:1;min-width:1.5rem;border-bottom:1.5px dotted var(--line-strong);transform:translateY(-.3em)}
+  .leader > :last-child{order:2;white-space:nowrap}
+  .tag{font-size:.8125rem;font-weight:500;color:var(--teal);letter-spacing:.02em}
+
+  /* "Our work": one showcase. Projects on one side (grouped), the chosen one on a laptop + phone on the other. */
+  .work-features{display:flex;flex-wrap:wrap;gap:.5rem}
+  .work-features li{padding:.32rem .8rem;border-radius:999px;border:1px solid var(--line-strong);font-size:.8125rem;color:var(--fg-2)}
+  .wk{display:grid;gap:2.5rem}
+  @media (min-width:1024px){.wk{grid-template-columns:18.5rem minmax(0,1fr);gap:3.5rem;align-items:start}}
+
+  /* the index: a sliding highlight behind the chosen project */
+  .wk-index{position:relative;display:grid;gap:1.6rem}
+  @media (min-width:1024px){.wk-index{position:sticky;top:6.5rem}}
+  .wk-hl{position:absolute;left:0;top:0;z-index:0;border-radius:1rem;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 18px 40px -24px rgba(0,0,0,.8);pointer-events:none}
+  .wk.ready .wk-hl{transition:transform .55s cubic-bezier(.23,1,.32,1),width .55s cubic-bezier(.23,1,.32,1),height .55s cubic-bezier(.23,1,.32,1)}
+  .wk-hl::before{content:"";position:absolute;inset-block:.85rem;inset-inline-start:-1px;width:3px;border-radius:3px;background:var(--teal)}
+  .wk-group{display:grid;gap:.2rem}
+  .wk-group-t{margin-bottom:.35rem;padding-inline:1rem;font-size:.75rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  html[lang="ar"] .wk-group-t{letter-spacing:0;font-size:.8125rem}
+  .wk-tab{position:relative;z-index:1;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:.9rem;width:100%;padding:.85rem 1rem;border-radius:1rem;text-align:start;color:var(--fg-2);transition:color .25s}
+  .wk-tab:hover{color:var(--fg)}
+  .wk-tab:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+  .wk-tab[aria-selected="true"]{color:var(--fg)}
+  .wk-num{font-size:.75rem;font-variant-numeric:tabular-nums;color:var(--muted);transition:color .25s}
+  .wk-tab[aria-selected="true"] .wk-num{color:var(--teal)}
+  .wk-tab-main{display:grid;gap:.1rem;min-width:0}
+  .wk-name{font-weight:600;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .wk-tag{font-size:.78rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .wk-chev{width:.9rem;height:.9rem;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:0;transform:translateX(-4px);transition:opacity .25s,transform .35s cubic-bezier(.23,1,.32,1)}
+  html[dir="rtl"] .wk-chev{scale:-1 1;transform:translateX(4px)}
+  .wk-tab[aria-selected="true"] .wk-chev,.wk-tab:hover .wk-chev{opacity:.8;transform:none}
+  /* phones and tablets: the projects become a row of pills */
+  @media (max-width:1023px){
+    .wk-index{display:flex;gap:.4rem;overflow-x:auto;scrollbar-width:none;margin-inline:calc(-1*1.25rem);padding:.2rem 1.25rem;scroll-padding-inline:1.25rem}
+    .wk-index::-webkit-scrollbar{display:none}
+    .wk-group{display:contents}
+    .wk-group-t,.wk-tag,.wk-chev,.wk-num{display:none}
+    .wk-tab{display:block;width:auto;flex:none;padding:.6rem 1.05rem;border-radius:999px;border:1px solid var(--line-strong);font-size:.92rem}
+    .wk-hl{border-radius:999px;border-color:var(--teal);background:color-mix(in oklab,var(--teal) 16%,var(--surface))}
+    .wk-hl::before{display:none}
+  }
+
+  /* the stage: every project in the same grid cell, so switching never makes the page jump */
+  .wk-stage{display:grid;min-width:0}
+  .wk-panel{grid-area:1/1;min-width:0;opacity:0;visibility:hidden;transform:translateY(16px);filter:blur(6px);
+    transition:opacity .35s,transform .6s cubic-bezier(.23,1,.32,1),filter .35s,visibility 0s .6s}
+  .wk-panel.on{opacity:1;visibility:visible;transform:none;filter:none;transition:opacity .5s .06s,transform .7s .06s cubic-bezier(.23,1,.32,1),filter .5s .06s,visibility 0s}
+  .wk-nav{grid-area:2/1;display:flex;align-items:center;justify-content:space-between;margin-top:2rem;padding-top:1.25rem;border-top:1px solid var(--line)}
+  .wk-count{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.9rem}
+  .wk-count b{color:var(--fg);font-weight:600}
+  .wk-arrow{display:grid;place-items:center;width:2.6rem;height:2.6rem;border-radius:999px;border:1px solid var(--line-strong);color:var(--fg);transition:background-color .2s,border-color .2s,transform .15s}
+  .wk-arrow:hover{background:var(--sunken);border-color:var(--teal)}
+  .wk-arrow:active{transform:scale(.92)}
+  .wk-arrow svg{width:1rem;height:1rem;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  html[dir="rtl"] .wk-arrow svg{scale:-1 1}
+
+  /* the devices: a browser window, and a phone overlapping its corner */
+  .wk-devices{--px:0;--py:0;position:relative;padding-bottom:8%;padding-inline-end:7%;touch-action:pan-y}
+  .wk-glow{position:absolute;inset:8% 12% 0;z-index:-1;border-radius:50%;background:radial-gradient(closest-side,color-mix(in oklab,var(--acc,var(--teal)) 28%,transparent),transparent);filter:blur(30px);opacity:.75}
+  .wk-browser{overflow:hidden;border-radius:1rem;border:1px solid var(--line-strong);background:var(--sunken);box-shadow:0 50px 90px -40px rgba(0,0,0,.9);
+    transform:translate(calc(var(--px)*-4px),calc(var(--py)*-3px));transition:transform .6s cubic-bezier(.23,1,.32,1)}
+  .wk-bar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;height:2.4rem;padding-inline:.9rem;border-bottom:1px solid var(--line);background:color-mix(in oklab,var(--surface) 80%,#000)}
+  .wk-dots{display:flex;gap:.4rem}
+  .wk-dots i{width:.6rem;height:.6rem;border-radius:50%;background:var(--line-strong)}
+  .wk-url{display:inline-flex;align-items:center;gap:.4rem;padding:.25rem .9rem;border-radius:999px;background:var(--canvas);font-size:.78rem;color:var(--fg-2);transition:color .2s}
+  .wk-url:hover{color:var(--fg)}
+  .wk-url svg{width:.75rem;height:.75rem;fill:none;stroke:currentColor;stroke-width:1.5}
+  .wk-screen{position:relative;aspect-ratio:16/10;overflow:hidden;container-type:size;background:var(--canvas)}
+  .wk-screen img{display:block;width:100%;height:100%;object-fit:cover;object-position:top}
+  .wk-screen.tall img{height:auto;translate:0 0;transition:translate 1s cubic-bezier(.4,0,.2,1)}
+  @media (hover:hover) and (pointer:fine){
+    .wk-screen.tall:hover img{translate:0 calc(-100% + 100cqh);transition-duration:var(--dur,5s);transition-timing-function:cubic-bezier(.45,.05,.4,1)}
+    .wk-screen.tall:hover .wk-hint{opacity:0;transform:translate(-50%,8px)}
+    .on-touch{display:none}
+  }
+  @media (hover:none),(pointer:coarse){
+    .wk-screen.tall{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+    .wk-screen.tall::-webkit-scrollbar{display:none}
+    .on-hover{display:none}
+  }
+  .wk-hint{position:absolute;left:50%;bottom:.9rem;display:inline-flex;align-items:center;gap:.45rem;padding:.45rem .9rem;border-radius:999px;transform:translateX(-50%);white-space:nowrap;
+    background:rgba(10,14,21,.78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:.78rem;pointer-events:none;transition:opacity .3s,transform .4s}
+  .wk-hint svg{width:.85rem;height:.85rem;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;animation:wk-nudge 1.8s ease-in-out infinite}
+  @keyframes wk-nudge{50%{transform:translateY(2px)}}
+  /* on touch the window scrolls itself: the hint sits on its bottom edge until the first swipe */
+  @media (hover:none),(pointer:coarse){.wk-screen.tall .wk-hint{position:sticky;bottom:.7rem;left:auto;display:flex;width:fit-content;margin-block:-2.4rem 0;margin-inline:.7rem auto;padding:.35rem .75rem;font-size:.72rem;transform:none}.wk-screen.tall.moved .wk-hint{opacity:0}}
+  .wk-phone{position:absolute;bottom:0;inset-inline-end:0;width:23%;overflow:hidden;border-radius:clamp(1rem,2.4vw,1.7rem);border:clamp(3px,.45vw,6px) solid #05070b;background:#05070b;
+    box-shadow:0 40px 70px -24px rgba(0,0,0,.9),0 0 0 1px var(--line-strong);transform:translate(calc(var(--px)*8px),calc(var(--py)*6px));transition:transform .6s cubic-bezier(.23,1,.32,1)}
+  .wk-phone img{display:block;width:100%;height:auto;border-radius:calc(clamp(1rem,2.4vw,1.7rem) - 5px)}
+  .wk-panel .wk-phone{opacity:0;translate:0 24px;transition:transform .6s cubic-bezier(.23,1,.32,1),opacity .4s,translate .8s cubic-bezier(.23,1,.32,1)}
+  .wk-panel.on .wk-phone{opacity:1;translate:0 0;transition-delay:0s,.15s,.15s}
+
+  .wk-info{display:grid;gap:1.75rem;margin-top:2.25rem}
+  @media (min-width:1280px){.wk-info{grid-template-columns:1.15fr 1fr;gap:3rem;align-items:start}}
+  .wk-panel .work-features li{opacity:0;transform:translateY(6px);transition:opacity .3s,transform .5s cubic-bezier(.23,1,.32,1)}
+  .wk-panel.on .work-features li{opacity:1;transform:none;transition-delay:calc(.2s + var(--k)*35ms)}
+
+  @media (prefers-reduced-motion:reduce){
+    .wk-panel,.wk-panel.on,.wk-panel .wk-phone,.wk-panel .work-features li,.wk.ready .wk-hl,.wk-browser,.wk-phone{transition:none!important;filter:none}
+    .wk-screen.tall{overflow-y:auto}
+    .wk-screen.tall:hover img{translate:none}
+    .wk-hint svg{animation:none}
+  }
+}
+
+@media print{
+  @page{margin:12mm}
+  body{background:#fff!important}
+  body *{visibility:hidden}
+  #receipt,#receipt *{visibility:visible}
+  #receipt{position:absolute;inset:0 auto auto 0;width:100%;-webkit-mask:none;mask:none;padding:0}
+  .receipt-wrap{filter:none}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+
+@layer components{
+  .founder{display:inline-flex;align-items:center;gap:.2rem;color:var(--fg-2);text-decoration:underline;text-decoration-color:var(--line-strong);text-underline-offset:3px;transition:color .2s,text-decoration-color .2s}
+  .founder svg{width:.7rem;height:.7rem;opacity:.7}
+  html[dir="rtl"] .founder svg{transform:scaleX(-1)}
+  @media (hover:hover) and (pointer:fine){.founder:hover{color:var(--teal);text-decoration-color:currentColor}}
+}

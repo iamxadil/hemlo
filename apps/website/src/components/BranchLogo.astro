@@ -1,0 +1,17 @@
+---
+// Official branch lockups from the brand kit: the H in the branch colour, the branch name under "Hemlo".
+// Shows the light or dark artwork to match the theme, and the Arabic lockup on Arabic pages.
+import type { BranchId } from '../brand/brand';
+import type { Lang } from '../i18n/strings';
+interface Props { branch: BranchId; lang: Lang; class?: string; }
+const { branch, lang, class: cls = '' } = Astro.props;
+const files = import.meta.glob('../brand/branches/*.svg', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+const suffix = lang === 'ar' ? '-ar' : '';
+const light = files[`../brand/branches/hemlo-${branch}${suffix}.svg`];
+const dark = files[`../brand/branches/hemlo-${branch}${suffix}-on-dark.svg`];
+const sized = (svg: string) => svg.replace('<svg ', '<svg aria-hidden="true" style="height:100%;width:auto;display:block" ');
+---
+<span class={`inline-block ${cls}`}>
+  <span class="block h-full dark:hidden" set:html={sized(light)} />
+  <span class="hidden h-full dark:block" set:html={sized(dark)} />
+</span>

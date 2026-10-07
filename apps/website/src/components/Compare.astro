@@ -1,0 +1,73 @@
+---
+// The difference, at a glance: free tools, a ready-made system, or a website/app built to order. One everyday
+// comparison each, then the same three facts (ready when, price, whose it is) in the same rows, so they read across.
+import { BRANCH, type BranchId } from '../brand/brand';
+import { href, TOOLS_URL, studioUrl, type Lang } from '../i18n/strings';
+interface Props { lang: Lang; here?: BranchId; title?: boolean }
+const { lang, here, title = true } = Astro.props;
+const ar = lang === 'ar';
+const T = ar
+  ? { title: 'الفرق، بنظرة واحدة', sub: 'ثلاث طرق نخدمك بها. اختر ما يشبه حاجتك.', ready: 'متى يجهز', price: 'السعر', own: 'الملكية', here: 'أنت هنا' }
+  : { title: 'The difference, at a glance', sub: 'Three ways we can help. Pick the one that sounds like you.', ready: 'Ready', price: 'Price', own: 'Ownership', here: 'You’re here' };
+const cols: { id: BranchId; verb: string; name: string; like: string; ready: string; price: string; own: string; go: string; url: string; ext?: boolean }[] = ar ? [
+  { id: 'tools', verb: 'استخدم', name: 'أدوات مجانية', like: 'مثل آلة حاسبة: تفتحها وتستخدمها. فاتورة، عرض سعر، والمبلغ بالحروف.', ready: 'الآن', price: 'مجاناً، دائماً', own: 'لا شيء تملكه: تستخدمه فقط', go: 'افتح الأدوات', url: TOOLS_URL, ext: true },
+  { id: 'systems', verb: 'أدِر', name: 'نظام جاهز', like: 'مثل محل مؤثث للإيجار: تدخله اليوم وتبدأ العمل. البيع، المواعيد، الديون والحسابات.', ready: 'اليوم', price: 'اشتراك شهري، وتبدأ مجاناً', own: 'نحن نشغّله ونطوّره، وبياناتك لك', go: 'شاهد الأنظمة', url: here === 'systems' ? '#trades' : href(lang, 'systems') },
+  { id: 'studio', verb: 'امتلك', name: 'موقع أو تطبيق حسب الطلب', like: 'مثل بيت يُبنى على مخططك: يأخذ وقتاً، ويبقى لك. موقع، متجر إلكتروني أو تطبيق.', ready: 'في موعد نتفق عليه', price: 'سعر واحد للمشروع', own: 'ملكك بالكامل', go: 'احسب السعر', url: `${studioUrl(lang)}#build`, ext: true },
+] : [
+  { id: 'tools', verb: 'Use', name: 'Free tools', like: 'Like a calculator: open it and use it. Invoices, quotes, the amount in words.', ready: 'Right now', price: 'Free, always', own: 'Nothing to own: just use it', go: 'Open the tools', url: TOOLS_URL, ext: true },
+  { id: 'systems', verb: 'Run', name: 'A ready-made system', like: 'Like a furnished shop to rent: move in today and start working. Sales, appointments, debts and money.', ready: 'Today', price: 'A monthly plan, start free', own: 'We run and improve it; your data is yours', go: 'See the systems', url: here === 'systems' ? '#trades' : href(lang, 'systems') },
+  { id: 'studio', verb: 'Own', name: 'A website or app, built for you', like: 'Like a house built to your plan: it takes time, and it’s yours. A website, an online store or an app.', ready: 'On a date we agree', price: 'One price per project', own: 'Fully yours', go: 'Work out the price', url: `${studioUrl(lang)}#build`, ext: true },
+];
+---
+<div class="cmp">
+  {title && <div class="cmp-head reveal"><h2 class="text-[clamp(1.6rem,3.2vw,2.4rem)] font-semibold tracking-tight">{T.title}</h2><p class="mt-2 text-fg-2">{T.sub}</p></div>}
+  <div class="cmp-grid">
+    {cols.map((c) => {
+      const b = BRANCH[c.id];
+      return (
+        <a class:list={['cmp-col reveal', here === c.id && 'is-here']} href={c.url} rel={c.ext ? 'noopener' : undefined} style={`--c:${b.color};--cd:${b.dark};--t:${b.tint};--td:${b.tintDark}`}>
+          <span class="cmp-top"><span class="cmp-verb">{c.verb}</span>{here === c.id && <span class="cmp-here">{T.here}</span>}</span>
+          <span class="cmp-name">{c.name}</span>
+          <span class="cmp-like">{c.like}</span>
+          <dl class="cmp-facts">
+            <div><dt>{T.ready}</dt><dd>{c.ready}</dd></div>
+            <div><dt>{T.price}</dt><dd>{c.price}</dd></div>
+            <div><dt>{T.own}</dt><dd>{c.own}</dd></div>
+          </dl>
+          <span class="cmp-go">{c.go}<span class="arr" aria-hidden="true">→</span></span>
+        </a>
+      );
+    })}
+  </div>
+</div>
+
+<style>
+  .cmp-head { margin-bottom: 1.6rem; text-align: center; }
+  .cmp-grid { display: grid; gap: .9rem; }
+  /* side by side, rows lined up across the three (subgrid), so "Ready", "Price" and "Whose" read like a table */
+  .cmp-col { position: relative; display: flex; flex-direction: column; gap: .7rem; padding: 1.5rem 1.5rem 1.3rem; border-radius: var(--radius-tile); border: 1px solid var(--line); background: var(--surface); color: var(--fg); text-align: start;
+    transition: border-color .2s ease, box-shadow .2s ease, transform .3s var(--ease-soft); }
+  @media (hover: hover) and (pointer: fine) { .cmp-col:hover { border-color: var(--c); transform: translateY(-2px); box-shadow: 0 20px 44px -28px rgb(14 20 32 / .3); } }
+  .cmp-col.is-here { border-color: color-mix(in oklab, var(--c) 45%, var(--line)); background: color-mix(in oklab, var(--t) 60%, var(--surface)); }
+  @media (prefers-color-scheme: dark) { .cmp-col.is-here { background: color-mix(in oklab, var(--td) 70%, var(--surface)); } }
+  .cmp-top { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+  .cmp-verb { display: inline-block; padding: .28rem .8rem; border-radius: 999px; font-size: .85rem; font-weight: 600; background: var(--t); color: var(--c); }
+  .cmp-here { font-size: .78rem; font-weight: 600; color: var(--c); }
+  @media (prefers-color-scheme: dark) { .cmp-verb { background: var(--td); color: var(--cd); } .cmp-here { color: var(--cd); } }
+  .cmp-name { font-size: clamp(1.15rem, 1.8vw, 1.35rem); font-weight: 600; letter-spacing: -.015em; line-height: 1.25; }
+  :global(html[lang="ar"]) .cmp-name { letter-spacing: 0; }
+  .cmp-like { color: var(--fg-2); line-height: 1.55; font-size: .97rem; }
+  .cmp-facts { display: grid; gap: 0; margin-top: .2rem; border-top: 1px solid var(--line); }
+  .cmp-facts > div { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: .75rem; padding: .6rem 0; border-bottom: 1px solid var(--line); font-size: .93rem; }
+  .cmp-facts dt { color: var(--muted); }
+  .cmp-facts dd { font-weight: 500; }
+  .cmp-go { display: inline-flex; align-items: center; gap: .4rem; margin-top: .3rem; font-weight: 600; color: var(--c); }
+  @media (prefers-color-scheme: dark) { .cmp-go { color: var(--cd); } }
+  .cmp-go .arr { transition: transform .2s var(--ease-soft); }
+  @media (hover: hover) and (pointer: fine) { .cmp-col:hover .cmp-go .arr { transform: translateX(3px); } }
+  :global(html[dir="rtl"]) .cmp-go .arr { transform: scaleX(-1); }
+  :global(html[dir="rtl"]) .cmp-col:hover .cmp-go .arr { transform: scaleX(-1) translateX(3px); }
+  @media (prefers-reduced-motion: reduce) { .cmp-col, .cmp-go .arr { transition: none; } }
+  /* desktop: side by side, every row lined up across the three (subgrid). Last, so it overrides the rules above. */
+  @media (min-width: 860px) { .cmp-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(7, auto); gap: 0 1rem; } .cmp-col { grid-row: span 7; display: grid; grid-template-rows: subgrid; row-gap: 0; } .cmp-col > :not(.cmp-facts) { margin-bottom: .7rem; } .cmp-facts { display: contents; } .cmp-facts > div:first-child { border-top: 1px solid var(--line); } .cmp-go { margin-top: .9rem; } }
+</style>

@@ -1,0 +1,10 @@
+{
+  // demo.hemlohq.com: Hemlo Studio's live demo store and its control panel (static; everything runs in the visitor's browser).
+  // Publish: npm run deploy
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "hemlo-demo-store",
+  "compatibility_date": "2026-09-01",
+  "assets": { "directory": "./dist", "not_found_handling": "single-page-application" },
+  "routes": [{ "pattern": "demo.hemlohq.com", "custom_domain": true }],
+  "workers_dev": false
+}

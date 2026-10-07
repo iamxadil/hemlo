@@ -1,0 +1,166 @@
+// Account screens copy. Arabic first; Kurdish is added once a native speaker has reviewed it.
+export type Lang = 'ar' | 'en';
+
+const ar = {
+  brand: 'هيملو',
+  langSwitch: 'English',
+  panel: { tagline: ['حسابٌ واحد.', 'لكل ما تبنيه هيملو.'], points: ['بدون كلمات مرور: رمز أو بصمة', 'لعملك ولفريقك، بصلاحيات واضحة', 'بالعربية والإنجليزية، وقريباً الكردية'], foot: 'هيملو · حلولٌ بإتقان.' },
+  signUp: { title: 'أنشئ حسابك في هيملو', sub: 'مجاني، بدون كلمة مرور، وجاهز خلال دقيقة.', haveAccount: 'لديك حساب؟', signInLink: 'سجّل الدخول', newHere: 'جديد على هيملو؟', createLink: 'اطلب وصولاً مبكراً' },
+  signIn: {
+    title: 'الدخول إلى هيملو', sub: 'حساب واحد لكل خدمات هيملو.',
+    phoneTab: 'رقم الهاتف', emailTab: 'البريد الإلكتروني',
+    phoneLabel: 'رقم الهاتف', phonePlaceholder: '0770 123 4567', emailLabel: 'البريد الإلكتروني', emailPlaceholder: 'name@example.com',
+    sendCode: 'أرسل الرمز', phoneOff: 'الدخول برقم الهاتف سيتوفر قريباً. استخدم بريدك الإلكتروني الآن.',
+    passkey: 'الدخول بمفتاح المرور', google: 'المتابعة مع Google', or: 'أو',
+    codeTitle: 'أدخل الرمز', codeSentPhone: 'أرسلنا رمزاً من 6 أرقام إلى {to}.', codeSentEmail: 'أرسلنا رمزاً من 6 أرقام إلى {to}.',
+    verify: 'تأكيد', resendIn: 'إعادة الإرسال بعد {s} ث', resend: 'أعد إرسال الرمز', change: 'تغيير',
+    profileTitle: 'مرحباً بك في هيملو', profileSub: 'كيف نناديك؟', nameLabel: 'الاسم', languageLabel: 'اللغة', continue: 'متابعة',
+    passkeyTitle: 'ادخل أسرع في المرة القادمة', passkeySub: 'استخدم بصمتك أو وجهك أو قفل الشاشة بدل الرمز. مجاني وآمن.',
+    passkeyAdd: 'إنشاء مفتاح مرور', notNow: 'ليس الآن',
+    terms: 'بالمتابعة، أنت توافق على شروط الاستخدام وسياسة الخصوصية.',
+  },
+  confirm: {
+    title: 'أكّد أنه أنت', sub: 'دخلت برمز الهاتف فقط. لحماية حسابك وأعمالك، أكّد بطريقة أخرى.',
+    passkey: 'التأكيد بمفتاح المرور', email: 'إرسال رمز إلى {email}', cancel: 'تسجيل الخروج',
+  },
+  home: {
+    title: 'حسابك', profile: 'الملف الشخصي', save: 'حفظ', saved: 'تم الحفظ',
+    methods: 'طرق الدخول', phone: 'رقم الهاتف', email: 'البريد الإلكتروني', add: 'إضافة', changeAction: 'تغيير', none: 'غير مضاف',
+    verified: 'مؤكَّد', passkeys: 'مفاتيح المرور', passkeysNone: 'لا توجد مفاتيح مرور بعد.', addPasskey: 'إضافة مفتاح مرور', remove: 'حذف',
+    backupTitle: 'أضف طريقة دخول احتياطية', backupSub: 'حسابك يملك أعمالاً. أضف مفتاح مرور أو بريداً إلكترونياً حتى لا تفقد الوصول إذا فقدت رقمك.',
+    devices: 'الأجهزة', thisDevice: 'هذا الجهاز', signOutDevice: 'خروج', signOutOthers: 'تسجيل الخروج من الأجهزة الأخرى', lastActive: 'آخر نشاط',
+    businesses: 'أعمالك', noBusiness: 'لا توجد أعمال بعد.', createBusiness: 'إنشاء عمل جديد', businessName: 'اسم العمل', create: 'إنشاء',
+    active: 'الحالي', switchTo: 'التبديل', manage: 'إدارة',
+    pin: 'رمز PIN للكاشير', pinSub: 'تستخدمه لفتح جهاز الكاشير المشترك في {org}.', pinSet: 'تعيين رمز', pinChange: 'تغيير الرمز', pinPlaceholder: '4 إلى 6 أرقام', pinIsSet: 'الرمز معيّن.',
+    activity: 'آخر النشاطات', signOut: 'تسجيل الخروج', earlyTitle: 'هيملو في مرحلة الوصول المبكر', earlyBody: 'تجهيز الأعمال متاح حالياً لمن حصل على وصول مبكر.', earlyLink: 'اطلب وصولاً مبكراً',
+    newCode: 'أدخل الرمز المرسل إلى {to}',
+    workspace: 'عملك', open: 'افتح {name}', openSub: 'في هيملو للأنظمة', openOther: 'افتح', noWsTitle: 'ابدأ عملك على هيملو', noWsBody: 'حسابك جاهز. اختر من أين تبدأ:',
+    startClinic: 'عيادة أسنان: ابدأ مجاناً لثلاثين يوماً', startShop: 'متجر أو ماركت: ابدأ مجاناً لثلاثين يوماً', startGym: 'نادٍ رياضي: ابدأ مجاناً لثلاثين يوماً', invitedNote: 'تعمل في محل أو عيادة؟ اطلب من صاحبه أن يدعوك.',
+  },
+  business: {
+    title: 'إدارة العمل', yourRole: 'دورك: {role}', team: 'الفريق', invite: 'دعوة موظف', inviteSub: 'برقم الهاتف أو البريد الإلكتروني.',
+    name: 'الاسم', role: 'الدور', phoneOrEmail: 'الهاتف أو البريد', locations: 'الفروع', sendInvite: 'إنشاء الدعوة',
+    inviteReady: 'الدعوة جاهزة', shareWhatsApp: 'مشاركة عبر واتساب', copyLink: 'نسخ الرابط', copied: 'تم النسخ',
+    inviteEmailed: 'أرسلنا الدعوة إلى البريد.', pending: 'دعوات بانتظار القبول', cancel: 'إلغاء', removeMember: 'إزالة',
+    addLocation: 'إضافة فرع', locationName: 'اسم الفرع', counters: 'أجهزة الكاشير', useThisDevice: 'استخدم هذا الجهاز ككاشير', deviceName: 'اسم الجهاز',
+    openCounter: 'فتح شاشة الكاشير', revoke: 'إلغاء الثقة', apiKeys: 'مفاتيح الربط (API)', apiKeysSub: 'لربط أنظمة أخرى بهذا العمل.', keyName: 'اسم المفتاح',
+    createKey: 'إنشاء مفتاح', copyKey: 'نسخ المفتاح', keyOnce: 'انسخ المفتاح الآن. لن يظهر مرة أخرى.', activity: 'سجل النشاط', noActive: 'اختر عملاً من صفحة حسابك أولاً.',
+  },
+  invite: {
+    title: 'دعوة للانضمام', body: '{inviter} يدعوك للانضمام إلى {org} بدور {role}.', sentTo: 'الدعوة مرسلة إلى {contact}.',
+    signInToAccept: 'سجّل الدخول للقبول', accept: 'قبول الدعوة', accepted: 'انضممت إلى {org}.', mismatch: 'هذه الدعوة لرقم أو بريد آخر. سجّل الخروج ثم ادخل بـ {contact}.',
+    expired: 'انتهت صلاحية هذه الدعوة. اطلب دعوة جديدة.', used: 'تم استخدام هذه الدعوة.', canceled: 'تم إلغاء هذه الدعوة.',
+  },
+  counter: {
+    title: 'الكاشير', pick: 'من يعمل الآن؟', enterPin: 'أدخل رمز PIN', working: 'يعمل الآن: {name}', lock: 'قفل', locked: 'مقفل: اطلب من المالك فتحه',
+    notDevice: 'هذا الجهاز ليس جهاز كاشير.', notDeviceSub: 'يمكن لمالك العمل أو المدير جعله جهاز كاشير من صفحة إدارة العمل.', idle: 'يُقفل تلقائياً بعد {m} دقائق من عدم الاستخدام.',
+    wrong: 'رمز خاطئ. {left}', noStaff: 'لا يوجد موظفون برمز PIN بعد. يعيّن كل موظف رمزه من صفحة حسابه.', forget: 'إزالة هذا الجهاز',
+  },
+  welcome: {
+    title: 'أهلاً {name}، وصولك جاهز', body: 'وافقنا على طلبك. أنشئ حسابك وسيكون «{business}» جاهزاً فوراً، وأنت مالكه.',
+    create: 'أنشئ حسابك', setup: 'جهّز «{business}»', signedInAs: 'أنت داخل باسم {who}.', notYou: 'لست أنت؟ سجّل الخروج',
+    used: 'تم استخدام هذا الرابط. سجّل الدخول للمتابعة.', expired: 'انتهت صلاحية هذا الرابط. راسلنا لنرسل لك رابطاً جديداً.', invalid: 'هذا الرابط غير صالح.', signIn: 'تسجيل الدخول',
+  },
+  consent: { title: 'طلب وصول', body: '{app} يريد الوصول إلى حسابك في هيملو.', allow: 'سماح', deny: 'رفض', scopes: 'سيتمكن من:' },
+  roles: { owner: 'مالك', admin: 'مسؤول', manager: 'مدير', cashier: 'كاشير', technician: 'فنّي', accountant: 'محاسب', viewer: 'مشاهد', dentist: 'طبيب أسنان', assistant: 'مساعد طبيب', receptionist: 'استقبال', trainer: 'مدرب' },
+  methods: { phone: 'رمز الهاتف', email: 'رمز البريد', passkey: 'مفتاح مرور', google: 'Google', oauth: 'تطبيق', other: 'أخرى' },
+  events: {
+    'user.created': 'إنشاء الحساب', 'session.created': 'تسجيل دخول', 'session.new_device': 'دخول من جهاز جديد', 'session.pending_second_factor': 'دخول بانتظار التأكيد',
+    'session.ended': 'تسجيل خروج', 'org.created': 'إنشاء العمل', 'member.added': 'إضافة عضو', 'member.removed': 'إزالة عضو', 'member.role_changed': 'تغيير دور',
+    'invite.created': 'إنشاء دعوة', 'invite.accepted': 'قبول دعوة', 'counter.trusted': 'إضافة جهاز كاشير', 'counter.revoked': 'إلغاء جهاز كاشير',
+    'counter.unlocked': 'فتح الكاشير', 'counter.pin_set': 'تعيين رمز PIN', 'counter.pin_locked': 'قفل رمز PIN', 'counter.member_unlocked': 'فتح رمز PIN',
+    'counter.forgotten': 'إزالة جهاز كاشير', 'apikey.created': 'إنشاء مفتاح ربط', 'apikey.deleted': 'حذف مفتاح ربط',
+  } as Record<string, string>,
+  errors: {
+    generic: 'حدث خطأ. حاول مرة أخرى.', network: 'لا يوجد اتصال بالإنترنت.', invalidPhone: 'أدخل رقم هاتف عراقي صحيح، مثل 0770 123 4567.',
+    invalidEmail: 'أدخل بريداً إلكترونياً صحيحاً.', invalidCode: 'الرمز غير صحيح.', expiredCode: 'انتهت صلاحية الرمز. اطلب رمزاً جديداً.',
+    tooMany: 'محاولات كثيرة. انتظر قليلاً ثم حاول مجدداً.', notFresh: 'لأمانك، أكّد دخولك مرة أخرى ثم أعد المحاولة.', notAllowed: 'ليست لديك صلاحية لذلك.',
+    roleTooHigh: 'لا يمكنك منح هذا الدور.', pinWeak: 'اختر رمزاً أصعب من ذلك.', pinFormat: 'الرمز من 4 إلى 6 أرقام.', passkeyFailed: 'لم يكتمل مفتاح المرور.',
+    phoneUsed: 'هذا الرقم مستخدم في حساب آخر.',
+  },
+};
+
+const en: typeof ar = {
+  brand: 'Hemlo',
+  langSwitch: 'العربية',
+  panel: { tagline: ['One account.', 'For everything Hemlo builds.'], points: ['No passwords: a code or your fingerprint', 'For your business and your team, with clear roles', 'In Arabic and English, with Kurdish coming'], foot: 'Hemlo · Elegantly solved.' },
+  signUp: { title: 'Create your Hemlo account', sub: 'Free, no password, ready in a minute.', haveAccount: 'Already have an account?', signInLink: 'Sign in', newHere: 'New to Hemlo?', createLink: 'Get early access' },
+  signIn: {
+    title: 'Sign in to Hemlo', sub: 'One account for everything Hemlo.',
+    phoneTab: 'Phone', emailTab: 'Email',
+    phoneLabel: 'Phone number', phonePlaceholder: '0770 123 4567', emailLabel: 'Email', emailPlaceholder: 'name@example.com',
+    sendCode: 'Send code', phoneOff: 'Signing in with a phone number is coming soon. Use your email for now.',
+    passkey: 'Sign in with a passkey', google: 'Continue with Google', or: 'or',
+    codeTitle: 'Enter the code', codeSentPhone: 'We sent a 6-digit code to {to}.', codeSentEmail: 'We sent a 6-digit code to {to}.',
+    verify: 'Confirm', resendIn: 'Resend in {s}s', resend: 'Send a new code', change: 'Change',
+    profileTitle: 'Welcome to Hemlo', profileSub: 'What should we call you?', nameLabel: 'Name', languageLabel: 'Language', continue: 'Continue',
+    passkeyTitle: 'Sign in faster next time', passkeySub: 'Use your fingerprint, face or screen lock instead of a code. Free and safe.',
+    passkeyAdd: 'Create a passkey', notNow: 'Not now',
+    terms: 'By continuing you agree to the terms of use and privacy policy.',
+  },
+  confirm: {
+    title: 'Confirm it’s you', sub: 'You signed in with a phone code only. To protect your account and businesses, confirm another way.',
+    passkey: 'Confirm with a passkey', email: 'Send a code to {email}', cancel: 'Sign out',
+  },
+  home: {
+    title: 'Your account', profile: 'Profile', save: 'Save', saved: 'Saved',
+    methods: 'Ways to sign in', phone: 'Phone number', email: 'Email', add: 'Add', changeAction: 'Change', none: 'Not added',
+    verified: 'Verified', passkeys: 'Passkeys', passkeysNone: 'No passkeys yet.', addPasskey: 'Add a passkey', remove: 'Remove',
+    backupTitle: 'Add a backup way to sign in', backupSub: 'Your account runs a business. Add a passkey or an email so you don’t lose access if you lose your number.',
+    devices: 'Devices', thisDevice: 'This device', signOutDevice: 'Sign out', signOutOthers: 'Sign out of other devices', lastActive: 'Last active',
+    businesses: 'Your businesses', noBusiness: 'No businesses yet.', createBusiness: 'Create a business', businessName: 'Business name', create: 'Create',
+    active: 'Current', switchTo: 'Switch', manage: 'Manage',
+    pin: 'Counter PIN', pinSub: 'You use it to unlock the shared counter device at {org}.', pinSet: 'Set PIN', pinChange: 'Change PIN', pinPlaceholder: '4 to 6 digits', pinIsSet: 'Your PIN is set.',
+    activity: 'Recent activity', signOut: 'Sign out', earlyTitle: 'Hemlo is in early access', earlyBody: 'Setting up a business is open to people with early access for now.', earlyLink: 'Get early access',
+    newCode: 'Enter the code sent to {to}',
+    workspace: 'Your workspace', open: 'Open {name}', openSub: 'in Hemlo Systems', openOther: 'Open', noWsTitle: 'Start your business on Hemlo', noWsBody: 'Your account is ready. Pick where to start:',
+    startClinic: 'Dental clinic: start free for 30 days', startShop: 'Shop or market: start free for 30 days', startGym: 'Gym: start free for 30 days', invitedNote: 'Work at a shop or clinic? Ask the owner to invite you.',
+  },
+  business: {
+    title: 'Manage business', yourRole: 'Your role: {role}', team: 'Team', invite: 'Invite someone', inviteSub: 'By phone number or email.',
+    name: 'Name', role: 'Role', phoneOrEmail: 'Phone or email', locations: 'Locations', sendInvite: 'Create invitation',
+    inviteReady: 'Invitation ready', shareWhatsApp: 'Share on WhatsApp', copyLink: 'Copy link', copied: 'Copied',
+    inviteEmailed: 'We emailed the invitation.', pending: 'Waiting to be accepted', cancel: 'Cancel', removeMember: 'Remove',
+    addLocation: 'Add location', locationName: 'Location name', counters: 'Counter devices', useThisDevice: 'Use this device as a counter', deviceName: 'Device name',
+    openCounter: 'Open the counter', revoke: 'Remove trust', apiKeys: 'API keys', apiKeysSub: 'To connect other systems to this business.', keyName: 'Key name',
+    createKey: 'Create key', copyKey: 'Copy key', keyOnce: 'Copy the key now. It won’t be shown again.', activity: 'Activity log', noActive: 'Choose a business on your account page first.',
+  },
+  invite: {
+    title: 'You’re invited', body: '{inviter} invited you to join {org} as {role}.', sentTo: 'The invitation was sent to {contact}.',
+    signInToAccept: 'Sign in to accept', accept: 'Accept invitation', accepted: 'You joined {org}.', mismatch: 'This invitation is for another number or email. Sign out, then sign in with {contact}.',
+    expired: 'This invitation has expired. Ask for a new one.', used: 'This invitation was already used.', canceled: 'This invitation was canceled.',
+  },
+  counter: {
+    title: 'Counter', pick: 'Who’s working?', enterPin: 'Enter your PIN', working: 'Working: {name}', lock: 'Lock', locked: 'Locked: ask the owner to unlock',
+    notDevice: 'This device isn’t a counter.', notDeviceSub: 'A business owner or manager can make it one from the Manage business page.', idle: 'Locks by itself after {m} minutes without use.',
+    wrong: 'Wrong PIN. {left}', noStaff: 'Nobody has a PIN yet. Each person sets theirs on their account page.', forget: 'Remove this device',
+  },
+  welcome: {
+    title: 'Welcome, {name}. You’re in.', body: 'We approved your request. Create your account and “{business}” will be ready straight away, with you as its owner.',
+    create: 'Create your account', setup: 'Set up “{business}”', signedInAs: 'You’re signed in as {who}.', notYou: 'Not you? Sign out',
+    used: 'This link was already used. Sign in to continue.', expired: 'This link has expired. Message us and we’ll send a new one.', invalid: 'This link isn’t valid.', signIn: 'Sign in',
+  },
+  consent: { title: 'Access request', body: '{app} wants to access your Hemlo account.', allow: 'Allow', deny: 'Deny', scopes: 'It will be able to:' },
+  roles: { owner: 'Owner', admin: 'Admin', manager: 'Manager', cashier: 'Cashier', technician: 'Technician', accountant: 'Accountant', viewer: 'Viewer', dentist: 'Dentist', assistant: 'Dental assistant', receptionist: 'Receptionist', trainer: 'Coach' },
+  methods: { phone: 'Phone code', email: 'Email code', passkey: 'Passkey', google: 'Google', oauth: 'App', other: 'Other' },
+  events: {
+    'user.created': 'Account created', 'session.created': 'Signed in', 'session.new_device': 'Sign-in from a new device', 'session.pending_second_factor': 'Sign-in waiting for confirmation',
+    'session.ended': 'Signed out', 'org.created': 'Business created', 'member.added': 'Member added', 'member.removed': 'Member removed', 'member.role_changed': 'Role changed',
+    'invite.created': 'Invitation created', 'invite.accepted': 'Invitation accepted', 'counter.trusted': 'Counter device added', 'counter.revoked': 'Counter device removed',
+    'counter.unlocked': 'Counter unlocked', 'counter.pin_set': 'PIN set', 'counter.pin_locked': 'PIN locked', 'counter.member_unlocked': 'PIN unlocked',
+    'counter.forgotten': 'Counter device removed', 'apikey.created': 'API key created', 'apikey.deleted': 'API key deleted',
+  },
+  errors: {
+    generic: 'Something went wrong. Please try again.', network: 'No internet connection.', invalidPhone: 'Enter a valid Iraqi number, like 0770 123 4567.',
+    invalidEmail: 'Enter a valid email.', invalidCode: 'That code isn’t right.', expiredCode: 'That code has expired. Ask for a new one.',
+    tooMany: 'Too many tries. Wait a little, then try again.', notFresh: 'For your safety, confirm your sign-in again, then retry.', notAllowed: 'You don’t have permission for that.',
+    roleTooHigh: 'You can’t give that role.', pinWeak: 'Choose a harder PIN.', pinFormat: 'The PIN is 4 to 6 digits.', passkeyFailed: 'The passkey didn’t complete.',
+    phoneUsed: 'That number belongs to another account.',
+  },
+};
+
+export const STRINGS = { ar, en };
+export type Strings = typeof ar;
+export const fill = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k) => String(v[k] ?? ''));
+export const langFromPath = (p: string): Lang => (p.startsWith('/en/') || p === '/en' ? 'en' : 'ar');
+export const pathFor = (lang: Lang, page = '') => (lang === 'en' ? '/en/' : '/') + (page ? `${page}/` : '');

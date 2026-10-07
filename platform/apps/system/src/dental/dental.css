@@ -1,0 +1,310 @@
+/* The Dental edition's own parts. Loads with its screens only; uses the app's colours. */
+
+/* ---------- alerts: a patient's medical warnings, always red, always first ---------- */
+.alerts { display: inline-flex; flex-wrap: wrap; gap: .3rem; }
+.alert-chip { display: inline-flex; align-items: center; gap: .3rem; padding: .2rem .55rem; border-radius: 999px; font-size: .78rem; font-weight: 600; color: var(--bad); background: color-mix(in oklab, var(--bad) 12%, transparent); white-space: nowrap; }
+.alert-chip b { display: inline-grid; place-items: center; width: 1rem; height: 1rem; border-radius: 999px; background: var(--bad); color: var(--surface); font-size: .7rem; }
+.alerts.sm .alert-chip { font-size: .7rem; padding: .08rem .45rem; font-weight: 500; }
+.alerts.sm .alert-chip b { width: .85rem; height: .85rem; font-size: .6rem; }
+.chip.danger[aria-pressed="true"] { background: var(--bad); border-color: var(--bad); color: #fff; }
+.chip.danger:not([aria-pressed]) { color: var(--bad); border-color: color-mix(in oklab, var(--bad) 40%, var(--line)); }
+
+/* a chosen patient in a form */
+.picked { display: flex; align-items: center; gap: .6rem; padding: .6rem .6rem .6rem .9rem; border-radius: .9rem; border: 1px solid var(--line-strong); background: var(--sunken); }
+a.picked:hover { border-color: var(--accent); }
+
+.btn-wa { background: #1F9D55; color: #fff; }
+.btn-wa:hover { filter: brightness(1.06); }
+
+/* ---------- statuses ---------- */
+.pill.st-booked { color: var(--info); background: color-mix(in oklab, var(--info) 12%, transparent); }
+.pill.st-confirmed { color: var(--info); background: color-mix(in oklab, var(--info) 20%, transparent); }
+.pill.st-arrived { color: var(--warn); background: color-mix(in oklab, var(--warn) 14%, transparent); }
+.pill.st-seated { color: var(--accent); background: var(--accent-soft); }
+.pill.st-done { color: var(--ok); background: color-mix(in oklab, var(--ok) 13%, transparent); }
+.pill.st-no_show { color: var(--bad); background: color-mix(in oklab, var(--bad) 12%, transparent); }
+.pill.st-canceled { color: var(--muted); text-decoration: line-through; }
+.pill.lab-sent, .pill.lab-in_progress { color: var(--info); background: color-mix(in oklab, var(--info) 12%, transparent); }
+.pill.lab-received { color: var(--ok); background: color-mix(in oklab, var(--ok) 13%, transparent); }
+.pill.lab-fitted { color: var(--muted); }
+.pill.lab-remake { color: var(--warn); background: color-mix(in oklab, var(--warn) 14%, transparent); }
+.pill.plan-proposed { color: var(--info); background: color-mix(in oklab, var(--info) 12%, transparent); }
+.pill.plan-accepted, .pill.plan-in_progress { color: var(--accent); background: var(--accent-soft); }
+.pill.plan-completed { color: var(--ok); background: color-mix(in oklab, var(--ok) 13%, transparent); }
+.pill.plan-declined { color: var(--muted); }
+.row.late { background: color-mix(in oklab, var(--bad) 5%, transparent); }
+
+/* ---------- today ---------- */
+.attn { display: inline-flex; align-items: center; gap: .45rem; padding: .55rem .9rem; border-radius: .9rem; border: 1px solid var(--line); background: var(--surface); font-size: .9rem; font-weight: 500; }
+.attn:hover { border-color: var(--line-strong); }
+.attn.ok { color: var(--ok); border-color: color-mix(in oklab, var(--ok) 35%, var(--line)); }
+.attn.warn { color: var(--warn); border-color: color-mix(in oklab, var(--warn) 35%, var(--line)); }
+.attn.bad { color: var(--bad); border-color: color-mix(in oklab, var(--bad) 35%, var(--line)); background: color-mix(in oklab, var(--bad) 5%, var(--surface)); }
+.dot-dent { width: .6rem; height: .6rem; border-radius: 999px; flex: none; }
+.today-row.st-done, .today-row.st-no_show, .today-row.st-canceled { opacity: .55; }
+.today-row.st-seated { background: var(--accent-soft); }
+
+/* ---------- schedule: day (chairs or dentists as columns) ---------- */
+.day-grid { max-height: calc(100dvh - 12rem); overflow: auto; }
+.day-cols { display: grid; min-width: min-content; }
+.day-head { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; justify-content: center; gap: .4rem; padding: .7rem .5rem; font-weight: 600; font-size: .9rem; background: var(--surface); border-bottom: 1px solid var(--line); border-inline-start: 1px solid var(--line); }
+.day-head i { width: .6rem; height: .6rem; border-radius: 999px; }
+.day-times { position: relative; }
+.day-times span { position: absolute; inset-inline: 0; transform: translateY(-50%); text-align: center; font-size: .72rem; color: var(--muted); }
+.day-times span:first-child { transform: none; }
+.day-col { position: relative; border-inline-start: 1px solid var(--line); cursor: copy;
+  background-image: linear-gradient(to bottom, color-mix(in oklab, var(--line) 60%, transparent) 1px, transparent 1px); }
+.appt { position: absolute; inset-inline: 3px; display: flex; flex-direction: column; gap: 0; overflow: hidden; padding: .25rem .45rem; border-radius: .55rem; text-align: start; font-size: .78rem; line-height: 1.25;
+  background: color-mix(in oklab, var(--info) 11%, var(--surface)); border: 1px solid color-mix(in oklab, var(--info) 25%, var(--line)); border-inline-start-width: 4px; cursor: pointer; z-index: 1; }
+.appt:hover { z-index: 2; box-shadow: 0 4px 14px rgb(0 0 0 / .12); }
+.appt b { font-weight: 600; font-size: .82rem; }
+.appt span { color: var(--fg-2); }
+.appt em { font-style: normal; font-size: .68rem; color: var(--muted); }
+.appt > * { flex: none; min-width: 0; }
+.appt.short em { display: none; }
+.appt.tiny { flex-direction: row; align-items: center; gap: .4rem; padding-block: 0; }
+.appt.tiny span, .appt.tiny em { display: none; }
+.appt.st-arrived { background: color-mix(in oklab, var(--warn) 14%, var(--surface)); }
+.appt.st-seated { background: var(--accent-soft); }
+.appt.st-done { background: color-mix(in oklab, var(--ok) 10%, var(--surface)); opacity: .75; }
+.appt.st-no_show { background: var(--sunken); opacity: .6; text-decoration: line-through; }
+.now-line { position: absolute; inset-inline: 0; height: 2px; background: var(--bad); z-index: 2; pointer-events: none; }
+.now-line::before { content: ""; position: absolute; inset-inline-start: -4px; top: -3px; width: 8px; height: 8px; border-radius: 999px; background: var(--bad); }
+
+/* week */
+.week-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .6rem; }
+@media (max-width: 1000px) { .week-grid { grid-template-columns: 1fr; } }
+.week-day { display: grid; align-content: start; gap: .3rem; padding: .5rem; min-height: 8rem; }
+.week-day.today { border-color: var(--accent); }
+.week-head { display: flex; justify-content: space-between; padding: .3rem .4rem; font-weight: 600; font-size: .9rem; border-radius: .5rem; }
+.week-head:hover { background: var(--sunken); }
+.week-item { display: flex; gap: .4rem; align-items: baseline; padding: .3rem .45rem; border-radius: .45rem; border-inline-start: 3px solid var(--info); background: var(--sunken); font-size: .8rem; text-align: start; min-width: 0; }
+.week-item.st-done, .week-item.st-no_show { opacity: .55; }
+
+/* ---------- patient's file ---------- */
+.file-head { padding: 1.1rem 1.2rem; }
+.file-tabs { display: flex; gap: .25rem; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--line); }
+.file-tabs::-webkit-scrollbar { display: none; }
+.file-tabs button { padding: .7rem .9rem; font-size: .92rem; color: var(--fg-2); white-space: nowrap; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.file-tabs button:hover { color: var(--fg); }
+.file-tabs button[aria-selected="true"] { color: var(--accent); border-color: var(--accent); font-weight: 600; }
+.timeline-list { display: grid; gap: .45rem; padding: 0 1.2rem 1.1rem; font-size: .9rem; }
+.timeline-list li { padding-inline-start: .8rem; border-inline-start: 2px solid var(--line); }
+.amendments { display: grid; gap: .25rem; margin-top: .5rem; padding: .5rem .75rem; border-radius: .7rem; background: var(--sunken); font-size: .86rem; }
+
+/* ---------- the chart ---------- */
+
+/* ---------- plans ---------- */
+.plan-options { display: grid; gap: .75rem; padding: .75rem; border: 1px dashed var(--line-strong); border-radius: 1.1rem; }
+.plan.st-declined { opacity: .6; }
+.plan .panel-h p { font-size: .82rem; color: var(--muted); }
+.plan-items { display: grid; padding: 0 1.2rem; }
+.plan-items li { display: flex; align-items: center; gap: .6rem; padding: .5rem 0; border-bottom: 1px solid var(--line); font-size: .92rem; }
+.plan-items li.st-done { color: var(--muted); }
+.plan-items li.st-canceled { text-decoration: line-through; opacity: .5; }
+.ph { display: inline-grid; place-items: center; width: 1.4rem; height: 1.4rem; border-radius: 999px; background: var(--sunken); font-size: .72rem; font-weight: 600; color: var(--fg-2); flex: none; }
+.plan-total { display: grid; gap: .25rem; padding: .8rem 1.2rem 1rem; }
+.plan-pick { display: flex; align-items: center; gap: .6rem; padding: .55rem .75rem; border-radius: .8rem; border: 1px solid var(--line); cursor: pointer; font-size: .92rem; }
+.plan-pick:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+
+/* ---------- X-rays ---------- */
+.xray-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: .75rem; }
+.xray { position: relative; display: grid; border-radius: 1rem; overflow: hidden; border: 1px solid var(--line); background: var(--surface); }
+.xray.k-panoramic, .xray.k-cephalometric { grid-column: span 2; }
+.xray-img { display: block; aspect-ratio: 4 / 3; background: #0b0b0c; }
+.xray.k-panoramic .xray-img, .xray.k-cephalometric .xray-img { aspect-ratio: 8 / 3; }
+.xray-img img { width: 100%; height: 100%; object-fit: contain; }
+.xray figcaption { padding: .5rem .7rem; font-size: .84rem; }
+.xray-edit { position: absolute; top: .4rem; inset-inline-end: .4rem; background: color-mix(in oklab, var(--surface) 85%, transparent); }
+@media (max-width: 520px) { .xray.k-panoramic, .xray.k-cephalometric { grid-column: 1 / -1; } }
+.viewer { position: fixed; inset: 0; z-index: 90; display: grid; grid-template-rows: 1fr auto; background: #050506; color: #eee; }
+.viewer-stage { overflow: hidden; display: grid; place-items: center; touch-action: none; cursor: grab; }
+.viewer-stage:active { cursor: grabbing; }
+.viewer-stage img { max-width: 100%; max-height: 100%; transform-origin: center; }
+.viewer-bar { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; padding: .7rem 1rem max(.7rem, env(safe-area-inset-bottom)); background: #141416; font-size: .85rem; }
+.viewer-bar label { display: flex; align-items: center; gap: .5rem; }
+.viewer-bar input[type="range"] { width: 7rem; accent-color: var(--accent); }
+.viewer-bar .chip { background: transparent; color: #eee; border-color: #444; }
+.viewer-bar .chip[aria-pressed="true"] { background: #eee; color: #111; }
+.viewer-bar .icon-btn { color: #eee; }
+
+/* ---------- gums ---------- */
+.perio-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(4.4rem, 1fr)); gap: .4rem; padding: 0 1.2rem 1.2rem; }
+.perio-tooth { display: grid; gap: .2rem; justify-items: center; padding: .35rem; border: 1px solid var(--line); border-radius: .6rem; font-size: .78rem; }
+.perio-pd { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: 100%; }
+.perio-pd input { width: 100%; height: 1.6rem; text-align: center; border: 1px solid var(--line); border-radius: .3rem; background: var(--surface); font-size: .8rem; padding: 0; }
+.perio-pd input.deep4 { background: color-mix(in oklab, var(--warn) 18%, var(--surface)); border-color: var(--warn); }
+.perio-pd input.deep6 { background: color-mix(in oklab, var(--bad) 18%, var(--surface)); border-color: var(--bad); font-weight: 700; }
+.perio-bop { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: 100%; }
+.perio-bop button { height: .6rem; border-radius: 999px; background: var(--sunken); }
+.perio-bop button.on { background: var(--bad); }
+.perio-tooth select { font-size: .72rem; background: transparent; }
+
+/* ---------- consent signature ---------- */
+.sign-pad { width: 100%; height: 11rem; border: 1px dashed var(--line-strong); border-radius: .9rem; background: var(--surface); touch-action: none; cursor: crosshair; }
+
+/* ---------- start a clinic ---------- */
+.start .start-badge { display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+.note.bad { color: var(--bad); background: color-mix(in oklab, var(--bad) 9%, transparent); }
+.note.warn { color: var(--warn); background: color-mix(in oklab, var(--warn) 10%, transparent); }
+
+/* ---------- the waiting-room TV ---------- */
+.waiting .cd-h { padding: 1.5rem 3rem; }
+.wait-cols { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; padding: 3rem; }
+@media (max-width: 800px) { .wait-cols { grid-template-columns: 1fr; gap: 2rem; padding: 1.5rem; } }
+.wait-cols h2 { font-size: 1.4rem; color: var(--muted); font-weight: 500; margin-bottom: 1.2rem; }
+.wait-card { display: grid; gap: .4rem; padding: 1.4rem 1.6rem; margin-bottom: 1rem; border-radius: 1.2rem; background: var(--surface); border: 1px solid var(--line); border-inline-start: 8px solid var(--accent); }
+.wait-card b { font-size: 2.6rem; font-weight: 600; line-height: 1.1; }
+.wait-card span { font-size: 1.3rem; color: var(--fg-2); }
+.wait-card.now { animation: wait-in .5s ease-out; }
+@keyframes wait-in { from { opacity: 0; transform: translateY(8px); } }
+@media (prefers-reduced-motion: reduce) { .wait-card.now { animation: none; } }
+.wait-list { display: grid; gap: .7rem; }
+.wait-list li { display: flex; align-items: baseline; gap: 1rem; font-size: 2rem; padding: .6rem 0; border-bottom: 1px solid var(--line); }
+.wait-list li .muted { font-size: 1.2rem; margin-inline-start: auto; }
+.wait-n { display: inline-grid; place-items: center; min-width: 2.6rem; height: 2.6rem; border-radius: 999px; background: var(--sunken); font-size: 1.2rem; font-weight: 600; align-self: center; }
+.wait-foot { display: flex; justify-content: center; padding: 1rem; }
+
+/* ---------- tables (reports) ---------- */
+.tbl { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.tbl th { padding: .55rem 1.2rem; text-align: start; font-weight: 500; font-size: .8rem; color: var(--muted); border-bottom: 1px solid var(--line); }
+.tbl td { padding: .7rem 1.2rem; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.tbl tbody tr:last-child td { border-bottom: 0; }
+.panel:has(> .tbl), .panel:has(.tbl) { overflow-x: auto; }
+
+/* long names never push a sheet wider than the screen */
+.sheet-b section.grid:not([class*="grid-cols"]), .sheet-b > .grid:not([class*="grid-cols"]) { grid-template-columns: minmax(0, 1fr); }
+.sheet-b .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.sheet-b .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.plan-pick { min-width: 0; }
+
+.wait-empty { flex: 1; display: grid; place-items: center; text-align: center; gap: 1rem; }
+.wait-empty b { font-size: 4rem; font-weight: 600; }
+
+/* ---------- the chart, drawn like the mouth ---------- */
+.odo-wrap { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; }
+.odontogram { width: 100%; height: auto; display: block; user-select: none; -webkit-user-select: none; touch-action: pan-x pan-y; }
+@media (max-width: 760px) { .odo-wrap .odontogram { min-width: 46rem; } }
+.odontogram .midline { stroke: var(--line-strong); stroke-width: .8; stroke-dasharray: 3 4; }
+.odontogram .tooth-hit { fill: transparent; transition: fill .15s; }
+.odontogram .tooth.tap { cursor: pointer; }
+.odontogram .tooth.tap:hover .tooth-hit { fill: color-mix(in oklab, var(--accent) 7%, transparent); }
+.odontogram .tooth.sel .tooth-hit { fill: color-mix(in oklab, var(--accent) 12%, transparent); stroke: color-mix(in oklab, var(--accent) 55%, transparent); stroke-width: 1.2; }
+.odontogram .tooth-body { transition: filter .2s; }
+.odontogram .tooth.tap:hover .tooth-body { filter: brightness(1.04) drop-shadow(0 2px 3px rgb(60 40 20 / .18)); }
+.odontogram .tooth.sel .tooth-body { filter: drop-shadow(0 0 4px color-mix(in oklab, var(--accent) 70%, transparent)); }
+.odontogram .tooth.fresh .tooth-body { animation: tooth-fresh 1.3s ease-out; }
+@keyframes tooth-fresh { 0%, 30% { filter: drop-shadow(0 0 7px color-mix(in oklab, var(--accent) 95%, transparent)); } 100% { filter: none; } }
+.odontogram .tooth { animation: tooth-in .5s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i) * 12ms); }
+@keyframes tooth-in { from { opacity: 0; } }
+.odontogram .surf.pickable, .tooth-portrait .surf.pickable { cursor: pointer; }
+.odontogram .surf.pickable:hover, .tooth-portrait .surf.pickable:hover { fill: color-mix(in oklab, var(--accent) 22%, transparent); }
+.odontogram .surf.on, .tooth-portrait .surf.on { fill: color-mix(in oklab, var(--accent) 45%, transparent); stroke: var(--accent); stroke-width: 1.2; }
+.odontogram .tooth-n { font-size: 9.5px; font-weight: 600; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.odontogram .tooth.sel .tooth-n { fill: var(--accent); font-weight: 800; }
+@media (prefers-reduced-motion: reduce) { .odontogram .tooth, .odontogram .tooth.fresh .tooth-body { animation: none; } }
+
+.legend { display: inline-flex; flex-wrap: wrap; gap: .8rem; font-size: .8rem; color: var(--fg-2); }
+.legend > span { display: inline-flex; align-items: center; gap: .35rem; }
+.legend i { width: .7rem; height: .7rem; border-radius: .2rem; }
+
+/* the studio: a stage for the mouth, and the inspector beside it */
+.studio { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; align-items: start; }
+@media (min-width: 1100px) { .studio { grid-template-columns: minmax(0, 1fr) 23rem; } .studio-side { position: sticky; top: 5.5rem; max-height: calc(100dvh - 6.5rem); overflow-y: auto; scrollbar-width: thin; border-radius: 1.3rem; } }
+.studio-stage { position: relative; padding: 1rem 1rem .8rem; border-radius: 1.5rem; border: 1px solid var(--line);
+  background: var(--surface); box-shadow: 0 1px 2px rgb(10 30 30 / .04); }
+.studio-bar { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; margin-bottom: .4rem; }
+.studio-readout { flex: 1; min-width: 12rem; display: flex; align-items: center; gap: .55rem; font-size: .92rem; font-weight: 550; }
+.studio-readout b { display: inline-grid; place-items: center; min-width: 2.1rem; height: 1.8rem; padding: 0 .45rem; border-radius: .6rem; background: var(--accent); color: var(--accent-ink); font-size: .85rem; }
+.studio-foot { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: .25rem; font-size: .75rem; font-weight: 600; color: var(--muted); direction: ltr; }
+.studio-dock { position: fixed; z-index: 28; inset-inline: .75rem; bottom: calc(5.1rem + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: .5rem; padding: .55rem .6rem .55rem .9rem;
+  border-radius: 1.2rem; background: var(--surface); border: 1px solid var(--line); box-shadow: 0 18px 40px -16px rgb(6 30 28 / .4); animation: c-pop .18s ease-out; font-size: .9rem; }
+.studio-dock b { color: var(--accent); }
+@media (min-width: 700px) { .studio-dock { bottom: 1rem; inset-inline-start: 6.6rem; inset-inline-end: 1.5rem; } }
+
+.inspector { display: grid; gap: 1rem; padding: 1rem; border-radius: 1.3rem; background: var(--surface); border: 1px solid var(--line); }
+.sheet .inspector { padding: 0; border: 0; background: none; }
+.sheet .insp-head { display: none; }
+.insp-head { display: flex; align-items: center; gap: .75rem; }
+.insp-num { display: inline-grid; place-items: center; min-width: 2.8rem; height: 2.8rem; padding: 0 .4rem; border-radius: .9rem; background: var(--accent); color: var(--accent-ink); font-weight: 800; font-size: 1.05rem; flex: none; }
+.insp-num.many { background: var(--fg); color: var(--surface); }
+.insp-num.sm { min-width: 2.2rem; height: 2.2rem; font-size: .85rem; border-radius: .7rem; background: var(--accent-soft); color: var(--accent); }
+.insp-chips { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .3rem; }
+.insp-chips .chip { padding: .15rem .55rem; font-size: .78rem; }
+.insp-figure { display: grid; justify-items: center; gap: .4rem; padding: .8rem; border-radius: 1.1rem;
+  background: radial-gradient(90% 80% at 50% 45%, color-mix(in oklab, var(--accent) 7%, var(--surface)), var(--sunken)); }
+.tooth-portrait { height: auto; display: block; filter: drop-shadow(0 10px 18px rgb(60 40 20 / .16)); }
+.insp-tip { display: flex; align-items: center; gap: .35rem; font-size: .8rem; color: var(--accent); font-weight: 600; }
+.insp-kinds { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .4rem; }
+.insp-kind { display: grid; justify-items: center; gap: .25rem; padding: .5rem .2rem .45rem; border-radius: .9rem; border: 1px solid var(--line); background: var(--surface); font-size: .7rem; font-weight: 600; line-height: 1.15; text-align: center; color: var(--fg-2); transition: border-color .15s, background-color .15s, transform .12s; }
+.insp-kind:hover { border-color: color-mix(in oklab, var(--accent) 45%, var(--line)); transform: translateY(-1px); }
+.insp-kind[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 14%, transparent); }
+.kind-glyph { width: 2rem; height: 3.1rem; overflow: visible; }
+.insp-row .seg { width: 100%; }
+.insp-dot { display: inline-block; width: .55rem; height: .55rem; border-radius: 999px; margin-inline-end: .35rem; vertical-align: middle; }
+.insp-actions { display: grid; gap: .5rem; }
+.insp-list { display: grid; gap: .45rem; }
+.insp-list li { display: flex; align-items: center; gap: .6rem; padding: .45rem .5rem; border-radius: .9rem; background: var(--sunken); font-size: .88rem; }
+.insp-mini { display: grid; place-items: center; width: 1.9rem; flex: none; }
+.insp-mini .kind-glyph { width: 1.25rem; height: 2rem; }
+.hist-kinds { display: flex; flex-wrap: wrap; gap: .25rem; margin-top: .2rem; }
+.hist-k { padding: .05rem .45rem; border-radius: 999px; font-size: .7rem; font-weight: 600; color: var(--k); background: color-mix(in oklab, var(--k) 11%, transparent); }
+@media (max-width: 699px) { .studio-stage { padding: .75rem .5rem .6rem; margin-inline: -.25rem; } }
+
+/* ---------- the chart in pencil: a dental study drawing (soft graphite volume, loose second lines, construction lines) ---------- */
+.odontogram, .tooth-portrait, .kind-glyph {
+  --ink: #57534E; --ink-2: #8A857E; --ink-3: #B5B1AA; --enamel: #FFFFFF; --dentin: #FBFAF8; --metal: #F1F2F3;
+  --gumline: #C49A9C; --gumwash: #F7ECEB; --paper: #FCFCFA;
+  --vol-1: #FFFFFF; --vol-2: #F6F5F2; --vol-3: #DAD6CF; --vol-4: #B7B2AA; --emb: #3E3B38; --hi: #FFFFFF;
+}
+/* paper grain: drawn once as a background image (no live filter on the interactive chart) */
+.odontogram, .tooth-portrait { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .34 0 0 0 0 .32 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E"); }
+.o-vol-1 { stop-color: var(--vol-1); } .o-vol-2 { stop-color: var(--vol-2); } .o-vol-3 { stop-color: var(--vol-3); } .o-vol-4 { stop-color: var(--vol-4); }
+.o-hi { stop-color: var(--hi); } .o-emb { stop-color: var(--emb); }
+.o-sketch { fill: none; stroke: var(--ink); stroke-width: .38; stroke-linejoin: round; stroke-linecap: round; opacity: .5; pointer-events: none; }
+.o-bghatch { stroke: var(--ink-3); stroke-width: .28; opacity: .55; }
+.o-guide { stroke: var(--ink-3); stroke-width: .35; opacity: .55; pointer-events: none; }
+@media (prefers-color-scheme: dark) {
+  .odontogram, .tooth-portrait, .kind-glyph {
+    --ink: #ECE6DA; --ink-2: #B3AB9D; --ink-3: #6D675E; --enamel: #1E2327; --dentin: #1B1F23; --metal: #2B3137;
+    --gumline: #D0939A; --gumwash: #3A2528; --paper: #16191C;
+    --vol-1: #3A4148; --vol-2: #2C3238; --vol-3: #22272C; --vol-4: #181C20; --emb: #000000; --hi: #6A737D;
+  }
+}
+.o-crown { fill: var(--enamel); stroke: var(--ink); stroke-width: .68; stroke-linejoin: round; stroke-linecap: round; }
+.o-root { fill: var(--dentin); stroke: var(--ink-2); stroke-width: .75; stroke-linejoin: round; }
+.o-root.back { stroke: var(--ink-3); stroke-width: .6; }
+.o-shade { pointer-events: none; }
+.o-hatch-line { stroke: var(--ink-2); stroke-width: .3; opacity: .8; }
+.o-detail { fill: none; stroke: var(--ink-3); stroke-width: .5; stroke-linecap: round; }
+.o-metal { fill: var(--metal); stroke: var(--ink-2); stroke-width: .6; }
+.o-thread { stroke: var(--ink-2); stroke-width: .55; }
+.o-planned { opacity: .6; }
+.o-ghost path, path.o-ghost { fill: none; stroke: var(--ink-3); stroke-width: .7; stroke-dasharray: 2.4 2; }
+.o-occ { fill: var(--enamel); stroke: var(--ink); stroke-width: .7; }
+.o-occ-in { fill: none; stroke: var(--ink-3); stroke-width: .45; pointer-events: none; }
+.o-fis { fill: none; stroke: var(--ink-2); stroke-width: .5; stroke-linecap: round; stroke-linejoin: round; }
+.o-ridge { fill: none; stroke: var(--ink-3); stroke-width: .45; stroke-linecap: round; }
+.o-pit { fill: var(--ink-2); }
+.gum { pointer-events: none; }
+.o-gumstop { stop-color: var(--gumwash); }
+.o-gumline { fill: none; stroke: var(--gumline); stroke-width: .6; stroke-linecap: round; opacity: .85; }
+/* the five surfaces: invisible on the drawing until the tooth is picked */
+.odontogram .surf, .tooth-portrait .surf, .kind-glyph .surf { stroke: transparent; stroke-width: .5; transition: fill .12s; }
+.odontogram .tooth.sel .surf, .tooth-portrait .surf { stroke: color-mix(in oklab, var(--accent) 40%, transparent); }
+.odontogram .surf.filled, .tooth-portrait .surf.filled { stroke: rgb(0 0 0 / .25); }
+.studio-stage { background: var(--paper, #FDFCF9); }
+@media (prefers-color-scheme: dark) { .studio-stage { background: #16191C; } }
+.tooth-portrait { filter: none !important; }
+
+/* the biting surface in relief: a shaded dome, lit cusps, shadowed pits, fissures cut in */
+.o-occ-s1 { stop-color: #FFFFFF; } .o-occ-s2 { stop-color: #F1F0EC; } .o-occ-s3 { stop-color: #C8C4BD; }
+.o-cusp-s { stop-color: #FFFFFF; }
+.o-pit-s { stop-color: #45423E; }
+.o-fis-lit { fill: none; stroke: rgb(255 255 255 / .85); stroke-width: .45; stroke-linecap: round; stroke-linejoin: round; }
+@media (prefers-color-scheme: dark) {
+  .o-occ-s1 { stop-color: #343B43; } .o-occ-s2 { stop-color: #252B31; } .o-occ-s3 { stop-color: #14181C; }
+  .o-cusp-s { stop-color: #4A535D; }
+  .o-pit-s { stop-color: #000000; }
+  .o-fis-lit { stroke: rgb(255 255 255 / .12); }
+}

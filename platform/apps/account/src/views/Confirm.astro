@@ -1,0 +1,48 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Mark from '../components/Mark.astro';
+import { STRINGS, type Lang } from '../lib/i18n';
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const s = STRINGS[lang].confirm;
+---
+<Layout lang={lang} title={s.title} page="confirm" auth>
+  <div class="pt-6 sm:pt-12">
+    <Mark class="h-10 w-auto text-fg lg:hidden" />
+    <h1 class="mt-8 text-[1.75rem] font-semibold tracking-tight">{s.title}</h1>
+    <p class="mt-2 muted">{s.sub}</p>
+    <div class="mt-8 space-y-3">
+      <button type="button" class="btn btn-primary btn-block" id="passkey" hidden>{s.passkey}</button>
+      <button type="button" class="btn btn-secondary btn-block" id="email" hidden></button>
+    </div>
+    <form id="code-form" class="mt-6 space-y-3" hidden>
+      <input class="input code-input" id="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" aria-label={STRINGS[lang].signIn.codeTitle} />
+      <button class="btn btn-primary btn-block" id="verify">{STRINGS[lang].signIn.verify}</button>
+    </form>
+    <p class="error-text mt-4" id="error" role="alert" hidden></p>
+    <button type="button" class="btn-ghost mt-8" id="cancel">{s.cancel}</button>
+  </div>
+</Layout>
+
+<script>
+  import { authClient, api, ba, busy, t, fill, page, returnTarget, passkeysSupported, $, type Me } from '../lib/client';
+
+  const err = (m: string) => { $('#error').textContent = m; $('#error').hidden = !m; };
+  const me = await api<Me>('/v1/me').catch(() => null);
+  if (!me) location.href = page('sign-in');
+  else if (!me.session.secondFactorPending) location.replace(returnTarget());
+  else {
+    const done = () => location.replace(returnTarget());
+    if (me.backup.passkeys > 0 && passkeysSupported()) $('#passkey').hidden = false;
+    if (me.user.email && me.backup.email) { $('#email').hidden = false; $('#email').textContent = fill(t.confirm.email, { email: me.user.email }); }
+    $('#passkey').addEventListener('click', () => busy($('#passkey') as HTMLButtonElement, async () => { await ba(authClient.signIn.passkey()); done(); }, err));
+    $('#email').addEventListener('click', () => busy($('#email') as HTMLButtonElement, async () => {
+      await ba(authClient.emailOtp.sendVerificationOtp({ email: me.user.email!, type: 'sign-in' }));
+      $('#code-form').hidden = false; ($('#otp') as HTMLInputElement).focus();
+    }, err));
+    $('#code-form').addEventListener('submit', (e) => { e.preventDefault(); busy($('#verify') as HTMLButtonElement, async () => {
+      await ba(authClient.signIn.emailOtp({ email: me.user.email!, otp: ($('#otp') as HTMLInputElement).value.trim() })); done();
+    }, err); });
+  }
+  $('#cancel').addEventListener('click', async () => { await authClient.signOut(); location.href = page('sign-in'); });
+</script>

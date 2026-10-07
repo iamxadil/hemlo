@@ -1,0 +1,144 @@
+---
+import Base from '../layouts/Base.astro';
+import Mark from '../components/Mark.astro';
+import { t, accountUrl, studioUrl, SYSTEM_URL, type Lang } from '../i18n/strings';
+interface Props { lang: Lang; }
+const { lang } = Astro.props;
+const s = t(lang).earlyAccess;
+const ar = lang === 'ar';
+const signIn = `${accountUrl(lang, 'sign-in')}?return_to=${encodeURIComponent(SYSTEM_URL)}`;
+// the first question: what does the visitor want? Each answer goes straight to the right place.
+const C = ar ? {
+  title: 'كيف تريد أن تبدأ؟', sub: 'اختر ما يشبهك. لا تحتاج حساباً لتجرّب.',
+  cards: [
+    { k: 'dental', t: 'عيادة أسنان', b: 'ابدأ الآن، مجاناً لثلاثين يوماً. تجهّزها بنفسك في دقائق، بلا انتظار.', go: [['ابدأ عيادتي مجاناً', `${SYSTEM_URL}?start=dental&lang=ar`, 1], ['جرّب عيادة جاهزة', `${SYSTEM_URL}?demo=dental&lang=ar`, 0]] },
+    { k: 'store', t: 'متجر أو ماركت', b: 'ابدأ الآن، مجاناً لثلاثين يوماً. تجهّزه بنفسك في دقائق، بلا انتظار.', go: [['ابدأ محلي مجاناً', `${SYSTEM_URL}?start=store&lang=ar`, 1], ['جرّب متجراً جاهزاً', `${SYSTEM_URL}?demo=1&lang=ar`, 0]] },
+    { k: 'gym', t: 'نادٍ رياضي', b: 'ابدأ الآن، مجاناً لثلاثين يوماً. اشتراكاتك وأوقاتك جاهزة، عدّلها كما تريد.', go: [['ابدأ ناديّ مجاناً', `${SYSTEM_URL}?start=gym&lang=ar`, 1], ['جرّب نادياً جاهزاً', `${SYSTEM_URL}?demo=gym&lang=ar`, 0]] },
+    { k: 'studio', t: 'موقع أو تطبيق', b: 'نبنيه لك ويكون ملكك. احسب السعر في دقيقة.', go: [['احسب السعر', studioUrl(lang), 1]] },
+    { k: 'other', t: 'مهنة أخرى', b: 'ورشة، صالون، مقهى، فندق… أخبرنا كيف يسير عملك ونبني إصدارها.', go: [['أخبرنا', '#apply', 1]] },
+  ],
+  apply: 'لمهنتك إن لم تكن هنا', have: 'لديك حساب؟', signIn: 'سجّل دخولك وافتح عملك',
+} : {
+  title: 'How would you like to start?', sub: 'Pick the one that sounds like you. You don’t need an account to try.',
+  cards: [
+    { k: 'dental', t: 'Dental clinic', b: 'Start now, free for 30 days. Set it up yourself in minutes, no waiting.', go: [['Start my clinic free', `${SYSTEM_URL}?start=dental&lang=en`, 1], ['Try a ready-made clinic', `${SYSTEM_URL}?demo=dental&lang=en`, 0]] },
+    { k: 'store', t: 'Shop or market', b: 'Start now, free for 30 days. Set it up yourself in minutes, no waiting.', go: [['Start my shop free', `${SYSTEM_URL}?start=store&lang=en`, 1], ['Try a ready-made shop', `${SYSTEM_URL}?demo=1&lang=en`, 0]] },
+    { k: 'gym', t: 'Gym', b: 'Start now, free for 30 days. Memberships and hours come ready; change them as you like.', go: [['Start my gym free', `${SYSTEM_URL}?start=gym&lang=en`, 1], ['Try a ready-made gym', `${SYSTEM_URL}?demo=gym&lang=en`, 0]] },
+    { k: 'studio', t: 'A website or app', b: 'We build it for you, and it’s yours. Work out the price in a minute.', go: [['Work out the price', studioUrl(lang), 1]] },
+    { k: 'other', t: 'Another trade', b: 'Workshop, salon, café, hotel… tell us how your work runs and we’ll build its edition.', go: [['Tell us', '#apply', 1]] },
+  ],
+  apply: 'For your trade, if it isn’t here yet', have: 'Have an account?', signIn: 'Sign in and open your workspace',
+};
+---
+<Base lang={lang} page="earlyAccess" title={t(lang).nav.earlyAccess} description={C.sub}>
+  <!-- first: what do you want? -->
+  <section class="wrap pt-12 sm:pt-20 pb-16">
+    <h1 class="text-display font-semibold tracking-tight rise">{C.title}</h1>
+    <p class="mt-4 text-lead text-fg-2 rise rise-2">{C.sub}</p>
+    <div class="mt-10 grid gap-3 sm:grid-cols-2 rise rise-3">
+      {C.cards.map((c) => (
+        <div class="start-card" data-kind={c.k}>
+          <h2 class="text-xl font-semibold tracking-tight">{c.t}</h2>
+          <p class="mt-2 leading-relaxed text-fg-2">{c.b}</p>
+          <div class="mt-5 flex flex-wrap gap-2">
+            {c.go.map(([label, url, main]) => <a class:list={['btn', main ? 'btn-primary' : 'btn-secondary', '!py-2.5 !px-4 text-[14px]']} href={url as string} data-apply={url === '#apply' ? c.k : undefined}>{label}</a>)}
+          </div>
+        </div>
+      ))}
+    </div>
+    <p class="mt-8 text-fg-2 rise rise-4">{C.have} <a class="link-arrow" href={signIn}>{C.signIn} <span class="arr">→</span></a></p>
+  </section>
+
+  <section class="wrap border-t border-line pt-16 sm:pt-20 pb-24 scroll-mt-16" id="apply">
+    <div class="grid items-start gap-12 lg:grid-cols-[1fr_minmax(0,30rem)] lg:gap-20">
+      <div class="lg:sticky lg:top-24">
+        <p class="eyebrow">{C.apply}</p>
+        <h2 class="mt-4 text-display font-semibold tracking-tight">{s.title}</h2>
+        <p class="mt-5 max-w-xl text-lead text-fg-2">{s.sub}</p>
+        <ul class="mt-10 space-y-6">
+          {s.points.map(([title, body]) => (
+            <li class="flex gap-4">
+              <Mark class="mt-1 h-5 w-auto shrink-0 text-brass" />
+              <div><p class="font-medium">{title}</p><p class="mt-1 text-fg-2">{body}</p></div>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div class="card p-6 sm:p-8">
+        <form id="ea-form" class="space-y-5" novalidate data-lang={lang}>
+          <div><label class="field-label" for="ea-name">{s.name}</label><input class="field" id="ea-name" name="name" autocomplete="name" required maxlength="80" /></div>
+          <div><label class="field-label" for="ea-phone">{s.phone}</label><input class="field" id="ea-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="0770 123 4567" dir="ltr" required /></div>
+          <div><label class="field-label" for="ea-business">{s.business}</label><input class="field" id="ea-business" name="business" autocomplete="organization" required maxlength="100" /></div>
+          <div class="grid gap-5 sm:grid-cols-2">
+            <div><label class="field-label" for="ea-kind">{s.kind}</label>
+              <select class="field" id="ea-kind" name="kind" required>
+                <option value="" disabled selected>{s.choose}</option>
+                {Object.entries(s.kinds).map(([v, l]) => <option value={v}>{l}</option>)}
+              </select></div>
+            <div><label class="field-label" for="ea-city">{s.city}</label>
+              <select class="field" id="ea-city" name="city">
+                <option value="">{s.choose}</option>
+                {s.cities.map((c) => <option value={c}>{c}</option>)}
+              </select></div>
+          </div>
+          <div><label class="field-label" for="ea-note">{s.note} <span class="font-normal text-muted">({s.optional})</span></label><textarea class="field min-h-[6rem]" id="ea-note" name="note" maxlength="500"></textarea></div>
+          <div class="hidden" aria-hidden="true"><label>Website<input name="website" tabindex="-1" autocomplete="off" /></label></div>
+          <p id="ea-error" class="text-[15px] text-[#B42331]" role="alert" hidden></p>
+          <button class="btn btn-primary w-full justify-center !py-3.5" id="ea-submit">{s.submit}</button>
+          <p class="text-center text-[13px] text-muted">{s.privacy}</p>
+        </form>
+        <div id="ea-done" class="py-10 text-center" hidden>
+          <Mark class="mx-auto h-12 w-auto text-brass" />
+          <h2 class="mt-6 text-title font-semibold">{s.doneTitle}</h2>
+          <p class="mt-3 text-fg-2" id="ea-done-body"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { API_URL, t } from '../i18n/strings';
+
+  function init() {
+    const form = document.getElementById('ea-form') as HTMLFormElement | null;
+    if (!form || form.dataset.ready) return;
+    form.dataset.ready = '1';
+    const lang = form.dataset.lang as 'ar' | 'en';
+    const s = t(lang).earlyAccess;
+    const err = document.getElementById('ea-error')!;
+    const btn = document.getElementById('ea-submit') as HTMLButtonElement;
+    const show = (m: string) => { err.textContent = m; err.hidden = !m; };
+    // arriving from a branch page (e.g. Systems → ?kind=store): the business type is already chosen
+    const kind = new URLSearchParams(location.search).get('kind');
+    const sel = document.getElementById('ea-kind') as HTMLSelectElement | null;
+    if (kind && sel && [...sel.options].some((o) => o.value === kind)) { sel.value = kind; document.getElementById('apply')?.scrollIntoView(); }
+    document.querySelectorAll<HTMLElement>('[data-apply]').forEach((a) => a.addEventListener('click', () => { if (sel && [...sel.options].some((o) => o.value === a.dataset.apply)) sel.value = a.dataset.apply!; setTimeout(() => (document.getElementById('ea-name') as HTMLInputElement | null)?.focus({ preventScroll: true }), 400); }));
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      show('');
+      const data = Object.fromEntries(new FormData(form)) as Record<string, string>;
+      if (!data.name?.trim() || !data.phone?.trim() || !data.business?.trim() || !data.kind) return show(s.errMissing);
+      btn.disabled = true;
+      try {
+        const res = await fetch(`${API_URL}/v1/early-access`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...data, locale: lang }) });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) return show(json.error === 'INVALID_PHONE' ? s.errPhone : json.error === 'MISSING_FIELDS' ? s.errMissing : res.status === 429 ? s.errMany : s.errGeneric);
+        form.hidden = true;
+        document.getElementById('ea-done-body')!.textContent = s.doneBody.replace('{name}', data.name.trim().split(/\s+/)[0]);
+        document.getElementById('ea-done')!.hidden = false;
+      } catch { show(s.errGeneric); }
+      finally { btn.disabled = false; }
+    });
+  }
+  document.addEventListener('astro:page-load', init);
+</script>
+
+<style>
+  .start-card { display: flex; flex-direction: column; padding: 1.5rem; border-radius: var(--radius-tile); border: 1px solid var(--line); background: var(--surface); }
+  .start-card > div { margin-top: auto; padding-top: 1.25rem; }
+  .start-card .btn { transition: transform .16s cubic-bezier(.23, 1, .32, 1); }
+  .start-card .btn:active { transform: scale(.97); }
+</style>

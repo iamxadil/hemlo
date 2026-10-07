@@ -1,0 +1,29 @@
+# dependencies and build output
+node_modules/
+dist/
+dist-offline/
+.astro/
+.wrangler/
+out/
+*.print.html
+
+# local data and secrets
+.data/
+.env
+.env.local
+.dev.vars*
+*.log
+
+# screenshots and local captures
+shots/
+
+# large originals kept on the working machine only
+apps/demo-store/photos-src/
+brand/_archive/
+
+# editor and OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.claude/settings.local.json

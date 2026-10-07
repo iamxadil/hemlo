@@ -1,0 +1,338 @@
+// The Dental edition's words (Arabic first, English, Kurdish in i18n-ckb.ts). Loaded only for clinics.
+import { useApp } from '../lib/app';
+import type { Lang } from '../lib/i18n';
+import { ckb } from './i18n-ckb';
+
+const ar = {
+  today: {
+    hello: 'أهلاً د. {name}', helloStaff: 'أهلاً {name}', appts: 'مواعيد اليوم', waiting: 'في الانتظار', inChair: 'على الكرسي', done: 'انتهى', noShow: 'لم يحضر',
+    collected: 'المقبوض اليوم', billed: 'أُنجز اليوم', outstanding: 'ديون المرضى', owing: '{n} مريض', newPatients: 'مرضى جدد اليوم',
+    labReady: 'أعمال مختبر جاهزة', labOverdue: 'متأخرة من المختبر', installments: 'أقساط مستحقة', recalls: 'مرضى حان فحصهم الدوري',
+    empty: 'لا مواعيد اليوم.', newAppt: 'موعد جديد', newPatient: 'مريض جديد', waitingScreen: 'شاشة الانتظار', startVisit: 'بدء الزيارة',
+  },
+  status: { booked: 'محجوز', confirmed: 'مؤكد', arrived: 'حضر', seated: 'على الكرسي', done: 'انتهى', no_show: 'لم يحضر', canceled: 'أُلغي' } as Record<string, string>,
+  schedule: {
+    day: 'يوم', week: 'أسبوع', todayBtn: 'اليوم', byChair: 'حسب الكرسي', byDentist: 'حسب الطبيب', closed: 'العيادة مغلقة هذا اليوم.', noChair: 'بدون كرسي',
+    new: 'موعد جديد', edit: 'الموعد', patient: 'المريض', findPatient: 'ابحث باسم المريض أو هاتفه أو رقم ملفه', addPatient: 'مريض جديد: {name}',
+    dentist: 'الطبيب', chair: 'الكرسي', any: 'أي', date: 'التاريخ', time: 'الوقت', minutes: 'المدة (دقيقة)', reason: 'السبب', note: 'ملاحظة', save: 'حفظ الموعد',
+    taken: 'هذا الوقت محجوز لنفس الكرسي أو الطبيب.', bookAnyway: 'احجز على أي حال', confirm: 'تأكيد', arrived: 'حضر', seat: 'إلى الكرسي', noShow: 'لم يحضر', cancel: 'إلغاء الموعد',
+    remind: 'تذكير واتساب', reminded: 'تم التذكير', openFile: 'ملف المريض', move: 'تغيير الوقت', saved: 'تم الحفظ',
+  },
+  patients: {
+    search: 'ابحث بالاسم أو الهاتف أو رقم الملف', new: 'مريض جديد', empty: 'لا مرضى بعد.', none: 'لا نتائج.', file: 'ملف', age: '{n} سنة', ageMonths: '{n} شهر',
+    last: 'آخر زيارة', next: 'الموعد القادم', balance: 'الرصيد', recalls: 'الفحص الدوري', recallsSub: 'حان فحصهم ولم يحجزوا بعد', installments: 'الأقساط',
+    name: 'الاسم الكامل', phone: 'الهاتف', gender: 'الجنس', f: 'أنثى', m: 'ذكر', birth: 'تاريخ الميلاد', address: 'العنوان', occupation: 'المهنة',
+    referral: 'كيف عرفتنا', referrals: ['إنستغرام', 'فيسبوك', 'تيك توك', 'قوقل', 'صديق أو قريب', 'مرّ من أمام العيادة', 'طبيب آخر'],
+    guardian: 'وليّ الأمر (للأطفال)', notes: 'ملاحظات', save: 'حفظ', saved: 'تم الحفظ', medical: 'التاريخ الطبي', created: 'تم فتح ملف المريض',
+  },
+  medical: {
+    title: 'التاريخ الطبي', hint: 'اسأل المريض عن كل بند. يظهر أي خطر باللون الأحمر في كل مكان.', none: 'لا ملاحظات طبية.',
+    diabetes: 'سكري', hypertension: 'ضغط الدم', heart: 'أمراض القلب', anticoagulants: 'مميّعات الدم (وارفارين، أسبرين…)', bleeding: 'اضطراب نزف',
+    asthma: 'ربو', epilepsy: 'صرع', hepatitis: 'التهاب الكبد', hiv: 'HIV', kidney: 'أمراض الكلى', thyroid: 'الغدة الدرقية', pregnant: 'حامل', breastfeeding: 'مرضعة',
+    smoker: 'مدخّن', bisphosphonates: 'أدوية العظام (بايفوسفونيت)', radiotherapy: 'علاج إشعاعي للرأس أو الرقبة', surgeryRecent: 'عملية جراحية حديثة',
+    allergies: 'الحساسية', penicillin: 'البنسلين', latex: 'اللاتكس', anesthetic: 'المخدّر الموضعي', nsaids: 'المسكّنات (بروفين…)', otherAllergy: 'حساسية أخرى',
+    medications: 'الأدوية الحالية', conditions: 'حالات أخرى', bloodType: 'فصيلة الدم',
+    alerts: {
+      allergy_penicillin: 'حساسية بنسلين', allergy_latex: 'حساسية لاتكس', allergy_anesthetic: 'حساسية مخدّر', allergy_nsaids: 'حساسية مسكّنات', allergy_other: 'حساسية',
+      anticoagulants: 'مميّعات دم', bleeding: 'نزف', heart: 'قلب', diabetes: 'سكري', hypertension: 'ضغط', pregnant: 'حامل', hepatitis: 'التهاب كبد', hiv: 'HIV',
+      epilepsy: 'صرع', asthma: 'ربو', kidney: 'كلى', bisphosphonates: 'بايفوسفونيت', radiotherapy: 'علاج إشعاعي',
+    } as Record<string, string>,
+  },
+  file: {
+    tabs: { overview: 'نظرة عامة', chart: 'المخطط', plans: 'خطط العلاج', visits: 'الزيارات', images: 'الأشعة والصور', rx: 'الوصفات', perio: 'اللثة', consents: 'الموافقات', account: 'الحساب', lab: 'المختبر' } as Record<string, string>,
+    call: 'اتصال', whatsapp: 'واتساب', book: 'حجز موعد', upcoming: 'المواعيد القادمة', noUpcoming: 'لا مواعيد قادمة.', edit: 'تعديل الملف', visits: 'الزيارات', plans: 'خطط مفتوحة',
+    timeline: 'السجل', access: 'من فتح الملف', print: 'طباعة الملف', noClinical: 'السجل السريري متاح للأطباء والمساعدين فقط.',
+  },
+  chart: {
+    adult: 'دائمية', child: 'لبنية', select: 'اختر سناً أو أكثر من المخطط، ثم ما وجدته.', selected: 'المحدد: {teeth}', clear: 'إلغاء التحديد',
+    surfaces: 'الأسطح', existing: 'موجود', planned: 'مخطط', done: 'أُنجز', add: 'إضافة', addPlan: 'إضافة إلى خطة علاج', legend: 'الألوان',
+    kinds: {
+      caries: 'تسوّس', filling: 'حشوة', crown: 'تاج', rct: 'حشوة عصب', missing: 'مفقود', implant: 'زرعة', bridge: 'جسر', veneer: 'فينير', sealant: 'سيلانت',
+      fracture: 'كسر', extraction: 'للقلع', pulpotomy: 'بتر لب', post: 'وتد', impacted: 'مطمور', mobility: 'متحرك', watch: 'للمتابعة',
+    } as Record<string, string>,
+    tooth: 'السن {n}', names: ['القاطع المركزي', 'القاطع الجانبي', 'الناب', 'الضاحك الأول', 'الضاحك الثاني', 'الطاحن الأول', 'الطاحن الثاني', 'ضرس العقل'],
+    primaryNames: ['القاطع المركزي اللبني', 'القاطع الجانبي اللبني', 'الناب اللبني', 'الطاحن الأول اللبني', 'الطاحن الثاني اللبني'], upper: 'العلوي', lower: 'السفلي', right: 'الأيمن', left: 'الأيسر',
+    nameFmt: '{name} {jaw} {side}', record: 'سجّل على السن', recordMany: 'سجّل على {n} أسنان', onTooth: 'على هذا السن', nothing: 'لا شيء مسجّل على هذا السن.', pickSurfaces: 'اضغط الأسطح على الصورة',
+    dragHint: 'اضغط سناً، أو اسحب فوق عدة أسنان لتحديدها معاً', teethN: '{n} أسنان', summary: 'موجود {e} · مخطط {p} · منجز {d}', patientRight: 'يمين المريض', patientLeft: 'يسار المريض', status: 'الحالة',
+    history: 'تاريخ المخطط', remove: 'إزالة', none: 'المخطط نظيف.', mark: 'تحديد كـ',
+  },
+  plans: {
+    new: 'خطة علاج جديدة', title: 'عنوان الخطة', optionOf: 'بديل لـ', options: 'خيارات للمريض', empty: 'لا خطط علاج بعد.', phase: 'المرحلة', item: 'الإجراء',
+    tooth: 'السن', price: 'السعر', total: 'الإجمالي', usdAt: '{usd}$ بسعر {rate}', discount: 'خصم', net: 'الصافي', accept: 'قبول الخطة', decline: 'رفض',
+    accepted: 'قُبلت الخطة', addItem: 'إضافة إجراء', pickProc: 'اختر الإجراء', quote: 'عرض سعر', sendQuote: 'إرسال العرض واتساب', printQuote: 'طباعة العرض',
+    installments: 'جدول الأقساط', months: 'عدد الأشهر', down: 'دفعة أولى', firstDue: 'أول استحقاق', makeSchedule: 'إنشاء الجدول', paid: 'مدفوع', markPaid: 'تسجيل كمدفوع',
+    kind: 'نوع الخطة', kinds: { general: 'علاج عام', ortho: 'تقويم', implant: 'زراعة' } as Record<string, string>,
+    status: { proposed: 'مقترحة', accepted: 'مقبولة', in_progress: 'قيد التنفيذ', completed: 'مكتملة', declined: 'مرفوضة' } as Record<string, string>,
+    doneN: '{done} من {count} منجز', save: 'حفظ الخطة', quoteText: 'عرض سعر من {clinic} لـ {name}:',
+  },
+  visit: {
+    new: 'زيارة جديدة', dentist: 'الطبيب', complaint: 'الشكوى', notes: 'الملاحظات السريرية', anesthesia: 'التخدير', templates: 'قوالب', fromPlan: 'من خطة العلاج',
+    add: 'إضافة إجراء', items: 'ما تم اليوم', noItems: 'لم يُضف إجراء (زيارة بدون أجر).', discount: 'خصم', total: 'الإجمالي', payNow: 'المدفوع الآن', method: 'طريقة الدفع',
+    onAccount: 'يُضاف على الحساب: {n}', save: 'حفظ الزيارة', saved: 'حُفظت الزيارة', receipt: 'الوصل', amend: 'إضافة تصحيح', amendHint: 'بعد يوم من الزيارة تُضاف التصحيحات أسفل الملاحظات ولا تُمحى.',
+    amendments: 'تصحيحات', noVisits: 'لا زيارات بعد.', surfaces: 'الأسطح', price: 'السعر', lab: 'كلفة المختبر', edit: 'تعديل',
+  },
+  tpl: [
+    ['حشوة عصب', 'فتح السن، تحديد الطول العامل، تنظيف وتوسيع القنوات، غسل بهيبوكلورايت، حشو القنوات بالكوتابيركا، حشوة مؤقتة.'],
+    ['قلع', 'تخدير موضعي، قلع السن بدون مضاعفات، ضغط بالشاش، تعليمات ما بعد القلع.'],
+    ['حشوة تجميلية', 'إزالة التسوس، عزل، حفر حمضي، بوند، حشوة كومبوزيت على طبقات، تشطيب وتلميع، فحص الإطباق.'],
+    ['تنظيف', 'إزالة الجير فوق وتحت اللثة، تلميع، تعليمات نظافة الفم.'],
+    ['زرعة', 'تخدير، شق، تحضير موقع الزرعة، وضع الزرعة، خياطة. ثبات أولي جيد.'],
+  ] as [string, string][],
+  rx: {
+    new: 'وصفة جديدة', drug: 'الدواء', dose: 'الجرعة', how: 'طريقة الاستعمال', days: 'الأيام', add: 'إضافة دواء', save: 'حفظ الوصفة', print: 'طباعة', whatsapp: 'واتساب',
+    common: 'أدوية شائعة', allergyWarn: 'تنبيه: المريض لديه حساسية من البنسلين!', empty: 'لا وصفات بعد.', patient: 'المريض', date: 'التاريخ', signature: 'التوقيع',
+    drugs: [
+      ['Amoxicillin 500mg', 'حبة كل 8 ساعات', 5], ['Amoxicillin + Clavulanic 1g', 'حبة كل 12 ساعة', 5], ['Metronidazole 500mg', 'حبة كل 8 ساعات', 5],
+      ['Clindamycin 300mg', 'كبسولة كل 8 ساعات', 5], ['Azithromycin 500mg', 'حبة يومياً', 3], ['Ibuprofen 400mg', 'حبة عند الألم بعد الأكل', 3],
+      ['Paracetamol 500mg', 'حبة أو حبتان عند الألم', 3], ['Chlorhexidine 0.12% mouthwash', 'مضمضة مرتين يومياً', 7],
+    ] as [string, string, number][],
+  },
+  perio: { new: 'فحص لثة جديد', pd: 'عمق الجيب (مم)', bop: 'نزف', mob: 'حركة', save: 'حفظ', empty: 'لا فحوص لثة بعد.', deep: 'جيوب ≥ 4 مم: {n}', bleeding: 'نزف: {p}%', upper: 'العلوي', lower: 'السفلي' },
+  images: {
+    upload: 'رفع أشعة أو صور', empty: 'لا أشعة أو صور بعد.', kind: 'النوع', teeth: 'الأسنان', note: 'ملاحظة', save: 'حفظ',
+    kinds: { periapical: 'أشعة سن', bitewing: 'أشعة جناحية', panoramic: 'بانوراما', cephalometric: 'سيفالومترك', cbct: 'CBCT', photo: 'صورة', document: 'مستند' } as Record<string, string>,
+    brightness: 'السطوع', contrast: 'التباين', invert: 'عكس الألوان', reset: 'إعادة', zoom: 'تكبير',
+  },
+  consents: {
+    new: 'موافقة جديدة', kind: 'نوع الموافقة', signHere: 'يوقّع المريض هنا', clear: 'مسح', name: 'اسم الموقّع', save: 'حفظ الموافقة', saved: 'حُفظت الموافقة', empty: 'لا موافقات موقّعة.', view: 'عرض',
+    kinds: { general: 'موافقة على العلاج', extraction: 'قلع', implant: 'زراعة', rct: 'حشوة عصب', whitening: 'تبييض', ortho: 'تقويم', anesthesia: 'تخدير' } as Record<string, string>,
+    text: {
+      general: 'أوافق على الفحص والعلاج الموضح لي من قبل الطبيب. شُرحت لي طبيعة العلاج وبدائله ومخاطره المحتملة، وأُتيحت لي الفرصة لطرح الأسئلة.',
+      extraction: 'أوافق على قلع السن/الأسنان المحددة. أفهم أن من المضاعفات المحتملة: الألم، التورم، النزف، التهاب السنخ الجاف، وفي حالات نادرة تنميل مؤقت أو دائم في الشفة أو اللسان.',
+      implant: 'أوافق على عملية زراعة الأسنان. شُرحت لي المراحل والمدة والكلفة، وأفهم أن نجاح الزرعة يعتمد على عظم الفك والصحة العامة ونظافة الفم، وأن التدخين يقلل نسبة النجاح.',
+      rct: 'أوافق على علاج عصب السن. أفهم أن العلاج قد يحتاج أكثر من جلسة، وأن السن قد يحتاج تاجاً بعد العلاج، وأن نسبة النجاح عالية لكنها ليست مضمونة.',
+      whitening: 'أوافق على تبييض الأسنان. أفهم أن النتيجة تختلف من شخص لآخر، وأن حساسية مؤقتة قد تحدث، وأن الحشوات والتيجان لا تتغير ألوانها.',
+      ortho: 'أوافق على علاج التقويم. أفهم أن مدة العلاج تقديرية، وأن الالتزام بالمواعيد ونظافة الفم ضروري، وأن المثبّت بعد العلاج ضروري للحفاظ على النتيجة.',
+      anesthesia: 'أوافق على استخدام التخدير الموضعي. أُبلغت بالآثار الجانبية المحتملة مثل التنميل المؤقت وتسارع ضربات القلب.',
+    } as Record<string, string>,
+  },
+  lab: {
+    title: 'أعمال المختبر', new: 'طلب مختبر جديد', open: 'المفتوحة', all: 'الكل', empty: 'لا أعمال مختبر.', work: 'العمل', teeth: 'الأسنان', shade: 'اللون', material: 'المادة',
+    lab: 'المختبر', newLab: 'مختبر جديد', due: 'موعد التسليم', cost: 'الكلفة', overdue: 'متأخر', save: 'إرسال', labName: 'اسم المختبر',
+    status: { sent: 'أُرسل', in_progress: 'قيد العمل', received: 'وصل', fitted: 'رُكّب', remake: 'إعادة', canceled: 'أُلغي' } as Record<string, string>,
+    next: { sent: 'وصل من المختبر', in_progress: 'وصل من المختبر', received: 'رُكّب للمريض', remake: 'وصل من المختبر' } as Record<string, string>,
+    works: ['تاج زيركون', 'تاج خزف على معدن', 'تاج إيماكس', 'جسر زيركون', 'فينير', 'طقم كامل', 'طقم جزئي', 'مثبّت تقويم', 'واقي ليلي'],
+  },
+  reports: {
+    period: 'الفترة', month: 'هذا الشهر', last: 'الشهر الماضي', d30: '30 يوماً', billed: 'الأعمال المنجزة', collected: 'المقبوض', visits: 'الزيارات', seen: 'مرضى رأيناهم',
+    newPatients: 'مرضى جدد', noShow: 'نسبة عدم الحضور', acceptance: 'قبول خطط العلاج', dentists: 'حصص الأطباء', dentist: 'الطبيب', share: 'الحصة', labCost: 'المختبر',
+    basis: { collected: 'من المقبوض', billed: 'من المنجز' } as Record<string, string>, procedures: 'الإجراءات', count: 'العدد', amount: 'المبلغ', referral: 'مصادر المرضى الجدد',
+    owed: 'ديون المرضى', statement: 'كشف', noDentist: 'بدون طبيب', print: 'طباعة',
+  },
+  clinic: {
+    tabs: { general: 'عام', hours: 'الدوام', chairs: 'الكراسي', dentists: 'الأطباء', prices: 'الأسعار' } as Record<string, string>,
+    usdRate: 'سعر الدولار (دينار لكل دولار)', usdHint: 'تُحسب الأسعار بالدولار بالدينار بهذا السعر عند الإنجاز.', slot: 'فترة الحجز (دقيقة)', recall: 'الفحص الدوري بعد (أشهر)',
+    reminder: 'نص تذكير واتساب', reminderHint: 'يمكنك استخدام: {name} {clinic} {date} {time} {dentist_line}', rxHeader: 'ترويسة الوصفة (الاسم، الاختصاص، رقم النقابة، الهاتف)',
+    days: ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'], closed: 'مغلق', open: 'مفتوح', from: 'من', to: 'إلى',
+    addChair: 'إضافة كرسي', chairName: 'اسم الكرسي', archive: 'إيقاف', restore: 'تفعيل', addDentist: 'إضافة طبيب', dentistName: 'الاسم', account: 'حسابه في العيادة', noAccount: 'بدون حساب (زائر)',
+    specialty: 'الاختصاص', color: 'اللون في الجدول', share: 'حصته (%)', shareHint: '0 للمالك أو الطبيب براتب. 30–50% شائع للأطباء بالنسبة.', basis: 'تُحسب من', labDeduct: 'تُخصم كلفة المختبر أولاً',
+    specialties: { general: 'عام', endo: 'علاج جذور', ortho: 'تقويم', perio: 'لثة', prostho: 'تعويضات', surgery: 'جراحة', pedo: 'أطفال', implant: 'زراعة', cosmetic: 'تجميل' } as Record<string, string>,
+    categories: { diagnostic: 'تشخيص', preventive: 'وقاية', restorative: 'حشوات', endo: 'جذور', surgery: 'جراحة', prostho: 'تعويضات', implant: 'زراعة', ortho: 'تقويم', perio: 'لثة', cosmetic: 'تجميل', pedo: 'أطفال', other: 'أخرى' } as Record<string, string>,
+    addProc: 'إضافة إجراء', procName: 'اسم الإجراء', category: 'الفئة', currency: 'العملة', price: 'السعر', minutes: 'المدة', active: 'مفعّل', scope: 'يُطبّق على', mark: 'يظهر في المخطط كـ',
+    scopes: { tooth: 'سن', surface: 'أسطح', arch: 'فك', mouth: 'الفم' } as Record<string, string>, saved: 'تم الحفظ', inactive: 'موقوف',
+  },
+  start: {
+    title: 'ابدأ عيادتك على هيملو', sub: '30 يوماً مجاناً، بكل المزايا. لا بطاقة ولا التزام.', name: 'اسم العيادة', city: 'المدينة', specialty: 'اختصاصك', chairs: 'عدد الكراسي',
+    go: 'ابدأ التجربة المجانية', used: 'استخدمت تجربتك المجانية من قبل. تواصل معنا لتفعيل عيادتك.', signIn: 'سجّل الدخول أولاً بحساب هيملو.',
+    namePh: 'عيادة د. {name}', cityPh: 'بغداد',
+  },
+  waiting: { title: 'قائمة الانتظار', now: 'على الكرسي الآن', next: 'في الانتظار', empty: 'لا أحد في الانتظار', welcome: 'أهلاً بكم',
+    chairs: 'على الكراسي', free: 'متاح', nextUp: 'التالي', youAreNext: 'دورك التالي', waitingN: '{n} في الانتظار', calling: 'يُرجى التوجّه إلى', with: 'مع {name}',
+    start: 'ملء الشاشة والصوت', startHint: 'انقر مرة واحدة لتُصدر الشاشة نغمة عند مناداة المريض.', sound: 'النغمة', voice: 'قراءة الأسماء', fullscreen: 'ملء الشاشة',
+    tip: 'لابتسامة صحية', reconnecting: 'جارٍ إعادة الاتصال…', reset: 'تم تغيير رابط هذه الشاشة. افتح شاشة الانتظار من جديد من هيملو.', signIn: 'افتح شاشة الانتظار من هيملو: المزيد ← شاشة الانتظار.', poweredBy: 'بواسطة',
+    tips: ['نظّف أسنانك مرتين يومياً، لدقيقتين كاملتين.', 'نظّف ما بين الأسنان كل يوم بالخيط أو بفرشاة صغيرة.', 'غيّر فرشاة أسنانك كل ثلاثة أشهر، أو قبل ذلك إذا تفرّقت شعيراتها.',
+      'شرب الماء بعد الأكل يساعد على إزالة السكر والأحماض.', 'المشروبات السكرية بين الوجبات هي السبب الأول لتسوّس الأسنان.', 'الفحص كل ستة أشهر يكشف المشاكل وهي صغيرة، وعلاجها أسهل وأرخص.',
+      'نزيف اللثة ليس أمراً طبيعياً، أخبر طبيبك.', 'يحتاج الأطفال إلى المساعدة في تنظيف أسنانهم حتى عمر ثماني سنوات تقريباً.'] },
+  shell: {
+    morning: 'صباح الخير', afternoon: 'مساء الخير', evening: 'مساء الخير', dr: 'د. {n}', greetFmt: '{greet} {name}',
+    search: 'ابحث عن مريض…', searchLong: 'ابحث بالاسم أو الهاتف أو رقم الملف', new: 'جديد', more: 'المزيد', newAppt: 'موعد جديد', newPatient: 'مريض جديد',
+    newVisit: 'زيارة جديدة', newLab: 'طلب مختبر', pickPatient: 'زيارة جديدة: لأي مريض؟', patients: 'المرضى', goTo: 'انتقل إلى', actions: 'إجراءات', recent: 'آخر المرضى',
+    none: 'لا نتائج لـ «{q}»', addAs: 'إضافة «{q}» كمريض جديد', waitingScreen: 'شاشة الانتظار', keys: '↑↓ للتنقل · Enter للفتح · Esc للإغلاق', clinic: 'العيادة', account: 'حسابي',
+  },
+  board: {
+    nextUp: 'التالي', startsIn: 'بعد {m}', noneNext: 'لا مواعيد أخرى اليوم', attention: 'يحتاج انتباهك', allClear: 'لا شيء يحتاج انتباهك', workDone: 'أُنجز اليوم',
+    coming: 'قادمون', waiting: 'في الانتظار', chairs: 'على الكراسي', done: 'انتهوا', free: 'فارغ', drop: 'أفلت هنا', dropChair: 'أفلت المريض هنا ليجلس', taken: '{chair} مشغول',
+    late: 'متأخر {m}', waitFor: 'ينتظر منذ {m}', inFor: 'منذ {m}', over: 'تجاوز الوقت {m}', arrived: 'حضر', seat: 'إلى الكرسي', pickChair: 'أي كرسي؟', visit: 'الزيارة', finish: 'انتهى',
+    confirm: 'تأكيد الموعد', remind: 'تذكير واتساب', noShow: 'لم يحضر', edit: 'تعديل الموعد', open: 'فتح الملف', back: 'إرجاع خطوة', emptyComing: 'لا أحد قادم', emptyWaiting: 'لا أحد ينتظر',
+    emptyDone: 'لم ينتهِ أحد بعد', noChair: 'بدون كرسي', hint: 'اسحب البطاقة إلى مرحلة أو كرسي، أو استخدم الزر.', summary: '{n} مريض اليوم · {done} انتهى', min: '{n} د', hr: '{h} س {m} د',
+    quiet: 'لا مواعيد اليوم. يوم هادئ!', now: 'الآن', owe: 'ديون المرضى', collected: 'المقبوض اليوم', newP: 'مرضى جدد', actions: 'خيارات',
+  },
+  common: { save: 'حفظ', cancel: 'إلغاء', close: 'إغلاق', edit: 'تعديل', delete: 'حذف', add: 'إضافة', search: 'بحث', none: '—', all: 'الكل', optional: 'اختياري', usd: 'دولار', iqd: 'دينار', yes: 'نعم', no: 'لا', more: 'المزيد', back: 'رجوع' },
+  errors: {
+    SLOT_TAKEN: 'هذا الوقت محجوز لنفس الكرسي أو الطبيب.', BAD_TOOTH: 'رقم سن غير صحيح.', PATIENT_NOT_FOUND: 'المريض غير موجود.', TRIAL_USED: 'استخدمت التجربة المجانية من قبل.',
+    ALREADY_DONE: 'هذا الإجراء منجز من قبل.', ALREADY_A_DENTIST: 'هذا الحساب مسجّل كطبيب من قبل.', ALREADY_BILLED: 'سُجّلت كلفة هذا العمل على المختبر.', CONSENT_IS_KEPT: 'الموافقة الموقّعة سجل دائم ولا تُحذف.',
+    BAD_PERIO: 'قراءات اللثة غير صحيحة.', EMPTY_PLAN: 'أضف إجراءً واحداً على الأقل.', EMPTY_RX: 'أضف دواءً واحداً على الأقل.',
+  } as Record<string, string>,
+};
+
+const en: typeof ar = {
+  today: {
+    hello: 'Hello Dr {name}', helloStaff: 'Hello {name}', appts: 'Today’s appointments', waiting: 'Waiting', inChair: 'In the chair', done: 'Done', noShow: 'No-show',
+    collected: 'Collected today', billed: 'Work done today', outstanding: 'Patients owe', owing: '{n} patients', newPatients: 'New patients today',
+    labReady: 'Lab work ready', labOverdue: 'Late from the lab', installments: 'Instalments due', recalls: 'Due for a check-up',
+    empty: 'No appointments today.', newAppt: 'New appointment', newPatient: 'New patient', waitingScreen: 'Waiting-room screen', startVisit: 'Start visit',
+  },
+  status: { booked: 'Booked', confirmed: 'Confirmed', arrived: 'Arrived', seated: 'In the chair', done: 'Done', no_show: 'No-show', canceled: 'Canceled' },
+  schedule: {
+    day: 'Day', week: 'Week', todayBtn: 'Today', byChair: 'By chair', byDentist: 'By dentist', closed: 'The clinic is closed this day.', noChair: 'No chair',
+    new: 'New appointment', edit: 'Appointment', patient: 'Patient', findPatient: 'Search a patient by name, phone or file number', addPatient: 'New patient: {name}',
+    dentist: 'Dentist', chair: 'Chair', any: 'Any', date: 'Date', time: 'Time', minutes: 'Length (minutes)', reason: 'Reason', note: 'Note', save: 'Save appointment',
+    taken: 'That time is taken for the same chair or dentist.', bookAnyway: 'Book anyway', confirm: 'Confirm', arrived: 'Arrived', seat: 'To the chair', noShow: 'No-show', cancel: 'Cancel appointment',
+    remind: 'WhatsApp reminder', reminded: 'Reminded', openFile: 'Patient file', move: 'Change time', saved: 'Saved',
+  },
+  patients: {
+    search: 'Search by name, phone or file number', new: 'New patient', empty: 'No patients yet.', none: 'No matches.', file: 'File', age: '{n} y', ageMonths: '{n} mo',
+    last: 'Last visit', next: 'Next appointment', balance: 'Balance', recalls: 'Check-ups', recallsSub: 'Due for a check-up and not booked yet', installments: 'Instalments',
+    name: 'Full name', phone: 'Phone', gender: 'Sex', f: 'Female', m: 'Male', birth: 'Date of birth', address: 'Address', occupation: 'Occupation',
+    referral: 'How they found us', referrals: ['Instagram', 'Facebook', 'TikTok', 'Google', 'Friend or family', 'Walked past', 'Another doctor'],
+    guardian: 'Guardian (children)', notes: 'Notes', save: 'Save', saved: 'Saved', medical: 'Medical history', created: 'Patient file opened',
+  },
+  medical: {
+    title: 'Medical history', hint: 'Ask the patient about each item. Anything risky shows in red everywhere.', none: 'No medical notes.',
+    diabetes: 'Diabetes', hypertension: 'High blood pressure', heart: 'Heart disease', anticoagulants: 'Blood thinners (warfarin, aspirin…)', bleeding: 'Bleeding disorder',
+    asthma: 'Asthma', epilepsy: 'Epilepsy', hepatitis: 'Hepatitis', hiv: 'HIV', kidney: 'Kidney disease', thyroid: 'Thyroid', pregnant: 'Pregnant', breastfeeding: 'Breastfeeding',
+    smoker: 'Smoker', bisphosphonates: 'Bone drugs (bisphosphonates)', radiotherapy: 'Head or neck radiotherapy', surgeryRecent: 'Recent surgery',
+    allergies: 'Allergies', penicillin: 'Penicillin', latex: 'Latex', anesthetic: 'Local anaesthetic', nsaids: 'Painkillers (ibuprofen…)', otherAllergy: 'Other allergy',
+    medications: 'Current medications', conditions: 'Other conditions', bloodType: 'Blood type',
+    alerts: {
+      allergy_penicillin: 'Penicillin allergy', allergy_latex: 'Latex allergy', allergy_anesthetic: 'Anaesthetic allergy', allergy_nsaids: 'NSAID allergy', allergy_other: 'Allergy',
+      anticoagulants: 'Blood thinners', bleeding: 'Bleeding', heart: 'Heart', diabetes: 'Diabetes', hypertension: 'Blood pressure', pregnant: 'Pregnant', hepatitis: 'Hepatitis', hiv: 'HIV',
+      epilepsy: 'Epilepsy', asthma: 'Asthma', kidney: 'Kidney', bisphosphonates: 'Bisphosphonates', radiotherapy: 'Radiotherapy',
+    },
+  },
+  file: {
+    tabs: { overview: 'Overview', chart: 'Chart', plans: 'Treatment plans', visits: 'Visits', images: 'X-rays & photos', rx: 'Prescriptions', perio: 'Gums', consents: 'Consents', account: 'Account', lab: 'Lab' },
+    call: 'Call', whatsapp: 'WhatsApp', book: 'Book', upcoming: 'Upcoming', noUpcoming: 'Nothing booked.', edit: 'Edit file', visits: 'Visits', plans: 'Open plans',
+    timeline: 'History', access: 'Who opened this file', print: 'Print file', noClinical: 'The clinical record is for dentists and assistants only.',
+  },
+  chart: {
+    adult: 'Permanent', child: 'Primary', select: 'Pick one or more teeth on the chart, then what you found.', selected: 'Selected: {teeth}', clear: 'Clear',
+    surfaces: 'Surfaces', existing: 'Existing', planned: 'Planned', done: 'Done', add: 'Add', addPlan: 'Add to a treatment plan', legend: 'Colours',
+    kinds: {
+      caries: 'Caries', filling: 'Filling', crown: 'Crown', rct: 'Root canal', missing: 'Missing', implant: 'Implant', bridge: 'Bridge', veneer: 'Veneer', sealant: 'Sealant',
+      fracture: 'Fracture', extraction: 'To extract', pulpotomy: 'Pulpotomy', post: 'Post', impacted: 'Impacted', mobility: 'Mobile', watch: 'Watch',
+    },
+    tooth: 'Tooth {n}', names: ['central incisor', 'lateral incisor', 'canine', 'first premolar', 'second premolar', 'first molar', 'second molar', 'wisdom tooth'],
+    primaryNames: ['primary central incisor', 'primary lateral incisor', 'primary canine', 'primary first molar', 'primary second molar'], upper: 'Upper', lower: 'Lower', right: 'right', left: 'left',
+    nameFmt: '{jaw} {side} {name}', record: 'Record on this tooth', recordMany: 'Record on {n} teeth', onTooth: 'On this tooth', nothing: 'Nothing recorded on this tooth.', pickSurfaces: 'Tap the surfaces on the picture',
+    dragHint: 'Tap a tooth, or drag across several to pick them together', teethN: '{n} teeth', summary: 'Existing {e} · Planned {p} · Done {d}', patientRight: 'Patient’s right', patientLeft: 'Patient’s left', status: 'Status',
+    history: 'Chart history', remove: 'Remove', none: 'Nothing charted.', mark: 'Mark as',
+  },
+  plans: {
+    new: 'New treatment plan', title: 'Plan title', optionOf: 'An option for', options: 'Options for the patient', empty: 'No treatment plans yet.', phase: 'Phase', item: 'Procedure',
+    tooth: 'Tooth', price: 'Price', total: 'Total', usdAt: '${usd} at {rate}', discount: 'Discount', net: 'Net', accept: 'Accept plan', decline: 'Decline',
+    accepted: 'Plan accepted', addItem: 'Add procedure', pickProc: 'Pick a procedure', quote: 'Quote', sendQuote: 'Send quote on WhatsApp', printQuote: 'Print quote',
+    installments: 'Payment schedule', months: 'Months', down: 'First payment', firstDue: 'First due', makeSchedule: 'Make schedule', paid: 'Paid', markPaid: 'Mark paid',
+    kind: 'Plan type', kinds: { general: 'General', ortho: 'Braces', implant: 'Implants' },
+    status: { proposed: 'Proposed', accepted: 'Accepted', in_progress: 'In progress', completed: 'Completed', declined: 'Declined' },
+    doneN: '{done} of {count} done', save: 'Save plan', quoteText: 'Quote from {clinic} for {name}:',
+  },
+  visit: {
+    new: 'New visit', dentist: 'Dentist', complaint: 'Complaint', notes: 'Clinical notes', anesthesia: 'Anaesthesia', templates: 'Templates', fromPlan: 'From the treatment plan',
+    add: 'Add procedure', items: 'Done today', noItems: 'Nothing added (a visit with no charge).', discount: 'Discount', total: 'Total', payNow: 'Paid now', method: 'Paid by',
+    onAccount: 'On their account: {n}', save: 'Save visit', saved: 'Visit saved', receipt: 'Receipt', amend: 'Add a correction', amendHint: 'After a day, corrections are added below the notes, never erased.',
+    amendments: 'Corrections', noVisits: 'No visits yet.', surfaces: 'Surfaces', price: 'Price', lab: 'Lab cost', edit: 'Edit',
+  },
+  tpl: [
+    ['Root canal', 'Access opened, working length determined, canals cleaned and shaped, irrigated with NaOCl, obturated with gutta-percha, temporary filling.'],
+    ['Extraction', 'Local anaesthesia, tooth extracted without complications, gauze pressure, post-extraction instructions given.'],
+    ['Composite filling', 'Caries removed, isolation, etch, bond, layered composite, finished and polished, occlusion checked.'],
+    ['Cleaning', 'Supra- and subgingival scaling, polishing, oral hygiene instructions.'],
+    ['Implant', 'Anaesthesia, incision, osteotomy, implant placed, sutured. Good primary stability.'],
+  ],
+  rx: {
+    new: 'New prescription', drug: 'Drug', dose: 'Dose', how: 'How to take', days: 'Days', add: 'Add drug', save: 'Save prescription', print: 'Print', whatsapp: 'WhatsApp',
+    common: 'Common', allergyWarn: 'Warning: this patient is allergic to penicillin!', empty: 'No prescriptions yet.', patient: 'Patient', date: 'Date', signature: 'Signature',
+    drugs: [
+      ['Amoxicillin 500mg', '1 tablet every 8 hours', 5], ['Amoxicillin + Clavulanic 1g', '1 tablet every 12 hours', 5], ['Metronidazole 500mg', '1 tablet every 8 hours', 5],
+      ['Clindamycin 300mg', '1 capsule every 8 hours', 5], ['Azithromycin 500mg', '1 tablet daily', 3], ['Ibuprofen 400mg', '1 tablet for pain, after food', 3],
+      ['Paracetamol 500mg', '1–2 tablets for pain', 3], ['Chlorhexidine 0.12% mouthwash', 'Rinse twice a day', 7],
+    ],
+  },
+  perio: { new: 'New gum chart', pd: 'Pocket depth (mm)', bop: 'Bleeding', mob: 'Mobility', save: 'Save', empty: 'No gum charts yet.', deep: 'Pockets ≥ 4 mm: {n}', bleeding: 'Bleeding: {p}%', upper: 'Upper', lower: 'Lower' },
+  images: {
+    upload: 'Upload X-rays or photos', empty: 'No X-rays or photos yet.', kind: 'Type', teeth: 'Teeth', note: 'Note', save: 'Save',
+    kinds: { periapical: 'Periapical', bitewing: 'Bitewing', panoramic: 'Panoramic', cephalometric: 'Cephalometric', cbct: 'CBCT', photo: 'Photo', document: 'Document' },
+    brightness: 'Brightness', contrast: 'Contrast', invert: 'Invert', reset: 'Reset', zoom: 'Zoom',
+  },
+  consents: {
+    new: 'New consent', kind: 'Consent for', signHere: 'The patient signs here', clear: 'Clear', name: 'Signed by', save: 'Save consent', saved: 'Consent saved', empty: 'No signed consents.', view: 'View',
+    kinds: { general: 'Treatment', extraction: 'Extraction', implant: 'Implant surgery', rct: 'Root canal', whitening: 'Whitening', ortho: 'Braces', anesthesia: 'Anaesthesia' },
+    text: {
+      general: 'I consent to the examination and treatment explained to me by the dentist. The nature of the treatment, its alternatives and possible risks were explained, and I was able to ask questions.',
+      extraction: 'I consent to the extraction of the tooth/teeth named. I understand possible complications include pain, swelling, bleeding, dry socket, and rarely temporary or permanent numbness of the lip or tongue.',
+      implant: 'I consent to dental implant surgery. The stages, time and cost were explained. I understand success depends on the jawbone, general health and oral hygiene, and that smoking lowers the success rate.',
+      rct: 'I consent to root canal treatment. I understand it may take more than one visit, the tooth may need a crown afterwards, and that success rates are high but not guaranteed.',
+      whitening: 'I consent to teeth whitening. I understand results vary, temporary sensitivity may occur, and fillings and crowns do not change colour.',
+      ortho: 'I consent to orthodontic treatment. I understand the length is an estimate, keeping appointments and oral hygiene is essential, and a retainer is needed afterwards to keep the result.',
+      anesthesia: 'I consent to local anaesthesia. I was told of possible side effects such as temporary numbness and a faster heartbeat.',
+    },
+  },
+  lab: {
+    title: 'Lab work', new: 'New lab order', open: 'Open', all: 'All', empty: 'No lab work.', work: 'Work', teeth: 'Teeth', shade: 'Shade', material: 'Material',
+    lab: 'Lab', newLab: 'New lab', due: 'Due', cost: 'Cost', overdue: 'Late', save: 'Send', labName: 'Lab name',
+    status: { sent: 'Sent', in_progress: 'In progress', received: 'Arrived', fitted: 'Fitted', remake: 'Remake', canceled: 'Canceled' },
+    next: { sent: 'Arrived from the lab', in_progress: 'Arrived from the lab', received: 'Fitted to the patient', remake: 'Arrived from the lab' },
+    works: ['Zirconia crown', 'PFM crown', 'E-max crown', 'Zirconia bridge', 'Veneer', 'Complete denture', 'Partial denture', 'Retainer', 'Night guard'],
+  },
+  reports: {
+    period: 'Period', month: 'This month', last: 'Last month', d30: '30 days', billed: 'Work done', collected: 'Collected', visits: 'Visits', seen: 'Patients seen',
+    newPatients: 'New patients', noShow: 'No-show rate', acceptance: 'Plans accepted', dentists: 'Dentists’ shares', dentist: 'Dentist', share: 'Share', labCost: 'Lab',
+    basis: { collected: 'of collected', billed: 'of work done' }, procedures: 'Procedures', count: 'Count', amount: 'Amount', referral: 'Where new patients came from',
+    owed: 'Patients owe', statement: 'Statement', noDentist: 'No dentist', print: 'Print',
+  },
+  clinic: {
+    tabs: { general: 'General', hours: 'Hours', chairs: 'Chairs', dentists: 'Dentists', prices: 'Prices' },
+    usdRate: 'Dollar rate (IQD per USD)', usdHint: 'Dollar prices are charged in dinars at this rate on the day.', slot: 'Booking step (minutes)', recall: 'Check-up after (months)',
+    reminder: 'WhatsApp reminder text', reminderHint: 'You can use: {name} {clinic} {date} {time} {dentist_line}', rxHeader: 'Prescription header (name, specialty, syndicate no., phone)',
+    days: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], closed: 'Closed', open: 'Open', from: 'From', to: 'To',
+    addChair: 'Add chair', chairName: 'Chair name', archive: 'Stop using', restore: 'Use again', addDentist: 'Add dentist', dentistName: 'Name', account: 'Their account here', noAccount: 'No account (visiting)',
+    specialty: 'Specialty', color: 'Colour on the schedule', share: 'Their share (%)', shareHint: '0 for the owner or a salaried dentist. 30–50% is common for associates.', basis: 'Worked out from', labDeduct: 'Lab costs come off first',
+    specialties: { general: 'General', endo: 'Endodontics', ortho: 'Orthodontics', perio: 'Periodontics', prostho: 'Prosthodontics', surgery: 'Oral surgery', pedo: 'Paediatric', implant: 'Implants', cosmetic: 'Cosmetic' },
+    categories: { diagnostic: 'Diagnostic', preventive: 'Preventive', restorative: 'Fillings', endo: 'Endodontics', surgery: 'Surgery', prostho: 'Prosthodontics', implant: 'Implants', ortho: 'Orthodontics', perio: 'Gums', cosmetic: 'Cosmetic', pedo: 'Children', other: 'Other' },
+    addProc: 'Add procedure', procName: 'Procedure name', category: 'Category', currency: 'Currency', price: 'Price', minutes: 'Minutes', active: 'In use', scope: 'Applies to', mark: 'Shows on the chart as',
+    scopes: { tooth: 'Tooth', surface: 'Surfaces', arch: 'Arch', mouth: 'Whole mouth' }, saved: 'Saved', inactive: 'Not in use',
+  },
+  start: {
+    title: 'Start your clinic on Hemlo', sub: '30 days free, with everything. No card, no commitment.', name: 'Clinic name', city: 'City', specialty: 'Your specialty', chairs: 'Chairs',
+    go: 'Start my free trial', used: 'You’ve already used your free trial. Contact us to activate your clinic.', signIn: 'Sign in with your Hemlo account first.',
+    namePh: 'Dr {name}’s clinic', cityPh: 'Baghdad',
+  },
+  waiting: { title: 'Waiting list', now: 'In the chair now', next: 'Waiting', empty: 'No one is waiting', welcome: 'Welcome',
+    chairs: 'In the chairs', free: 'Free', nextUp: 'Next', youAreNext: 'You’re next', waitingN: '{n} waiting', calling: 'Please go to', with: 'with {name}',
+    start: 'Full screen and sound', startHint: 'Click once so this screen can chime when a patient is called.', sound: 'Chime', voice: 'Read names aloud', fullscreen: 'Full screen',
+    tip: 'For a healthy smile', reconnecting: 'Reconnecting…', reset: 'This screen’s link was reset. Open the waiting-room screen again from Hemlo.', signIn: 'Open the waiting-room screen from Hemlo: More → Waiting-room screen.', poweredBy: 'Powered by',
+    tips: ['Brush twice a day, for two full minutes.', 'Clean between your teeth every day, with floss or a small brush.', 'Change your toothbrush every three months, or sooner if the bristles splay.',
+      'A drink of water after meals helps wash sugar and acid away.', 'Sugary drinks between meals are the main cause of cavities.', 'A check-up every six months catches problems while they’re small and cheaper to fix.',
+      'Bleeding gums aren’t normal. Tell your dentist.', 'Children need help brushing until about the age of eight.'] },
+  shell: {
+    morning: 'Good morning', afternoon: 'Good afternoon', evening: 'Good evening', dr: 'Dr {n}', greetFmt: '{greet}, {name}',
+    search: 'Find a patient…', searchLong: 'Search by name, phone or file number', new: 'New', more: 'More', newAppt: 'New appointment', newPatient: 'New patient',
+    newVisit: 'New visit', newLab: 'Lab order', pickPatient: 'New visit: for which patient?', patients: 'Patients', goTo: 'Go to', actions: 'Actions', recent: 'Recent patients',
+    none: 'Nothing found for “{q}”', addAs: 'Add “{q}” as a new patient', waitingScreen: 'Waiting-room screen', keys: '↑↓ to move · Enter to open · Esc to close', clinic: 'Clinic', account: 'My account',
+  },
+  board: {
+    nextUp: 'Next up', startsIn: 'in {m}', noneNext: 'No more appointments today', attention: 'Needs you', allClear: 'All clear', workDone: 'Work done',
+    coming: 'Coming', waiting: 'Waiting', chairs: 'In the chairs', done: 'Done', free: 'Free', drop: 'Drop here', dropChair: 'Drop a patient here to seat them', taken: '{chair} is taken',
+    late: 'Late {m}', waitFor: 'Waiting {m}', inFor: '{m}', over: 'Over by {m}', arrived: 'Arrived', seat: 'Seat', pickChair: 'Which chair?', visit: 'Visit', finish: 'Done',
+    confirm: 'Confirm', remind: 'WhatsApp reminder', noShow: 'No-show', edit: 'Edit appointment', open: 'Open file', back: 'Step back', emptyComing: 'No one coming', emptyWaiting: 'No one waiting',
+    emptyDone: 'No one finished yet', noChair: 'No chair', hint: 'Drag a card to a stage or a chair, or use its button.', summary: '{n} patients today · {done} done', min: '{n} min', hr: '{h}h {m}m',
+    quiet: 'No appointments today. A quiet day!', now: 'Now', owe: 'Patients owe', collected: 'Collected today', newP: 'New patients', actions: 'Options',
+  },
+  common: { save: 'Save', cancel: 'Cancel', close: 'Close', edit: 'Edit', delete: 'Delete', add: 'Add', search: 'Search', none: '—', all: 'All', optional: 'optional', usd: 'USD', iqd: 'IQD', yes: 'Yes', no: 'No', more: 'More', back: 'Back' },
+  errors: {
+    SLOT_TAKEN: 'That time is taken for the same chair or dentist.', BAD_TOOTH: 'That isn’t a tooth number.', PATIENT_NOT_FOUND: 'Patient not found.', TRIAL_USED: 'You’ve already used your free trial.',
+    ALREADY_DONE: 'That procedure is already done.', ALREADY_A_DENTIST: 'That account is already a dentist here.', ALREADY_BILLED: 'This work’s cost is already on the lab’s account.', CONSENT_IS_KEPT: 'A signed consent is a permanent record and can’t be deleted.',
+    BAD_PERIO: 'Those gum readings aren’t valid.', EMPTY_PLAN: 'Add at least one procedure.', EMPTY_RX: 'Add at least one drug.',
+  },
+};
+
+export type DStrings = typeof ar;
+export const DSTRINGS: Record<Lang, DStrings> = { ar, en, ckb };
+/** The dental words in the app's language, and an error message that knows the dental codes. */
+export function useD() {
+  const app = useApp();
+  const d = DSTRINGS[app.lang];
+  const err = (e: any) => (e?.code && d.errors[e.code]) || app.errorText(e);
+  return { ...app, d, err };
+}

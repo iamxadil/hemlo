@@ -1,0 +1,1222 @@
+<title>Solvra Brand Book</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Kufi+Arabic:wght@500;600;700&family=Noto+Sans+Arabic:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ink:#0E1420; --ink-700:#2B3445; --slate:#5E6776; --slate-400:#8A919C;
+  --stone-50:#F7F7F4; --stone-100:#EFEFEA; --stone-200:#E2E2DB; --stone-300:#CBCBC2;
+  --brass:#B38B3A; --brass-700:#8A6A22; --brass-300:#D7B46A;
+  --success:#1F7A4D; --warning:#B8520A; --danger:#B42331; --info:#2F5DA8;
+
+  --bg:#FAFAF8; --surface:#F1F1EC; --raised:#FFFFFF; --line:#E2E2DB; --line-strong:#CBCBC2;
+  --text:#0E1420; --muted:#5E6776; --accent:#B38B3A; --accent-text:#8A6A22;
+  --mark-a:#0E1420; --mark-b:#0E1420; --invert-bg:#0E1420; --invert-text:#F4F4F0;
+  --code-bg:#EFEFEA;
+
+  --f-display:"Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --f-ar-display:"Noto Kufi Arabic", "Segoe UI", Tahoma, sans-serif;
+  --f-ar:"Noto Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0C111A; --surface:#131A26; --raised:#1A2230; --line:#283243; --line-strong:#3A4557;
+    --text:#E9EAE6; --muted:#A3ABB8; --accent:#D7B46A; --accent-text:#D7B46A;
+    --mark-a:#E9EAE6; --mark-b:#E9EAE6; --invert-bg:#E9EAE6; --invert-text:#0E1420;
+    --code-bg:#131A26;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0C111A; --surface:#131A26; --raised:#1A2230; --line:#283243; --line-strong:#3A4557;
+  --text:#E9EAE6; --muted:#A3ABB8; --accent:#D7B46A; --accent-text:#D7B46A;
+  --mark-a:#E9EAE6; --mark-b:#E9EAE6; --invert-bg:#E9EAE6; --invert-text:#0E1420;
+  --code-bg:#131A26;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--f-body);font-size:16px;line-height:1.6;padding-inline:20px;padding-block:0 64px}
+h1,h2,h3,h4{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-0.015em}
+p{margin:0}
+a{color:var(--accent-text)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ar{font-family:var(--f-ar);direction:rtl;line-height:1.8;letter-spacing:0}
+.ar-d{font-family:var(--f-ar-display);direction:rtl;letter-spacing:0}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.label{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+.layout{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:220px minmax(0,1fr);gap:56px}
+nav.index{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;max-height:calc(100vh - 48px);overflow:auto;padding-block:28px 12px;font-size:13px}
+nav.index ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+nav.index a{display:flex;gap:10px;color:var(--muted);text-decoration:none;padding:3px 6px;border-radius:4px}
+nav.index a:hover{color:var(--text);background:var(--surface)}
+nav.index a span:first-child{font-family:var(--f-mono);font-size:11px;min-width:18px;padding-top:2px}
+main{min-width:0}
+@media (max-width:900px){.layout{grid-template-columns:1fr;gap:0} nav.index{display:none}}
+
+.hero{padding-block:56px 48px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:40px;align-items:center}
+@media (max-width:760px){.hero{grid-template-columns:1fr}}
+.hero h1{font-size:clamp(40px,6vw,68px);line-height:1.02;font-weight:700}
+.hero .sub{margin-top:18px;font-size:19px;max-width:34em;color:var(--muted)}
+.hero .ar-line{margin-top:20px;font-family:var(--f-ar-display);font-size:24px;font-weight:600;direction:rtl;text-align:right}
+.hero-mark{background:var(--surface);border-radius:20px;padding:36px;display:flex;flex-direction:column;align-items:center;gap:20px}
+.hero-mark svg{width:min(240px,60vw);height:auto}
+.slide-a{animation:fitA 1.1s cubic-bezier(.2,0,0,1) .3s both}
+.slide-b{animation:fitB 1.1s cubic-bezier(.2,0,0,1) .3s both}
+@keyframes fitA{from{transform:translateX(-3.5px)}to{transform:none}}
+@keyframes fitB{from{transform:translateX(3.5px)}to{transform:none}}
+@media (prefers-reduced-motion:reduce){.slide-a,.slide-b{animation:none}}
+
+section.s{padding-block:64px 8px;scroll-margin-top:16px}
+.s-head{display:grid;gap:8px;margin-bottom:28px;max-width:46em}
+.s-head .num{font-family:var(--f-mono);font-size:13px;color:var(--accent-text)}
+.s-head h2{font-size:clamp(28px,3.4vw,38px);line-height:1.1;font-weight:700}
+.s-head p{color:var(--muted);font-size:17px}
+h3{font-size:20px;font-weight:600;margin-bottom:10px}
+h4{font-size:15px;font-weight:600;margin-bottom:6px;letter-spacing:0}
+.prose{max-width:44em;display:grid;gap:14px}
+.stack{display:grid;gap:28px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+@media (max-width:760px){.grid2,.grid3{grid-template-columns:1fr}}
+.panel{background:var(--raised);border:1px solid var(--line);border-radius:12px;padding:22px}
+.plate{background:var(--surface);border-radius:12px;padding:22px}
+.statement{font-family:var(--f-display);font-size:clamp(22px,2.6vw,30px);line-height:1.25;font-weight:600;max-width:28em;text-wrap:balance}
+.kv{display:grid;grid-template-columns:180px minmax(0,1fr);gap:10px 20px;font-size:15px}
+.kv dt{color:var(--muted);font-weight:500}
+.kv dd{margin:0}
+@media (max-width:600px){.kv{grid-template-columns:1fr;gap:2px 0}.kv dd{margin-bottom:10px}}
+ul.clean{margin:0;padding-left:1.1em;display:grid;gap:6px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--raised)}
+table{border-collapse:collapse;width:100%;font-size:14.5px;min-width:560px}
+th,td{text-align:left;padding:11px 14px;vertical-align:top;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:none}
+th{font-family:var(--f-mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--surface)}
+td.pick{font-weight:600}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;border:1px solid currentColor;white-space:nowrap}
+.chip.ok{color:var(--success)} .chip.no{color:var(--danger)} .chip.mid{color:var(--warning)}
+.chosen{color:var(--accent-text);font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+
+/* logo */
+.lock{display:inline-flex;align-items:center;gap:.42em;color:var(--text)}
+.lock svg{width:1.05em;height:1.05em;flex:none}
+.wm{font-family:var(--f-display);font-weight:600;letter-spacing:-0.02em;line-height:1}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:760px){.tiles{grid-template-columns:1fr}}
+.tile{border-radius:12px;padding:30px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;min-height:170px;border:1px solid var(--line)}
+.tile .cap{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;opacity:.75}
+.t-light{background:#FFFFFF;color:#0E1420;--mark-a:#0E1420;--mark-b:#0E1420}
+.t-stone{background:#EFEFEA;color:#0E1420;--mark-a:#0E1420;--mark-b:#B38B3A}
+.t-dark{background:#0E1420;color:#F4F4F0;--mark-a:#F4F4F0;--mark-b:#F4F4F0;border-color:#0E1420}
+.t-dark2{background:#0E1420;color:#F4F4F0;--mark-a:#F4F4F0;--mark-b:#D7B46A;border-color:#0E1420}
+.t-brass{background:#B38B3A;color:#0E1420;--mark-a:#0E1420;--mark-b:#0E1420;border-color:#B38B3A}
+.t-prod{background:#FFFFFF;color:#0E1420;--mark-a:#0E1420;--mark-b:#3B5BC4}
+
+.concepts{display:grid;gap:18px}
+.concept{display:grid;grid-template-columns:150px minmax(0,1fr);gap:22px;background:var(--raised);border:1px solid var(--line);border-radius:12px;padding:22px}
+.concept.rec{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.concept .art{background:var(--surface);border-radius:10px;display:flex;align-items:center;justify-content:center;aspect-ratio:1;max-width:100%}
+.concept .art svg{width:70%;height:auto;color:var(--text)}
+.concept dl{display:grid;grid-template-columns:130px minmax(0,1fr);gap:6px 16px;font-size:14px;margin:12px 0 0}
+.concept dt{color:var(--muted)}
+.concept dd{margin:0}
+@media (max-width:640px){.concept{grid-template-columns:1fr}.concept .art{max-width:160px}.concept dl{grid-template-columns:1fr;gap:0}.concept dd{margin-bottom:8px}}
+
+/* color */
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+.sw{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--raised)}
+.sw .chipc{height:84px}
+.sw .meta{padding:10px 12px;display:grid;gap:2px;font-size:13px}
+.sw .meta b{font-family:var(--f-display);font-size:14px}
+.sw .meta .mono{font-size:12px;color:var(--muted)}
+.dir{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:22px;align-items:start}
+@media (max-width:760px){.dir{grid-template-columns:1fr}}
+.strip{display:flex;height:64px;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.strip div{flex:1}
+.strip div.w2{flex:2.4}
+
+/* type */
+.spec-row{display:grid;grid-template-columns:170px minmax(0,1fr);gap:20px;padding:16px 0;border-bottom:1px solid var(--line);align-items:baseline}
+.spec-row:last-child{border-bottom:none}
+@media (max-width:640px){.spec-row{grid-template-columns:1fr;gap:4px}}
+
+/* applications */
+.apps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+@media (max-width:760px){.apps{grid-template-columns:1fr}}
+.card-biz{aspect-ratio:85/55;max-width:100%;border-radius:8px;padding:18px 20px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 1px 2px rgba(14,20,32,.08),0 8px 24px rgba(14,20,32,.08)}
+.card-front{background:#FFFFFF;color:#0E1420;--mark-a:#0E1420;--mark-b:#B38B3A}
+.card-back{background:#0E1420;color:#F4F4F0;--mark-a:#F4F4F0;--mark-b:#D7B46A}
+.doc{background:#FFFFFF;color:#0E1420;border-radius:6px;padding:22px;font-size:12px;box-shadow:0 1px 2px rgba(14,20,32,.08),0 8px 24px rgba(14,20,32,.08);--mark-a:#0E1420;--mark-b:#B38B3A}
+.doc table{min-width:0;font-size:11.5px}
+.doc th{background:#F1F1EC;color:#5E6776}
+.doc td,.doc th{padding:6px 8px;border-color:#E2E2DB}
+.sticker{width:100%;max-width:320px;aspect-ratio:3/2;border-radius:10px;background:#FFFFFF;color:#0E1420;border:1px solid #CBCBC2;display:grid;grid-template-columns:auto 1fr;gap:14px;padding:14px;--mark-a:#0E1420;--mark-b:#B38B3A}
+.icons-row{display:flex;flex-wrap:wrap;gap:22px;align-items:end}
+.appicon{border-radius:22%;background:#0E1420;display:flex;align-items:center;justify-content:center;--mark-a:#F4F4F0;--mark-b:#D7B46A}
+.appicon.light{background:#F1F1EC;--mark-a:#0E1420;--mark-b:#B38B3A}
+.dash{background:#FFFFFF;color:#0E1420;border-radius:10px;border:1px solid #E2E2DB;overflow:hidden;display:grid;grid-template-columns:130px minmax(0,1fr);font-size:12.5px;--mark-a:#0E1420;--mark-b:#3B5BC4}
+.dash .side{background:#F7F7F4;border-inline-end:1px solid #E2E2DB;padding:14px;display:grid;gap:8px;align-content:start}
+.dash .mainc{padding:14px;min-width:0;overflow-x:auto}
+.dash table{min-width:420px;font-size:12px}
+.dash th{background:#F7F7F4;color:#5E6776}
+.dash td,.dash th{padding:7px 9px;border-color:#EFEFEA}
+.stat{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.st-ok{background:#E3F1EA;color:#1F7A4D}.st-warn{background:#F8E9DC;color:#9A4508}.st-bad{background:#F6E1E3;color:#B42331}.st-info{background:#E3EAF6;color:#2F5DA8}
+.social{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:760px){.social{grid-template-columns:1fr}}
+.post{aspect-ratio:1;max-width:100%;border-radius:10px;padding:18px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+.photo-slot{background:repeating-linear-gradient(135deg,#2B3445 0 10px,#27303F 10px 20px);color:#D8DCE3}
+
+pre.code{background:var(--code-bg);border:1px solid var(--line);border-radius:12px;padding:18px;overflow-x:auto;font-family:var(--f-mono);font-size:12.5px;line-height:1.65;margin:0}
+.copy{font-family:var(--f-mono);font-size:12px;background:var(--raised);color:var(--text);border:1px solid var(--line-strong);border-radius:6px;padding:5px 10px;cursor:pointer}
+.copy:hover{border-color:var(--text)}
+.final{background:var(--invert-bg);color:var(--invert-text);border-radius:18px;padding:36px;margin-top:72px;display:grid;gap:22px}
+.final .kv dt{color:inherit;opacity:.65}
+.final h2{font-size:clamp(28px,3.6vw,40px)}
+.final .lock{color:inherit}
+.final{--mark-a:currentColor;--mark-b:var(--brass-300)}
+:root[data-theme="dark"] .final{--mark-b:var(--brass-700)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .final{--mark-b:var(--brass-700)}}
+.foot{margin-top:40px;font-size:13px;color:var(--muted)}
+@media print{@page{size:A4;margin:14mm}nav.index{display:none}.layout{display:block}body{padding-inline:0}.panel,.plate,.tile,.concept,.sw,.dir,tr,.card-biz,.doc,.dash,.post{break-inside:avoid}section.s{padding-block:28px 0}.hero{padding-block:10px 28px}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style>
+
+<!-- The Seal (v3): circle r=12 on a 24 grid. One continuous seam, width 1.6:
+     straight runs at y 6, 12, 18 joined by two semicircular turns of radius 3 (reaching x 6 and x 18).
+     Piece B = piece A rotated 180°. Small cut (<=24px): seam width 2.2. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <clipPath id="sq"><rect width="24" height="24" rx="5"/></clipPath>
+    <clipPath id="circ"><circle cx="12" cy="12" r="12"/></clipPath>
+    <clipPath id="peb"><rect width="24" height="24" rx="8.5"/></clipPath>
+    <mask id="seamcut" maskUnits="userSpaceOnUse" x="-2" y="-2" width="28" height="28">
+      <rect x="-2" y="-2" width="28" height="28" fill="#fff"/>
+      <path d="M25 6H9A3 3 0 0 0 9 12H15A3 3 0 0 1 15 18H-1" fill="none" stroke="#000" stroke-width="1.6"/>
+    </mask>
+    <symbol id="mk" viewBox="0 0 24 24">
+      <g mask="url(#seamcut)"><g clip-path="url(#circ)">
+        <path d="M25 6H9A3 3 0 0 0 9 12H15A3 3 0 0 1 15 18H-1L-1 -1L25 -1Z" style="fill:var(--mark-a,currentColor)"/>
+        <path d="M25 6H9A3 3 0 0 0 9 12H15A3 3 0 0 1 15 18H-1L-1 25L25 25Z" style="fill:var(--mark-b,currentColor)"/>
+      </g></g>
+    </symbol>
+    <symbol id="mk-peb" viewBox="0 0 24 24">
+      <g mask="url(#seamcut)"><g clip-path="url(#peb)">
+        <path d="M25 6H9A3 3 0 0 0 9 12H15A3 3 0 0 1 15 18H-1L-1 -1L25 -1Z" style="fill:var(--mark-a,currentColor)"/>
+        <path d="M25 6H9A3 3 0 0 0 9 12H15A3 3 0 0 1 15 18H-1L-1 25L25 25Z" style="fill:var(--mark-b,currentColor)"/>
+      </g></g>
+    </symbol>
+    <symbol id="mk-v1" viewBox="0 0 24 24">
+      <g clip-path="url(#sq)">
+        <polygon points="0,0 24,0 24,4.5 4.5,4.5 4.5,13 17.5,13 17.5,17.5 0,17.5" style="fill:var(--mark-a,currentColor)"/>
+        <polygon points="24,24 0,24 0,19.5 19.5,19.5 19.5,11 6.5,11 6.5,6.5 24,6.5" style="fill:var(--mark-b,currentColor)"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="layout">
+<nav class="index" aria-label="Sections">
+  <ol>
+    <li><a href="#s01"><span>01</span><span>Brand Essence</span></a></li>
+    <li><a href="#s02"><span>02</span><span>Positioning</span></a></li>
+    <li><a href="#s03"><span>03</span><span>Mission &amp; Vision</span></a></li>
+    <li><a href="#s04"><span>04</span><span>Audience</span></a></li>
+    <li><a href="#s05"><span>05</span><span>Personality</span></a></li>
+    <li><a href="#s06"><span>06</span><span>Brand Principles</span></a></li>
+    <li><a href="#s07"><span>07</span><span>Brand Story</span></a></li>
+    <li><a href="#s08"><span>08</span><span>Naming Architecture</span></a></li>
+    <li><a href="#s09"><span>09</span><span>Tagline Exploration</span></a></li>
+    <li><a href="#s10"><span>10</span><span>Voice &amp; Tone</span></a></li>
+    <li><a href="#s11"><span>11</span><span>Logo Concepts</span></a></li>
+    <li><a href="#s12"><span>12</span><span>Recommended Logo</span></a></li>
+    <li><a href="#s13"><span>13</span><span>Color Exploration</span></a></li>
+    <li><a href="#s14"><span>14</span><span>Final Color System</span></a></li>
+    <li><a href="#s15"><span>15</span><span>Typography</span></a></li>
+    <li><a href="#s16"><span>16</span><span>Arabic Identity</span></a></li>
+    <li><a href="#s17"><span>17</span><span>Iconography</span></a></li>
+    <li><a href="#s18"><span>18</span><span>Imagery</span></a></li>
+    <li><a href="#s19"><span>19</span><span>Motion</span></a></li>
+    <li><a href="#s20"><span>20</span><span>Product Branding</span></a></li>
+    <li><a href="#s21"><span>21</span><span>Website Direction</span></a></li>
+    <li><a href="#s22"><span>22</span><span>Homepage Concept</span></a></li>
+    <li><a href="#s23"><span>23</span><span>Social Media</span></a></li>
+    <li><a href="#s24"><span>24</span><span>Applications</span></a></li>
+    <li><a href="#s25"><span>25</span><span>Design Tokens</span></a></li>
+    <li><a href="#s26"><span>26</span><span>Guidelines</span></a></li>
+    <li><a href="#s27"><span>27</span><span>Competitive Inspiration</span></a></li>
+    <li><a href="#s28"><span>28</span><span>Distinctive</span></a></li>
+    <li><a href="#s29"><span>29</span><span>Never Become</span></a></li>
+    <li><a href="#s30"><span>30</span><span>Five-Year Evolution</span></a></li>
+    <li><a href="#final"><span>→</span><span>Final Direction</span></a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero">
+  <div>
+    <p class="label">Solvra Brand Strategy · v3 · September 2026</p>
+    <h1 style="margin-top:14px">Elegantly solved.</h1>
+    <p class="sub">Solvra is an Iraq-first software company that builds small, focused products for the everyday work of businesses. We study the work first. Then we build the simplest thing that fits it.</p>
+    <p class="hero-ar ar-line" lang="ar">حلولٌ بإتقان.</p>
+  </div>
+  <div class="hero-mark" role="img" aria-label="The Solvra Seal: a round mark made of two identical interlocking pieces, with a rounded S-shaped seam between them">
+    <svg viewBox="0 0 24 24" style="--mark-a:var(--text);--mark-b:var(--accent)">
+      <g class="slide-a"><g mask="url(#seamcut)"><g clip-path="url(#circ)"><path d="M25 6H9A3 3 0 0 0 9 12H15A3 3 0 0 1 15 18H-1L-1 -1L25 -1Z" style="fill:var(--mark-a)"/></g></g></g>
+      <g class="slide-b"><g mask="url(#seamcut)"><g clip-path="url(#circ)"><path d="M25 6H9A3 3 0 0 0 9 12H15A3 3 0 0 1 15 18H-1L-1 25L25 25Z" style="fill:var(--mark-b)"/></g></g></g>
+    </svg>
+    <div style="display:flex;gap:18px;align-items:baseline;flex-wrap:wrap;justify-content:center">
+      <span class="wm" style="font-size:38px">Solvra</span>
+      <span class="ar-d" lang="ar" style="font-size:30px;font-weight:700">سولفرا</span>
+    </div>
+    <p class="label" style="text-align:center">The Seal: two pieces that fit, in one round mark</p>
+  </div>
+</header>
+
+<!-- 01 -->
+<section class="s" id="s01">
+  <div class="s-head"><span class="num">01</span><h2>Brand Essence</h2><p>The one idea everything else answers to.</p></div>
+  <div class="stack">
+    <div class="grid2">
+      <div class="plate"><p class="label">Central brand idea</p><p class="statement" style="margin-top:10px">Understand the work, then make it simple.</p></div>
+      <div class="plate"><p class="label">Brand essence</p><p class="statement" style="margin-top:10px">Earns its place.</p><p class="muted" style="margin-top:8px">Every product, screen, feature and sentence has to justify being in someone's working day. If it doesn't, it goes.</p></div>
+    </div>
+    <div>
+      <h3>Choosing the conceptual territory</h3>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Territory</th><th>What it gets right</th><th>Why it isn't the core</th><th>Verdict</th></tr></thead>
+        <tbody>
+          <tr><td>A. Solve complexity</td><td>Echoes the name</td><td>Leans on a pun, and every software company claims it</td><td><span class="chip no">Reject</span></td></tr>
+          <tr><td>B. Make work simpler</td><td>True to the product</td><td>Generic. Better as a principle than as the idea</td><td><span class="chip mid">Principle</span></td></tr>
+          <tr><td>C. Software for real life</td><td>Grounded</td><td>"Real life" is vague. Stronger as the photography direction</td><td><span class="chip mid">Imagery</span></td></tr>
+          <tr><td>D. Practical technology for Iraq</td><td>Honest origin</td><td>Makes Iraq a ceiling instead of a starting point</td><td><span class="chip mid">Proof point</span></td></tr>
+          <tr><td>E. Turn friction into flow</td><td>Easy to animate</td><td>Motion-graphics cliché; says nothing specific</td><td><span class="chip no">Reject</span></td></tr>
+          <tr><td>F. Build what businesses actually need</td><td>Customer-first</td><td>Implies everyone else doesn't, which is combative and hard to prove</td><td><span class="chip mid">Internal value</span></td></tr>
+          <tr><td class="pick">G. From problem to product</td><td class="pick">Describes the method <em>and</em> the portfolio model: one studied problem, one focused product</td><td>Needs a sharper expression for customers, which is "earns its place"</td><td><span class="chip ok">Core</span></td></tr>
+          <tr><td>H. The software layer for everyday business</td><td>Big ambition</td><td>Platform language five years too early; claims infrastructure that doesn't exist yet</td><td><span class="chip no">Later</span></td></tr>
+        </tbody>
+      </table></div>
+      <p class="muted" style="margin-top:12px;max-width:44em">G wins because it is true on day one and still true with ten products. It turns Solvra's actual behaviour (research first, focused scope) into the brand, so the brand can't drift away from how the company works.</p>
+    </div>
+    <div class="grid2">
+      <div class="panel"><h4>Positioning statement</h4><p>For Iraqi businesses whose daily work runs on WhatsApp, notebooks and spreadsheets, Solvra builds focused software products, each designed around one job we have studied inside real workplaces. Unlike general ERPs and imported tools, a Solvra product does its one job completely, fits how Iraqi businesses actually operate, and has to prove its value in daily use.</p></div>
+      <div class="panel"><h4>Manifesto</h4><div class="prose" style="gap:8px">
+        <p>Most work in Iraq already has a system. It's a notebook, a WhatsApp group, a stamp and a person who remembers everything.</p>
+        <p>We don't pretend that system is broken. We study it, find the parts that cost people time or money, and build software only for those parts.</p>
+        <p>Small products. Real problems. Plain words. Software that works when the signal drops and the day gets busy.</p>
+        <p>If it doesn't earn its place, we don't ship it.</p></div></div>
+    </div>
+    <div class="panel"><dl class="kv">
+      <dt>Company description</dt><dd>Solvra is an Iraqi software company that builds focused products for the everyday operations of businesses.</dd>
+      <dt>Elevator pitch</dt><dd>A lot of Iraqi businesses run on WhatsApp, paper and memory, and it mostly works until money or time starts slipping through the gaps. Solvra studies those gaps one industry at a time and builds small, focused software for them. Each product does one job properly, works in Arabic, in dinars, on a phone, with patchy internet, and it only stays in our lineup if people keep using it.</dd>
+      <dt>Website hero</dt><dd><strong>Elegantly solved.</strong> Software that earns its place: focused tools for the everyday work of Iraqi businesses, built after we've watched the work being done.</dd>
+    </dl></div>
+  </div>
+</section>
+
+<!-- 02 -->
+<section class="s" id="s02">
+  <div class="s-head"><span class="num">02</span><h2>Positioning</h2><p>Practical claims only. Everything here should be defensible in a conversation with a sceptical shop owner.</p></div>
+  <div class="panel"><dl class="kv">
+    <dt>Purpose</dt><dd>Turn the repeated, error-prone parts of everyday work into software simple enough to use every day.</dd>
+    <dt>Promise</dt><dd>Each Solvra product does one job completely, and does it the way your business actually works.</dd>
+    <dt>Values</dt><dd><strong>Understand first</strong> (no code before we've seen the work) · <strong>One job, done completely</strong> · <strong>Plain words</strong> · <strong>Built for real conditions</strong> (weak signal, cash, Arabic, paper) · <strong>Earn trust slowly</strong> (no promises we can't keep)</dd>
+    <dt>Differentiation</dt><dd>Not a generic ERP with 40 modules and not a translated foreign tool. Solvra is a portfolio of narrow products, each built from field research in Iraqi workplaces, sharing one account, one design language and one support standard.</dd>
+    <dt>Target audience</dt><dd>Owners and operators of Iraqi small and medium businesses, plus the accountants, technicians and staff who do the daily work.</dd>
+    <dt>Functional benefit</dt><dd>Fewer lost records, fewer phone calls asking for status, faster reports and a clear view of money and work.</dd>
+    <dt>Emotional benefit</dt><dd>The owner feels in control without becoming a software administrator. Staff feel the tool is on their side.</dd>
+    <dt>Reason to believe</dt><dd>Verifiable from day one: every product starts with published field research, has a narrow scope, and handles Iraqi specifics (IQD, landmark addresses, Arabic and Kurdish, WhatsApp delivery, offline use). Customer proof is added only as it is earned.</dd>
+  </dl></div>
+</section>
+
+<!-- 03 -->
+<section class="s" id="s03">
+  <div class="s-head"><span class="num">03</span><h2>Mission &amp; Vision</h2></div>
+  <div class="grid2">
+    <div class="plate"><p class="label">Mission</p><p class="statement" style="margin-top:10px;font-size:24px">Build focused software for the everyday work of Iraqi businesses, one real problem at a time.</p></div>
+    <div class="plate"><p class="label">Vision</p><p class="statement" style="margin-top:10px;font-size:24px">A family of products that businesses across Iraq rely on daily, where "by Solvra" means the software was built by people who understood the work.</p></div>
+  </div>
+</section>
+
+<!-- 04 -->
+<section class="s" id="s04">
+  <div class="s-head"><span class="num">04</span><h2>Audience</h2><p>Who each group is, and what they need to believe before they'll use a Solvra product.</p></div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Audience</th><th>What they are like</th><th>What they need to hear</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Owners of small and medium businesses</strong> (primary)</td><td>Busy, sceptical of software, burned by systems nobody used, decides fast once trust exists</td><td>"This does one thing you already do, faster, and your staff will actually use it."</td></tr>
+      <tr><td><strong>Operators and staff</strong> (primary): accountants, technicians, admins, cashiers</td><td>Mobile-first, low tolerance for complex screens, judged on mistakes</td><td>"Less typing, fewer mistakes, proof you did your job."</td></tr>
+      <tr><td><strong>Growing companies (20–100 people)</strong></td><td>Have outgrown WhatsApp but don't want a heavy ERP</td><td>"Structure without a six-month implementation."</td></tr>
+      <tr><td><strong>Developers and tech professionals</strong> (secondary)</td><td>Judge by craft, stack and honesty</td><td>"Real engineering on real problems, written up openly."</td></tr>
+      <tr><td><strong>Partners, future hires, investors</strong> (secondary)</td><td>Want to know if this is serious and lasting</td><td>"A method, a portfolio logic and products with real users."</td></tr>
+      <tr><td><strong>Consumers</strong> (future)</td><td>Meet Solvra through a receipt link, a QR sticker or a status page</td><td>"This business is organised, and I can trust this link."</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 05 -->
+<section class="s" id="s05">
+  <div class="s-head"><span class="num">05</span><h2>Personality</h2></div>
+  <div class="stack">
+    <div class="grid3">
+      <div class="panel"><h4>Grounded</h4><p class="muted">Starts from what people really do, not from what software can do.</p></div>
+      <div class="panel"><h4>Precise</h4><p class="muted">Exact numbers, exact words, exact alignment. Details are respect.</p></div>
+      <div class="panel"><h4>Calm</h4><p class="muted">Never shouts. Confidence shows through restraint.</p></div>
+      <div class="panel"><h4>Plain-spoken</h4><p class="muted">Talks like a capable colleague, in the customer's language.</p></div>
+      <div class="panel"><h4>Curious</h4><p class="muted">Asks "show me how you do it now" before proposing anything.</p></div>
+      <div class="panel"><h4>Dependable</h4><p class="muted">Keeps promises small and keeps all of them.</p></div>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Solvra is</th><th>Solvra is not</th></tr></thead>
+      <tbody>
+        <tr><td>Confident</td><td>Boastful ("the best", "revolutionary")</td></tr>
+        <tr><td>Simple</td><td>Empty or vague</td></tr>
+        <tr><td>Technical underneath</td><td>Technical on the surface (jargon, acronyms)</td></tr>
+        <tr><td>Warm</td><td>Cute, playful or full of emoji</td></tr>
+        <tr><td>Serious</td><td>Corporate, bureaucratic or government-like</td></tr>
+        <tr><td>Iraqi in its details</td><td>Iraqi in its clichés</td></tr>
+        <tr><td>Ambitious in scope</td><td>Ambitious in claims</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- 06 -->
+<section class="s" id="s06">
+  <div class="s-head"><span class="num">06</span><h2>Brand Principles</h2><p>Rules for product and design decisions. When two options compete, these break the tie.</p></div>
+  <div class="grid2">
+    <div class="panel"><h4>1. Understand before building</h4><p class="muted">No feature ships without a real example from a real workplace behind it.</p></div>
+    <div class="panel"><h4>2. One job, done completely</h4><p class="muted">A narrow product that finishes the job beats a wide one that half-does ten.</p></div>
+    <div class="panel"><h4>3. Design for real conditions</h4><p class="muted">Weak signal, a cracked phone, 48°C, cash, paper, Arabic. The hardest condition sets the standard.</p></div>
+    <div class="panel"><h4>4. Localise the details, not the decoration</h4><p class="muted">IQD formatting, landmark addresses and WhatsApp delivery show you're Iraqi. Palm trees and lions don't.</p></div>
+    <div class="panel"><h4>5. Plain words, exact numbers</h4><p class="muted">If a sentence needs a second read, rewrite it.</p></div>
+    <div class="panel"><h4>6. Quiet confidence</h4><p class="muted">One strong idea per screen, one accent per page, no effects that exist only to impress.</p></div>
+  </div>
+</section>
+
+<!-- 07 -->
+<section class="s" id="s07">
+  <div class="s-head"><span class="num">07</span><h2>Brand Story</h2></div>
+  <div class="prose" style="font-size:17px">
+    <p>Walk into almost any business in Iraq and you'll find a system that works better than outsiders expect. Orders arrive on WhatsApp. Debts live in a notebook by the till. A technician's day is planned in a phone call. Receipts are stamped, photographed and forwarded. Someone always remembers where everything is.</p>
+    <p>That system holds together until it doesn't: a payment nobody recorded, a customer who calls five times for an update, a report assembled by hand at midnight, a shipment held because one document was wrong. The cost is small each time and large over a year.</p>
+    <p>Solvra started from a simple decision: don't build software for Iraq from a distance. Sit in the shop, read the notebook, follow the paperwork, then build only the part that genuinely needs software, and make that part simple enough to use on a busy day with a weak signal.</p>
+    <p>We're early. We don't claim to have transformed anyone's business. What we promise is a method: every Solvra product starts with real work we've studied, does one job properly, and stays only if it keeps earning its place in people's days.</p>
+  </div>
+</section>
+
+<!-- 08 -->
+<section class="s" id="s08">
+  <div class="s-head"><span class="num">08</span><h2>Naming Architecture</h2><p>How products relate to the company, now and at ten products.</p></div>
+  <div class="stack">
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Architecture</th><th>Example</th><th>Strength</th><th>Weakness</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr><td class="pick">A. Solvra + descriptor</td><td class="pick">Solvra Service · Solvra Shipments</td><td>Every product builds one brand; instantly understood; cheapest to market</td><td>A weak product can hurt the parent; descriptors must be chosen carefully</td><td><span class="chip ok">Choose</span></td></tr>
+        <tr><td>B. Descriptor by Solvra</td><td>Workshop by Solvra</td><td>Product leads, parent endorses</td><td>Generic words ("Workshop") can't be owned or searched</td><td><span class="chip mid">Endorsement line only</span></td></tr>
+        <tr><td>C. Independent names</td><td>Wasl, Fanni, Madrasa</td><td>Each product gets its own personality</td><td>Splits a tiny marketing budget across many names; parent stays invisible</td><td><span class="chip no">Not now</span></td></tr>
+        <tr><td>D. Solvra Core + verticals</td><td>Solvra Core, Solvra Retail</td><td>Signals shared platform</td><td>"Core" is internal architecture, not a customer benefit</td><td><span class="chip no">Reject</span></td></tr>
+      </tbody>
+    </table></div>
+    <div class="grid2">
+      <div class="panel"><h4>Naming principles</h4><ul class="clean">
+        <li>Name <strong>what the customer manages</strong>, not the industry. "Solvra Import" reads like an importing company; <strong>Solvra Shipments</strong> doesn't.</li>
+        <li>One word, in plain English, that customers already say.</li>
+        <li>Every product has a fixed Arabic descriptor, chosen for meaning rather than translated.</li>
+        <li>No invented product words, no "Pro/Plus/AI", no numbers in names.</li>
+        <li>Plans and editions are named by size (Starter, Team, Business), never by metals or gems.</li>
+      </ul></div>
+      <div class="panel"><h4>Hierarchy and the exception rule</h4><ul class="clean">
+        <li><strong>Level 1:</strong> Solvra (company, account, billing, support)</li>
+        <li><strong>Level 2:</strong> Solvra + descriptor (products)</li>
+        <li><strong>Level 3:</strong> plain feature names inside products ("Deposit schedule", "Visit report"), never branded</li>
+        <li>A product may earn an independent name only if it later serves a different audience that doesn't benefit from the parent, and it keeps the endorsement "by Solvra".</li>
+        <li>The earlier working name "Wasl" retires; the first product is <strong>Solvra Shipments</strong>.</li>
+      </ul></div>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Product (example)</th><th>English lockup</th><th>Arabic lockup</th><th>Spoken Arabic</th></tr></thead>
+      <tbody>
+        <tr><td>Import shipment files</td><td>Solvra Shipments</td><td class="ar" lang="ar">سولفرا · الشحنات</td><td class="ar" lang="ar">سولفرا للشحنات</td></tr>
+        <tr><td>Field service</td><td>Solvra Service</td><td class="ar" lang="ar">سولفرا · الصيانة</td><td class="ar" lang="ar">سولفرا للصيانة</td></tr>
+        <tr><td>Repair and warranty</td><td>Solvra Workshop</td><td class="ar" lang="ar">سولفرا · الورشة</td><td class="ar" lang="ar">سولفرا للورش</td></tr>
+        <tr><td>School fees and operations</td><td>Solvra School</td><td class="ar" lang="ar">سولفرا · المدرسة</td><td class="ar" lang="ar">سولفرا للمدارس</td></tr>
+      </tbody>
+    </table></div>
+    <p class="muted" style="max-width:44em">In Arabic the descriptor is set as a separate typographic tier after a middle dot, so it reads as a label. Written as a sentence ("سولفرا للاستيراد") it would sound like the name of a trading company.</p>
+  </div>
+</section>
+
+<!-- 09 -->
+<section class="s" id="s09">
+  <div class="s-head"><span class="num">09</span><h2>Tagline Exploration</h2></div>
+  <div class="stack">
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>#</th><th>Tagline</th><th>Style</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">★</td><td><strong>Elegantly solved.</strong></td><td>Premium, concise</td><td>Chosen tagline: refined, carries the name, works in every context</td></tr><tr><td class="mono">1</td><td><strong>Software that earns its place.</strong></td><td>Product-minded</td><td>Kept as the supporting line under the tagline</td></tr>
+        <tr><td class="mono">2</td><td><strong>From the notebook to the system.</strong></td><td>Iraqi-first, human</td><td>Names the real starting point</td></tr>
+        <tr><td class="mono">3</td><td><strong>Built from the work.</strong></td><td>Concise</td><td>Method in four words</td></tr>
+        <tr><td class="mono">4</td><td>Small products. Real problems.</td><td>Concise</td><td>Good internal motto; a little flat as a tagline</td></tr>
+        <tr><td class="mono">5</td><td>One job, done properly.</td><td>Product-minded</td><td>Better as a product-page line</td></tr>
+        <tr><td class="mono">6</td><td>We study the work first.</td><td>Human</td><td>Strong in research content</td></tr>
+        <tr><td class="mono">7</td><td>Made for the way work actually happens.</td><td>Human</td><td>Too long</td></tr>
+        <tr><td class="mono">8</td><td>Less software. More done.</td><td>Technical</td><td>Clever, and a common formula</td></tr>
+        <tr><td class="mono">9</td><td>Useful every day.</td><td>Concise</td><td>Honest but forgettable</td></tr>
+        <tr><td class="mono">10</td><td>The work, made simple.</td><td>Concise</td><td>Close to generic</td></tr>
+        <tr><td class="mono">11</td><td>Simple on the surface. Solid underneath.</td><td>Technical</td><td>Good for developer audiences</td></tr>
+        <tr><td class="mono">12</td><td>Every product starts on the shop floor.</td><td>Iraqi-first</td><td>Great for the "how we build" section</td></tr>
+        <tr><td class="mono">13</td><td>Built in Iraq, for work.</td><td>Iraqi-first</td><td>Limits future expansion</td></tr>
+        <tr><td class="mono">14</td><td>Quietly essential.</td><td>Ambitious</td><td>Sounds like a luxury brand</td></tr>
+        <tr><td class="mono">15</td><td>Software with its sleeves rolled up.</td><td>Human</td><td>Too cute for the personality</td></tr>
+      </tbody>
+    </table></div>
+    <div class="grid3">
+      <div class="panel" style="border-color:var(--accent)"><p class="chosen">Tagline</p><h3 style="margin-top:8px">Elegantly solved.</h3><p class="muted">Two words, calm and confident. It carries the name (Solvra → solved) without spelling it out, and "elegantly" describes the whole identity: refined, precise, nothing extra. It works on a business card, a billboard, a website hero and a product screen.</p></div>
+      <div class="panel"><p class="label">Supporting line</p><h3 style="margin-top:8px">Software that earns its place.</h3><p class="muted">The sentence under the tagline. It sets the standard every Solvra product has to meet, and it stays the internal test for product decisions.</p></div>
+      <div class="panel"><p class="label">Method line</p><h3 style="margin-top:8px">Built from the work.</h3><p class="muted">For the "how we build" section and hiring.</p></div>
+    </div>
+    <div class="panel"><h4>Arabic tagline (written for Arabic readers, not translated)</h4>
+      <p class="ar-d" lang="ar" style="font-size:28px;font-weight:700;margin-top:6px;text-align:right">حلولٌ بإتقان.</p>
+      <p class="muted" style="margin-top:8px">Formal Modern Standard Arabic, and a partner to the English rather than a translation. The English stresses refinement; the Arabic stresses mastery. «إتقان» is the strongest Arabic word for work done properly (precision, care and skill together), and the well-known saying «إن الله يحب إذا عمل أحدكم عملاً أن يتقنه» gives it real weight with Iraqi audiences. Formal alternative for documents: <span class="ar" lang="ar">برمجيات تستحق مكانها في عملك اليومي.</span></p>
+    </div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section class="s" id="s10">
+  <div class="s-head"><span class="num">10</span><h2>Voice &amp; Tone</h2><p>A capable colleague who has visited your business, explaining something clearly on a busy day.</p></div>
+  <div class="stack">
+    <div class="grid2">
+      <div class="panel"><h4>Voice principles</h4><ul class="clean">
+        <li><strong>Specific over impressive.</strong> "Send a visit report in one tap", not "streamline reporting".</li>
+        <li><strong>Short sentences, active verbs.</strong> One idea per sentence.</li>
+        <li><strong>Customer's words.</strong> "Debt", "receipt", "technician", never "AR ledger" or "workforce entity".</li>
+        <li><strong>Numbers exact.</strong> 1,250,000 IQD, not "over a million".</li>
+        <li><strong>Technical depth on request.</strong> Plain for owners; precise and open for developers.</li>
+        <li><strong>Punctuation:</strong> full stops, commas, colons for lists. No exclamation marks in product UI. No ALL CAPS sentences.</li>
+      </ul></div>
+      <div class="panel"><h4>Arabic and English tone</h4><ul class="clean">
+        <li><strong>English:</strong> calm, direct, lightly warm. Sentence case everywhere.</li>
+        <li><strong>Arabic product UI:</strong> clear Modern Standard Arabic, short, no flowery openings ("نود أن نحيطكم علماً…" is banned).</li>
+        <li><strong>Arabic marketing and social:</strong> MSA with Iraqi warmth where it helps (الشغل، هسه sparingly). Never full dialect in written UI.</li>
+        <li><strong>To owners:</strong> money, time, control. <strong>To staff:</strong> less typing, fewer mistakes. <strong>To developers:</strong> architecture, trade-offs, what didn't work.</li>
+        <li><strong>About products:</strong> describe the job, show the screen, state the limit. "Solvra Shipments doesn't file your customs declaration. Your broker still does."</li>
+      </ul></div>
+    </div>
+    <div class="grid2">
+      <div class="panel"><h4 style="color:var(--success)">Do</h4><ul class="clean">
+        <li>"Your statement was sent to 42 customers on WhatsApp."</li>
+        <li>"We watched 11 technicians work before designing this screen."</li>
+        <li>"This works offline. Photos upload when you have signal."</li>
+        <li>Admit limits and say what to do instead.</li>
+      </ul></div>
+      <div class="panel"><h4 style="color:var(--danger)">Don't</h4><ul class="clean">
+        <li>"Revolutionise your workflow with smart AI-powered solutions!"</li>
+        <li>"Oops! Something went wrong 😅"</li>
+        <li>"Leading", "first", "best" without proof.</li>
+        <li>Translate English copy line by line into Arabic.</li>
+      </ul></div>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Context</th><th>Sample copy</th></tr></thead>
+      <tbody>
+        <tr><td>Website homepage</td><td><strong>Elegantly solved.</strong><br>Software that earns its place. We build focused tools for the everyday work of Iraqi businesses. Each one starts with time spent inside real shops, offices and workshops, and does one job properly.</td></tr>
+        <tr><td>Product launch</td><td><strong>Solvra Shipments is live.</strong> One file per shipment: supplier documents, pre-declaration, bank transfer, duties and tax deposits in one place. It gives you your real landed cost and the deposit schedule your accountant needs before the importer-ID renewal. Built with 12 importers and 3 customs brokers over two months.</td></tr>
+        <tr><td>LinkedIn post</td><td>We spent last week in three auto-parts shops in Baghdad. Every one kept customer debts in the same kind of notebook, and every one had a page of corrections. The notebook isn't the problem. Finding last month's balance in 30 seconds is. Here's what we're testing next.</td></tr>
+        <tr><td>Product feature</td><td><strong>Deposit schedule.</strong> Every tax deposit you pay at customs, matched to its shipment and receipt. Export it for your accountant in one tap.</td></tr>
+        <tr><td>Customer announcement</td><td>From 1 November, Solvra accounts can pay by FIB transfer as well as cash. Nothing changes in your plan or your data.</td></tr>
+        <tr><td>Error message</td><td>The photo didn't upload because there's no internet. It's saved on this phone and will upload automatically when you're back online.<br><span class="ar" lang="ar">ما تم رفع الصورة لعدم وجود اتصال بالإنترنت. الصورة محفوظة على الهاتف وسترفع تلقائياً عند عودة الاتصال.</span></td></tr>
+        <tr><td>Onboarding</td><td>Start with one real shipment. Add the supplier invoice you already have; we'll show you what's missing.<br><span class="ar" lang="ar">ابدأ بشحنة حقيقية واحدة. أضف فاتورة المورّد الموجودة عندك، وسنوضّح لك ما ينقصها.</span></td></tr>
+      </tbody>
+    </table></div>
+    <p class="muted" style="max-width:44em">The launch and LinkedIn samples use example numbers. Publish real ones only when they are true.</p>
+  </div>
+</section>
+
+<!-- 11 -->
+<section class="s" id="s11">
+  <div class="s-head"><span class="num">11</span><h2>Logo Concepts</h2><p>Revised in v2 (round) and refined in v3 (one continuous seam with perfect semicircular turns). Every concept is drawn on the same 24-unit grid so they can be compared fairly.</p></div>
+  <div class="concepts">
+    <article class="concept rec">
+      <div class="art"><svg viewBox="0 0 24 24" style="--mark-a:var(--text);--mark-b:var(--accent)"><use href="#mk"/></svg></div>
+      <div><p class="chosen">Recommended · v3</p><h3>1 · The Seal</h3>
+        <dl>
+          <dt>Idea</dt><dd>A round mark made of two identical pieces. One continuous seam runs between them, straight runs joined by two perfect semicircles, so the S is found in the gap rather than drawn.</dd>
+          <dt>Metaphor</dt><dd>In Iraq, a business says "this is ours, this is correct" with a round stamp (الختم). The Seal is Solvra's version: a mark of work done properly, made of two pieces (the work and the software) that fit exactly.</dd>
+          <dt>Geometry</dt><dd>Circle of radius 12 on a 24 grid. The seam is 1.6 wide: runs at 6, 12 and 18, joined by semicircles of radius 3. The turn radius is exactly half the run spacing, so every inner band ends in a perfect round cap. Piece B is piece A rotated 180°.</dd>
+          <dt>Why it's new</dt><dd>Round S logos usually draw the letter. This one is a solid disc cut by a single rounded seam with straight runs. It reads engineered and calm, not flowing, and has no dots or halves like a yin-yang.</dd>
+          <dt>Strengths</dt><dd>Neat at any size. Fits the round avatar crops of WhatsApp, Instagram and LinkedIn perfectly. Keeps the product system (piece B takes the product's colour). Simple to reproduce.</dd>
+          <dt>Weaknesses</dt><dd>Circle-plus-S is a crowded family, so the seam proportions must never be simplified into a plain S curve.</dd>
+          <dt>App icon / company</dt><dd>Excellent / excellent.</dd>
+        </dl></div>
+    </article>
+    <article class="concept">
+      <div class="art"><svg viewBox="0 0 24 24" style="--mark-a:var(--text);--mark-b:var(--accent)"><use href="#mk-peb"/></svg></div>
+      <div><h3>2 · The Pebble</h3>
+        <dl>
+          <dt>Idea</dt><dd>The same rounded seam inside a very soft square (corner radius 8.5).</dd>
+          <dt>Metaphor</dt><dd>A smooth, hand-worn object; practical and friendly.</dd>
+          <dt>Strengths</dt><dd>Very neat, and fills an app-icon tile fully.</dd>
+          <dt>Weaknesses</dt><dd>Softer squares are the default app-icon shape, so as a logo it disappears into the phone's grid. The circle is more ownable.</dd>
+          <dt>App icon / company</dt><dd>Excellent / good. Kept as the app-icon interior if a platform forces square artwork.</dd>
+        </dl></div>
+    </article>
+    <article class="concept">
+      <div class="art"><svg viewBox="0 0 24 24" style="--mark-a:var(--text);--mark-b:var(--accent)"><use href="#mk-v1"/></svg></div>
+      <div><p class="label">v1 · superseded</p><h3>3 · The Seam (square)</h3>
+        <dl>
+          <dt>Idea</dt><dd>Two identical blocks that interlock into a square. The S appears only as the gap where they meet.</dd>
+          <dt>Metaphor</dt><dd>The software and the work, shaped to each other. Something that fits exactly has earned its place.</dd>
+          <dt>Geometry</dt><dd>24-unit square, four bands of 4.5, seams of 2, outer radius 5. Piece B is piece A rotated 180°.</dd>
+          <dt>Strengths</dt><dd>Ownable; the S is discovered rather than drawn; the two-piece structure gives a product system (the second piece takes the product's colour); precise to reproduce.</dd>
+          <dt>Weaknesses</dt><dd>At 16px the seam needs a widened favicon cut; with carelessness it can read as a maze.</dd>
+          <dt>App icon / company</dt><dd>Excellent / excellent. Superseded because the sharp square felt closer to a technical diagram than to the neat, rounded character Solvra wants.</dd>
+        </dl></div>
+    </article>
+    <article class="concept">
+      <div class="art"><svg viewBox="0 0 24 24" aria-hidden="true">
+        <g style="fill:var(--line-strong)"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9.5" y="2" width="5" height="5" rx="1"/><rect x="17" y="2" width="5" height="5" rx="1"/><rect x="2" y="9.5" width="5" height="5" rx="1"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><rect x="17" y="9.5" width="5" height="5" rx="1"/><rect x="2" y="17" width="5" height="5" rx="1"/><rect x="9.5" y="17" width="5" height="5" rx="1"/><rect x="17" y="17" width="5" height="5" rx="1"/></g>
+        <polyline points="19.5,4.5 4.5,4.5 4.5,12 19.5,12 19.5,19.5 4.5,19.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="miter"/>
+      </svg></div>
+      <div><h3>4 · The Route</h3>
+        <dl>
+          <dt>Idea</dt><dd>A 3×3 grid of modules with one path through them.</dd>
+          <dt>Metaphor</dt><dd>Finding the route through a messy process; modules as small products.</dd>
+          <dt>Geometry</dt><dd>Nine 5-unit modules, path stroke 2.4 through the centres.</dd>
+          <dt>Strengths</dt><dd>Systematic; each product could highlight a different route.</dd>
+          <dt>Weaknesses</dt><dd>Reads as a game, a keypad or a QR fragment. Detailed at small sizes.</dd>
+          <dt>App icon / company</dt><dd>Fair / fair.</dd>
+        </dl></div>
+    </article>
+    <article class="concept">
+      <div class="art"><svg viewBox="0 0 24 24" aria-hidden="true">
+        <polyline points="21,4.5 4.5,4.5 4.5,12" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="butt" stroke-linejoin="miter"/>
+        <polyline points="4.5,12 19.5,12 19.5,19.5" fill="none" style="stroke:var(--accent)" stroke-width="4.5" stroke-linejoin="miter"/>
+        <polyline points="19.5,19.5 3,19.5" fill="none" stroke="currentColor" stroke-width="4.5"/>
+      </svg></div>
+      <div><h3>5 · The Fold</h3>
+        <dl>
+          <dt>Idea</dt><dd>One continuous band folded into an S with right-angle turns.</dd>
+          <dt>Metaphor</dt><dd>A long, messy process folded into order, like paperwork into a file.</dd>
+          <dt>Geometry</dt><dd>Constant 4.5 band, mitred folds, alternating tone on the middle segment.</dd>
+          <dt>Strengths</dt><dd>Very legible S; strong at tiny sizes.</dd>
+          <dt>Weaknesses</dt><dd>Closest to a generic "S logo"; similar marks exist in many industries.</dd>
+          <dt>App icon / company</dt><dd>Good / average.</dd>
+        </dl></div>
+    </article>
+    <article class="concept">
+      <div class="art"><svg viewBox="0 0 24 24" aria-hidden="true" style="fill:currentColor">
+        <rect x="6" y="3" width="15" height="4.5" rx="1.2"/><rect x="3" y="9.75" width="18" height="4.5" rx="1.2" style="fill:var(--accent)"/><rect x="3" y="16.5" width="15" height="4.5" rx="1.2"/>
+      </svg></div>
+      <div><h3>6 · The Stack</h3>
+        <dl>
+          <dt>Idea</dt><dd>Three offset bars in an S rhythm: small products stacked into one company.</dd>
+          <dt>Metaphor</dt><dd>Layers of a business, each handled by a focused product.</dd>
+          <dt>Geometry</dt><dd>Three 4.5 bars, offset by 3 units.</dd>
+          <dt>Strengths</dt><dd>Simple, flexible, easy to animate.</dd>
+          <dt>Weaknesses</dt><dd>Reads as a menu (hamburger) icon or a database logo. Not ownable.</dd>
+          <dt>App icon / company</dt><dd>Weak / weak.</dd>
+        </dl></div>
+    </article>
+    <article class="concept">
+      <div class="art"><svg viewBox="0 0 120 60" aria-hidden="true"><text x="60" y="40" text-anchor="middle" style="font-family:var(--f-display);font-weight:700;font-size:30px;letter-spacing:-1px;fill:currentColor">Sol<tspan style="fill:var(--accent)">v</tspan>ra</text></svg></div>
+      <div><h3>7 · Wordmark-led</h3>
+        <dl>
+          <dt>Idea</dt><dd>No symbol. A custom wordmark where the v carries the identity through a flat-cut vertex.</dd>
+          <dt>Metaphor</dt><dd>The name is the brand; restraint is the message.</dd>
+          <dt>Geometry</dt><dd>Grotesk base with a v vertex cut to the seam width.</dd>
+          <dt>Strengths</dt><dd>Cheapest; very mature; no symbol to explain.</dd>
+          <dt>Weaknesses</dt><dd>No app icon or favicon without adding a symbol later; products lose a shared visual anchor.</dd>
+          <dt>App icon / company</dt><dd>Poor / good.</dd>
+        </dl></div>
+    </article>
+  </div>
+</section>
+
+<!-- 12 -->
+<section class="s" id="s12">
+  <div class="s-head"><span class="num">12</span><h2>Recommended Logo Direction: The Seal</h2><p>One round mark, two identical pieces, one exact fit. The S is the space between them.</p></div>
+  <div class="stack">
+    <div class="tiles">
+      <div class="tile t-light"><span class="lock" style="font-size:40px"><svg><use href="#mk"/></svg><span class="wm">Solvra</span></span><span class="cap">Primary · ink on white</span></div>
+      <div class="tile t-stone"><span class="lock" style="font-size:40px"><svg><use href="#mk"/></svg><span class="wm">Solvra</span></span><span class="cap">Two-tone · brand moments</span></div>
+      <div class="tile t-dark"><span class="lock" style="font-size:40px"><svg><use href="#mk"/></svg><span class="wm">Solvra</span></span><span class="cap">Reversed</span></div>
+      <div class="tile t-dark2"><span class="lock" style="font-size:40px"><svg><use href="#mk"/></svg><span class="wm">Solvra</span></span><span class="cap">Two-tone on ink</span></div>
+      <div class="tile t-brass"><span class="lock" style="font-size:40px"><svg><use href="#mk"/></svg><span class="wm">Solvra</span></span><span class="cap">On brass · large sizes only</span></div>
+      <div class="tile t-prod"><span class="lock" style="font-size:34px"><svg><use href="#mk"/></svg><span class="wm">Solvra <span style="font-weight:500">Shipments</span></span></span><span class="cap">Product · piece B takes product colour</span></div>
+    </div>
+
+    <div class="panel"><h4>Lockup family</h4><p class="muted" style="margin-bottom:14px">All lockups are outlined vectors, so no fonts are needed. The Arabic and Kurdish names are shaped with HarfBuzz from Noto Kufi Arabic (weight 600) and merged into single paths. In right-to-left lockups the Seal sits on the right, at the start of the line, and is never mirrored.</p>
+      <div class="tiles">
+        <div class="tile t-light" style="min-height:260px"><svg style="height:190px;width:auto;max-width:100%" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 296.7871 400.5861"><g transform="translate(56.3896 0) scale(7.667)"><path d="M21.8874 5.2H9A3.8 3.8 0 0 0 9 12.8H15A2.2 2.2 0 0 1 15 17.2H1.1852A12 12 0 0 1 21.8874 5.2Z" fill="#0E1420"/><path d="M2.1126 18.8H15A3.8 3.8 0 0 0 15 11.2H9A2.2 2.2 0 0 1 9 6.8H22.8148A12 12 0 0 1 2.1126 18.8Z" fill="#B38B3A"/></g><path d="M30.22 299.13L30.22 299.13Q22.27 299.13 15.87 296.62Q9.47 294.11 5.35 289.08Q1.22 284.05 0 276.63L0 276.63L13.72 273.84Q14.06 281.26 18.21 285.05Q22.36 288.83 29.88 288.83L29.88 288.83Q34.72 288.83 37.77 287.44Q40.82 286.05 42.31 283.63Q43.80 281.22 43.80 278.14L43.80 278.14Q43.80 273.65 40.80 271.33Q37.79 269.01 32.81 267.98L32.81 267.98L24.90 266.37Q21.68 265.74 17.99 264.59Q14.31 263.44 11.04 261.32Q7.76 259.19 5.69 255.65Q3.61 252.11 3.61 246.74L3.61 246.74Q3.61 239.91 7.13 235.39Q10.64 230.87 16.55 228.63Q22.46 226.38 29.59 226.38L29.59 226.38Q37.06 226.38 42.72 228.68Q48.39 230.97 52.03 235.29Q55.66 239.61 56.88 245.77L56.88 245.77L43.41 248.55Q43.02 244.84 41.48 242.18Q39.94 239.52 37.11 238.10Q34.28 236.68 29.74 236.68L29.74 236.68Q25.88 236.68 22.95 237.76Q20.02 238.83 18.36 240.91Q16.70 242.98 16.70 245.96L16.70 245.96Q16.70 249.72 19.87 251.84Q23.05 253.97 29.25 255.29L29.25 255.29L37.30 257.00Q42.33 258.02 46.90 260.29Q51.46 262.56 54.37 266.69Q57.28 270.81 57.28 277.50L57.28 277.50Q57.28 284.44 53.88 289.30Q50.49 294.15 44.41 296.64Q38.33 299.13 30.22 299.13ZM89.21 299.13L89.21 299.13Q81.45 299.13 75.51 295.64Q69.58 292.15 66.29 285.93Q62.99 279.70 62.99 271.55L62.99 271.55Q62.99 263.39 66.29 257.17Q69.58 250.94 75.51 247.45Q81.45 243.96 89.21 243.96L89.21 243.96Q96.97 243.96 102.88 247.45Q108.79 250.94 112.11 257.17Q115.43 263.39 115.43 271.55L115.43 271.55Q115.43 279.70 112.11 285.93Q108.79 292.15 102.86 295.64Q96.93 299.13 89.21 299.13ZM89.21 289.96L89.21 289.96Q95.41 289.96 99.03 285.00Q102.64 280.04 102.64 271.55L102.64 271.55Q102.64 263.00 99.03 258.07Q95.41 253.14 89.21 253.14L89.21 253.14Q82.96 253.14 79.37 258.07Q75.78 263.00 75.78 271.55L75.78 271.55Q75.78 280.04 79.37 285.00Q82.96 289.96 89.21 289.96ZM143.61 297.91L135.11 297.91Q130.28 297.91 127.45 295.35Q124.61 292.79 124.61 288.30L124.61 288.30L124.61 224.67L136.72 224.67L136.72 286.00Q136.72 287.66 137.19 288.20Q137.65 288.73 139.16 288.73L139.16 288.73L143.61 288.73L143.61 297.91ZM180.47 297.91L165.78 297.91L145.90 245.18L159.38 245.18L173.83 289.76L172.42 289.76L186.82 245.18L200.30 245.18L180.47 297.91ZM219.73 297.91L207.67 297.91L207.67 245.18L219.25 245.18L219.25 256.80L218.81 255.34Q221.25 249.62 225.84 246.79Q230.43 243.96 235.60 243.96L235.60 243.96Q237.07 243.96 238.56 244.20Q240.05 244.45 241.41 245.03L241.41 245.03L240.34 255.63Q237.36 254.75 234.53 254.75L234.53 254.75Q232.43 254.75 229.87 255.51Q227.30 256.26 225.01 258.31Q222.71 260.37 221.22 264.20Q219.73 268.03 219.73 274.13L219.73 274.13L219.73 297.91ZM263.63 299.13L263.63 299.13Q258.51 299.13 254.40 297.28Q250.30 295.42 247.91 291.88Q245.52 288.34 245.52 283.41L245.52 283.41Q245.52 278.09 248.62 274.11Q251.72 270.13 257.80 267.93Q263.88 265.74 272.86 265.74L272.86 265.74L280.77 265.74L279.89 266.91L279.89 263.93Q279.89 258.27 277.74 255.38Q275.60 252.50 270.62 252.50L270.62 252.50Q265.88 252.50 263.34 254.99Q260.80 257.48 260.41 261.88L260.41 261.88L247.76 259.49Q248.40 255.14 251.30 251.63Q254.21 248.11 259.24 246.01Q264.27 243.91 271.35 243.91L271.35 243.91Q278.09 243.91 282.63 246.21Q287.17 248.50 289.44 253.31Q291.71 258.12 291.71 265.74L291.71 265.74L291.71 286.00Q291.71 287.66 292.17 288.20Q292.64 288.73 294.15 288.73L294.15 288.73L296.79 288.73L296.79 297.91L290.49 297.91Q285.70 297.91 283.02 295.35Q280.33 292.79 280.33 288.30L280.33 288.30L280.33 285.32L282.38 285.90Q281.70 288.00 280.38 290.30Q279.06 292.59 276.87 294.59Q274.67 296.60 271.42 297.87Q268.17 299.13 263.63 299.13ZM266.95 290.39L266.95 290.39Q270.62 290.39 273.57 288.66Q276.52 286.93 278.26 283.34Q279.99 279.75 279.99 274.28L279.99 274.28L279.99 273.40L273.06 273.40Q267.34 273.40 264.12 274.89Q260.90 276.38 259.58 278.55Q258.26 280.73 258.26 282.88L258.26 282.88Q258.26 284.73 259.12 286.46Q259.97 288.20 261.88 289.30Q263.78 290.39 266.95 290.39Z" fill="#0E1420"/><g fill="#0E1420"><path d="M46.7933,336.5861L55.0495,336.5861L55.0495,385.2261L46.7933,385.2261L46.7933,336.5861ZM81.6311,385.2261L81.6311,386.4208Q81.6311,390.7514 80.0844,393.9408Q78.5377,397.1301 75.711,398.8581Q72.8843,400.5861 68.9163,400.5861Q66.2282,400.5861 63.8494,399.9248Q61.4707,399.2634 58.8893,397.5993L62.0041,392.0312Q63.6254,392.9912 64.8415,393.3113Q66.0575,393.6313 67.6362,393.6313Q70.3028,393.6313 71.8922,391.5513Q73.4815,389.4713 73.4815,386.2287L73.4815,353.7594L81.6311,353.7594L81.6311,378.442L89.8231,378.442Q90.1431,378.442 90.1431,378.698L90.1431,384.9061Q90.1431,385.2261 89.8231,385.2261L81.6311,385.2261ZM108.852,347.2315Q106.9746,347.2315 105.8866,346.0688Q104.7986,344.9061 104.7986,342.8794Q104.7986,340.8101 105.8652,339.6687Q106.9319,338.5274 108.852,338.5274Q110.7506,338.5274 111.8066,339.69Q112.8627,340.8527 112.8627,342.8794Q112.8627,344.8634 111.7853,346.0474Q110.708,347.2315 108.852,347.2315ZM131.6363,378.442Q131.9563,378.442 131.9563,378.7193L131.9563,384.9275Q131.9563,385.2261 131.6363,385.2261L89.1613,385.2261Q88.8413,385.2261 88.8413,384.9061L88.8413,378.698Q88.8413,378.442 89.1613,378.442L98.5052,378.442Q97.4812,377.2046 96.7772,375.7753Q96.0733,374.346 95.7106,372.778Q95.3479,371.21 95.3479,369.5887Q95.3479,364.6821 97.5346,361.1407Q99.7213,357.5994 103.828,355.6794Q107.9346,353.7594 113.652,353.7594L124.0415,353.7594L124.0415,378.442L131.6363,378.442ZM115.8706,378.442L115.8706,360.5436L113.844,360.5436Q110.6654,360.5436 108.3934,361.6316Q106.1215,362.7196 104.9482,364.8102Q103.7749,366.9008 103.7749,369.9301Q103.7749,372.6607 104.7882,374.5807Q105.8015,376.5006 107.7962,377.4713Q109.7909,378.442 112.6709,378.442L115.8706,378.442ZM131.0173,385.2261Q130.6973,385.2261 130.6973,384.9061L130.6973,378.698Q130.6973,378.442 131.0173,378.442L139.1666,378.442L139.1666,336.5861L147.4228,336.5861L147.4228,385.2261L131.0173,385.2261ZM194.1644,378.442Q194.4844,378.442 194.4844,378.698L194.4844,384.9061Q194.4844,385.2261 194.1644,385.2261L182.5804,385.2261Q182.2604,385.2261 182.2604,384.9061L182.2604,378.698Q182.2604,378.442 182.5804,378.442L194.1644,378.442ZM170.8894,400.5861Q166.9,400.5861 163.828,399.8608Q160.756,399.1355 157.9613,397.4501L161.2894,391.37Q163.7214,392.6286 165.9934,393.2366Q168.2654,393.8446 170.8041,393.8446Q174.6867,393.8446 176.8093,391.7433Q178.932,389.642 178.932,386.058L178.932,385.2261L172.6173,385.2261Q165.7693,385.2261 162.0786,381.3968Q158.388,377.5674 158.388,370.4208Q158.388,365.1088 160.8733,361.3861Q163.3587,357.6634 167.7534,355.7114Q172.1481,353.7594 177.8015,353.7594L187.0816,353.7594L187.0816,385.866Q187.0816,392.9061 182.8469,396.7461Q178.6122,400.5861 170.8894,400.5861ZM178.9106,378.442L178.9106,360.5436L176.628,360.5436Q171.9988,360.5436 169.4068,363.0822Q166.8149,365.6208 166.8149,370.2288Q166.8149,374.4527 168.5855,376.4473Q170.3561,378.442 173.9614,378.442L178.9106,378.442ZM238.0042,385.2261Q235.2096,385.2261 232.7349,384.0954Q230.2602,382.9648 227.8709,380.5328Q226.2069,382.7728 223.6575,383.9995Q221.1082,385.2261 217.6308,385.2261L193.5453,385.2261Q193.2253,385.2261 193.2253,384.9061L193.2253,378.698Q193.2253,378.442 193.5453,378.442L201.9292,378.442L201.9292,358.7514L210.1001,358.7514L210.1001,378.442L216.0307,378.442Q219.1881,378.442 220.7454,376.586Q222.3027,374.73 222.3027,371.018L222.3027,358.7514L230.4736,358.7514L230.4736,371.6366Q230.4736,372.3193 230.4523,372.97Q230.431,373.6207 230.3243,374.2607Q231.9243,376.586 233.5776,377.514Q235.2309,378.442 237.8762,378.442L241.8229,378.442L241.8229,353.7594L249.9938,353.7594L249.9938,385.2261L238.0042,385.2261Z"/></g></svg><span class="cap">Stacked bilingual · signage, avatars, cover pages</span></div>
+        <div class="tile t-light" style="min-height:260px"><svg style="height:92px;width:auto;max-width:100%" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 489.6996 164.3125"><g transform="translate(0 0) scale(6.8464)"><path d="M21.8874 5.2H9A3.8 3.8 0 0 0 9 12.8H15A2.2 2.2 0 0 1 15 17.2H1.1852A12 12 0 0 1 21.8874 5.2Z" fill="#0E1420"/><path d="M2.1126 18.8H15A3.8 3.8 0 0 0 15 11.2H9A2.2 2.2 0 0 1 9 6.8H22.8148A12 12 0 0 1 2.1126 18.8Z" fill="#B38B3A"/></g><path d="M223.14 71.53L223.14 71.53Q215.18 71.53 208.78 69.02Q202.39 66.50 198.26 61.47Q194.13 56.45 192.91 49.02L192.91 49.02L206.63 46.24Q206.97 53.66 211.13 57.45Q215.28 61.23 222.80 61.23L222.80 61.23Q227.63 61.23 230.68 59.84Q233.73 58.45 235.22 56.03Q236.71 53.61 236.71 50.54L236.71 50.54Q236.71 46.04 233.71 43.73Q230.71 41.41 225.72 40.38L225.72 40.38L217.81 38.77Q214.59 38.13 210.91 36.99Q207.22 35.84 203.95 33.72Q200.68 31.59 198.60 28.05Q196.53 24.51 196.53 19.14L196.53 19.14Q196.53 12.30 200.04 7.79Q203.56 3.27 209.47 1.03Q215.37-1.22 222.50-1.22L222.50-1.22Q229.97-1.22 235.64 1.07Q241.30 3.37 244.94 7.69Q248.58 12.01 249.80 18.16L249.80 18.16L236.32 20.95Q235.93 17.24 234.39 14.58Q232.85 11.91 230.02 10.50Q227.19 9.08 222.65 9.08L222.65 9.08Q218.79 9.08 215.86 10.16Q212.93 11.23 211.27 13.31Q209.61 15.38 209.61 18.36L209.61 18.36Q209.61 22.12 212.79 24.24Q215.96 26.37 222.16 27.69L222.16 27.69L230.22 29.39Q235.25 30.42 239.81 32.69Q244.38 34.96 247.28 39.09Q250.19 43.21 250.19 49.90L250.19 49.90Q250.19 56.84 246.79 61.69Q243.40 66.55 237.32 69.04Q231.24 71.53 223.14 71.53ZM282.12 71.53L282.12 71.53Q274.36 71.53 268.43 68.04Q262.49 64.55 259.20 58.33Q255.90 52.10 255.90 43.95L255.90 43.95Q255.90 35.79 259.20 29.57Q262.49 23.34 268.43 19.85Q274.36 16.36 282.12 16.36L282.12 16.36Q289.89 16.36 295.80 19.85Q301.70 23.34 305.02 29.57Q308.34 35.79 308.34 43.95L308.34 43.95Q308.34 52.10 305.02 58.33Q301.70 64.55 295.77 68.04Q289.84 71.53 282.12 71.53ZM282.12 62.35L282.12 62.35Q288.32 62.35 291.94 57.40Q295.55 52.44 295.55 43.95L295.55 43.95Q295.55 35.40 291.94 30.47Q288.32 25.54 282.12 25.54L282.12 25.54Q275.87 25.54 272.28 30.47Q268.70 35.40 268.70 43.95L268.70 43.95Q268.70 52.44 272.28 57.40Q275.87 62.35 282.12 62.35ZM336.52 70.31L328.02 70.31Q323.19 70.31 320.36 67.75Q317.53 65.19 317.53 60.69L317.53 60.69L317.53-2.93L329.64-2.93L329.64 58.40Q329.64 60.06 330.10 60.60Q330.56 61.13 332.08 61.13L332.08 61.13L336.52 61.13L336.52 70.31ZM373.39 70.31L358.69 70.31L338.82 17.58L352.29 17.58L366.75 62.16L365.33 62.16L379.73 17.58L393.21 17.58L373.39 70.31ZM412.65 70.31L400.59 70.31L400.59 17.58L412.16 17.58L412.16 29.20L411.72 27.73Q414.16 22.02 418.75 19.19Q423.34 16.36 428.52 16.36L428.52 16.36Q429.98 16.36 431.47 16.60Q432.96 16.85 434.33 17.43L434.33 17.43L433.25 28.03Q430.27 27.15 427.44 27.15L427.44 27.15Q425.34 27.15 422.78 27.91Q420.22 28.66 417.92 30.71Q415.63 32.76 414.14 36.60Q412.65 40.43 412.65 46.53L412.65 46.53L412.65 70.31ZM456.55 71.53L456.55 71.53Q451.42 71.53 447.32 69.68Q443.22 67.82 440.82 64.28Q438.43 60.74 438.43 55.81L438.43 55.81Q438.43 50.49 441.53 46.51Q444.63 42.53 450.71 40.33Q456.79 38.13 465.77 38.13L465.77 38.13L473.68 38.13L472.81 39.31L472.81 36.33Q472.81 30.66 470.66 27.78Q468.51 24.90 463.53 24.90L463.53 24.90Q458.79 24.90 456.25 27.39Q453.71 29.88 453.32 34.28L453.32 34.28L440.68 31.88Q441.31 27.54 444.22 24.02Q447.12 20.51 452.15 18.41Q457.18 16.31 464.26 16.31L464.26 16.31Q471.00 16.31 475.54 18.60Q480.08 20.90 482.35 25.71Q484.62 30.52 484.62 38.13L484.62 38.13L484.62 58.40Q484.62 60.06 485.09 60.60Q485.55 61.13 487.06 61.13L487.06 61.13L489.70 61.13L489.70 70.31L483.40 70.31Q478.62 70.31 475.93 67.75Q473.24 65.19 473.24 60.69L473.24 60.69L473.24 57.71L475.30 58.30Q474.61 60.40 473.29 62.70Q471.98 64.99 469.78 66.99Q467.58 68.99 464.33 70.26Q461.09 71.53 456.55 71.53ZM459.87 62.79L459.87 62.79Q463.53 62.79 466.48 61.06Q469.44 59.33 471.17 55.74Q472.90 52.15 472.90 46.68L472.90 46.68L472.90 45.80L465.97 45.80Q460.26 45.80 457.03 47.29Q453.81 48.78 452.49 50.95Q451.17 53.13 451.17 55.27L451.17 55.27Q451.17 57.13 452.03 58.86Q452.88 60.60 454.79 61.69Q456.69 62.79 459.87 62.79Z" fill="#0E1420"/><g fill="#0E1420"><path d="M192.9125,100.3125L201.1688,100.3125L201.1688,148.9525L192.9125,148.9525L192.9125,100.3125ZM227.7503,148.9525L227.7503,150.1471Q227.7503,154.4778 226.2036,157.6671Q224.6569,160.8565 221.8302,162.5845Q219.0035,164.3125 215.0355,164.3125Q212.3474,164.3125 209.9687,163.6511Q207.5899,162.9898 205.0085,161.3257L208.1233,155.7576Q209.7447,156.7176 210.9607,157.0376Q212.1767,157.3576 213.7554,157.3576Q216.4221,157.3576 218.0114,155.2777Q219.6007,153.1977 219.6007,149.9551L219.6007,117.4858L227.7503,117.4858L227.7503,142.1683L235.9423,142.1683Q236.2623,142.1683 236.2623,142.4243L236.2623,148.6325Q236.2623,148.9525 235.9423,148.9525L227.7503,148.9525ZM254.9712,110.9578Q253.0938,110.9578 252.0058,109.7951Q250.9178,108.6325 250.9178,106.6058Q250.9178,104.5364 251.9845,103.3951Q253.0511,102.2537 254.9712,102.2537Q256.8699,102.2537 257.9259,103.4164Q258.9819,104.5791 258.9819,106.6058Q258.9819,108.5898 257.9045,109.7738Q256.8272,110.9578 254.9712,110.9578ZM277.7555,142.1683Q278.0755,142.1683 278.0755,142.4456L278.0755,148.6538Q278.0755,148.9525 277.7555,148.9525L235.2805,148.9525Q234.9605,148.9525 234.9605,148.6325L234.9605,142.4243Q234.9605,142.1683 235.2805,142.1683L244.6245,142.1683Q243.6005,140.931 242.8965,139.5017Q242.1925,138.0724 241.8298,136.5044Q241.4671,134.9364 241.4671,133.3151Q241.4671,128.4084 243.6538,124.8671Q245.8405,121.3258 249.9472,119.4058Q254.0539,117.4858 259.7712,117.4858L270.1608,117.4858L270.1608,142.1683L277.7555,142.1683ZM261.9898,142.1683L261.9898,124.27L259.9632,124.27Q256.7846,124.27 254.5127,125.3579Q252.2407,126.4459 251.0674,128.5365Q249.8941,130.6272 249.8941,133.6564Q249.8941,136.3871 250.9074,138.307Q251.9208,140.227 253.9154,141.1977Q255.9101,142.1683 258.7901,142.1683L261.9898,142.1683ZM277.1365,148.9525Q276.8165,148.9525 276.8165,148.6325L276.8165,142.4243Q276.8165,142.1683 277.1365,142.1683L285.2858,142.1683L285.2858,100.3125L293.5421,100.3125L293.5421,148.9525L277.1365,148.9525ZM340.2836,142.1683Q340.6036,142.1683 340.6036,142.4243L340.6036,148.6325Q340.6036,148.9525 340.2836,148.9525L328.6996,148.9525Q328.3796,148.9525 328.3796,148.6325L328.3796,142.4243Q328.3796,142.1683 328.6996,142.1683L340.2836,142.1683ZM317.0086,164.3125Q313.0192,164.3125 309.9472,163.5872Q306.8752,162.8619 304.0805,161.1765L307.4086,155.0963Q309.8406,156.355 312.1126,156.963Q314.3846,157.571 316.9233,157.571Q320.8059,157.571 322.9285,155.4697Q325.0512,153.3684 325.0512,149.7844L325.0512,148.9525L318.7365,148.9525Q311.8885,148.9525 308.1978,145.1232Q304.5072,141.2938 304.5072,134.1471Q304.5072,128.8351 306.9925,125.1124Q309.4779,121.3898 313.8726,119.4378Q318.2673,117.4858 323.9207,117.4858L333.2008,117.4858L333.2008,149.5924Q333.2008,156.6325 328.9661,160.4725Q324.7314,164.3125 317.0086,164.3125ZM325.0298,142.1683L325.0298,124.27L322.7472,124.27Q318.118,124.27 315.5261,126.8086Q312.9341,129.3472 312.9341,133.9551Q312.9341,138.1791 314.7047,140.1737Q316.4754,142.1683 320.0806,142.1683L325.0298,142.1683ZM384.1234,148.9525Q381.3288,148.9525 378.8541,147.8218Q376.3794,146.6911 373.9901,144.2591Q372.3261,146.4992 369.7767,147.7258Q367.2274,148.9525 363.75,148.9525L339.6645,148.9525Q339.3445,148.9525 339.3445,148.6325L339.3445,142.4243Q339.3445,142.1683 339.6645,142.1683L348.0484,142.1683L348.0484,122.4778L356.2194,122.4778L356.2194,142.1683L362.1499,142.1683Q365.3073,142.1683 366.8646,140.3123Q368.4219,138.4564 368.4219,134.7443L368.4219,122.4778L376.5929,122.4778L376.5929,135.363Q376.5929,136.0457 376.5715,136.6964Q376.5502,137.3471 376.4435,137.9871Q378.0435,140.3124 379.6968,141.2403Q381.3501,142.1683 383.9954,142.1683L387.9421,142.1683L387.9421,117.4858L396.113,117.4858L396.113,148.9525L384.1234,148.9525Z"/></g></svg><span class="cap">Bilingual horizontal · documents, website header</span></div>
+        <div class="tile t-light" style="min-height:260px;gap:22px"><svg style="height:70px;width:auto;max-width:100%" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 452.4852 116.4922"><g transform="translate(0 0)"><g fill="#0E1420"><path d="M0,16.4922L12.9004,16.4922L12.9004,92.4922L0,92.4922L0,16.4922ZM54.4341,92.4922L54.4341,94.3588Q54.4341,101.1255 52.0174,106.1088Q49.6007,111.0922 45.184,113.7922Q40.7673,116.4922 34.5672,116.4922Q30.367,116.4922 26.6503,115.4588Q22.9335,114.4255 18.9,111.8253L23.7669,103.1251Q26.3002,104.6252 28.2003,105.1252Q30.1003,105.6252 32.567,105.6252Q36.7337,105.6252 39.217,102.3752Q41.7003,99.1253 41.7003,94.0587L41.7003,43.3255L54.4341,43.3255L54.4341,81.8919L67.2341,81.8919Q67.7341,81.8919 67.7341,82.2919L67.7341,91.9922Q67.7341,92.4922 67.2341,92.4922L54.4341,92.4922ZM96.9667,33.1255Q94.0333,33.1255 92.3333,31.3088Q90.6333,29.4921 90.6333,26.3254Q90.6333,23.0921 92.2999,21.3087Q93.9666,19.5254 96.9667,19.5254Q99.9334,19.5254 101.5834,21.342Q103.2334,23.1587 103.2334,26.3254Q103.2334,29.4255 101.5501,31.2755Q99.8667,33.1255 96.9667,33.1255ZM132.5672,81.8919Q133.0672,81.8919 133.0672,82.3252L133.0672,92.0255Q133.0672,92.4922 132.5672,92.4922L66.2,92.4922Q65.7,92.4922 65.7,91.9922L65.7,82.2919Q65.7,81.8919 66.2,81.8919L80.7999,81.8919Q79.1999,79.9586 78.0999,77.7253Q77,75.492 76.4333,73.042Q75.8666,70.592 75.8666,68.0587Q75.8666,60.3921 79.2833,54.8587Q82.7,49.3254 89.1167,46.3254Q95.5334,43.3255 104.4668,43.3255L120.7004,43.3255L120.7004,81.8919L132.5672,81.8919ZM107.9333,81.8919L107.9333,53.9257L104.7668,53.9257Q99.8002,53.9257 96.2503,55.6257Q92.7003,57.3257 90.867,60.5922Q89.0337,63.8588 89.0337,68.5921Q89.0337,72.8587 90.6171,75.8586Q92.2004,78.8586 95.3171,80.3753Q98.4338,81.8919 102.9338,81.8919L107.9333,81.8919ZM131.6,92.4922Q131.1,92.4922 131.1,91.9922L131.1,82.2919Q131.1,81.8919 131.6,81.8919L144.3333,81.8919L144.3333,16.4922L157.2337,16.4922L157.2337,92.4922L131.6,92.4922ZM230.2674,81.8919Q230.7674,81.8919 230.7674,82.2919L230.7674,91.9922Q230.7674,92.4922 230.2674,92.4922L212.1674,92.4922Q211.6674,92.4922 211.6674,91.9922L211.6674,82.2919Q211.6674,81.8919 212.1674,81.8919L230.2674,81.8919ZM193.9002,116.4922Q187.6668,116.4922 182.8667,115.3589Q178.0667,114.2256 173.7,111.5922L178.9001,102.0919Q182.7002,104.0586 186.2502,105.0086Q189.8002,105.9586 193.7669,105.9586Q199.8334,105.9586 203.1501,102.6753Q206.4667,99.392 206.4667,93.792L206.4667,92.4922L196.6,92.4922Q185.9,92.4922 180.1333,86.5088Q174.3667,80.5255 174.3667,69.3588Q174.3667,61.0588 178.2501,55.2421Q182.1334,49.4254 189.0002,46.3754Q195.8669,43.3255 204.7003,43.3255L219.2004,43.3255L219.2004,93.492Q219.2004,104.4921 212.5837,110.4922Q205.967,116.4922 193.9002,116.4922ZM206.4333,81.8919L206.4333,53.9257L202.8668,53.9257Q195.6336,53.9257 191.5837,57.8923Q187.5338,61.8589 187.5338,69.0588Q187.5338,75.6587 190.3004,78.7753Q193.067,81.8919 198.7002,81.8919L206.4333,81.8919ZM298.7671,92.4922Q294.4004,92.4922 290.5338,90.7255Q286.6671,88.9588 282.9338,85.1588Q280.3338,88.6589 276.3504,90.5755Q272.367,92.4922 266.9337,92.4922L229.3,92.4922Q228.8,92.4922 228.8,91.9922L228.8,82.2919Q228.8,81.8919 229.3,81.8919L242.3999,81.8919L242.3999,51.1255L255.167,51.1255L255.167,81.8919L264.4335,81.8919Q269.3668,81.8919 271.8001,78.9919Q274.2334,76.092 274.2334,70.2919L274.2334,51.1255L287.0005,51.1255L287.0005,71.2586Q287.0005,72.3253 286.9672,73.342Q286.9339,74.3587 286.7672,75.3587Q289.2672,78.992 291.8505,80.4419Q294.4338,81.8919 298.5671,81.8919L304.7338,81.8919L304.7338,43.3255L317.5009,43.3255L317.5009,92.4922L298.7671,92.4922Z"/></g><g transform="translate(343.5009 0) scale(4.541)"><path d="M21.8874 5.2H9A3.8 3.8 0 0 0 9 12.8H15A2.2 2.2 0 0 1 15 17.2H1.1852A12 12 0 0 1 21.8874 5.2Z" fill="#0E1420"/><path d="M2.1126 18.8H15A3.8 3.8 0 0 0 15 11.2H9A2.2 2.2 0 0 1 9 6.8H22.8148A12 12 0 0 1 2.1126 18.8Z" fill="#B38B3A"/></g></g></svg><svg style="height:70px;width:auto;max-width:100%" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 452.4852 116.4922"><g transform="translate(0 0)"><g fill="#0E1420"><path d="M0,16.4922L12.9004,16.4922L12.9004,92.4922L0,92.4922L0,16.4922ZM54.4341,92.4922L54.4341,94.3588Q54.4341,101.1255 52.0174,106.1088Q49.6007,111.0922 45.184,113.7922Q40.7673,116.4922 34.5672,116.4922Q30.367,116.4922 26.6503,115.4588Q22.9335,114.4255 18.9,111.8253L23.7669,103.1251Q26.3002,104.6252 28.2003,105.1252Q30.1003,105.6252 32.567,105.6252Q36.7337,105.6252 39.217,102.3752Q41.7003,99.1253 41.7003,94.0587L41.7003,43.3255L54.4341,43.3255L54.4341,81.8919L67.2341,81.8919Q67.7341,81.8919 67.7341,82.2919L67.7341,91.9922Q67.7341,92.4922 67.2341,92.4922L54.4341,92.4922ZM97.3667,17.792Q95.0334,17.792 93.4334,16.3587Q91.8334,14.9253 91.8334,11.892Q91.8334,8.7919 93.4334,7.3919Q95.0334,5.9919 97.3667,5.9919Q99.8001,5.9919 101.3501,7.5086Q102.9001,9.0253 102.9001,11.892Q102.9001,14.6586 101.3501,16.2253Q99.8001,17.792 97.3667,17.792ZM88.8334,33.0255Q86,33.0255 84.25,31.2588Q82.5,29.4921 82.5,26.2254Q82.5,22.8921 84.25,21.1587Q86,19.4254 88.8334,19.4254Q91.8001,19.4254 93.4501,21.242Q95.1001,23.0587 95.1001,26.2254Q95.1001,29.3255 93.4168,31.1755Q91.7334,33.0255 88.8334,33.0255ZM105.9334,33.0255Q103,33.0255 101.3,31.2088Q99.6,29.3921 99.6,26.2254Q99.6,22.9921 101.2667,21.2087Q102.9333,19.4254 105.9334,19.4254Q108.8334,19.4254 110.5168,21.242Q112.2001,23.0587 112.2001,26.2254Q112.2001,29.3255 110.5168,31.1755Q108.8334,33.0255 105.9334,33.0255ZM132.5672,81.8919Q133.0672,81.8919 133.0672,82.3252L133.0672,92.0255Q133.0672,92.4922 132.5672,92.4922L66.2,92.4922Q65.7,92.4922 65.7,91.9922L65.7,82.2919Q65.7,81.8919 66.2,81.8919L80.7999,81.8919Q79.1999,79.9586 78.0999,77.7253Q77,75.492 76.4333,73.042Q75.8666,70.592 75.8666,68.0587Q75.8666,60.3921 79.2833,54.8587Q82.7,49.3254 89.1167,46.3254Q95.5334,43.3255 104.4668,43.3255L120.7004,43.3255L120.7004,81.8919L132.5672,81.8919ZM107.9333,81.8919L107.9333,53.9257L104.7668,53.9257Q99.8002,53.9257 96.2503,55.6257Q92.7003,57.3257 90.867,60.5922Q89.0337,63.8588 89.0337,68.5921Q89.0337,72.8587 90.6171,75.8586Q92.2004,78.8586 95.3171,80.3753Q98.4338,81.8919 102.9338,81.8919L107.9333,81.8919ZM131.6,92.4922Q131.1,92.4922 131.1,91.9922L131.1,82.2919Q131.1,81.8919 131.6,81.8919L144.3333,81.8919L144.3333,16.4922L157.2337,16.4922L157.2337,92.4922L131.6,92.4922ZM213.2669,12.6922L202.2669,32.5922L193.4,32.5922L182.3,12.6922L191.4335,12.6922L197.7335,25.5922L204.2335,12.6922L213.2669,12.6922ZM230.2674,81.8919Q230.7674,81.8919 230.7674,82.2919L230.7674,91.9922Q230.7674,92.4922 230.2674,92.4922L212.1674,92.4922Q211.6674,92.4922 211.6674,91.9922L211.6674,82.2919Q211.6674,81.8919 212.1674,81.8919L230.2674,81.8919ZM193.9002,116.4922Q187.6668,116.4922 182.8667,115.3589Q178.0667,114.2256 173.7,111.5922L178.9001,102.0919Q182.7002,104.0586 186.2502,105.0086Q189.8002,105.9586 193.7669,105.9586Q199.8334,105.9586 203.1501,102.6753Q206.4667,99.392 206.4667,93.792L206.4667,92.4922L196.6,92.4922Q185.9,92.4922 180.1333,86.5088Q174.3667,80.5255 174.3667,69.3588Q174.3667,61.0588 178.2501,55.2421Q182.1334,49.4254 189.0002,46.3754Q195.8669,43.3255 204.7003,43.3255L219.2004,43.3255L219.2004,93.492Q219.2004,104.4921 212.5837,110.4922Q205.967,116.4922 193.9002,116.4922ZM206.4333,81.8919L206.4333,53.9257L202.8668,53.9257Q195.6336,53.9257 191.5837,57.8923Q187.5338,61.8589 187.5338,69.0588Q187.5338,75.6587 190.3004,78.7753Q193.067,81.8919 198.7002,81.8919L206.4333,81.8919ZM298.7671,92.4922Q294.4004,92.4922 290.5338,90.7255Q286.6671,88.9588 282.9338,85.1588Q280.3338,88.6589 276.3504,90.5755Q272.367,92.4922 266.9337,92.4922L229.3,92.4922Q228.8,92.4922 228.8,91.9922L228.8,82.2919Q228.8,81.8919 229.3,81.8919L242.3999,81.8919L242.3999,51.1255L255.167,51.1255L255.167,81.8919L264.4335,81.8919Q269.3668,81.8919 271.8001,78.9919Q274.2334,76.092 274.2334,70.2919L274.2334,51.1255L287.0005,51.1255L287.0005,71.2586Q287.0005,72.3253 286.9672,73.342Q286.9339,74.3587 286.7672,75.3587Q289.2672,78.992 291.8505,80.4419Q294.4338,81.8919 298.5671,81.8919L304.7338,81.8919L304.7338,43.3255L317.5009,43.3255L317.5009,92.4922L298.7671,92.4922Z"/></g><g transform="translate(343.5009 0) scale(4.541)"><path d="M21.8874 5.2H9A3.8 3.8 0 0 0 9 12.8H15A2.2 2.2 0 0 1 15 17.2H1.1852A12 12 0 0 1 21.8874 5.2Z" fill="#0E1420"/><path d="M2.1126 18.8H15A3.8 3.8 0 0 0 15 11.2H9A2.2 2.2 0 0 1 9 6.8H22.8148A12 12 0 0 1 2.1126 18.8Z" fill="#B38B3A"/></g></g></svg><span class="cap">Arabic · Kurdish Sorani</span></div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="panel">
+        <h4>Construction</h4>
+        <svg viewBox="-5 -5 38 34" style="width:100%;height:auto;margin-top:8px" role="img" aria-label="Construction of the Seal: circle radius 12, one seam of width 1.6 with semicircular turns of radius 3, bands 4.4">
+          <g style="stroke:var(--line-strong)" stroke-width=".06">
+            <path d="M0 0V24M6 0V24M9 0V24M12 0V24M15 0V24M18 0V24M24 0V24M0 0H24M0 6H24M0 12H24M0 18H24M0 24H24"/>
+          </g>
+          <circle cx="12" cy="12" r="12" fill="none" style="stroke:var(--line-strong)" stroke-width=".12"/>
+          <g mask="url(#seamcut)" opacity=".9"><g clip-path="url(#circ)">
+            <path d="M25 6H9A3 3 0 0 0 9 12H15A3 3 0 0 1 15 18H-1L-1 -1L25 -1Z" style="fill:var(--text)"/>
+            <path d="M25 6H9A3 3 0 0 0 9 12H15A3 3 0 0 1 15 18H-1L-1 25L25 25Z" style="fill:var(--accent)"/>
+          </g></g>
+          <path d="M24 6H9A3 3 0 0 0 9 12H15A3 3 0 0 1 15 18H0" fill="none" style="stroke:var(--muted)" stroke-width=".1" stroke-dasharray=".4 .3"/>
+          <g style="fill:var(--muted);font-family:var(--f-mono)" font-size="1.3">
+            <text x="25" y="6.4">seam 1.6</text><text x="25" y="9.4">band 4.4</text><text x="25" y="12.4">centre</text><text x="25" y="15.4">turn r 3</text><text x="25" y="18.4">seam 1.6</text>
+            <text x="-4.6" y="27.4">circle r 12 on a 24 grid · B = A rotated 180°</text>
+          </g>
+        </svg>
+      </div>
+      <div class="panel stack" style="gap:16px">
+        <div><h4>Proportions</h4><p class="muted">A circle of radius 12 on a 24 grid. One continuous seam, 1.6 units wide: horizontal runs at 6, 12 and 18, joined by two semicircular turns of radius 3 that reach x 6 and x 18. Because the turn radius is half the run spacing, each inner band (4.4 thick) ends in a perfect semicircle, and the caps are 5.2 at their deepest. There are no corners anywhere in the mark, only straight lines and true circles.</p></div>
+        <div><h4>Clear space</h4><p class="muted">A quarter of the mark's diameter on all sides. In lockups the gap between the mark and the wordmark is 0.42 × the cap height, and the mark is 1.05 × the cap height.</p></div>
+        <div><h4>Minimum size</h4><p class="muted">Symbol: 24px on screen with the master seam (1.6). At 24px and below use the small cut (seam 2.2, same centreline). Absolute minimum 16px. Lockup: 88px wide on screen, 22 mm in print. Symbol in print: 6 mm.</p></div>
+        <div><h4>Wordmark</h4><p class="muted">Title case "Solvra", drawn from Schibsted Grotesk SemiBold (600) at −2% tracking and outlined. For the final drawing, soften the corners of the stroke ends (about 8% of the stem width) so the letters share the Seal's rounded turns, without becoming a "rounded font". Also shorten the r arm, open the l–v spacing by 4%, and keep tracking at −2%. Title case keeps it friendly and avoids the government feel of all caps.</p></div>
+      </div>
+    </div>
+
+    <div class="panel"><h4>Incorrect usage</h4>
+      <div class="grid3" style="margin-top:10px;font-size:14px">
+        <ul class="clean"><li>Rotating by 90° (it becomes a different shape). 180° is allowed because the mark is symmetric.</li><li>Mirroring it in right-to-left layouts.</li><li>Smoothing the seam into a flowing S curve (it becomes a yin-yang or a generic S).</li></ul>
+        <ul class="clean"><li>Changing the seam width, turn radius or proportions (use only the master 1.6 or small-cut 2.2 files).</li><li>Adding a ring, a border or stamp-style text around it.</li><li>Gradients, shadows, 3D, or two different product colours on one mark.</li></ul>
+        <ul class="clean"><li>Placing it on busy photos without a solid plate.</li><li>Brass as the only colour at small sizes (too little contrast).</li><li>Rebuilding the wordmark in a different font.</li></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 13 -->
+<section class="s" id="s13">
+  <div class="s-head"><span class="num">13</span><h2>Color Exploration</h2><p>Three directions, judged on distinctiveness, working range in a dashboard and associations in Iraq.</p></div>
+  <div class="stack">
+    <div class="dir panel">
+      <div><p class="chosen">Chosen</p><h3 style="margin-top:6px">A · Kohl &amp; Brass</h3><p class="muted">Deep blue-black ink, muted brass, cool stone neutrals. Brass references Baghdad's coppersmiths' market (Souq al-Safafeer): craft, tools and precision, not luxury. Ink carries the seriousness; brass appears sparingly. It belongs to no big software brand.</p></div>
+      <div class="strip"><div class="w2" style="background:#0E1420"></div><div style="background:#2B3445"></div><div style="background:#B38B3A"></div><div style="background:#E2E2DB"></div><div style="background:#F7F7F4"></div></div>
+    </div>
+    <div class="dir panel">
+      <div><h3>B · Graphite &amp; Signal Cobalt</h3><p class="muted">Near-black graphite with a saturated cobalt. Clean and safe, but it reads as every developer tool and sits close to the blues of Atlassian and Microsoft. Rejected for lacking a point of view.</p></div>
+      <div class="strip"><div class="w2" style="background:#111418"></div><div style="background:#2A2F37"></div><div style="background:#2D4BD8"></div><div style="background:#DADDE3"></div><div style="background:#F5F6F8"></div></div>
+    </div>
+    <div class="dir panel">
+      <div><h3>C · Tigris Green &amp; Sand</h3><p class="muted">Deep river green with sand neutrals. Warm and local, but green reads as banking and fintech, overlaps with the flag and with Careem, and warm sand drifts toward the overused cream look. Rejected.</p></div>
+      <div class="strip"><div class="w2" style="background:#103B34"></div><div style="background:#1D5A4F"></div><div style="background:#C98B4B"></div><div style="background:#E7DCC6"></div><div style="background:#F6F1E6"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 14 -->
+<section class="s" id="s14">
+  <div class="s-head"><span class="num">14</span><h2>Final Color System</h2><p>Ink carries the identity and all primary actions. Brass is a signature, used sparingly. Status colours are strictly separate from brand colours.</p></div>
+  <div class="stack">
+    <div><h3>Brand</h3><div class="swatches">
+      <div class="sw"><div class="chipc" style="background:#0E1420"></div><div class="meta"><b>Kohl Ink</b><span class="mono">#0E1420</span><span class="muted">Logo, text, primary buttons</span></div></div>
+      <div class="sw"><div class="chipc" style="background:#2B3445"></div><div class="meta"><b>Ink 700</b><span class="mono">#2B3445</span><span class="muted">Secondary text on light, dark surfaces</span></div></div>
+      <div class="sw"><div class="chipc" style="background:#B38B3A"></div><div class="meta"><b>Safafeer Brass</b><span class="mono">#B38B3A</span><span class="muted">Mark piece B, highlights (3.2:1 on white, non-text only)</span></div></div>
+      <div class="sw"><div class="chipc" style="background:#8A6A22"></div><div class="meta"><b>Brass 700</b><span class="mono">#8A6A22</span><span class="muted">Accent text and links on light (5.0:1)</span></div></div>
+      <div class="sw"><div class="chipc" style="background:#D7B46A"></div><div class="meta"><b>Brass 300</b><span class="mono">#D7B46A</span><span class="muted">Accent on dark</span></div></div>
+      <div class="sw"><div class="chipc" style="background:#5E6776"></div><div class="meta"><b>Slate</b><span class="mono">#5E6776</span><span class="muted">Muted text (5.8:1 on white)</span></div></div>
+    </div></div>
+    <div><h3>Neutrals</h3><div class="swatches">
+      <div class="sw"><div class="chipc" style="background:#FFFFFF"></div><div class="meta"><b>White</b><span class="mono">#FFFFFF</span><span class="muted">App surfaces, documents</span></div></div>
+      <div class="sw"><div class="chipc" style="background:#F7F7F4"></div><div class="meta"><b>Stone 50</b><span class="mono">#F7F7F4</span><span class="muted">Marketing background</span></div></div>
+      <div class="sw"><div class="chipc" style="background:#EFEFEA"></div><div class="meta"><b>Stone 100</b><span class="mono">#EFEFEA</span><span class="muted">Panels, sidebars</span></div></div>
+      <div class="sw"><div class="chipc" style="background:#E2E2DB"></div><div class="meta"><b>Stone 200</b><span class="mono">#E2E2DB</span><span class="muted">Borders</span></div></div>
+      <div class="sw"><div class="chipc" style="background:#0C111A"></div><div class="meta"><b>Night</b><span class="mono">#0C111A</span><span class="muted">Dark background</span></div></div>
+      <div class="sw"><div class="chipc" style="background:#1A2230"></div><div class="meta"><b>Night raised</b><span class="mono">#1A2230</span><span class="muted">Dark surfaces</span></div></div>
+    </div></div>
+    <div><h3>Semantic (never used as brand colour)</h3><div class="swatches">
+      <div class="sw"><div class="chipc" style="background:#1F7A4D"></div><div class="meta"><b>Success</b><span class="mono">#1F7A4D</span><span class="muted">Paid, completed</span></div></div>
+      <div class="sw"><div class="chipc" style="background:#B8520A"></div><div class="meta"><b>Warning</b><span class="mono">#B8520A</span><span class="muted">Due soon, missing document</span></div></div>
+      <div class="sw"><div class="chipc" style="background:#B42331"></div><div class="meta"><b>Danger</b><span class="mono">#B42331</span><span class="muted">Overdue, failed</span></div></div>
+      <div class="sw"><div class="chipc" style="background:#2F5DA8"></div><div class="meta"><b>Info</b><span class="mono">#2F5DA8</span><span class="muted">In progress, notes</span></div></div>
+    </div></div>
+    <div><h3>Product accents (piece B of the mark, product navigation indicator)</h3><div class="swatches">
+      <div class="sw"><div class="chipc" style="background:#3B5BC4"></div><div class="meta"><b>Shipments</b><span class="mono">#3B5BC4</span></div></div>
+      <div class="sw"><div class="chipc" style="background:#0F766E"></div><div class="meta"><b>Service</b><span class="mono">#0F766E</span></div></div>
+      <div class="sw"><div class="chipc" style="background:#A8532E"></div><div class="meta"><b>Workshop</b><span class="mono">#A8532E</span></div></div>
+      <div class="sw"><div class="chipc" style="background:#6E4A86"></div><div class="meta"><b>School</b><span class="mono">#6E4A86</span></div></div>
+      <div class="sw"><div class="chipc" style="background:#5F7A2E"></div><div class="meta"><b>Retail</b><span class="mono">#5F7A2E</span></div></div>
+    </div></div>
+    <div class="grid2">
+      <div class="panel"><h4>Usage ratio</h4><div class="strip" style="height:40px;margin-top:10px"><div style="flex:60;background:#F7F7F4"></div><div style="flex:25;background:#FFFFFF"></div><div style="flex:10;background:#0E1420"></div><div style="flex:4;background:#B38B3A"></div><div style="flex:1;background:#3B5BC4"></div></div><p class="muted" style="margin-top:10px">Roughly 60 stone, 25 white, 10 ink, 4 brass, 1 product accent. If brass exceeds about 5% of a screen, it stops being a signature.</p></div>
+      <div class="panel"><h4>Charts and dark mode</h4><p class="muted">Chart series order: Ink 700, Brass, Service teal, Shipments blue, School plum, Slate. Status is never shown in series colours. In dark mode, the primary button becomes stone-on-night, brass shifts to Brass 300, and borders carry the structure because shadows disappear.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 15 -->
+<section class="s" id="s15">
+  <div class="s-head"><span class="num">15</span><h2>Typography</h2><p>Three families on Google Fonts, all free, covering English, Arabic and Kurdish Sorani.</p></div>
+  <div class="stack">
+    <div class="panel">
+      <div class="spec-row"><span class="label">Display · Latin</span><span style="font-family:var(--f-display);font-size:34px;font-weight:700;letter-spacing:-0.02em;line-height:1.1">Schibsted Grotesk: built from the work.</span></div>
+      <div class="spec-row"><span class="label">Text &amp; UI · Latin</span><span style="font-size:17px">IBM Plex Sans. Engineered, very readable at 13–16px, with true tabular figures for invoices and tables.</span></div>
+      <div class="spec-row"><span class="label">Data · Latin</span><span class="mono" style="font-size:15px">SHP-2026-0142 · HS 8415.10 · 1,250,000 IQD</span></div>
+      <div class="spec-row"><span class="label">Display · Arabic</span><span class="ar-d" lang="ar" style="font-size:30px;font-weight:700;text-align:right">برمجيات تستحق مكانها</span></div>
+      <div class="spec-row"><span class="label">Text &amp; UI · Arabic</span><span class="ar" lang="ar" style="font-size:17px;text-align:right">نوتو سانس العربي للنصوص والواجهات: واضح بالأحجام الصغيرة، ويدعم الكردية.</span></div>
+      <div class="spec-row"><span class="label">Kurdish Sorani</span><span class="ar" lang="ckb" style="font-size:17px;text-align:right">ڕۆژێکی باش لە سۆلڤرا — پسوولە، قەرز، هەڵگرتن</span></div>
+      <div class="spec-row"><span class="label">Mixed direction</span><span class="ar" lang="ar" style="font-size:16px;text-align:right">رقم الشحنة <span class="mono" dir="ltr">SHP-2026-0142</span> · المبلغ <span class="mono" dir="ltr">1,250,000</span> د.ع</span></div>
+    </div>
+    <div class="grid2">
+      <div class="panel"><h4>Why these faces</h4><ul class="clean">
+        <li><strong>Schibsted Grotesk</strong> has editorial character without trendiness. It is also the base of the wordmark, so headlines and logo agree.</li>
+        <li><strong>IBM Plex Sans + Mono</strong> suit the "engineered" personality and handle dense numbers well. Plex is used for Latin only.</li>
+        <li><strong>Noto Kufi Arabic</strong> (display) has square, geometric forms that echo the mark. <strong>Noto Sans Arabic</strong> (text) is highly legible and supports Sorani.</li>
+        <li>IBM Plex Sans Arabic was rejected: it has an open, unresolved rendering bug for Central Kurdish.</li>
+      </ul></div>
+      <div class="panel"><h4>Arabic rhythm rules</h4><ul class="clean">
+        <li>Arabic sets one step larger than Latin at the same role, with line-height 1.7–1.8 (Latin 1.5).</li>
+        <li>Never letter-space Arabic; never use kashida to justify text in the UI.</li>
+        <li>Arabic punctuation: ، ؛ ؟ and « » quotes. Don't mix in Latin commas.</li>
+        <li>Digits: Western 0–9 in product UI and documents for IDs, phones and money. Eastern Arabic digits are optional in editorial Arabic, never mixed in one table.</li>
+        <li>Currency: <span class="mono">1,250,000</span> <span class="ar" lang="ar">د.ع</span> in Arabic, <span class="mono">1,250,000 IQD</span> in English. No decimals.</li>
+      </ul></div>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Role</th><th>Latin</th><th>Arabic</th><th>Size / line-height</th></tr></thead>
+      <tbody>
+        <tr><td>Marketing H1</td><td>Schibsted 700, −2%</td><td>Noto Kufi 700</td><td>56–68 / 1.05 (AR 1.3)</td></tr>
+        <tr><td>H2</td><td>Schibsted 700</td><td>Noto Kufi 600</td><td>32–38 / 1.1</td></tr>
+        <tr><td>H3 / card title</td><td>Schibsted 600</td><td>Noto Kufi 600</td><td>20 / 1.3</td></tr>
+        <tr><td>Body</td><td>Plex Sans 400</td><td>Noto Sans Arabic 400</td><td>16 / 1.6 (AR 17 / 1.8)</td></tr>
+        <tr><td>UI text, navigation</td><td>Plex Sans 500</td><td>Noto Sans Arabic 500</td><td>14 / 1.45 (AR 15 / 1.6)</td></tr>
+        <tr><td>Labels</td><td>Plex Mono 500, caps, +8%</td><td>Noto Sans Arabic 600 (no caps)</td><td>11–12</td></tr>
+        <tr><td>Numbers in tables</td><td>Plex Sans, tabular</td><td>Western digits, tabular</td><td>13–14</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- 16 -->
+<section class="s" id="s16">
+  <div class="s-head"><span class="num">16</span><h2>Arabic Identity</h2><p>One name, written three ways for three scripts and audiences, never translated.</p></div>
+  <div class="stack">
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Option</th><th>Assessment</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr><td>Solvra only</td><td>Clean internationally, but Arabic-first customers can't say or search it confidently</td><td><span class="chip no">Not alone</span></td></tr>
+        <tr><td class="ar" lang="ar">سولفرا</td><td>Readable to every Arabic reader; ف for v is the common Iraqi convention</td><td><span class="chip ok">Arabic name</span></td></tr>
+        <tr><td class="ar" lang="ar">سولڤرا</td><td>More exact pronunciation, but ڤ looks unusual to many Arab readers</td><td><span class="chip mid">Kurdish only</span></td></tr>
+        <tr><td>Solvra | <span class="ar" lang="ar">سولفرا</span></td><td>The bilingual lockup for signage, documents and the website header</td><td><span class="chip ok">Bilingual lockup</span></td></tr>
+      </tbody>
+    </table></div>
+    <div class="tiles">
+      <div class="tile t-light"><span class="lock" style="font-size:40px"><svg><use href="#mk"/></svg><span class="ar-d" lang="ar" style="font-weight:700">سولفرا</span></span><span class="cap">Arabic lockup</span></div>
+      <div class="tile t-stone"><div style="display:flex;align-items:center;gap:14px"><svg viewBox="0 0 24 24" style="width:52px;height:52px"><use href="#mk"/></svg><div style="display:grid;gap:4px"><span class="wm" style="font-size:30px">Solvra</span><span class="ar-d" lang="ar" style="font-size:22px;font-weight:700;line-height:1.2">سولفرا</span></div></div><span class="cap">Bilingual, stacked</span></div>
+      <div class="tile t-dark"><span class="lock" style="font-size:36px"><svg><use href="#mk"/></svg><span class="ar-d" lang="ckb" style="font-weight:700">سۆلڤرا</span></span><span class="cap">Kurdish Sorani</span></div>
+    </div>
+    <div class="grid2">
+      <div class="panel"><h4>Arabic wordmark treatment</h4><p class="muted">Set in Noto Kufi Arabic Bold, then adjusted by hand: the سو connection tightened, the baseline of ر and ا aligned to the Latin baseline so bilingual lockups sit on one line, and the ف counter opened to match the seam width. The symbol always sits at the start of the line. In right-to-left layouts it moves to the right side without being mirrored.</p></div>
+      <div class="panel"><h4>Arabic taglines</h4><ul class="clean">
+        <li><span class="ar" lang="ar">حلولٌ بإتقان.</span> Primary Arabic tagline (website, marketing, social, stationery).</li><li><span class="ar" lang="ar">كل حلّ في مكانه.</span> Secondary line for editorial and product pages.</li>
+        <li><span class="ar" lang="ar">برمجيات تستحق مكانها في عملك اليومي.</span> Formal (documents, proposals).</li>
+        <li><span class="ar" lang="ar">من الدفتر إلى النظام.</span> Campaign line ("From the notebook to the system").</li>
+      </ul></div>
+      <div class="panel"><h4>Arabic website behaviour</h4><ul class="clean">
+        <li>Arabic is the default for visitors in Iraq; English is one tap away and remembered.</li>
+        <li>The whole layout mirrors (navigation, icons with direction, progress); the logo, charts' time axis and phone numbers do not.</li>
+        <li>Arabic copy is written separately from English, with the same structure and different sentences.</li>
+        <li>Fonts switch by <span class="mono">lang</span> attribute, never by guessing from characters.</li>
+      </ul></div>
+      <div class="panel"><h4>Kurdish without redesign</h4><ul class="clean">
+        <li>Noto Kufi and Noto Sans Arabic already cover Sorani letters (ڕ ڵ ۆ ێ ە ڤ).</li>
+        <li>Kurdish name: <span class="ar" lang="ckb">سۆلڤرا</span>. Same lockup rules as Arabic.</li>
+        <li>Add a <span class="mono">ckb</span> locale file and a Kurdish copywriter; no visual changes.</li>
+        <li>Badini (Latin-script Kurdish) uses the Latin system as it is.</li>
+      </ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- 17 -->
+<section class="s" id="s17">
+  <div class="s-head"><span class="num">17</span><h2>Iconography</h2></div>
+  <div class="grid2">
+    <div class="panel"><h4>System</h4><ul class="clean">
+      <li>Base set: <strong>Lucide</strong> (open source, 1,500+ icons), so a solo founder never draws routine icons.</li>
+      <li>24px grid, <strong>1.75 stroke</strong> (Lucide's 2 is slightly heavy next to Plex), round caps and joins.</li>
+      <li>Outline by default; filled only for the active state in navigation.</li>
+      <li>Sizes: 16 (inline), 20 (buttons, tables), 24 (navigation), 32 (empty states).</li>
+      <li>Icon colour follows text colour. Never brass except the active product indicator.</li>
+      <li>Custom icons (QR tag, deposit, landmark address) are drawn on the same grid and stroke.</li>
+    </ul></div>
+    <div class="panel"><h4>Right-to-left rules</h4><ul class="clean">
+      <li>Mirror anything that shows direction or sequence: arrows, back/forward, send, reply, progress, list indent, "next".</li>
+      <li>Don't mirror clocks, checkmarks, play buttons, search, cameras, phones, charts, or anything representing a real object.</li>
+      <li>Mirror with CSS (<span class="mono">[dir=rtl] .icon-dir{transform:scaleX(-1)}</span>) on a flagged subset, not globally.</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- 18 -->
+<section class="s" id="s18">
+  <div class="s-head"><span class="num">18</span><h2>Imagery</h2><p>Documentary, not staged. The subject is the work and the tools people already use.</p></div>
+  <div class="grid2">
+    <div class="panel"><h4>What we photograph</h4><ul class="clean">
+      <li><strong>The workaround</strong>, Solvra's signature subject: the debt notebook by the till, the stamped receipt, the WhatsApp group on a cracked phone, the Excel sheet printed and annotated.</li>
+      <li>Hands at work: a technician's hands on an outdoor AC unit, an accountant's desk with invoices, a broker's folder at a port office.</li>
+      <li>Real places: shop counters, workshops, warehouses, market lanes, rooftops, offices with plastic chairs and good light.</li>
+      <li>Product in context: the phone in a real hand in a real place, not floating.</li>
+    </ul></div>
+    <div class="panel"><h4>How it looks</h4><ul class="clean">
+      <li>Natural light, slightly cool, true colour. No teal-orange grading, no heavy filters.</li>
+      <li>Eye-level or over-the-shoulder; people doing, not posing. Faces only with written consent.</li>
+      <li>Shot by Iraqi photographers in real businesses that agreed to take part. Credit them.</li>
+      <li>Never: handshakes, pointing at charts, laptop-and-latte offices, stock "Arab businessman", skyline composites.</li>
+      <li>Blur customer names, phone numbers and amounts on real documents.</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- 19 -->
+<section class="s" id="s19">
+  <div class="s-head"><span class="num">19</span><h2>Motion</h2><p>Motion explains cause and effect. It never entertains.</p></div>
+  <div class="grid2">
+    <div class="panel"><h4>Principles and timings</h4>
+      <dl class="kv" style="grid-template-columns:130px minmax(0,1fr)">
+        <dt>Micro (hover, press)</dt><dd><span class="mono">120ms</span>, standard ease</dd>
+        <dt>Standard (toggle, menu)</dt><dd><span class="mono">180ms</span></dd>
+        <dt>Enter (panel, sheet)</dt><dd><span class="mono">240ms</span>, 6px travel + fade</dd>
+        <dt>Exit</dt><dd><span class="mono">160ms</span>, faster than enter</dd>
+        <dt>Easing</dt><dd>Standard <span class="mono">cubic-bezier(.2,0,0,1)</span>; exit <span class="mono">cubic-bezier(.4,0,1,1)</span>. No bounce, no spring overshoot.</dd>
+      </dl>
+    </div>
+    <div class="panel"><h4>Behaviours</h4><ul class="clean">
+      <li><strong>Signature "fit":</strong> the two pieces of the mark slide together and lock (hero, app launch, video end frames). Once per session, never looping.</li>
+      <li><strong>Hover:</strong> colour and border change only; no lifting cards.</li>
+      <li><strong>Loading:</strong> skeletons in stone for layout; a thin progress bar for known duration. No spinners over 1 second without text saying what's happening.</li>
+      <li><strong>Saved/synced:</strong> a quiet inline confirmation ("Saved on this phone", then "Uploaded").</li>
+      <li>All motion is off under <span class="mono">prefers-reduced-motion</span>.</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- 20 -->
+<section class="s" id="s20">
+  <div class="s-head"><span class="num">20</span><h2>Product Branding Architecture</h2><p>The company brand stays dominant. Each product owns one colour and nothing else.</p></div>
+  <div class="stack">
+    <div class="tiles">
+      <div class="tile t-light" style="--mark-b:#3B5BC4"><span class="lock" style="font-size:28px"><svg><use href="#mk"/></svg><span class="wm">Solvra <span style="font-weight:500">Shipments</span></span></span></div>
+      <div class="tile t-light" style="--mark-b:#0F766E"><span class="lock" style="font-size:28px"><svg><use href="#mk"/></svg><span class="wm">Solvra <span style="font-weight:500">Service</span></span></span></div>
+      <div class="tile t-light" style="--mark-b:#6E4A86"><span class="lock" style="font-size:28px"><svg><use href="#mk"/></svg><span class="wm">Solvra <span style="font-weight:500">School</span></span></span></div>
+    </div>
+    <div class="panel"><h4>Brand pattern: the continuous seam</h4><p class="muted" style="margin-bottom:12px">The Seal's own seam (runs 6 apart, semicircular turns of radius 3) chained into one unbroken line. Use it at 8–22% opacity for backgrounds, packaging, slides and banners. Never behind body text, and never with the Seal on top of it at full strength.</p>
+      <svg viewBox="0 0 480 160" style="width:100%;height:auto;border-radius:12px;display:block" role="img" aria-label="Solvra seam pattern on ink"><defs><pattern id="seamPat" width="48" height="24" patternUnits="userSpaceOnUse"><g transform="scale(2)"><path d="M24 -12H9A3 3 0 0 0 9 -6H15A3 3 0 0 1 15 0H0M24 0H9A3 3 0 0 0 9 6H15A3 3 0 0 1 15 12H0M24 12H9A3 3 0 0 0 9 18H15A3 3 0 0 1 15 24H0" fill="none" stroke="#D7B46A" stroke-width="1.6" opacity=".35"/></g></pattern></defs><rect width="480" height="160" fill="#0E1420"/><rect width="480" height="160" fill="url(#seamPat)"/></svg>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Element</th><th>Inherited from Solvra</th><th>Owned by the product</th></tr></thead>
+      <tbody>
+        <tr><td>Logo</td><td>Mark geometry, piece A in ink, wordmark "Solvra"</td><td>Piece B in the product accent; descriptor in weight 500</td></tr>
+        <tr><td>Typography</td><td>All families and scales</td><td>Nothing</td></tr>
+        <tr><td>Colour</td><td>Ink, neutrals, semantic, charts</td><td>One accent: active navigation, the mark and illustration highlights</td></tr>
+        <tr><td>Navigation</td><td>Account switcher, Solvra header, settings, help in the same places</td><td>Its own section list</td></tr>
+        <tr><td>Iconography</td><td>Lucide set and rules</td><td>A few domain icons on the same grid</td></tr>
+        <tr><td>Dashboard style</td><td>Summary first, tables second, status chips, empty states in the brand voice</td><td>Its own key numbers and default views</td></tr>
+        <tr><td>Motif</td><td>The seam divider (a 2px gap between panels instead of hairlines in hero areas)</td><td>Nothing</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- 21 -->
+<section class="s" id="s21">
+  <div class="s-head"><span class="num">21</span><h2>Website Direction</h2></div>
+  <div class="grid3">
+    <div class="panel" style="border-color:var(--accent)"><p class="chosen">Chosen</p><h4 style="margin-top:6px">A · Field-notes editorial</h4><p class="muted">Stone background, large Schibsted headlines, documentary photos of the work, product screens set in quiet frames. Motion: the hero "fit" and nothing else. It suits a company whose proof is understanding.</p></div>
+    <div class="panel"><h4>B · Product-native</h4><p class="muted">Screens first, dark UI, dense feature grids. Strong for a single product; wrong for a company whose products don't exist yet and whose story is its method.</p></div>
+    <div class="panel"><h4>C · Bold Iraqi tech</h4><p class="muted">Large brass and ink colour fields, oversized Kufi Arabic, poster energy. Memorable, but loud, and it would date quickly. Keep a little of it for campaign pages only.</p></div>
+  </div>
+</section>
+
+<!-- 22 -->
+<section class="s" id="s22">
+  <div class="s-head"><span class="num">22</span><h2>Website Homepage Concept</h2></div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Block</th><th>Content</th></tr></thead>
+    <tbody>
+      <tr><td>Navigation</td><td>Mark + Solvra · Products · How we build · Field notes · About · <span class="ar" lang="ar">العربية</span> / English · <strong>Talk to us</strong> (WhatsApp number shown as text + contact form)</td></tr>
+      <tr><td>Hero</td><td><strong>Elegantly solved.</strong><br>Software that earns its place. Focused tools for the everyday work of Iraqi businesses, built after we've watched the work being done.<br>CTAs: <strong>See our products</strong> · Talk to us</td></tr>
+      <tr><td>Company idea</td><td>A documentary photo of a debt notebook next to a phone, with one line: "Most businesses already have a system. We build software for the parts of it that cost you money."</td></tr>
+      <tr><td>Products</td><td>One card per product: accent-coloured mark, name, the one job in a sentence, status (Live / In pilot / Researching), "Who it's for". Researching products are shown honestly as research.</td></tr>
+      <tr><td>How we build</td><td>Four steps with real artefacts: <strong>Watch</strong> the work → <strong>Do it by hand</strong> for a few businesses → <strong>Build</strong> only what worked → <strong>Stay</strong> only if it's used.</td></tr>
+      <tr><td>Iraqi focus</td><td>The details that prove it: IQD without decimals, landmark addresses, Arabic and Kurdish, WhatsApp delivery, works offline, FIB/ZainCash/cash.</td></tr>
+      <tr><td>Credibility</td><td>Field notes (published research), the founder's name and face, response time, where data is stored. Customer logos only with permission and only when real.</td></tr>
+      <tr><td>Closing CTA</td><td>"Tell us how your work runs today. We'll tell you honestly if software would help."</td></tr>
+      <tr><td>Footer</td><td>Products · Company (About, Field notes, Careers) · Support (Help, Status, Contact) · Legal (Privacy, Terms, Data) · Baghdad, Iraq · bilingual lockup</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 23 -->
+<section class="s" id="s23">
+  <div class="s-head"><span class="num">23</span><h2>Social Media System</h2><p>Five fixed formats. Everything posted is one of them.</p></div>
+  <div class="stack">
+    <div class="social">
+      <div class="post photo-slot"><span class="label" style="color:#D8DCE3">Field note</span><div><p style="font-family:var(--f-display);font-size:20px;font-weight:600;line-height:1.2">Every shop we visited kept debts in the same notebook.</p><p style="font-size:12px;opacity:.8;margin-top:6px">Photo slot: notebook and phone on a counter, Baghdad</p></div></div>
+      <div class="post" style="background:#0E1420;color:#F4F4F0;--mark-a:#F4F4F0;--mark-b:#3B5BC4"><span class="lock" style="font-size:18px"><svg><use href="#mk"/></svg><span class="wm">Solvra <span style="font-weight:500">Shipments</span></span></span><div><p class="label" style="color:#A3ABB8">Product update</p><p style="font-family:var(--f-display);font-size:20px;font-weight:600;line-height:1.2;margin-top:6px">Deposit schedule: export for your accountant in one tap.</p></div></div>
+      <div class="post" style="background:#EFEFEA;color:#0E1420"><span class="label" style="color:#5E6776">Problem → product</span><div style="display:grid;gap:8px"><p style="font-size:14px"><span style="color:#5E6776">Before:</span> 14 receipts, 3 WhatsApp chats, 1 Excel file.</p><p style="font-size:14px"><span style="color:#8A6A22">After:</span> one shipment file.</p><p class="ar" lang="ar" style="font-size:15px;text-align:right">من الدفتر إلى النظام.</p></div></div>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Platform</th><th>Role</th><th>Language</th><th>Look</th></tr></thead>
+      <tbody>
+        <tr><td>LinkedIn</td><td>Founder posts, field notes, launches, hiring</td><td>English first, Arabic second</td><td>Text-led, one image or document carousel</td></tr>
+        <tr><td>Instagram</td><td>Field notes, problem → product, short screen videos</td><td>Arabic first</td><td>Documentary photos, five formats only</td></tr>
+        <tr><td>X</td><td>Build notes, release notes, short observations</td><td>Both</td><td>Plain text, occasional screenshot</td></tr>
+        <tr><td>WhatsApp Business</td><td>Sales and support: the channel customers actually use</td><td>Arabic first</td><td>Mark on ink as avatar; greeting, away message and product catalogue written in the brand voice</td></tr>
+        <tr><td>GitHub</td><td>Open tools (Iraqi phone/IQD formatting, RTL helpers), engineering credibility</td><td>English</td><td>Mark avatar, clear READMEs</td></tr>
+      </tbody>
+    </table></div>
+    <p class="muted" style="max-width:44em">The two formats not shown are the <strong>Founder log</strong> (text-only on stone, one idea per post) and <strong>Release notes</strong> (a product-accent header and a plain list).</p>
+  </div>
+</section>
+
+<!-- 24 -->
+<section class="s" id="s24">
+  <div class="s-head"><span class="num">24</span><h2>Brand Applications</h2><p>Real uses, drawn at working fidelity. Names, amounts and addresses are samples.</p></div>
+  <div class="apps">
+    <div class="stack" style="gap:12px">
+      <p class="label">Business card · 85 × 55 mm, English front / Arabic back</p>
+      <div class="card-biz card-front"><span class="lock" style="font-size:20px"><svg><use href="#mk"/></svg><span class="wm">Solvra</span></span><div style="font-size:11.5px;line-height:1.5"><strong style="font-size:13px">Your Name</strong><br>Founder<br><span class="mono">+964 7XX XXX XXXX · solvra.iq</span></div></div>
+      <div class="card-biz card-back" dir="rtl"><span class="lock" style="font-size:20px"><svg><use href="#mk"/></svg><span class="ar-d" lang="ar" style="font-weight:700">سولفرا</span></span><div class="ar" lang="ar" style="font-size:12px;line-height:1.6">الاسم<br>المؤسس<br><span class="ar" style="opacity:.8">حلولٌ بإتقان.</span></div></div>
+    </div>
+    <div class="stack" style="gap:12px">
+      <p class="label">Invoice · A4, bilingual header</p>
+      <div class="doc">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap"><span class="lock" style="font-size:18px"><svg><use href="#mk"/></svg><span class="wm">Solvra</span></span><div style="text-align:right"><strong style="font-family:var(--f-display);font-size:15px">Invoice · <span class="ar" lang="ar">فاتورة</span></strong><br><span class="mono" style="font-size:11px">SLV-INV-2026-0017 · 01 Nov 2026</span></div></div>
+        <p style="margin-top:12px;font-size:11.5px"><span style="color:#5E6776">Billed to</span> Nahr Trading Co. (sample), Baghdad</p>
+        <table style="margin-top:10px"><thead><tr><th>Item</th><th style="text-align:right">Amount (IQD)</th></tr></thead><tbody>
+          <tr><td>Solvra Shipments, Team plan, November</td><td class="mono" style="text-align:right">150,000</td></tr>
+          <tr><td>2026 shipment file setup</td><td class="mono" style="text-align:right">250,000</td></tr>
+          <tr><td><strong>Total</strong></td><td class="mono" style="text-align:right"><strong>400,000</strong></td></tr>
+        </tbody></table>
+        <p style="margin-top:10px;font-size:10.5px;color:#5E6776">Pay by FIB transfer or cash. Questions: support on WhatsApp.</p>
+      </div>
+    </div>
+    <div class="stack" style="gap:12px">
+      <p class="label">QR equipment / file sticker · 60 × 40 mm, weatherproof</p>
+      <div class="sticker">
+        <svg viewBox="0 0 29 29" style="width:96px;height:96px" role="img" aria-label="QR code placeholder"><rect width="29" height="29" fill="#FFFFFF"/><g fill="#0E1420"><rect x="1" y="1" width="7" height="7"/><rect x="21" y="1" width="7" height="7"/><rect x="1" y="21" width="7" height="7"/></g><g fill="#FFFFFF"><rect x="2" y="2" width="5" height="5"/><rect x="22" y="2" width="5" height="5"/><rect x="2" y="22" width="5" height="5"/></g><g fill="#0E1420"><rect x="3" y="3" width="3" height="3"/><rect x="23" y="3" width="3" height="3"/><rect x="3" y="23" width="3" height="3"/><rect x="10" y="3" width="2" height="2"/><rect x="14" y="5" width="3" height="2"/><rect x="11" y="10" width="2" height="4"/><rect x="16" y="11" width="4" height="2"/><rect x="22" y="12" width="3" height="3"/><rect x="10" y="17" width="3" height="2"/><rect x="15" y="16" width="2" height="5"/><rect x="19" y="20" width="4" height="2"/><rect x="24" y="24" width="3" height="3"/><rect x="12" y="23" width="2" height="3"/></g></svg>
+        <div style="display:flex;flex-direction:column;justify-content:space-between;min-width:0"><span class="lock" style="font-size:15px"><svg><use href="#mk"/></svg><span class="wm">Solvra</span></span><div><p style="font-size:12px;font-weight:600">Scan for service history</p><p class="ar" lang="ar" style="font-size:12px">امسح لعرض سجل الصيانة</p><p class="mono" style="font-size:11px;color:#5E6776;margin-top:4px">AC-0142</p></div></div>
+      </div>
+    </div>
+    <div class="stack" style="gap:12px">
+      <p class="label">App icon and favicon</p>
+      <div class="icons-row">
+        <div class="appicon" style="width:96px;height:96px"><svg viewBox="0 0 24 24" style="width:56px;height:56px"><use href="#mk"/></svg></div>
+        <div class="appicon light" style="width:64px;height:64px"><svg viewBox="0 0 24 24" style="width:38px;height:38px"><use href="#mk"/></svg></div>
+        <div class="appicon" style="width:40px;height:40px"><svg viewBox="0 0 24 24" style="width:24px;height:24px"><use href="#mk"/></svg></div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--raised)"><svg viewBox="0 0 24 24" style="width:16px;height:16px;--mark-a:var(--text);--mark-b:var(--text)"><use href="#mk"/></svg><span style="font-size:13px">Solvra</span></div>
+      </div>
+      <p class="muted" style="font-size:14px">App icon: the round Seal on ink with brass piece B, at 64% of the tile. Favicon: single colour, 16px favicon cut. Social avatars (WhatsApp, Instagram, LinkedIn) crop to a circle, so the Seal fills them edge to edge with nothing cut off.</p>
+    </div>
+    <div class="stack" style="gap:12px">
+      <p class="label">Product dashboard · Arabic, right to left</p>
+      <div class="dash" dir="rtl" lang="ar">
+        <div class="side"><span class="lock" style="font-size:14px"><svg><use href="#mk"/></svg><span class="ar-d" style="font-weight:700">سولفرا</span></span><span class="ar" style="font-size:12px;color:#5E6776">الشحنات</span><span class="ar" style="font-size:12.5px;font-weight:600;border-inline-start:2px solid #3B5BC4;padding-inline-start:8px">كل الشحنات</span><span class="ar" style="font-size:12.5px">جدول الأمانات</span><span class="ar" style="font-size:12.5px">الموردون</span></div>
+        <div class="mainc">
+          <p class="ar-d" style="font-size:15px;font-weight:700">الشحنات</p>
+          <table class="ar" style="margin-top:8px"><thead><tr><th>رقم الشحنة</th><th>المورّد</th><th>الأمانات الضريبية</th><th>الحالة</th></tr></thead><tbody>
+            <tr><td class="mono" dir="ltr" style="text-align:right">SHP-0142</td><td>قوانغتشو</td><td class="mono" dir="ltr" style="text-align:right">3,400,000</td><td><span class="stat st-ok">مطابقة</span></td></tr>
+            <tr><td class="mono" dir="ltr" style="text-align:right">SHP-0143</td><td>إسطنبول</td><td class="mono" dir="ltr" style="text-align:right">1,150,000</td><td><span class="stat st-warn">ينقص وصل</span></td></tr>
+            <tr><td class="mono" dir="ltr" style="text-align:right">SHP-0144</td><td>دبي</td><td class="mono" dir="ltr" style="text-align:right">—</td><td><span class="stat st-info">قيد الإعداد</span></td></tr>
+          </tbody></table>
+        </div>
+      </div>
+    </div>
+    <div class="stack" style="gap:12px">
+      <p class="label">Email signature and proposal cover</p>
+      <div class="doc" style="font-size:12.5px"><strong>Your Name</strong> · Founder, Solvra<br><span class="mono" style="font-size:11.5px;color:#5E6776">+964 7XX XXX XXXX · solvra.iq</span><div style="margin-top:8px"><span class="lock" style="font-size:14px"><svg><use href="#mk"/></svg><span class="wm">Solvra</span></span></div></div>
+      <div class="doc" style="background:#0E1420;color:#F4F4F0;--mark-a:#F4F4F0;--mark-b:#D7B46A;min-height:150px;display:flex;flex-direction:column;justify-content:space-between"><span class="lock" style="font-size:16px"><svg><use href="#mk"/></svg><span class="wm">Solvra</span></span><div><p class="label" style="color:#A3ABB8">Proposal · Nov 2026</p><p style="font-family:var(--f-display);font-size:19px;font-weight:600;margin-top:4px">Shipment files for Nahr Trading (sample)</p></div></div>
+    </div>
+  </div>
+  <div class="panel" style="margin-top:22px"><h4>Also covered by the same rules</h4><p class="muted"><strong>PDF reports:</strong> white pages, ink headings, brass only in the cover mark, page numbers in mono. <strong>Signage:</strong> the bilingual stacked lockup in ink on stone or brushed metal; brass only at the entrance. <strong>Social profiles:</strong> the mark on ink as the avatar and the "fit" frame as the cover. <strong>Packaging:</strong> not needed; QR stickers and printed onboarding cards are the only physical items.</p><p class="muted" style="margin-top:10px"><strong>Domain:</strong> <span class="mono">solvra.iq</span> is registered by submitting company documents to the .iq registry, so start that paperwork alongside company registration. Until it is approved, secure a .com or .app fallback, and redirect it to .iq once .iq is live. Iraqi customers trust .iq, and it matches "Iraq-first".</p></div>
+</section>
+
+<!-- 25 -->
+<section class="s" id="s25">
+  <div class="s-head"><span class="num">25</span><h2>Design Tokens</h2><p>Semantic names for Next.js and Tailwind (map these CSS variables in <span class="mono">tailwind.config</span> or with Tailwind v4 <span class="mono">@theme</span>).</p></div>
+  <div class="stack" style="gap:12px">
+    <div style="display:flex;justify-content:flex-end"><button class="copy" id="copyTokens" type="button">Copy tokens</button></div>
+<pre class="code" id="tokens">/* Primitives */
+--ink-950:#0E1420; --ink-700:#2B3445; --slate-500:#5E6776; --slate-400:#8A919C;
+--stone-50:#F7F7F4; --stone-100:#EFEFEA; --stone-200:#E2E2DB; --stone-300:#CBCBC2;
+--night-900:#0C111A; --night-800:#131A26; --night-700:#1A2230; --night-600:#283243;
+--brass-300:#D7B46A; --brass-500:#B38B3A; --brass-700:#8A6A22;
+--green-700:#1F7A4D; --amber-700:#B8520A; --red-700:#B42331; --blue-700:#2F5DA8;
+--product-shipments:#3B5BC4; --product-service:#0F766E; --product-workshop:#A8532E;
+--product-school:#6E4A86; --product-retail:#5F7A2E;
+
+/* Semantic (light) */
+--color-bg:var(--stone-50);        --color-surface:#FFFFFF;
+--color-surface-muted:var(--stone-100); --color-border:var(--stone-200);
+--color-border-strong:var(--stone-300); --color-text:var(--ink-950);
+--color-text-muted:var(--slate-500);    --color-primary:var(--ink-950);
+--color-primary-fg:#FFFFFF;         --color-accent:var(--brass-500);
+--color-accent-text:var(--brass-700);   --color-focus:var(--brass-500);
+--color-success:var(--green-700);   --color-warning:var(--amber-700);
+--color-danger:var(--red-700);      --color-info:var(--blue-700);
+--color-product:var(--product-shipments); /* set per product */
+
+/* Semantic (dark) — [data-theme="dark"] and prefers-color-scheme */
+--color-bg:var(--night-900); --color-surface:var(--night-700);
+--color-surface-muted:var(--night-800); --color-border:var(--night-600);
+--color-text:#E9EAE6; --color-text-muted:#A3ABB8;
+--color-primary:#E9EAE6; --color-primary-fg:var(--ink-950);
+--color-accent:var(--brass-300); --color-accent-text:var(--brass-300);
+
+/* Type */
+--font-display:"Schibsted Grotesk", system-ui, sans-serif;
+--font-sans:"IBM Plex Sans", system-ui, sans-serif;
+--font-mono:"IBM Plex Mono", ui-monospace, monospace;
+--font-ar-display:"Noto Kufi Arabic", Tahoma, sans-serif;
+--font-ar:"Noto Sans Arabic", Tahoma, sans-serif;
+--text-xs:12px; --text-sm:13px; --text-base:14px; --text-md:16px; --text-lg:18px;
+--text-xl:20px; --text-2xl:24px; --text-3xl:32px; --text-4xl:40px; --text-5xl:56px;
+--leading-tight:1.1; --leading-ui:1.45; --leading-body:1.6; --leading-ar:1.8;
+
+/* Space (4px base) */
+--space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:20px;
+--space-6:24px; --space-8:32px; --space-10:40px; --space-12:48px; --space-16:64px;
+
+/* Radius (echoes the Seal's 2.2/24 seam turns; full round for avatars and status dots) */
+--radius-sm:6px; --radius-md:10px; --radius-lg:14px; --radius-xl:20px; --radius-full:999px;
+
+/* Borders, shadows */
+--border-width:1px; --seam:2px;
+--shadow-sm:0 1px 2px rgb(14 20 32 / .06);
+--shadow-md:0 2px 4px rgb(14 20 32 / .06), 0 8px 24px rgb(14 20 32 / .08);
+
+/* Motion */
+--duration-micro:120ms; --duration-standard:180ms; --duration-enter:240ms; --duration-exit:160ms;
+--ease-standard:cubic-bezier(.2,0,0,1); --ease-exit:cubic-bezier(.4,0,1,1);
+
+/* Breakpoints */
+--bp-sm:640px; --bp-md:768px; --bp-lg:1024px; --bp-xl:1280px;</pre>
+    <p class="muted">Rules: components use only semantic tokens. Buttons 10px radius, cards 14px, dialogs 20px (slightly softer in v2 to match the round mark). One shadow level per screen. Set <span class="mono">dir</span> and <span class="mono">lang</span> on <span class="mono">&lt;html&gt;</span>, and use logical CSS properties (<span class="mono">margin-inline-start</span>, <span class="mono">ps-*</span>/<span class="mono">pe-*</span> in Tailwind) everywhere.</p>
+  </div>
+</section>
+
+<!-- 26 -->
+<section class="s" id="s26">
+  <div class="s-head"><span class="num">26</span><h2>Brand Guidelines Structure</h2><p>The chapter list for the PDF. Each chapter maps to a section of this document.</p></div>
+  <div class="grid3" style="font-size:15px">
+    <ol class="clean" style="padding-left:1.3em"><li>Brand story (07)</li><li>Purpose (02)</li><li>Mission (03)</li><li>Vision (03)</li><li>Positioning (01, 02)</li><li>Audience (04)</li><li>Personality (05)</li><li>Voice (10)</li><li>Logo (12)</li></ol>
+    <ol class="clean" start="10" style="padding-left:1.6em"><li>Logo construction (12)</li><li>Clear space and minimum size (12)</li><li>Misuse (12)</li><li>Colours (14)</li><li>Typography (15)</li><li>Arabic and Kurdish system (16)</li><li>Iconography (17)</li><li>Imagery (18)</li></ol>
+    <ol class="clean" start="18" style="padding-left:1.6em"><li>Motion (19)</li><li>Product architecture (20)</li><li>Product naming (08)</li><li>Web (21, 22)</li><li>Social (23)</li><li>Print (24)</li><li>Accessibility: contrast ratios, focus, RTL, reduced motion (14, 19, 25)</li><li>Brand examples (24)</li></ol>
+  </div>
+</section>
+
+<!-- 27 -->
+<section class="s" id="s27">
+  <div class="s-head"><span class="num">27</span><h2>Competitive Inspiration</h2><p>What to learn from each, and what not to copy. These are observations of public brand behaviour, not audits.</p></div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Brand</th><th>What makes it recognisable</th><th>Parent ↔ product</th><th>Lesson for Solvra</th></tr></thead>
+    <tbody>
+      <tr><td>Linear</td><td>Extreme restraint; product quality is the brand</td><td>Single product</td><td>Craft in the product beats decoration. Don't copy the dark-purple look.</td></tr>
+      <tr><td>Stripe</td><td>Documentation-grade clarity; editorial writing</td><td>"Stripe Billing", "Stripe Terminal"</td><td>Architecture A works when every product is excellent. Skip the gradients.</td></tr>
+      <tr><td>Vercel</td><td>Monochrome precision, a strong geometric mark</td><td>Platform + features</td><td>A simple mark can carry a whole company.</td></tr>
+      <tr><td>Notion</td><td>Humane illustration, friendly monochrome</td><td>Single product with add-ons</td><td>Warmth without colour noise.</td></tr>
+      <tr><td>Shopify</td><td>Merchant-first language; a clear ecosystem</td><td>"Shopify POS", "Shopify Payments"</td><td>Speak the customer's trade language.</td></tr>
+      <tr><td>Atlassian</td><td>A unified logo system across many products</td><td>Independent names with shared icon rules</td><td>A shared mark grammar keeps a portfolio coherent.</td></tr>
+      <tr><td>Zoho</td><td>Huge breadth under one name</td><td>"Zoho CRM", "Zoho Books", 50+ apps</td><td>The warning: Architecture A dilutes if quality varies. Launch products slowly.</td></tr>
+      <tr><td>HubSpot / Jobber / ServiceTitan</td><td>Friendly, trade-specific tone; HubSpot's orange</td><td>Hubs / single product</td><td>Plain talk to trades people. Keep brass clearly away from orange.</td></tr>
+      <tr><td>Figma</td><td>Colourful multi-shape mark tied to collaboration</td><td>Figma + FigJam, Dev Mode</td><td>A mark with parts lets products own a part. Solvra does this with piece B.</td></tr>
+      <tr><td>Careem, Salla, Zid, Foodics (region)</td><td>Arabic-first names; bilingual wordmarks treated as equals</td><td>Mostly single platforms</td><td>Arabic treated as a first-class identity is now the regional standard.</td></tr>
+      <tr><td>Iraqi software (Geno, Mandubi, local ERPs)</td><td>Mostly generic: stock blue, stock icons, feature lists</td><td>Single products</td><td>Almost nobody in Iraqi B2B software has a considered identity. A calm, crafted one stands out immediately.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 28 -->
+<section class="s" id="s28">
+  <div class="s-head"><span class="num">28</span><h2>What Makes Solvra Distinctive</h2></div>
+  <div class="grid2">
+    <div class="panel"><h4>A mark that is also a product system</h4><p class="muted">Piece A is always Solvra; piece B belongs to the product. The logo explains the company structure without words.</p></div>
+    <div class="panel"><h4>A concept tied to real behaviour</h4><p class="muted">"Earns its place" is a test the company runs on itself, not a slogan. It shapes the roadmap, the copy and the website's honest "Researching" labels.</p></div>
+    <div class="panel"><h4>Iraqi through details</h4><p class="muted">Dinars without decimals, landmark addresses, notebooks in the photography, Sorani-ready type. No lions, no cuneiform.</p></div>
+    <div class="panel"><h4>A palette nobody in the category owns</h4><p class="muted">Kohl ink and Safafeer brass: serious, warm, crafted, and far from tech blue, fintech green and startup purple.</p></div>
+    <div class="panel"><h4>Documentary proof instead of stock promises</h4><p class="muted">The workaround photographed as it is. Research published as field notes.</p></div>
+    <div class="panel"><h4>Bilingual by design</h4><p class="muted">Arabic copy is written, not translated, with its own tagline.</p></div>
+  </div>
+</section>
+
+<!-- 29 -->
+<section class="s" id="s29">
+  <div class="s-head"><span class="num">29</span><h2>Things Solvra Should Never Become</h2></div>
+  <div class="panel"><ul class="clean" style="columns:2 280px;column-gap:40px">
+    <li>A software agency that builds anything for anyone</li>
+    <li>A one-size-fits-all ERP with a module for everything</li>
+    <li>A brand that claims "first", "leading" or "AI-powered" as its identity</li>
+    <li>A government-looking portal: seals, flags, all caps, dense forms</li>
+    <li>A gradient-and-glow startup page</li>
+    <li>A logo system where every product invents its own mark</li>
+    <li>A company whose Arabic is an afterthought</li>
+    <li>A brand that shows customers it doesn't have</li>
+    <li>Noisy: pop-ups, confetti, countdown timers</li>
+    <li>Cheap: discount banners and "limited offer" pressure</li>
+  </ul></div>
+</section>
+
+<!-- 30 -->
+<section class="s" id="s30">
+  <div class="s-head"><span class="num">30</span><h2>Five-Year Brand Evolution</h2></div>
+  <div class="stack">
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Stage</th><th>Brand focus</th><th>What changes</th></tr></thead>
+      <tbody>
+        <tr><td>Year 1: one product</td><td>Solvra and its first product feel like one thing. The founder is the face.</td><td>Website shows the method, one live product and research in progress.</td></tr>
+        <tr><td>Years 2–3: two to four products</td><td>"By Solvra" becomes a quality signal. Field notes become a recognised publication.</td><td>Product accents appear; shared account and billing; customer stories with permission.</td></tr>
+        <tr><td>Years 4–5: portfolio and region</td><td>Known in Iraq as the company that builds software people keep using. Possible expansion to nearby Arabic-speaking markets.</td><td>Kurdish fully live; an Iraq-specific line appears on local marketing instead of in the core tagline.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="grid2">
+      <div class="panel"><h4>What must never change</h4><ul class="clean"><li>The Seal geometry and the A/B piece rule</li><li>Ink as the primary colour; brass as a rare signature</li><li>The type families and the Arabic-first writing standard</li><li>The "earns its place" test for every product</li><li>Plain voice, exact numbers</li></ul></div>
+      <div class="panel"><h4>What may flex</h4><ul class="clean"><li>Product accents (a new one per product, from the defined range)</li><li>Campaign lines and seasonal art direction</li><li>Photography subjects as industries change</li><li>Illustration, if it is ever needed, drawn on the 24-unit grid</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL -->
+<section class="final" id="final">
+  <span class="lock" style="font-size:30px"><svg><use href="#mk"/></svg><span class="wm">Solvra</span></span>
+  <h2>Final brand direction</h2>
+  <dl class="kv">
+    <dt>Brand essence</dt><dd>Earns its place.</dd>
+    <dt>Positioning</dt><dd>For Iraqi businesses whose daily work runs on WhatsApp, notebooks and spreadsheets, Solvra builds focused software products, each designed around one job studied in real workplaces, that do that job completely and fit how Iraqi businesses actually operate.</dd>
+    <dt>Mission</dt><dd>Build focused software for the everyday work of Iraqi businesses, one real problem at a time.</dd>
+    <dt>Vision</dt><dd>A family of products businesses across Iraq rely on daily, where "by Solvra" means built by people who understood the work.</dd>
+    <dt>Tagline</dt><dd>Elegantly solved. · <span class="ar" lang="ar">حلولٌ بإتقان.</span> Supporting line: Software that earns its place.</dd>
+    <dt>Logo concept</dt><dd>The Seal: a round mark made of two identical interlocking pieces, with a rounded S-shaped seam between them. It echoes the round business stamp (الختم) Iraqi companies use to mark work as theirs. Piece B takes each product's colour.</dd>
+    <dt>Primary colours</dt><dd>Kohl Ink #0E1420 · Safafeer Brass #B38B3A · Stone #F7F7F4 / #E2E2DB · Slate #5E6776</dd>
+    <dt>Typography</dt><dd>Schibsted Grotesk (display, wordmark) · IBM Plex Sans + Mono (text, data) · Noto Kufi Arabic + Noto Sans Arabic (Arabic and Kurdish)</dd>
+    <dt>Personality</dt><dd>Grounded, precise, calm, plain-spoken, curious, dependable</dd>
+    <dt>Naming</dt><dd>Solvra + descriptor (Solvra Shipments, Solvra Service). Arabic lockup: <span class="ar" lang="ar">سولفرا · الشحنات</span></dd>
+    <dt>Visual style</dt><dd>Field-notes editorial: stone grounds, ink type, documentary photography of real work, 10–14px radii, quiet motion with one signature "fit"</dd>
+  </dl>
+  <p style="max-width:48em;font-size:17px">Solvra is an Iraqi software company that builds small, focused products for the everyday work of businesses. It studies how work is really done (the notebooks, the WhatsApp groups, the stamped receipts) and builds software only for the parts that cost people time or money. Its identity is calm and exact: an ink-and-brass palette, a mark made of two pieces that fit, and a voice that speaks plainly in Arabic and English. Every product carries the same promise: software that earns its place.</p>
+</section>
+
+<p class="foot">Solvra brand strategy v3 (refined Seal: continuous seam, semicircular turns) · September 2026 · All customer names, numbers and contact details shown are samples.</p>
+</main>
+</div>
+
+<script>
+(function(){
+  var btn=document.getElementById('copyTokens'), pre=document.getElementById('tokens');
+  if(!btn||!pre) return;
+  btn.addEventListener('click',function(){
+    var done=function(){btn.textContent='Copied';setTimeout(function(){btn.textContent='Copy tokens'},1600)};
+    var fallback=function(){var r=document.createRange();r.selectNodeContents(pre);var s=window.getSelection();s.removeAllRanges();s.addRange(r);btn.textContent='Selected. Press Ctrl+C'};
+    try{navigator.clipboard.writeText(pre.textContent).then(done,fallback)}catch(e){fallback()}
+  });
+})();
+</script>

@@ -1,0 +1,8 @@
+# Cache rules for Cloudflare static assets. Built JS/CSS have content hashes in their names; photos and fonts are
+# re-made under the same names only when scripts/photos.ts runs again, so a month of cache is safe for them.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+/photos/*
+  Cache-Control: public, max-age=2592000, stale-while-revalidate=604800
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable

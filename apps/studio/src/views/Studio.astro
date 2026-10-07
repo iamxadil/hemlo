@@ -1,0 +1,518 @@
+---
+import StudioBase from '../layouts/StudioBase.astro';
+import StudioLogo from '../components/StudioLogo.astro';
+import Mark from '../components/Mark.astro';
+import Blank from '../components/Blank.astro';
+import { t, EMAIL, pagesLabel, type Lang } from '../i18n';
+import { PRICES, DEFAULT_QUOTE as D, calculate, money } from '../pricing';
+interface Props { lang: Lang; }
+const { lang } = Astro.props;
+const s = t(lang), w = s.sentence, r = s.receipt, L = s.list, AL = s.afterLaunch;
+// small line icons for the after-launch explainer
+const ICON: Record<string, string> = {
+  server: 'M4 5h16v5H4zM4 14h16v5H4zM8 7.5h.01M8 16.5h.01',
+  globe: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM3 12h18M12 3c2.5 2.7 3.6 5.7 3.6 9s-1.1 6.3-3.6 9c-2.5-2.7-3.6-5.7-3.6-9S9.5 5.7 12 3z',
+  lock: 'M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3M12 14.5v2.5',
+  copy: 'M8 8h11v11H8zM5 16V5h11',
+  pulse: 'M3 12h4l2.5-6 4 12 2.5-6H21',
+  pencil: 'M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4',
+};
+const iqd = (n: number) => money(n, 'IQD', lang);
+const comma = lang === 'ar' ? '،' : ',';
+const opts = (o: Record<string, string>) => Object.entries(o) as [string, string][];
+const idx = (a: string[]) => a.map((l, i) => [String(i), l]) as [string, string][];
+const extras: [keyof typeof w.extras, string][] = [
+  ['cms', 'website'], ['accounts', 'webapp mobile system'], ['reports', 'webapp mobile system'], ['workflows', 'webapp mobile system'], ['notify', 'webapp mobile system'],
+  ['blog', 'website'], ['booking', 'website store'], ['payments', 'website store'], ['copy', 'website'], ['seo', ''], ['brand', ''], ['rush', ''],
+];
+const on = (k: string) => (k in D.modules ? D.modules[k as keyof typeof D.modules] : (D as any)[k]) as boolean;
+const first = calculate(D);
+const A = PRICES.addons, M = PRICES.modules;
+const pct = (x: number) => `+${Math.round(x * 100)}%`;
+const websites: [string, string][] = [
+  [L.firstPage, iqd(PRICES.website.firstPage)], [L.extraPage, iqd(PRICES.website.perPage)], [L.cms, iqd(A.cms)], [L.lang, pct(A.languagePct)],
+  [L.blog, iqd(A.blog)], [L.booking, iqd(A.booking)], [L.payments, iqd(A.payments)], [L.copy, `${iqd(A.copyPerPage)} ${L.perPage}`],
+  [L.seo, iqd(A.seo)], [L.brand, iqd(A.brand)], [L.rush, pct(A.rushPct)],
+];
+const stores = PRICES.store.catalogue.map((c, i) => [L.catalogue[i], iqd(PRICES.store.base + c.add)]);
+const apps = [PRICES.webapp.from, PRICES.mobile.from, PRICES.system.from].map((v, i) => [L.types[i], `${L.from} ${iqd(v)}`]);
+const modules = [M.accounts, M.reports, M.workflows, M.notify, M.integrations].map((v, i) => [L.modules[i], `+ ${iqd(v)}${i === 4 ? ' ' + L.each : ''}`]);
+const cares = (['basic', 'business', 'priority'] as const).map((k, i) => ({ name: L.carePlans[i][0], desc: L.carePlans[i][1], price: `${iqd(PRICES.care[k])} ${L.perMonth}` }));
+const num = (i: number) => String(i + 1).padStart(2, '0');
+const F = s.work.featured, DM = s.work.demo, SY = s.work.systems, HM = s.work.hemlo, TL = s.work.tools, WU = s.work.ui;
+// "Our work": every project the same shape, so the showcase can treat them alike. `tall` = a whole page, scrolled on hover.
+type Project = { id: string; group: 'client' | 'demo' | 'own'; name: string; domain: string; tag: string; desc: string; features: string[]; alt: string; phoneAlt: string;
+  desk: string; deskSet?: string; tall?: boolean; phone: string; phoneSet: string; color: string; links: [string, string, boolean][] };
+const GROUPS = ['client', 'demo', 'own'] as const;
+const phone = (id: string) => ({ phone: `/work/${id}-phone-${lang}-360.webp`, phoneSet: `/work/${id}-phone-${lang}-360.webp 360w, /work/${id}-phone-${lang}-720.webp 720w` });
+const PROJECTS: Project[] = [
+  { id: 'alwafi', group: 'client', name: F.name, domain: F.domain, tag: F.tag, desc: F.desc, features: F.features.slice(0, 8), alt: F.alt, phoneAlt: F.name,
+    desk: `/work/alwafi-page-${lang}.webp`, tall: true, ...phone('alwafi'), color: '#5B6CFF', links: [[F.url, F.visit, true]] },
+  { id: 'nafha', group: 'demo', name: DM.name, domain: DM.domain, tag: DM.tag, desc: DM.desc, features: DM.features, alt: DM.alt, phoneAlt: DM.phoneAlt,
+    desk: `/work/nafha-panel-${lang}-900.webp`, deskSet: `/work/nafha-panel-${lang}-900.webp 900w, /work/nafha-panel-${lang}-1600.webp 1600w`, ...phone('nafha'), color: '#C9A06A',
+    links: [[DM.panelUrl, DM.panel, true], [DM.url, DM.open, false]] },
+  { id: 'systems', group: 'own', name: SY.name, domain: SY.domain, tag: SY.tag, desc: SY.desc, features: SY.features, alt: SY.alt, phoneAlt: SY.phoneAlt,
+    desk: `/work/systems-desk-${lang}-1000.webp`, deskSet: `/work/systems-desk-${lang}-1000.webp 1000w, /work/systems-desk-${lang}-1800.webp 1800w`, ...phone('systems'), color: '#E4572E',
+    links: [[SY.demoUrl, SY.open, true], [SY.url, SY.visit, false]] },
+  { id: 'hemlo', group: 'own', name: HM.name, domain: HM.domain, tag: HM.tag, desc: HM.desc, features: HM.features, alt: HM.alt, phoneAlt: HM.phoneAlt,
+    desk: `/work/hemlo-page-${lang}.webp`, tall: true, ...phone('hemlo'), color: '#4FC1B3', links: [[HM.url, HM.visit, true]] },
+  { id: 'tools', group: 'own', name: TL.name, domain: TL.domain, tag: TL.tag, desc: TL.desc, features: TL.features, alt: TL.alt, phoneAlt: TL.phoneAlt,
+    desk: `/work/tools-page-${lang}.webp`, tall: true, ...phone('tools'), color: '#3E7BFA', links: [[TL.url, TL.visit, true]] },
+];
+---
+<StudioBase lang={lang}>
+  <!-- the sentence and the receipt -->
+  <section id="build" class="relative overflow-hidden">
+    <div class="absolute -top-48 start-[-10%] -z-10 h-[40rem] w-[60rem] rounded-full bg-[radial-gradient(closest-side,var(--glow),transparent)]" aria-hidden="true"></div>
+    <div class="wrap grid items-start gap-14 pt-12 pb-24 sm:pt-16 lg:grid-cols-[1fr_22.5rem] lg:gap-16">
+      <div>
+        <p class="eyebrow rise">{s.hero.eyebrow}</p>
+        <h1 class="mt-3 max-w-2xl text-[clamp(1.25rem,2.2vw,1.625rem)] font-medium leading-snug tracking-tight text-muted rise rise-2" set:html={s.hero.title} />
+
+        <form id="sentence" class="sentence mt-10 sm:mt-14 rise rise-3" data-lang={lang} onsubmit="return false" autocomplete="off">
+          <p>
+            {w.need} <Blank name="type" label={w.need} options={opts(w.types)} value={D.type} />{' '}
+            <span data-for="website">{w.with}{' '}<span class="stepper"><button type="button" data-step="-1" aria-label={w.less}>−</button><output id="pages-out" class="price">{pagesLabel(D.pages, lang)}</output><button type="button" data-step="1" aria-label={w.more}>+</button></span><input type="hidden" name="pages" value={D.pages} /></span>
+            <span data-for="store"><Blank name="catalogue" label={w.catalogue.s} options={opts(w.catalogue)} value={D.catalogue} /></span>
+            <span data-for="webapp mobile system"><Blank name="complexity" label="Complexity" options={opts(w.complexity)} value={D.complexity} />{comma} <Blank name="integrations" label="Integrations" options={idx(w.integrations)} value={String(D.integrations)} /></span>{comma}{' '}
+            <Blank name="languages" label="Languages" options={idx(w.languages)} value={String(D.languages)} />.
+          </p>
+          <p class="mt-4">
+            {w.also}{' '}
+            <span class="chips">{extras.map(([k, f]) => <label class="chip" data-for={f || undefined}><input type="checkbox" name={k} checked={on(k)} />{w.extras[k]}</label>)}</span>
+          </p>
+          <p class="mt-4">{w.after}{' '}<Blank name="care" label={w.after} options={opts(w.care)} value={D.care} />. <a href="#after-launch" class="al-help">{AL.help}</a></p>
+        </form>
+      </div>
+
+      <!-- receipt -->
+      <aside class="lg:sticky lg:top-24 rise rise-4" aria-label={r.title}>
+        <div class="receipt-wrap">
+          <article id="receipt" class="receipt" aria-live="polite">
+            <div class="flex items-start justify-between gap-4">
+              <StudioLogo lang={lang} tone="paper" class="h-8 text-paper-ink" />
+              <div class="text-end text-[11px] leading-relaxed muted"><div class="code" id="r-no">HS-0000</div><div id="r-date"></div></div>
+            </div>
+            <hr class="rule" />
+            <p class="text-[11px] font-medium uppercase tracking-[.14em] muted">{r.title}</p>
+            <ul id="r-lines" class="mt-3 space-y-2 text-[14px]">
+              {first.lines.map((l) => <li class="flex justify-between gap-3"><span>{((r.lines as Record<string, string>)[l.key] ?? l.key).replace('{p}', pagesLabel(l.qty ?? 0, lang)).replace('{n}', String(l.qty ?? ''))}</span><span class="price">{iqd(l.amount)}</span></li>)}
+            </ul>
+            <hr class="rule" />
+            <div class="flex items-baseline justify-between gap-3">
+              <span class="text-sm font-medium">{r.total}</span>
+              <span id="r-total" class="price text-[1.65rem] font-semibold tracking-tight">{iqd(first.total)}</span>
+            </div>
+            <p id="r-range" class="mt-1 text-end text-[12px] muted" hidden>{r.range}</p>
+            <p id="r-monthly" class="mt-1 text-end text-[13px] muted"></p>
+            <hr class="rule" />
+            <dl class="space-y-1.5 text-[13px]">
+              <div class="flex justify-between"><dt class="muted">{r.ready}</dt><dd id="r-ready" class="price font-medium"></dd></div>
+              <div class="flex justify-between"><dt class="muted">{r.pay}</dt><dd></dd></div>
+              <div id="r-pay" class="space-y-1 ps-3"></div>
+            </dl>
+            <hr class="rule" />
+            <div class="flex items-end justify-between gap-4">
+              <div class="barcode" id="r-bar" aria-hidden="true"></div>
+              <Mark class="h-7 w-auto text-[var(--teal-deep)]" />
+            </div>
+            <p class="mt-2 text-[10.5px] code muted" dir="ltr">studio.hemlohq.com</p>
+          </article>
+        </div>
+        <div class="mt-6 grid gap-2.5">
+          <a id="send" class="btn btn-teal justify-center" href={`mailto:${EMAIL}`}>{r.send}</a>
+          <div class="grid grid-cols-3 gap-2.5 text-sm">
+            <button type="button" id="cur" class="btn btn-secondary justify-center !px-2" data-iqd={r.iqd} data-usd={r.usd}>{r.usd}</button>
+            <button type="button" id="copy" class="btn btn-secondary justify-center !px-2">{r.copy}</button>
+            <button type="button" id="pdf" class="btn btn-secondary justify-center !px-2">{r.pdf}</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- is Studio for you? -->
+  <section class="border-t border-line">
+    <div class="wrap py-16 sm:py-20">
+      <div class="fit">
+        <div><p class="fit-l">{s.fit.what}</p><p class="mt-3 text-[clamp(1.15rem,2vw,1.4rem)] font-medium leading-snug">{s.fit.whatBody}</p></div>
+        <div><p class="fit-l">{s.fit.when}</p><ul class="mt-3 grid gap-2.5">{s.fit.whenList.map((w) => <li class="flex items-start gap-3"><span class="fit-t" aria-hidden="true">✓</span><span class="leading-relaxed">{w}</span></li>)}</ul></div>
+        <div class="fit-n"><p class="fit-l">{s.fit.not}</p><p class="mt-3 leading-relaxed text-fg-2">{s.fit.notBody}</p>
+          <p class="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium"><a class="underline underline-offset-4" href={lang === 'ar' ? 'https://hemlohq.com/systems/' : 'https://hemlohq.com/en/systems/'}>{s.fit.systems}</a><a class="underline underline-offset-4" href="https://tools.hemlohq.com/">{s.fit.tools}</a></p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- the price list -->
+  <section id="prices" class="border-t border-line">
+    <div class="wrap py-24 sm:py-32">
+      <div class="reveal max-w-2xl">
+        <h2 class="text-display font-semibold tracking-tight">{L.title}</h2>
+        <p class="mt-4 text-lead text-fg-2">{L.sub}</p>
+      </div>
+      <div class="mt-16 grid gap-x-20 gap-y-16 lg:grid-cols-2">
+        <div class="reveal">
+          <h3 class="tag">{L.websites}</h3>
+          <ul class="mt-3 text-[15.5px]">{websites.map(([n, p], i) => <li class:list={['leader', i === 1 && 'border-b border-line pb-4 mb-2']}><span class:list={[i < 2 ? 'text-fg font-medium' : 'text-fg-2']}>{n}</span><span class="price text-fg">{p}</span></li>)}</ul>
+        </div>
+        <div class="space-y-14">
+          <div class="reveal">
+            <h3 class="tag">{L.stores}</h3>
+            <ul class="mt-3 text-[15.5px]">{stores.map(([n, p]) => <li class="leader"><span class="text-fg-2">{n}</span><span class="price text-fg">{p}</span></li>)}</ul>
+            <p class="mt-2 text-sm text-muted">{L.storeNote}</p>
+          </div>
+          <div class="reveal">
+            <h3 class="tag">{L.apps}</h3>
+            <ul class="mt-3 text-[15.5px]">{apps.map(([n, p]) => <li class="leader"><span class="text-fg font-medium">{n}</span><span class="price text-fg">{p}</span></li>)}</ul>
+            <ul class="mt-1 text-[14.5px]">{modules.map(([n, p]) => <li class="leader !py-1.5"><span class="text-fg-2">{n}</span><span class="price text-fg-2">{p}</span></li>)}</ul>
+            <p class="mt-2 text-sm text-muted">{L.appsNote}</p>
+          </div>
+        </div>
+      </div>
+      <div class="reveal mt-20 scroll-mt-24" id="care">
+        <h3 class="tag">{L.care} <a href="#after-launch" class="al-help ms-2">{AL.help}</a></h3>
+        <div class="mt-5 grid border-y border-line sm:grid-cols-3 sm:divide-x sm:rtl:divide-x-reverse divide-line">
+          {cares.map((c) => (
+            <div class="border-b border-line py-6 last:border-0 sm:border-0 sm:px-7 sm:first:ps-0">
+              <p class="flex items-center gap-2 text-lg font-medium"><Mark class="h-4 w-auto text-teal" />{c.name}</p>
+              <p class="price mt-2 text-2xl font-semibold tracking-tight">{c.price}</p>
+              <p class="mt-2 text-[15px] leading-relaxed text-fg-2">{c.desc}</p>
+            </div>
+          ))}
+        </div>
+        <p class="mt-4 text-sm text-muted">{L.careNote}</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- after launch, simply put: what a care plan does, and what happens without each part -->
+  <section id="after-launch" class="border-t border-line scroll-mt-16">
+    <div class="wrap py-24 sm:py-32">
+      <div class="reveal max-w-2xl">
+        <h2 class="text-display font-semibold tracking-tight">{AL.title}</h2>
+        <p class="mt-4 text-lead text-fg-2">{AL.sub}</p>
+      </div>
+      <ul class="al-grid mt-14">
+        {AL.items.map(([icon, name, what, without, scope]) => (
+          <li class="reveal al-item">
+            <div class="flex items-center justify-between gap-3">
+              <span class="al-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d={ICON[icon]} /></svg></span>
+              <span class:list={['al-scope', scope !== 'all' && 'is-other']}>{scope === 'all' ? AL.all : scope === 'some' ? AL.some : AL.yearly}</span>
+            </div>
+            <h3 class="mt-5 text-xl font-medium tracking-tight">{name}</h3>
+            <p class="mt-2 leading-relaxed text-fg-2">{what}</p>
+            <p class="al-without"><b>{AL.without}:</b> {without}</p>
+          </li>
+        ))}
+      </ul>
+      <div class="reveal al-end">
+        <div><p class="font-medium">{AL.must}</p><p class="mt-1.5 max-w-2xl leading-relaxed text-fg-2">{AL.mustBody}</p></div>
+        <a href="#care" class="btn btn-teal shrink-0">{AL.cta}</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- our work: one showcase. The projects, grouped, on one side; the chosen one on a laptop and a phone on the other
+       (the laptop scrolls through the whole page on hover). Arrow keys, the buttons, or a swipe move between them. -->
+  <section id="work" class="border-t border-line">
+    <div class="wrap py-24 sm:py-32">
+      <div class="reveal max-w-2xl">
+        <h2 class="text-display font-semibold tracking-tight">{s.work.title}</h2>
+        <p class="mt-4 text-lead text-fg-2">{s.work.sub}</p>
+      </div>
+      <div class="wk reveal mt-14" data-wk>
+        <div class="wk-index" role="tablist" aria-label={WU.projects} aria-orientation="vertical">
+          <span class="wk-hl" aria-hidden="true"></span>
+          {GROUPS.map((g) => (
+            <div class="wk-group" role="presentation">
+              <p class="wk-group-t" aria-hidden="true">{s.work.groups[g]}</p>
+              {PROJECTS.map((p, i) => p.group === g && (
+                <button type="button" role="tab" class="wk-tab" id={`wk-tab-${p.id}`} aria-controls={`wk-${p.id}`} aria-selected={i === 0 ? 'true' : 'false'} tabindex={i === 0 ? 0 : -1} data-i={i}>
+                  <span class="wk-num" aria-hidden="true">{num(i)}</span>
+                  <span class="wk-tab-main"><span class="wk-name" dir="auto">{p.name}</span><span class="wk-tag">{p.tag}</span></span>
+                  <svg class="wk-chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" /></svg>
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+
+        <div class="wk-stage">
+          {PROJECTS.map((p, i) => (
+            <article role="tabpanel" id={`wk-${p.id}`} aria-labelledby={`wk-tab-${p.id}`} class:list={['wk-panel', i === 0 && 'on']} inert={i !== 0} data-i={i} style={`--acc:${p.color}`}>
+              <div class="wk-devices">
+                <div class="wk-glow" aria-hidden="true"></div>
+                <div class="wk-browser">
+                  <div class="wk-bar">
+                    <span class="wk-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                    <a class="wk-url" href={p.links[0][0]} target="_blank" rel="noopener" dir="ltr" tabindex={i === 0 ? 0 : -1}>
+                      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 7V5.5a3.5 3.5 0 0 1 7 0V7M3.5 7h9v6.5h-9z" /></svg>{p.domain}
+                    </a>
+                  </div>
+                  <div class:list={['wk-screen', p.tall && 'tall']}>
+                    <img {...(i === 0 ? { src: p.desk, srcset: p.deskSet } : { 'data-src': p.desk, 'data-srcset': p.deskSet })} sizes="(min-width: 1024px) 760px, 92vw" alt={p.alt} decoding="async" loading={i === 0 ? 'lazy' : undefined} />
+                    {p.tall && <span class="wk-hint" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M8 3v10M4 9l4 4 4-4" /></svg><span class="on-hover">{WU.hover}</span><span class="on-touch">{WU.touch}</span></span>}
+                  </div>
+                </div>
+                <div class="wk-phone">
+                  <img {...(i === 0 ? { src: p.phone, srcset: p.phoneSet } : { 'data-src': p.phone, 'data-srcset': p.phoneSet })} sizes="(min-width: 1024px) 180px, 24vw" width="720" height="1558" alt={p.phoneAlt} decoding="async" loading={i === 0 ? 'lazy' : undefined} />
+                </div>
+              </div>
+              <div class="wk-info">
+                <div>
+                  <span class="tag">{p.tag}</span>
+                  <h3 class="mt-2 text-[clamp(1.6rem,3vw,2.3rem)] font-semibold leading-tight tracking-tight" dir="auto">{p.name}</h3>
+                  <p class="mt-4 leading-relaxed text-fg-2">{p.desc}</p>
+                </div>
+                <div>
+                  <ul class="work-features">{p.features.map((x, k) => <li style={`--k:${k}`}>{x}</li>)}</ul>
+                  <div class="mt-7 flex flex-wrap gap-3">
+                    {p.links.map(([u, label, main]) => <a href={u} target="_blank" rel="noopener" tabindex={i === 0 ? 0 : -1} class:list={['btn w-fit', main ? 'btn-teal' : 'btn-secondary']}>{label}{main && <span aria-hidden="true" class="rtl:-scale-x-100">→</span>}</a>)}
+                  </div>
+                </div>
+              </div>
+            </article>
+          ))}
+          <div class="wk-nav">
+            <p class="wk-count" aria-live="polite"><b>{num(0)}</b><span> / {num(PROJECTS.length - 1)}</span></p>
+            <div class="flex gap-2">
+              <button type="button" class="wk-arrow" data-step="-1" aria-label={WU.prev}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5 5.5 8 10 12.5" /></svg></button>
+              <button type="button" class="wk-arrow" data-step="1" aria-label={WU.next}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" /></svg></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // the "Our work" showcase: tabs (click, arrows, Home/End), prev/next, swipe; a highlight that slides to the chosen
+    // project; images of the others load once the section is near, so the page's first paint stays light
+    const root = document.querySelector<HTMLElement>('[data-wk]');
+    if (root) {
+      const tabs = [...root.querySelectorAll<HTMLButtonElement>('.wk-tab')];
+      const panels = [...root.querySelectorAll<HTMLElement>('.wk-panel')];
+      const index = root.querySelector<HTMLElement>('.wk-index')!, hl = root.querySelector<HTMLElement>('.wk-hl')!;
+      const count = root.querySelector<HTMLElement>('.wk-count b')!;
+      const rtl = () => document.documentElement.dir === 'rtl';
+      const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let cur = 0;
+
+      const load = (p: HTMLElement) => p.querySelectorAll<HTMLImageElement>('img[data-src]').forEach((img) => {
+        if (img.dataset.srcset) img.srcset = img.dataset.srcset;
+        img.src = img.dataset.src!; img.removeAttribute('data-src');
+      });
+      // how long the laptop takes to scroll through a page: longer pages scroll for longer
+      const pace = (img: HTMLImageElement) => {
+        const set = () => img.parentElement!.style.setProperty('--dur', `${Math.max(1.4, (img.naturalHeight / img.naturalWidth - 0.625) * 2.6).toFixed(2)}s`);
+        if (img.complete && img.naturalWidth) set(); else img.addEventListener('load', set, { once: true });
+      };
+      root.querySelectorAll<HTMLImageElement>('.wk-screen.tall img').forEach(pace);
+      root.querySelectorAll<HTMLElement>('.wk-screen.tall').forEach((w) => w.addEventListener('scroll', () => w.classList.add('moved'), { once: true, passive: true }));
+
+      const place = () => {
+        const t = tabs[cur];
+        hl.style.width = `${t.offsetWidth}px`; hl.style.height = `${t.offsetHeight}px`;
+        hl.style.transform = `translate(${t.offsetLeft}px, ${t.offsetTop}px)`;
+      };
+      const show = (i: number, focus = false) => {
+        i = (i + tabs.length) % tabs.length;
+        if (i === cur) return;
+        load(panels[i]);
+        tabs.forEach((t, k) => { t.setAttribute('aria-selected', String(k === i)); t.tabIndex = k === i ? 0 : -1; });
+        panels.forEach((p, k) => {
+          p.classList.toggle('on', k === i); p.inert = k !== i;
+          p.querySelectorAll<HTMLElement>('a').forEach((a) => (a.tabIndex = k === i ? 0 : -1));
+        });
+        cur = i; place();
+        count.textContent = String(i + 1).padStart(2, '0');
+        if (focus) tabs[i].focus({ preventScroll: true });
+        // on phones the projects are a row of pills: bring the chosen one into view without moving the page
+        if (index.scrollWidth > index.clientWidth + 2) {
+          const t = tabs[i];
+          index.scrollTo({ left: t.offsetLeft - (index.clientWidth - t.offsetWidth) / 2, behavior: still ? 'auto' : 'smooth' });
+        }
+      };
+
+      tabs.forEach((t, i) => {
+        t.addEventListener('click', () => show(i));
+        t.addEventListener('pointerenter', () => load(panels[i]), { once: true }); // warm it before the click
+      });
+      index.addEventListener('keydown', (e) => {
+        const back = rtl() ? 'ArrowRight' : 'ArrowLeft', fwd = rtl() ? 'ArrowLeft' : 'ArrowRight';
+        const to = e.key === 'ArrowDown' || e.key === fwd ? cur + 1 : e.key === 'ArrowUp' || e.key === back ? cur - 1 : e.key === 'Home' ? 0 : e.key === 'End' ? tabs.length - 1 : null;
+        if (to === null) return;
+        e.preventDefault(); show(to, true);
+      });
+      root.querySelectorAll<HTMLButtonElement>('.wk-arrow').forEach((b) => b.addEventListener('click', () => show(cur + Number(b.dataset.step))));
+
+      // a sideways swipe over the devices moves to the next or previous project (vertical stays a scroll)
+      let x0 = 0, y0 = 0, down = false;
+      root.querySelectorAll<HTMLElement>('.wk-devices').forEach((d) => {
+        d.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse') return; down = true; x0 = e.clientX; y0 = e.clientY; });
+        d.addEventListener('pointerup', (e) => {
+          if (!down) return; down = false;
+          const dx = e.clientX - x0, dy = e.clientY - y0;
+          if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.4) show(cur + (dx < 0 ? 1 : -1) * (rtl() ? -1 : 1));
+        });
+        d.addEventListener('pointercancel', () => (down = false));
+        // a touch of depth: the phone drifts a little against the pointer
+        if (!still && matchMedia('(hover: hover) and (pointer: fine)').matches) {
+          d.addEventListener('pointermove', (e) => {
+            const r = d.getBoundingClientRect();
+            d.style.setProperty('--px', (((e.clientX - r.left) / r.width) * 2 - 1).toFixed(3));
+            d.style.setProperty('--py', (((e.clientY - r.top) / r.height) * 2 - 1).toFixed(3));
+          });
+          d.addEventListener('pointerleave', () => { d.style.setProperty('--px', '0'); d.style.setProperty('--py', '0'); });
+        }
+      });
+
+      // load the other projects' pictures once the section is close, after the first one has had its turn
+      new IntersectionObserver((entries, io) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        io.disconnect();
+        setTimeout(() => panels.forEach(load), 1200);
+      }, { rootMargin: '400px 0px' }).observe(root);
+
+      place();
+      addEventListener('resize', place);
+      document.fonts?.ready.then(place);
+      requestAnimationFrame(() => root.classList.add('ready')); // the highlight glides only after its first placement
+    }
+  </script>
+
+  <!-- how it goes -->
+  <section id="how" class="border-t border-line">
+    <div class="wrap py-24 sm:py-32">
+      <h2 class="reveal text-display font-semibold tracking-tight">{s.how.title}</h2>
+      <ol class="reveal relative mt-14 grid gap-9 border-s border-line-strong ps-7 md:grid-cols-5 md:gap-6 md:border-s-0 md:border-t md:ps-0 md:pt-8">
+        {s.how.steps.map(([title, body], i) => (
+          <li class="relative">
+            <span class="absolute -start-[calc(1.75rem+5px)] top-1.5 h-2.5 w-2.5 rounded-full bg-teal ring-4 ring-canvas md:-top-[calc(2rem+5px)] md:start-0"></span>
+            <span class="price text-xs text-muted">{num(i)}</span>
+            <h3 class="mt-2 text-lg font-medium leading-snug">{title}</h3>
+            <p class="mt-1.5 text-[15px] leading-relaxed text-fg-2">{body}</p>
+          </li>
+        ))}
+      </ol>
+      <dl class="reveal mt-20 grid gap-x-16 gap-y-8 border-t border-line pt-12 sm:grid-cols-2">
+        {s.faq.map(([q, a]) => <div><dt class="font-medium">{q}</dt><dd class="mt-1.5 leading-relaxed text-fg-2">{a}</dd></div>)}
+      </dl>
+    </div>
+  </section>
+
+  <!-- end -->
+  <section class="border-t border-line">
+    <div class="wrap py-28 text-center sm:py-36">
+      <h2 class="reveal text-display font-semibold tracking-tight">{s.end.title}</h2>
+      <p class="reveal mt-4 text-lead text-fg-2">{s.end.sub}</p>
+      <a class="reveal mt-9 inline-block border-b-2 border-teal pb-1 text-[clamp(1.5rem,4.5vw,3rem)] font-medium tracking-tight transition-opacity hover:opacity-75" href={`mailto:${EMAIL}`} dir="ltr">{EMAIL}</a>
+    </div>
+  </section>
+
+  <!-- phones: the price follows you until the receipt is on screen -->
+  <a href="#receipt" id="dock" class="fixed inset-x-3 bottom-[max(.75rem,env(safe-area-inset-bottom))] z-30 flex items-center justify-between rounded-full bg-paper px-5 py-3 text-paper-ink shadow-[0_18px_40px_-8px_rgba(0,0,0,.7)] transition-[opacity,transform] duration-300 lg:hidden">
+    <span class="text-sm">{r.dock}</span><span id="dock-total" class="price font-semibold">{iqd(first.total)}</span>
+  </a>
+
+  <script is:inline type="application/json" id="strings" set:html={JSON.stringify({ lines: r.lines, parts: r.payParts, then: r.then, weeks: r.weeks, days: r.days, copy: r.copy, copied: r.copied, subject: r.mailSubject, intro: r.mailIntro, total: r.total, ready: r.ready, range: r.range, types: w.types, email: EMAIL })} />
+</StudioBase>
+
+<script>
+  import { calculate, schedule, money, encode, decode, DEFAULT_QUOTE, type Quote } from '../pricing';
+  import { pagesLabel, type Lang } from '../i18n';
+
+  const form = document.getElementById('sentence') as HTMLFormElement;
+  const lang = form.dataset.lang as Lang;
+  const S = JSON.parse(document.getElementById('strings')!.textContent!);
+  const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
+  const el = (n: string) => form.elements.namedItem(n) as any;
+  let cur: 'IQD' | 'USD' = 'IQD';
+  const m = (n: number) => money(n, cur, lang);
+
+  const write = (q: Quote) => {
+    for (const k of ['type', 'catalogue', 'complexity', 'care'] as const) el(k).value = q[k];
+    el('languages').value = String(q.languages); el('integrations').value = String(Math.min(4, q.integrations)); el('pages').value = String(q.pages);
+    for (const k of ['cms', 'blog', 'copy', 'booking', 'payments', 'seo', 'brand', 'rush'] as const) el(k).checked = q[k];
+    for (const k of ['accounts', 'reports', 'workflows', 'notify'] as const) el(k).checked = q.modules[k];
+  };
+  const read = (): Quote => {
+    const type = el('type').value, site = type === 'website', apps = !site && type !== 'store', c = (k: string) => el(k).checked as boolean;
+    // only what applies to this kind of project counts
+    return {
+      type, pages: +el('pages').value, catalogue: el('catalogue').value, complexity: el('complexity').value, languages: +el('languages').value,
+      cms: site && c('cms'), blog: site && c('blog'), copy: site && c('copy'), booking: !apps && c('booking'), payments: !apps && c('payments'),
+      seo: c('seo'), brand: c('brand'), rush: c('rush'),
+      modules: { accounts: apps && c('accounts'), reports: apps && c('reports'), workflows: apps && c('workflows'), notify: apps && c('notify') },
+      integrations: apps ? +el('integrations').value : 0, care: el('care').value,
+    };
+  };
+  const label = (key: string, qty?: number) => (S.lines[key] ?? key).replace('{p}', pagesLabel(qty ?? 0, lang)).replace('{n}', String(qty ?? ''));
+  const ready = ([a, b]: [number, number]) => (b >= 14 ? `${Math.max(1, Math.round(a / 7))}–${Math.ceil(b / 7)} ${S.weeks}` : `${a}–${b} ${S.days}`);
+  const hash = (s: string) => { let h = 2166136261; for (const ch of s) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return (h >>> 0).toString(36).toUpperCase().padStart(6, '0').slice(-6); };
+
+  function render() {
+    const q = read();
+    form.querySelectorAll<HTMLElement>('[data-for]').forEach((n) => { n.hidden = !n.dataset.for!.split(' ').includes(q.type); });
+    form.querySelectorAll<HTMLSelectElement>('.blank select').forEach((sel) => { sel.previousElementSibling!.textContent = sel.selectedOptions[0].text; });
+    $('pages-out').textContent = pagesLabel(q.pages, lang);
+
+    const r = calculate(q), code = encode(q), no = 'HS-' + hash(code);
+    $('r-lines').innerHTML = r.lines.map((l) => `<li class="flex justify-between gap-3"><span>${label(l.key, l.qty)}</span><span class="price shrink-0">${l.amount ? m(l.amount) : ''}</span></li>`).join('');
+    $('r-total').textContent = r.exact ? m(r.total) : `${m(r.total)} – ${m(r.high)}`;
+    $('r-total').style.fontSize = r.exact ? '' : '1.15rem';
+    $('r-range').hidden = r.exact;
+    $('r-monthly').textContent = r.monthly ? S.then.replace('{x}', m(r.monthly)) : '';
+    $('r-ready').textContent = ready(r.days);
+    $('r-pay').innerHTML = schedule(r.total).map((a, i) => `<div class="flex justify-between"><span class="muted">${['50%', '30%', '20%'][i]} ${S.parts[i]}</span><span class="price">${m(a)}</span></div>`).join('');
+    $('r-no').textContent = no;
+    $('r-bar').innerHTML = [...(code + no)].map((ch) => `<i style="width:${1 + (ch.charCodeAt(0) % 3)}px"></i>`).join('');
+    $('dock-total').textContent = r.exact ? m(r.total) : `${m(r.total)}+`;
+
+    const url = `${location.origin}${location.pathname}?q=${code}`;
+    history.replaceState(null, '', `?q=${code}`);
+    const iq = (n: number) => money(n, 'IQD', lang);
+    const body = [S.intro, '', S.types[q.type], ...r.lines.map((l) => `• ${label(l.key, l.qty)}${l.amount ? ': ' + iq(l.amount) : ''}`), '',
+      `${S.total}: ${r.exact ? iq(r.total) : iq(r.total) + ' – ' + iq(r.high)}`, r.monthly ? S.then.replace('{x}', iq(r.monthly)) : '', `${S.ready}: ${ready(r.days)}`, '', `${no} · ${url}`].filter(Boolean).join('\n');
+    $<HTMLAnchorElement>('send').href = `mailto:${S.email}?subject=${encodeURIComponent(S.subject + ' · ' + no)}&body=${encodeURIComponent(body)}`;
+  }
+
+  write(decode(new URLSearchParams(location.search).get('q')) ?? DEFAULT_QUOTE);
+  form.addEventListener('change', render);
+  form.addEventListener('input', render);
+  form.querySelectorAll<HTMLButtonElement>('[data-step]').forEach((b) => b.addEventListener('click', () => {
+    const p = el('pages') as HTMLInputElement; p.value = String(Math.max(1, Math.min(30, +p.value + +b.dataset.step!))); render();
+  }));
+  $('cur').addEventListener('click', () => { cur = cur === 'IQD' ? 'USD' : 'IQD'; $('cur').textContent = cur === 'IQD' ? $('cur').dataset.usd! : $('cur').dataset.iqd!; render(); });
+  $('copy').addEventListener('click', async () => { try { await navigator.clipboard.writeText(location.href); $('copy').textContent = S.copied; setTimeout(() => ($('copy').textContent = S.copy), 1600); } catch { /* blocked */ } });
+  $('pdf').addEventListener('click', async () => { await document.fonts.ready; window.print(); });
+  $('r-date').textContent = new Date().toLocaleDateString(lang === 'ar' ? 'ar-IQ-u-nu-latn' : 'en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
+
+  const dock = $('dock');
+  new IntersectionObserver(([e]) => { const v = e.isIntersecting; dock.style.opacity = v ? '0' : '1'; dock.style.transform = v ? 'translateY(1rem)' : ''; dock.style.pointerEvents = v ? 'none' : ''; }, { threshold: 0.25 }).observe($('receipt'));
+  render();
+</script>
+
+<style>
+  /* after launch, simply put */
+  .al-grid { display: grid; gap: 1rem; }
+  @media (min-width: 700px) { .al-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (min-width: 1024px) { .al-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  .al-item { display: flex; flex-direction: column; padding: 1.5rem; border-radius: 1.25rem; border: 1px solid var(--line); background: color-mix(in oklab, var(--fg) 3%, transparent); }
+  .al-ico { display: grid; place-items: center; width: 2.6rem; height: 2.6rem; border-radius: .85rem; color: var(--teal); background: color-mix(in oklab, var(--teal) 14%, transparent); }
+  .al-ico svg { width: 1.35rem; height: 1.35rem; }
+  .al-scope { font-size: .78rem; font-weight: 500; padding: .25rem .65rem; border-radius: 999px; color: var(--teal); background: color-mix(in oklab, var(--teal) 12%, transparent); white-space: nowrap; }
+  .al-scope.is-other { color: var(--fg-2); background: color-mix(in oklab, var(--fg) 7%, transparent); }
+  .al-without { margin-top: auto; padding-top: 1rem; font-size: .93rem; line-height: 1.5; color: var(--fg-2); }
+  .al-without b { font-weight: 600; color: #E8907A; }
+  .al-end { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.25rem 2rem; margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--line); }
+  .al-help { font-size: .85rem; font-weight: 500; color: var(--teal); text-decoration: underline; text-underline-offset: 4px; text-decoration-color: color-mix(in oklab, var(--teal) 45%, transparent); white-space: nowrap; }
+  .al-help:hover { text-decoration-color: var(--teal); }
+
+  .fit { display: grid; gap: 2rem; padding: 2rem; border-radius: 1.75rem; border: 1px solid var(--line); background: color-mix(in oklab, #4FC1B3 7%, var(--surface)); color: var(--fg); }
+  @media (min-width: 960px) { .fit { grid-template-columns: 1.15fr 1.2fr 1fr; gap: 2.5rem; padding: 2.5rem; } .fit-n { padding-inline-start: 2rem; border-inline-start: 1px solid color-mix(in oklab, #4FC1B3 25%, transparent); } }
+  .fit-l { font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: #4FC1B3; }
+  :global(html[lang="ar"]) .fit-l { text-transform: none; letter-spacing: 0; font-size: .9rem; }
+  .fit-t { display: grid; place-items: center; flex: none; width: 1.4rem; height: 1.4rem; margin-top: .15rem; border-radius: 999px; background: #4FC1B3; color: #0A0E15; font-size: .72rem; font-weight: 700; }
+  .fit a { color: #4FC1B3; }
+</style>

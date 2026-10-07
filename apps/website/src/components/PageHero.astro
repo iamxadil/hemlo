@@ -1,0 +1,21 @@
+---
+// Hero for a branch page: eyebrow, title, sub, call to action, and the H in the branch colour.
+import Mark from './Mark.astro';
+import { BRANCH, type BranchId } from '../brand/brand';
+interface Props { branch: BranchId; eyebrow: string; title: string; sub: string; cta?: { label: string; href: string }; }
+const { branch, eyebrow, title, sub, cta } = Astro.props;
+const b = BRANCH[branch];
+---
+<section class="wrap pt-14 sm:pt-20 pb-16 sm:pb-24" style={`--c:${b.color};--cd:${b.dark};--t:${b.tint};--td:${b.tintDark}`}>
+  <div class="grid items-center gap-12 md:grid-cols-[1.25fr_1fr]">
+    <div>
+      <p class="font-medium text-[var(--c)] dark:text-[var(--cd)] rise">{eyebrow}</p>
+      <h1 class="mt-4 text-hero font-semibold tracking-tight rise rise-2">{title}</h1>
+      <p class="mt-6 max-w-xl text-lead text-fg-2 rise rise-3">{sub}</p>
+      {cta && <a class="btn btn-primary mt-9 rise rise-4" href={cta.href}>{cta.label}</a>}
+    </div>
+    <div class="relative grid aspect-square place-items-center rounded-[2rem] bg-[var(--t)] dark:bg-[var(--td)] overflow-hidden" aria-hidden="true">
+      <Mark class="h-[64%] w-auto text-[var(--c)] dark:text-[var(--cd)] mark-in" />
+    </div>
+  </div>
+</section>

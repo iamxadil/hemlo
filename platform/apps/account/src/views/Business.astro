@@ -1,0 +1,217 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { STRINGS, type Lang } from '../lib/i18n';
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const s = STRINGS[lang].business;
+---
+<Layout lang={lang} title={s.title} page="business" wide>
+  <div class="pt-4 sm:pt-8">
+    <a class="link-arrow text-sm" id="back"><span class="arr rtl:rotate-180">←</span></a>
+    <h1 class="mt-3 text-[1.6rem] font-semibold tracking-tight" id="org-name"><span class="skeleton inline-block w-48"></span></h1>
+    <p class="muted text-sm" id="my-role"></p>
+    <p class="notice mt-6" id="no-active" hidden>{s.noActive}</p>
+
+    <div id="content" hidden>
+      <section class="panel mt-6" aria-labelledby="h-team">
+        <h2 id="h-team">{s.team}</h2>
+        <div id="members" class="mt-2"></div>
+      </section>
+
+      <section class="panel" id="invite-panel" aria-labelledby="h-invite" hidden>
+        <h2 id="h-invite">{s.invite}</h2>
+        <p class="text-sm muted">{s.inviteSub}</p>
+        <form id="invite-form" class="mt-4 grid gap-3 sm:grid-cols-2">
+          <div><label class="label" for="i-contact">{s.phoneOrEmail}</label><input class="input ltr" id="i-contact" required /></div>
+          <div><label class="label" for="i-name">{s.name}</label><input class="input" id="i-name" maxlength="80" /></div>
+          <div><label class="label" for="i-role">{s.role}</label><select class="input" id="i-role"></select></div>
+          <div id="i-teams-box"><label class="label">{s.locations}</label><div id="i-teams" class="flex flex-wrap gap-2 pt-1"></div></div>
+          <div class="sm:col-span-2"><button class="btn btn-primary" id="i-send">{s.sendInvite}</button></div>
+        </form>
+        <div id="invite-result" class="notice mt-4" hidden></div>
+        <h3 class="mt-6 text-sm font-medium text-fg-2">{s.pending}</h3>
+        <div id="invites"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-loc">
+        <h2 id="h-loc">{s.locations}</h2>
+        <div id="teams" class="mt-2"></div>
+        <form id="team-form" class="mt-4 flex gap-2" hidden>
+          <input class="input" id="team-name" placeholder={s.locationName} maxlength="60" required aria-label={s.locationName} />
+          <button class="btn btn-secondary shrink-0" id="team-add">{s.addLocation}</button>
+        </form>
+      </section>
+
+      <section class="panel" id="counter-panel" aria-labelledby="h-counter" hidden>
+        <h2 id="h-counter">{s.counters}</h2>
+        <div id="devices" class="mt-2"></div>
+        <form id="device-form" class="mt-4 grid gap-2 sm:grid-cols-[1fr_12rem_auto]">
+          <input class="input" id="device-name" placeholder={s.deviceName} maxlength="60" aria-label={s.deviceName} />
+          <select class="input" id="device-team" aria-label={s.locations}></select>
+          <button class="btn btn-secondary" id="device-add">{s.useThisDevice}</button>
+        </form>
+      </section>
+
+      <section class="panel" id="keys-panel" aria-labelledby="h-keys" hidden>
+        <h2 id="h-keys">{s.apiKeys}</h2>
+        <p class="text-sm muted">{s.apiKeysSub}</p>
+        <div id="keys" class="mt-2"></div>
+        <form id="key-form" class="mt-4 space-y-3">
+          <input class="input" id="key-name" placeholder={s.keyName} maxlength="60" required aria-label={s.keyName} />
+          <div id="key-perms" class="flex flex-wrap gap-2"></div>
+          <button class="btn btn-secondary" id="key-add">{s.createKey}</button>
+        </form>
+        <div id="key-result" class="notice mt-4" hidden></div>
+      </section>
+
+      <section class="panel" id="audit-panel" aria-labelledby="h-audit" hidden>
+        <h2 id="h-audit">{s.activity}</h2>
+        <div id="audit" class="mt-2 text-sm"></div>
+      </section>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { authClient, api, ba, busy, toast, h, t, fill, normalizeIraqiPhone, formatIraqiPhone, requireMe, page, roleName, initials, when, can, ApiError, $, type Me } from '../lib/client';
+
+  const RANK: Record<string, number> = { owner: 6, admin: 5, manager: 4, dentist: 3, accountant: 3, assistant: 2, receptionist: 2, cashier: 2, technician: 2, trainer: 2, viewer: 1 };
+  let me: Me = await requireMe();
+  ($('#back') as HTMLAnchorElement).href = page();
+  $('#back').append(' ' + t.home.title);
+
+  const org = me.organizations.find((o) => o.id === me.activeOrganizationId);
+  if (!org) { $('#no-active').hidden = false; $('#org-name').textContent = t.business.title; throw new Error('no active business'); }
+  const myRole = org.role;
+  // a clinic's team: dentists, assistants, reception; a shop's: cashiers and technicians
+  const ROLES = org.kind === 'dental' ? ['admin', 'manager', 'dentist', 'assistant', 'receptionist', 'accountant', 'viewer', 'owner']
+    : org.kind === 'gym' ? ['admin', 'manager', 'receptionist', 'trainer', 'cashier', 'accountant', 'viewer', 'owner'] : ['admin', 'manager', 'cashier', 'technician', 'accountant', 'viewer', 'owner'];
+  const assignable = ROLES.filter((r) => myRole.split(',').includes('owner') || (RANK[myRole] ?? 0) > RANK[r]);
+  $('#org-name').textContent = org.name;
+  $('#my-role').textContent = fill(t.business.yourRole, { role: roleName(myRole) });
+  $('#content').hidden = false;
+  let full: any = null;
+
+  async function loadOrg() { full = await ba(authClient.organization.getFullOrganization({ query: { organizationId: org!.id } })); }
+
+  function renderMembers() {
+    const canEdit = can(me, 'member', 'update'), canRemove = can(me, 'member', 'delete');
+    $('#members').replaceChildren(...full.members.map((m: any) => {
+      const mine = m.userId === me.user.id;
+      const editable = canEdit && !mine && (myRole.includes('owner') || (RANK[myRole] ?? 0) > (RANK[m.role] ?? 9));
+      const sel = h('select', { class: 'input !py-2 !w-auto', 'aria-label': t.business.role, disabled: !editable },
+        ...ROLES.filter((r) => r === m.role || assignable.includes(r)).map((r) => h('option', { value: r, selected: r === m.role, text: roleName(r) })));
+      sel.addEventListener('change', () => busy(null, async () => { await ba(authClient.organization.updateMemberRole({ memberId: m.id, role: sel.value as any, organizationId: org!.id })); toast(t.home.saved); await refresh(); }));
+      return h('div', { class: 'row flex-wrap' },
+        h('div', { class: 'avatar', text: initials(m.user.name) }),
+        h('div', { class: 'flex-1 min-w-0' }, h('p', { class: 'truncate font-medium', text: m.user.name || '—' }),
+          h('p', { class: 'text-sm muted ltr truncate', text: m.user.phoneNumber ? formatIraqiPhone(m.user.phoneNumber) : (m.user.email?.endsWith('.invalid') ? '' : m.user.email) })),
+        sel,
+        editable && canRemove ? h('button', { type: 'button', class: 'btn-ghost btn-danger', text: t.business.removeMember,
+          onclick: (e: Event) => busy(e.currentTarget as HTMLButtonElement, async () => { await ba(authClient.organization.removeMember({ memberIdOrEmail: m.id, organizationId: org!.id })); await refresh(); }) }) : null);
+    }));
+  }
+
+  function renderTeams() {
+    const teams = full.teams ?? [];
+    $('#teams').replaceChildren(...(teams.length ? teams.map((tm: any) => h('div', { class: 'row' }, h('span', { class: 'flex-1', text: tm.name }),
+      can(me, 'team', 'delete') && teams.length > 1 ? h('button', { type: 'button', class: 'btn-ghost btn-danger', text: t.home.remove,
+        onclick: (e: Event) => busy(e.currentTarget as HTMLButtonElement, async () => { await ba(authClient.organization.removeTeam({ teamId: tm.id, organizationId: org!.id })); await refresh(); }) }) : null))
+      : [h('p', { class: 'text-sm muted py-2', text: '—' })]));
+    $('#team-form').hidden = !can(me, 'team', 'create');
+    $('#i-teams').replaceChildren(...teams.map((tm: any) => h('label', { class: 'badge cursor-pointer' }, h('input', { type: 'checkbox', value: tm.id }), ' ' + tm.name)));
+    $('#i-teams-box').hidden = !teams.length;
+    ($('#device-team') as HTMLSelectElement).replaceChildren(h('option', { value: '', text: '—' }), ...teams.map((tm: any) => h('option', { value: tm.id, text: tm.name })));
+  }
+
+  async function renderInvites() {
+    if (!can(me, 'member', 'create')) return;
+    $('#invite-panel').hidden = false;
+    ($('#i-role') as HTMLSelectElement).replaceChildren(...assignable.filter((r) => r !== 'owner' || myRole.includes('owner')).map((r) => h('option', { value: r, selected: r === (org.kind === 'dental' || org.kind === 'gym' ? 'receptionist' : 'cashier'), text: roleName(r) })));
+    const { invites } = await api<{ invites: any[] }>('/v1/invites');
+    $('#invites').replaceChildren(...(invites.length ? invites.map((i) => h('div', { class: 'row' },
+      h('div', { class: 'flex-1 min-w-0' }, h('p', { class: 'truncate', text: i.name || (i.phoneNumber ? formatIraqiPhone(i.phoneNumber) : i.email) }),
+        h('p', { class: 'text-xs muted', text: `${roleName(i.role)} · ${when(i.expiresAt)}` })),
+      h('button', { type: 'button', class: 'btn-ghost btn-danger', text: t.business.cancel, onclick: (e: Event) => busy(e.currentTarget as HTMLButtonElement, async () => { await api(`/v1/invites/${i.id}`, { method: 'DELETE' }); await renderInvites(); }) })))
+      : [h('p', { class: 'text-sm muted py-2', text: '—' })]));
+  }
+
+  async function renderDevices() {
+    if (!can(me, 'counter', 'manage')) return;
+    $('#counter-panel').hidden = false;
+    const { devices } = await api<{ devices: any[] }>('/v1/counter/devices');
+    $('#devices').replaceChildren(...devices.map((d) => h('div', { class: 'row' },
+      h('div', { class: 'flex-1' }, h('p', { text: d.name }), h('p', { class: 'text-xs muted', text: d.lastSeenAt ? `${t.home.lastActive}: ${when(d.lastSeenAt)}` : when(d.createdAt) })),
+      h('button', { type: 'button', class: 'btn-ghost btn-danger', text: t.business.revoke, onclick: (e: Event) => busy(e.currentTarget as HTMLButtonElement, async () => { await api(`/v1/counter/devices/${d.id}`, { method: 'DELETE' }); await renderDevices(); }) }))));
+  }
+
+  async function renderKeys() {
+    if (!can(me, 'apikey', 'manage')) return;
+    $('#keys-panel').hidden = false;
+    const { keys } = await api<{ keys: any[] }>('/v1/api-keys');
+    $('#keys').replaceChildren(...keys.map((k) => h('div', { class: 'row' },
+      h('div', { class: 'flex-1 min-w-0' }, h('p', { text: k.name }), h('p', { class: 'text-xs muted ltr', text: `${k.start}… · ${Object.entries(k.permissions ?? {}).map(([r, a]) => `${r}:${(a as string[]).join('/')}`).join(', ')}` })),
+      h('button', { type: 'button', class: 'btn-ghost btn-danger', text: t.home.remove, onclick: (e: Event) => busy(e.currentTarget as HTMLButtonElement, async () => { await api(`/v1/api-keys/${k.id}`, { method: 'DELETE' }); await renderKeys(); }) }))));
+    const perms: [string, string][] = [['customers', 'read'], ['customers', 'create'], ['sales', 'read'], ['sales', 'create'], ['stock', 'read'], ['jobs', 'read'], ['reports', 'read']];
+    $('#key-perms').replaceChildren(...perms.filter(([r, a]) => can(me, r, a)).map(([r, a]) => h('label', { class: 'badge cursor-pointer ltr' }, h('input', { type: 'checkbox', value: `${r}:${a}` }), ` ${r}:${a}`)));
+  }
+
+  async function renderAudit() {
+    if (!can(me, 'audit', 'read')) return;
+    $('#audit-panel').hidden = false;
+    const { events } = await api<{ events: any[] }>('/v1/events/org');
+    $('#audit').replaceChildren(...events.slice(0, 30).map((e) => h('div', { class: 'row !py-2.5' },
+      h('span', { class: 'flex-1', text: `${(t.events as any)[e.kind] ?? e.kind}${e.userName ? ' · ' + e.userName : ''}${e.detail?.to ? ' → ' + roleName(e.detail.to) : ''}` }),
+      h('span', { class: 'muted text-xs', text: when(e.at) }))));
+  }
+
+  async function refresh() {
+    me = await requireMe();
+    await loadOrg();
+    renderMembers(); renderTeams();
+    await Promise.all([renderInvites(), renderDevices(), renderKeys(), renderAudit()]);
+  }
+
+  $('#invite-form').addEventListener('submit', (e) => { e.preventDefault(); busy($('#i-send') as HTMLButtonElement, async () => {
+    const contact = ($('#i-contact') as HTMLInputElement).value.trim();
+    const isEmail = contact.includes('@');
+    const phone = isEmail ? null : normalizeIraqiPhone(contact);
+    if (!isEmail && !phone) throw new ApiError(400, 'INVALID_PHONE', '');
+    const teamIds = [...document.querySelectorAll<HTMLInputElement>('#i-teams input:checked')].map((x) => x.value);
+    const r = await api<any>('/v1/invites', { body: { ...(isEmail ? { email: contact } : { phone }), name: ($('#i-name') as HTMLInputElement).value, role: ($('#i-role') as HTMLSelectElement).value, teamIds } });
+    const box = $('#invite-result');
+    const copy = h('button', { type: 'button', class: 'btn btn-secondary', text: t.business.copyLink, onclick: async () => { await navigator.clipboard.writeText(r.url).catch(() => {}); copy.textContent = t.business.copied; } });
+    box.replaceChildren(h('p', { class: 'font-medium', text: t.business.inviteReady }),
+      ...(isEmail ? [h('p', { class: 'text-sm mt-1', text: t.business.inviteEmailed })] : []),
+      h('div', { class: 'mt-3 flex flex-wrap gap-2' },
+        r.whatsappUrl ? h('a', { class: 'btn btn-primary', href: r.whatsappUrl, target: '_blank', rel: 'noopener', text: t.business.shareWhatsApp }) : null, copy));
+    box.hidden = false;
+    ($('#invite-form') as HTMLFormElement).reset();
+    await renderInvites();
+  }); });
+
+  $('#team-form').addEventListener('submit', (e) => { e.preventDefault(); busy($('#team-add') as HTMLButtonElement, async () => {
+    await ba(authClient.organization.createTeam({ name: ($('#team-name') as HTMLInputElement).value.trim(), organizationId: org!.id }));
+    ($('#team-name') as HTMLInputElement).value = ''; await refresh();
+  }); });
+
+  $('#device-form').addEventListener('submit', (e) => { e.preventDefault(); busy($('#device-add') as HTMLButtonElement, async () => {
+    await api('/v1/counter/devices', { body: { name: ($('#device-name') as HTMLInputElement).value.trim(), teamId: ($('#device-team') as HTMLSelectElement).value || undefined } });
+    await authClient.signOut().catch(() => {}); // your session on this device has ended; clear its cookies
+    location.href = page('counter');
+  }); });
+
+  $('#key-form').addEventListener('submit', (e) => { e.preventDefault(); busy($('#key-add') as HTMLButtonElement, async () => {
+    const permissions: Record<string, string[]> = {};
+    document.querySelectorAll<HTMLInputElement>('#key-perms input:checked').forEach((x) => { const [r, a] = x.value.split(':'); (permissions[r] ??= []).push(a); });
+    const k = await api<any>('/v1/api-keys', { body: { name: ($('#key-name') as HTMLInputElement).value.trim(), permissions } });
+    const box = $('#key-result');
+    box.replaceChildren(h('p', { class: 'font-medium', text: t.business.keyOnce }), h('code', { class: 'mt-2 block break-all ltr text-sm', text: k.key }),
+      h('button', { type: 'button', class: 'btn btn-secondary mt-3', text: t.business.copyKey, onclick: () => navigator.clipboard.writeText(k.key).catch(() => {}) }));
+    box.hidden = false;
+    ($('#key-form') as HTMLFormElement).reset();
+    await renderKeys();
+  }); });
+
+  await refresh();
+</script>

@@ -1,0 +1,25 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+import FitCheck from '../components/FitCheck.astro';
+import { t, EMAIL, type Lang } from '../i18n/strings';
+interface Props { lang: Lang; }
+const { lang } = Astro.props;
+const s = t(lang).school;
+const mail = `mailto:${EMAIL}?subject=${encodeURIComponent('Hemlo School')}`;
+---
+<Base lang={lang} page="school" title={t(lang).nav.school} description={s.sub}>
+  <PageHero branch="school" eyebrow={s.eyebrow} title={s.title} sub={s.sub} />
+  <FitCheck branch="school" lang={lang} fit={s.fit} />
+  <section class="wrap py-24 border-t border-line">
+    <div class="grid gap-4 md:grid-cols-3">
+      {s.points.map(([title, body]) => (
+        <div class="reveal card p-8">
+          <h3 class="text-title font-medium">{title}</h3>
+          <p class="mt-3 leading-relaxed text-fg-2">{body}</p>
+        </div>
+      ))}
+    </div>
+    <p class="reveal mt-16 text-center text-lead text-fg-2">{s.cta} <a class="link-arrow" href={mail}><span dir="ltr">{EMAIL}</span><span class="arr">›</span></a></p>
+  </section>
+</Base>

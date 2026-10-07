@@ -1,0 +1,60 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Hemlo reception sign</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Vazirmatn:wght@400;500;600;700;800&display=swap"><style>*{box-sizing:border-box;margin:0;padding:0}html,body{width:1600px;height:1000px;overflow:hidden}
+body{position:relative;font-family:"IBM Plex Sans",sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}.grain{position:absolute;inset:0;pointer-events:none;border-radius:inherit}
+.disp{font-family:"Readex Pro",sans-serif}.mono{font-family:"IBM Plex Mono",monospace}.ar{font-family:"Vazirmatn",sans-serif;direction:rtl}
+.light{position:absolute;inset:0;pointer-events:none}
+.sh-paper{box-shadow:1px 2px 2px rgba(20,18,12,.10),6px 12px 18px rgba(20,18,12,.12),18px 34px 60px rgba(20,18,12,.16)}
+.sh-obj{box-shadow:2px 3px 3px rgba(0,0,0,.22),8px 14px 22px rgba(0,0,0,.20),22px 40px 70px rgba(0,0,0,.18)}
+body{background:#1B212B}
+.wall{position:absolute;left:0;right:0;top:0;height:820px;background:radial-gradient(900px 620px at 50% 22%,#3A4250 0%,#262D38 45%,#181D25 100%)}
+.counter{position:absolute;left:0;right:0;top:820px;bottom:0;background:linear-gradient(180deg,#3A3F47 0%,#23272E 12%,#16191E 100%)}
+.counter:before{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:rgba(255,255,255,.18)}
+.sign{position:absolute;left:50%;top:320px;transform:translateX(-50%);filter:drop-shadow(10px 16px 9px rgba(0,0,0,.55)) drop-shadow(3px 4px 2px rgba(0,0,0,.4))}
+.sub{position:absolute;left:0;right:0;top:560px;display:flex;justify-content:center;gap:34px;align-items:center}
+.brasstext{background:linear-gradient(180deg,#F2DEA0,#C9A24E 45%,#8F6E27 70%,#D9B869);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(3px 5px 3px rgba(0,0,0,.5))}
+</style></head><body><svg width="0" height="0" style="position:absolute"><defs>
+<linearGradient id="foil" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="1" y2="1">
+  <stop offset="0" stop-color="#7C5E1E"/><stop offset=".2" stop-color="#C39A45"/><stop offset=".36" stop-color="#F2DEA0"/><stop offset=".5" stop-color="#B38B3A"/><stop offset=".68" stop-color="#E3C77F"/><stop offset=".84" stop-color="#8F6E27"/><stop offset="1" stop-color="#D2B062"/>
+</linearGradient>
+<linearGradient id="brassH" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#E9D08E"/><stop offset=".35" stop-color="#C9A24E"/><stop offset=".6" stop-color="#9E7B2E"/><stop offset="1" stop-color="#D9B869"/>
+</linearGradient>
+<filter id="brushed" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+  <feTurbulence type="fractalNoise" baseFrequency="0.003 0.55" numOctaves="2" seed="9" result="t"/>
+  <feColorMatrix in="t" type="matrix" values="0 0 0 0 1  0 0 0 0 .96  0 0 0 0 .86  1.1 0 0 0 -.45" result="streak"/>
+  <feComposite in="streak" in2="SourceAlpha" operator="in" result="lines"/>
+  <feBlend in="lines" in2="SourceGraphic" mode="soft-light" result="brushedFace"/>
+  <feGaussianBlur in="SourceAlpha" stdDeviation="2.2" result="bl"/>
+  <feSpecularLighting in="bl" surfaceScale="4" specularConstant="1.2" specularExponent="22" lighting-color="#FFF4D6" result="sp"><feDistantLight azimuth="235" elevation="38"/></feSpecularLighting>
+  <feComposite in="sp" in2="SourceAlpha" operator="in" result="sp2"/>
+  <feComposite in="brushedFace" in2="sp2" operator="arithmetic" k1="0" k2="1" k3=".6" k4="0"/>
+</filter>
+<filter id="foilSheen" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+  <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" result="g"/>
+  <feColorMatrix in="g" type="matrix" values="0 0 0 0 1  0 0 0 0 .95  0 0 0 0 .8  .9 0 0 0 -.5" result="gr"/>
+  <feComposite in="gr" in2="SourceAlpha" operator="in" result="grain"/>
+  <feBlend in="grain" in2="SourceGraphic" mode="soft-light" result="face"/>
+  <feGaussianBlur in="SourceAlpha" stdDeviation="0.8" result="bl"/>
+  <feSpecularLighting in="bl" surfaceScale="1.6" specularConstant="1" specularExponent="30" lighting-color="#FFF6DE" result="sp"><feDistantLight azimuth="235" elevation="45"/></feSpecularLighting>
+  <feComposite in="sp" in2="SourceAlpha" operator="in" result="sp2"/>
+  <feComposite in="face" in2="sp2" operator="arithmetic" k1="0" k2="1" k3=".45" k4="0" result="lit"/>
+  <feDropShadow dx="0.6" dy="0.8" stdDeviation="0.5" flood-color="#000" flood-opacity=".35"/>
+</filter>
+<filter id="ink" x="-5%" y="-5%" width="110%" height="110%">
+  <feTurbulence type="fractalNoise" baseFrequency="0.028" numOctaves="3" seed="11" result="n"/>
+  <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -1.3 0 0 0 1.6" result="m1"/>
+  <feComposite in="SourceGraphic" in2="m1" operator="in" result="patchy"/>
+  <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="5" result="fn"/>
+  <feColorMatrix in="fn" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -1.0 0 0 0 1.38" result="m2"/>
+  <feComposite in="patchy" in2="m2" operator="in" result="speck"/>
+  <feGaussianBlur in="speck" stdDeviation="0.35"/>
+</filter>
+</defs></svg>
+<div class="wall"></div><div class="grain" data-grain=".11,200,420" style="mix-blend-mode:overlay;bottom:180px"></div><div class="grain" data-grain=".06,140" style="mix-blend-mode:soft-light;bottom:180px"></div>
+<div class="sign"><svg width="629" height="150" viewBox="0 0 629 150" style="overflow:visible;"><g filter="url(#brushed)"><path d="M232.896 21.429L232.896 128.571L211.407 128.571L211.407 82.982L165.51 82.982L165.51 128.571L144.02 128.571L144.02 21.429L165.51 21.429L165.51 65.482L211.407 65.482L211.407 21.429L232.896 21.429ZM331.597 84.21C331.597 87.28 331.393 90.043 330.983 92.499L268.816 92.499C269.327 98.639 271.476 103.448 275.263 106.928C279.049 110.407 283.705 112.146 289.231 112.146C297.213 112.146 302.893 108.719 306.27 101.863L329.448 101.863C326.992 110.049 322.285 116.778 315.326 122.047C308.367 127.317 299.822 129.952 289.692 129.952C281.505 129.952 274.163 128.136 267.664 124.503C261.166 120.87 256.101 115.728 252.468 109.077C248.835 102.425 247.019 94.75 247.019 86.052C247.019 77.251 248.809 69.525 252.391 62.874C255.972 56.222 260.987 51.105 267.434 47.523C273.881 43.942 281.3 42.151 289.692 42.151C297.776 42.151 305.016 43.891 311.412 47.37C317.807 50.849 322.771 55.787 326.301 62.182C329.832 68.578 331.597 75.921 331.597 84.21ZM309.339 78.07C309.237 72.544 307.242 68.118 303.353 64.792C299.464 61.467 294.706 59.804 289.078 59.804C283.756 59.804 279.279 61.416 275.646 64.639C272.013 67.862 269.788 72.339 268.969 78.07L309.339 78.07ZM451.326 42.304C461.765 42.304 470.182 45.502 476.578 51.898C482.973 58.294 486.171 67.223 486.171 78.684L486.171 128.571L464.682 128.571L464.682 81.6C464.682 74.949 462.993 69.858 459.616 66.327C456.239 62.797 451.634 61.032 445.801 61.032C439.968 61.032 435.337 62.797 431.909 66.327C428.481 69.858 426.767 74.949 426.767 81.6L426.767 128.571L405.277 128.571L405.277 81.6C405.277 74.949 403.589 69.858 400.212 66.327C396.834 62.797 392.229 61.032 386.397 61.032C380.461 61.032 375.779 62.797 372.351 66.327C368.923 69.858 367.208 74.949 367.208 81.6L367.208 128.571L345.719 128.571L345.719 43.532L367.208 43.532L367.208 53.817C369.972 50.235 373.528 47.421 377.877 45.375C382.226 43.328 387.01 42.304 392.229 42.304C398.881 42.304 404.816 43.711 410.036 46.526C415.254 49.34 419.296 53.356 422.162 58.575C424.925 53.664 428.941 49.724 434.211 46.756C439.481 43.788 445.186 42.304 451.326 42.304ZM526.542 14.982L526.542 128.571L505.052 128.571L505.052 14.982L526.542 14.982ZM583.951 129.952C575.764 129.952 568.396 128.136 561.846 124.503C555.297 120.87 550.155 115.728 546.42 109.077C542.685 102.425 540.817 94.75 540.817 86.052C540.817 77.354 542.736 69.679 546.573 63.027C550.411 56.375 555.656 51.233 562.307 47.6C568.958 43.968 576.378 42.151 584.565 42.151C592.751 42.151 600.17 43.968 606.822 47.6C613.474 51.233 618.718 56.375 622.556 63.027C626.393 69.679 628.312 77.354 628.312 86.052C628.312 94.75 626.342 102.425 622.402 109.077C618.462 115.728 613.141 120.87 606.438 124.503C599.735 128.136 592.239 129.952 583.951 129.952ZM583.951 111.226C587.839 111.226 591.498 110.279 594.926 108.386C598.354 106.493 601.092 103.653 603.138 99.867C605.184 96.08 606.208 91.475 606.208 86.052C606.208 77.968 604.084 71.751 599.838 67.401C595.591 63.052 590.397 60.877 584.257 60.877C578.117 60.877 572.975 63.052 568.831 67.401C564.687 71.751 562.614 77.968 562.614 86.052C562.614 94.136 564.636 100.353 568.678 104.702C572.72 109.051 577.811 111.226 583.951 111.226Z" fill="url(#brassH)"/><path d="M77.744 19.732L74.216 17.366C66.005 11.859 54.971 17.744 54.971 27.631L54.971 72.757L46.681 69.546C43.805 68.432 41.908 65.664 41.908 62.579L41.908 42.012C41.908 29.242 35.545 17.312 24.937 10.199L11.631 1.275C6.668 -2.054 0 1.504 0 7.48L0 97.966C0 113.216 7.782 127.413 20.64 135.616L30.42 141.855C35.393 145.027 41.908 141.455 41.908 135.557L41.908 94.623C41.908 89.373 47.179 85.761 52.075 87.657L54.971 88.779L54.971 106.27C54.971 123.191 63.606 138.942 77.87 148.041C86.098 153.291 96.877 147.381 96.877 137.621L96.877 55.605C96.877 41.205 89.7 27.751 77.742 19.732Z" fill="url(#brassH)"/></g></svg></div>
+<div class="sub"><span class="ar brasstext" style="font-size:44px;font-weight:700">هيملو</span><span style="width:2px;height:40px;background:linear-gradient(#C9A24E,#8F6E27);opacity:.7"></span><span class="disp brasstext" style="font-size:30px;font-weight:500;letter-spacing:.01em">Elegantly solved.</span></div>
+<div class="counter"><div class="grain" data-grain=".08,160" style="mix-blend-mode:overlay"></div></div>
+<div class="light" style="background:radial-gradient(700px 360px at 50% 0%,rgba(255,236,200,.10),transparent 70%)"></div>
+<div class="light" style="background:radial-gradient(ellipse at 50% 40%,transparent 50%,rgba(0,0,0,.35) 100%)"></div>
+<script>(function(){function n(a,s){var c=document.createElement('canvas');c.width=c.height=s;var x=c.getContext('2d'),d=x.createImageData(s,s);for(var i=0;i<d.data.length;i+=4){var v=Math.random()*255|0;d.data[i]=d.data[i+1]=d.data[i+2]=v;d.data[i+3]=a*255}x.putImageData(d,0,0);return c.toDataURL()}
+document.querySelectorAll('[data-grain]').forEach(function(el){var p=el.getAttribute('data-grain').split(',').map(Number);el.style.backgroundImage='url('+n(p[0],p[1]||180)+')';el.style.backgroundSize=(p[2]||p[1]||180)+'px'})})();</script></body></html>

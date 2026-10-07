@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://studio.hemlohq.com/sitemap-index.xml

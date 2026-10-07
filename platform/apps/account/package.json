@@ -1,0 +1,1 @@
+{"name":"@hemlo/account","private":true,"type":"module","scripts":{"dev":"astro dev --port 4321","build":"astro build","preview":"astro preview --port 4321"},"dependencies":{"@tailwindcss/vite":"^4.3.3","astro":"^7.3.5","tailwindcss":"^4.3.3"}}

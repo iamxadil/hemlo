@@ -1,0 +1,11 @@
+{
+  // studio.hemlohq.com (Astro static site). Publish: npm run deploy
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "hemlo-studio",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-09-01",
+  "assets": { "directory": "./dist", "binding": "ASSETS", "run_worker_first": true, "not_found_handling": "404-page", "html_handling": "auto-trailing-slash" },
+  "routes": [{ "pattern": "studio.hemlohq.com", "custom_domain": true }],
+  "workers_dev": false,
+  "observability": { "enabled": true }
+}

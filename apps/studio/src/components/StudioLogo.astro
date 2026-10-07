@@ -1,0 +1,12 @@
+---
+// The official Hemlo Studio lockup (from the brand kit): the H in Studio teal, the name in the text colour.
+// tone="paper" uses the deep teal, for light surfaces like the receipt.
+import en from '../brand/hemlo-studio-on-dark.svg?raw';
+import ar from '../brand/hemlo-studio-ar-on-dark.svg?raw';
+import type { Lang } from '../i18n';
+interface Props { lang: Lang; class?: string; tone?: 'dark' | 'paper'; }
+const { lang, class: cls = '', tone = 'dark' } = Astro.props;
+let svg = (lang === 'ar' ? ar : en).replace(/#FFFFFF/gi, 'currentColor').replace('<svg ', '<svg aria-hidden="true" style="height:100%;width:auto;display:block" ');
+if (tone === 'paper') svg = svg.replace(/#4FC1B3/gi, '#0F766E');
+---
+<span class={`inline-block ${cls}`} set:html={svg} />

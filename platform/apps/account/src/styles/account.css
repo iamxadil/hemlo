@@ -1,0 +1,85 @@
+/* Hemlo ID screens: the Hemlo design system (base.css, shared with hemlohq.com) plus form and panel parts. */
+@import "./base.css";
+@source "../";
+
+@layer components {
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 1.25rem; padding: 1.5rem; }
+  .panel + .panel { margin-top: 1rem; }
+  .panel h2 { font-size: 1.125rem; font-weight: 600; letter-spacing: -.01em; }
+  .muted { color: var(--muted); }
+  .label { display: block; font-size: .875rem; font-weight: 500; color: var(--fg-2); margin-bottom: .4rem; }
+  .input { width: 100%; border: 1px solid var(--line-strong); background: var(--canvas); color: var(--fg); border-radius: .85rem; padding: .8rem 1rem; font-size: 1rem; line-height: 1.3; transition: border-color .15s, box-shadow .15s; }
+  .input:focus { outline: none; border-color: var(--fg-2); box-shadow: 0 0 0 4px color-mix(in oklab, var(--brass-soft) 22%, transparent); }
+  .input[aria-invalid="true"] { border-color: #B42331; }
+  select.input { appearance: none; padding-inline-end: 2.5rem; background: var(--canvas) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%238E96A3' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 1rem center; }
+  html[dir="rtl"] select.input { background-position: left 1rem center; }
+  .code-input { direction: ltr; text-align: center; font-size: 1.75rem; letter-spacing: .5em; font-variant-numeric: tabular-nums; padding-inline-start: 1.5rem; }
+  .ltr { direction: ltr; unicode-bidi: isolate; }
+  .btn-block { width: 100%; justify-content: center; padding-block: .95rem; }
+  .btn[disabled] { opacity: .55; cursor: default; }
+  .btn[data-busy]::after { content: ""; width: 1em; height: 1em; border: 2px solid currentColor; border-inline-end-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg) } }
+  .btn-ghost { color: var(--fg-2); padding: .5rem .75rem; border-radius: .6rem; font-size: .9rem; }
+  .btn-ghost:hover { background: var(--sunken); color: var(--fg); }
+  .btn-danger { color: #B42331; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--sunken); border-radius: .9rem; padding: .25rem; gap: .25rem; }
+  .seg button { border-radius: .7rem; padding: .6rem; font-size: .95rem; color: var(--fg-2); }
+  .seg button[aria-selected="true"] { background: var(--surface); color: var(--fg); font-weight: 500; box-shadow: 0 1px 2px rgba(14,20,32,.08); }
+  .divider { display: flex; align-items: center; gap: .75rem; color: var(--muted); font-size: .85rem; }
+  .divider::before, .divider::after { content: ""; flex: 1; border-top: 1px solid var(--line); }
+  .row { display: flex; align-items: center; gap: .9rem; padding: .85rem 0; border-top: 1px solid var(--line); }
+  .row:first-of-type { border-top: 0; }
+  .avatar { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: 999px; background: var(--sunken); font-weight: 600; flex: none; }
+  .badge { display: inline-flex; align-items: center; gap: .3rem; font-size: .75rem; font-weight: 500; padding: .15rem .55rem; border-radius: 999px; background: var(--sunken); color: var(--fg-2); }
+  .badge.ok { background: color-mix(in oklab, #1F7A4D 14%, transparent); color: #1F7A4D; }
+  .badge.warn { background: color-mix(in oklab, #B8520A 14%, transparent); color: #B8520A; }
+  .notice { border-radius: 1rem; padding: 1rem 1.1rem; background: color-mix(in oklab, var(--brass-soft) 13%, var(--surface)); border: 1px solid color-mix(in oklab, var(--brass-soft) 35%, transparent); }
+  .error-text { color: #B42331; font-size: .9rem; }
+  .toast { position: fixed; inset-inline: 1rem; bottom: max(1rem, env(safe-area-inset-bottom)); margin-inline: auto; max-width: 26rem; z-index: 60; padding: .85rem 1.1rem; border-radius: .9rem; background: var(--invert); color: var(--on-invert); box-shadow: 0 12px 30px rgba(0,0,0,.25); font-size: .95rem; transition: opacity .4s, transform .4s; }
+  .toast.error { background: #B42331; color: #fff; }
+  .toast.out { opacity: 0; transform: translateY(8px); }
+  .pinpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; direction: ltr; }
+  .pinpad button { height: 4.25rem; border-radius: 1.1rem; background: var(--surface); border: 1px solid var(--line); font-size: 1.6rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .pinpad button:active { background: var(--sunken); }
+  .dots { display: flex; justify-content: center; gap: .8rem; direction: ltr; }
+  .dots i { width: .85rem; height: .85rem; border-radius: 999px; border: 2px solid var(--fg-2); }
+  .dots i.on { background: var(--fg); border-color: var(--fg); }
+  .skeleton { background: linear-gradient(90deg, var(--sunken), var(--surface), var(--sunken)); background-size: 200% 100%; animation: sk 1.2s infinite; border-radius: .6rem; min-height: 1rem; }
+  @keyframes sk { to { background-position: -200% 0 } }
+}
+
+/* Sign-in / sign-up: the brand panel beside the form on large screens */
+@layer components {
+  .brand-panel { position: sticky; top: 0; height: 100dvh; flex-direction: column; justify-content: space-between; padding: 2.5rem 3rem;
+    background: radial-gradient(120% 80% at 80% 10%, #1B2433 0%, #0E1420 55%, #0A0E16 100%); color: #F2F1EC; overflow: hidden; }
+  .brand-panel .brand-h { height: 5.5rem; width: auto; color: #D7B46A; }
+  .brand-tag { margin-top: 2rem; font-size: clamp(2rem, 3.2vw, 3rem); font-weight: 600; line-height: 1.15; letter-spacing: -.02em; }
+  html[lang="ar"] .brand-tag { letter-spacing: 0; line-height: 1.35; }
+  .brand-points { margin-top: 2rem; display: grid; gap: .9rem; color: #C9CED6; font-size: 1.02rem; }
+  .brand-points li { display: flex; align-items: center; gap: .75rem; }
+  .brand-points span { width: .45rem; height: .45rem; border-radius: 999px; background: #D7B46A; flex: none; }
+  .brand-foot { font-size: .85rem; color: #8E96A3; }
+  .auth-side { background: var(--canvas); }
+  .auth-title { font-size: 1.85rem; font-weight: 600; letter-spacing: -.02em; line-height: 1.2; }
+  html[lang="ar"] .auth-title { letter-spacing: 0; line-height: 1.35; }
+  .switch-line { margin-top: 1.75rem; text-align: center; font-size: .95rem; color: var(--fg-2); }
+  .switch-line a { color: var(--fg); font-weight: 600; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--brass-soft); }
+}
+
+@layer components {
+  .lang-btn { display: inline-flex; align-items: center; gap: .4rem; height: 2.125rem; padding: 0 .75rem; border-radius: 999px; font-size: 13.5px; color: var(--fg-2); transition: background-color .15s, color .15s; }
+  .lang-btn:hover { background: var(--sunken); color: var(--fg); }
+}
+
+/* the way into Hemlo Systems, first on the account page */
+.ws { display: grid; gap: .5rem; }
+.ws-label { font-size: .8rem; font-weight: 600; color: var(--muted); }
+.ws-open { display: flex; align-items: center; gap: 1rem; width: 100%; padding: 1rem 1.1rem; border-radius: 1.1rem; background: var(--fg); color: var(--canvas); text-align: start;
+  box-shadow: 0 16px 34px -18px rgb(14 20 32 / .55); transition: transform .16s cubic-bezier(.23, 1, .32, 1); }
+.ws-open:active, .ws-other:active { transform: scale(.98); }
+.ws-open .avatar { background: rgb(255 255 255 / .14); color: inherit; }
+.ws-arrow { font-size: 1.4rem; transition: transform .2s cubic-bezier(.23, 1, .32, 1); }
+[dir="rtl"] .ws-arrow { transform: scaleX(-1); }
+@media (hover: hover) and (pointer: fine) { .ws-open:hover .ws-arrow { transform: translateX(3px); } [dir="rtl"] .ws-open:hover .ws-arrow { transform: scaleX(-1) translateX(3px); } }
+.ws-other { display: flex; align-items: center; gap: .75rem; width: 100%; padding: .65rem .8rem; border-radius: .9rem; border: 1px solid var(--line); background: var(--surface); transition: transform .16s cubic-bezier(.23, 1, .32, 1); }
+.ws-empty { padding: 1.1rem; border-radius: 1.1rem; border: 1px solid var(--line); background: var(--surface); }

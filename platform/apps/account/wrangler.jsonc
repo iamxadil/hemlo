@@ -1,0 +1,9 @@
+{
+  // account.hemlohq.com: the Hemlo ID screens (static). Deploy: npm run build -w @hemlo/account && npx wrangler deploy -c apps/account/wrangler.jsonc
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "hemlo-account",
+  "compatibility_date": "2026-09-01",
+  "assets": { "directory": "./dist", "not_found_handling": "404-page", "html_handling": "auto-trailing-slash" },
+  "routes": [{ "pattern": "account.hemlohq.com", "custom_domain": true }],
+  "workers_dev": false
+}

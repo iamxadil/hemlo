@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hemlo Systems — Pricing &amp; Plans</title>
+<style>
+  :root{
+    --bg:#FAFAF7; --tile:#F1F0EB; --ink:#0E1420; --ink2:#3A4252; --muted:#6B7280;
+    --rule:#E3E1DA; --accent:#3B5BC4; --good:#0F7B4F; --warn:#B45309; --bad:#B42318;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:"Readex Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .w{max-width:940px;margin:0 auto;padding:0 24px}
+  header{padding:56px 0 8px}
+  .eyebrow{font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+  h1{font-size:clamp(32px,5vw,46px);font-weight:700;letter-spacing:-.02em;line-height:1.15;margin:10px 0 8px}
+  .lede{font-size:18px;color:var(--ink2);max-width:62ch}
+  .stamp{font-size:13px;color:var(--muted);margin-top:14px;padding-bottom:32px;border-bottom:1px solid var(--rule)}
+  section{padding:40px 0 0}
+  h2{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+  h3{font-size:19px;font-weight:600;margin:26px 0 8px}
+  p+p{margin-top:10px}
+  .note{font-size:15px;color:var(--ink2);max-width:70ch}
+  table{width:100%;border-collapse:collapse;margin-top:14px;font-size:15px}
+  th{text-align:start;font-weight:600;color:var(--muted);font-size:12.5px;letter-spacing:.04em;text-transform:uppercase;padding:0 12px 8px 0;border-bottom:1px solid var(--rule);vertical-align:bottom}
+  td{padding:11px 12px 11px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  .num{font-variant-numeric:tabular-nums;white-space:nowrap}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:16px}
+  .card{border:1px solid var(--rule);border-radius:18px;padding:22px;background:#fff}
+  .card.feature{background:#EEF1FB;border-color:#D5DCF5}
+  .plan{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+  .price{font-size:34px;font-weight:700;letter-spacing:-.02em;margin:8px 0 2px;line-height:1.1}
+  .iqd{font-size:15px;color:var(--muted);margin-bottom:14px}
+  ul{list-style:none;margin:10px 0 0;display:grid;gap:7px;font-size:14.5px}
+  li{display:flex;gap:9px;align-items:flex-start;line-height:1.5}
+  li::before{content:"✓";flex:none;width:19px;height:19px;margin-top:2px;border-radius:999px;background:var(--accent);color:#fff;font-size:10.5px;font-weight:700;display:grid;place-items:center}
+  li.off::before{content:"–";background:var(--rule);color:var(--muted)}
+  .box{border-radius:18px;padding:20px 22px;margin-top:16px;background:var(--tile);font-size:15px;color:var(--ink2)}
+  .box.warn{background:#FDF6EC;border:1px solid #F3E2C7}
+  .box.bad{background:#FDF1F0;border:1px solid #F5D6D2}
+  .box.good{background:#EFF8F3;border:1px solid #CFE8DC}
+  .box strong{color:var(--ink)}
+  .tot{font-size:26px;font-weight:700;color:var(--ink);letter-spacing:-.01em;margin-top:4px}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.92em;background:var(--tile);padding:1.5px 6px;border-radius:5px}
+  .ar{font-size:19px;color:var(--ink2);line-height:1.9;padding:16px 0 4px}
+  footer{margin:48px 0 0;padding:26px 0 60px;border-top:1px solid var(--rule);font-size:13px;color:var(--muted)}
+  @media (max-width:600px){table{font-size:14px}th,td{padding-right:8px}}
+</style>
+</head>
+<body>
+<div class="w">
+
+<header>
+  <div class="eyebrow">Hemlo Systems · Internal pricing brief</div>
+  <h1>Plans, prices, and what it actually costs to run</h1>
+  <p class="lede">A defensible price card for Hemlo Systems, plus the real infrastructure bill behind it — so the margin per shop is a number, not a hope.</p>
+  <p class="stamp">Prepared 6 October 2026 · Figures verified against Neon and Cloudflare published rates · USD→IQD planned at <strong>1,450</strong> (see caveat)</p>
+</header>
+
+<section>
+  <h2>1 · The price card</h2>
+  <p class="note">Seats mean <strong>dentists</strong> or <strong>till operators</strong>. Staff accounts are always free — a cashier should never cost the owner extra, or they will share one login instead.</p>
+
+  <div class="cards">
+    <div class="card">
+      <div class="plan">Solo</div>
+      <div class="price">19<span style="font-size:15px;font-weight:600;color:var(--muted)"> USD</span></div>
+      <div class="iqd">27,500 IQD / month</div>
+      <ul>
+        <li>1 seat, 1 location</li>
+        <li>Till, stock, debt book, expenses</li>
+        <li>Unlimited customers &amp; products</li>
+        <li>FIB QR payments</li>
+        <li>CSV &amp; Excel import</li>
+        <li>Email support</li>
+      </ul>
+    </div>
+    <div class="card feature">
+      <div class="plan">Clinic — best value</div>
+      <div class="price">39<span style="font-size:15px;font-weight:600;color:var(--muted)"> USD</span></div>
+      <div class="iqd">57,000 IQD / month</div>
+      <ul>
+        <li>2–4 seats</li>
+        <li>Everything in Solo</li>
+        <li>Appointments &amp; chair plan</li>
+        <li>Installment plans</li>
+        <li>Lab orders &amp; referrals</li>
+        <li>Patient recall reminders</li>
+        <li>Waiting-room screen</li>
+        <li>Priority support</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="plan">Group</div>
+      <div class="price">79<span style="font-size:15px;font-weight:600;color:var(--muted)"> USD</span></div>
+      <div class="iqd">115,000 IQD / month</div>
+      <ul>
+        <li>5+ seats, 2+ locations</li>
+        <li>Everything in Clinic</li>
+        <li>Consolidated reporting</li>
+        <li>Per-branch dashboards</li>
+        <li>Custom roles &amp; permissions</li>
+        <li>Named account contact</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Annual billing</h3>
+  <table>
+    <tr><th>Plan</th><th>Monthly</th><th>Annual (10 months)</th><th>You save</th></tr>
+    <tr><td>Solo</td><td class="num">27,500</td><td class="num">275,000 IQD</td><td class="num">55,000 IQD</td></tr>
+    <tr><td>Clinic</td><td class="num">57,000</td><td class="num">570,000 IQD</td><td class="num">114,000 IQD</td></tr>
+    <tr><td>Group</td><td class="num">115,000</td><td class="num">1,150,000 IQD</td><td class="num">230,000 IQD</td></tr>
+  </table>
+  <div class="box">Paying for 10 months of the year is the regional convention, not a Hemlo invention — Asabsys (an Iraqi competitor) charges 270,000 IQD for 12 months on its 30,000/month plan, which is the same ~17% discount. Matching it costs nothing and removes a price objection.</div>
+</section>
+
+<section>
+  <h2>2 · How the numbers were set</h2>
+  <p class="note">Every price below is anchored to something a customer can actually check.</p>
+  <table>
+    <tr><th>Competitor</th><th>Their price</th><th>Annual</th><th>Read</th></tr>
+    <tr><td>Ivor Clinic <span style="color:var(--muted)">(iraq)</span></td><td class="num">250,000 IQD solo</td><td class="num">250,000</td><td>The anchor Iraqi dental shops already budget for. Our Solo sits <em>below</em> this.</td></tr>
+    <tr><td>Ivor multi-doctor</td><td class="num">500,000 IQD</td><td class="num">500,000</td><td>Validates Clinic at 570,000 as a premium-but-safe ask.</td></tr>
+    <tr><td>Ivor multi-branch</td><td class="num">950,000 IQD</td><td class="num">950,000</td><td>Group at 1,150,000 needs the multi-location reporting to justify the gap.</td></tr>
+    <tr><td>smile.krd</td><td class="num">≈$58/mo · ≈$107/mo</td><td class="num">≈$700 / $1,284</td><td>Significantly higher than us. We are not competing on price here.</td></tr>
+    <tr><td>Asabsys <span style="color:var(--muted)">(Iraqi)</span></td><td class="num">30,000 IQD</td><td class="num">270,000</td><td>Closest local comparable. Our Solo at 27,500 undercuts it while including more.</td></tr>
+    <tr><td>3yadtk</td><td class="num">≈$9.99/mo</td><td class="num">≈$120</td><td>Deliberately <em>not</em> matched. Race-to-the-bottom is a trap in this market.</td></tr>
+  </table>
+  <div class="box warn"><strong>The one hard correction.</strong> An earlier draft priced Solo at 32,000 and Clinic at 79,000 IQD. Research on Ivor's published rates showed the Iraqi dental market anchors much lower than assumed — 250,000/year, not 384,000. The cards above are revised <strong>downward</strong> from that first pass. Losing 4,500 IQD/month per Solo shop is the right trade for a price the market will actually accept.</div>
+</section>
+
+<section>
+  <h2>3 · What Hemlo Systems costs to run</h2>
+  <p class="note">The whole stack is Cloudflare plus Neon. There is no VPS, no server rental, and no operations overhead to scale.</p>
+  <table>
+    <tr><th>Item</th><th>Plan</th><th>Monthly</th><th>Notes</th></tr>
+    <tr><td>Cloudflare Workers</td><td>Paid</td><td class="num">$5.00</td><td>Removes the 10 ms CPU and 100k/day ceilings. Upgrade before customer #1.</td></tr>
+    <tr><td>Neon Postgres</td><td>Launch</td><td class="num">≈$15.00</td><td>Usage-based: $0.106/CU-hour, $0.35/GB-month. Scales to zero after 5 min idle.</td></tr>
+    <tr><td>R2 (images)</td><td>Free</td><td class="num">$0.00</td><td>10 GB-month free. Fine for thousands of shops.</td></tr>
+    <tr><td>Workers AI</td><td>Free tier</td><td class="num">$0.00</td><td>Daily allowance. Keep behind the paid gate — it has no margin as a free feature.</td></tr>
+    <tr><td>Pages</td><td>Free</td><td class="num">$0.00</td><td>All four frontends.</td></tr>
+    <tr><td>Resend (email)</td><td>Free → $20</td><td class="num">$0–20</td><td>Only needed once receipts and reminders go out in volume.</td></tr>
+    <tr><td>Domain + misc</td><td>—</td><td class="num">≈$2</td><td></td></tr>
+  </table>
+
+  <div class="cards">
+    <div class="card">
+      <div class="plan">Now — 0 customers</div>
+      <div class="tot">≈$20</div>
+      <div class="iqd">≈29,000 IQD</div>
+    </div>
+    <div class="card">
+      <div class="plan">100 shops · avg Clinic</div>
+      <div class="tot">≈$45</div>
+      <div class="iqd">≈65,000 IQD</div>
+    </div>
+    <div class="card feature">
+      <div class="plan">1,000 shops · avg Clinic</div>
+      <div class="tot">≈$150</div>
+      <div class="iqd">≈217,000 IQD</div>
+    </div>
+  </div>
+  <div class="box good"><strong>The shape of this is the whole point.</strong> Infrastructure is roughly <strong>$0.15 per shop per month</strong> at a thousand shops. Gross margin is above 99%, so the constraint on this business is customers and support — not servers. That is why pricing defensively costs almost nothing.</div>
+</section>
+
+<section>
+  <h2>4 · Margin</h2>
+  <table>
+    <tr><th>Scenario</th><th>Revenue (IQD)</th><th>Infra (IQD)</th><th>Gross margin</th></tr>
+    <tr><td>10 shops, avg Clinic, monthly</td><td class="num">570,000</td><td class="num">≈30,000</td><td class="num">≈95%</td></tr>
+    <tr><td>100 shops, annual billing</td><td class="num">5,700,000</td><td class="num">≈540,000</td><td class="num">≈91%</td></tr>
+    <tr><td>1,000 shops, annual billing</td><td class="num">57,000,000</td><td class="num">≈2,600,000</td><td class="num">≈95%</td></tr>
+  </table>
+  <div class="box bad"><strong>Not in these numbers.</strong> Payment processing (FIB takes a cut), support time, and sales effort. Those are real costs and none of them scale with server count — which is the argument for price discipline rather than discounting.</div>
+</section>
+
+<section>
+  <h2>5 · Arabic price card</h2>
+  <p class="note">For the storefront. Keep it identical to the table above — divergence is how you end up selling two different prices.</p>
+  <div class="ar">
+    <strong>فردي</strong> — 27,500 دينار شهرياً · فاتورة وعروض أسعار، مخزون، دفتر ديون، مصروفات، مدفوعات فيب<br>
+    <strong>عيادة</strong> — 57,000 دينار شهرياً · حتى 4 أسنان أو موظفين، مواعيد، خطة أسنان، أقساط، مختبر، تذكير المرضى<br>
+    <strong>مجموعة</strong> — 115,000 دينار شهرياً · 5 أسنان أو أكثر، فروع متعددة، تقارير موحّدة<br>
+    <strong>السنوي</strong> — ادفع 10 أشهر فقط<br>
+    <span style="color:var(--muted);font-size:17px">الأسعار بالدينار العراقي. الموظفون غير المناوبين مجاناً دائماً.</span>
+  </div>
+</section>
+
+<section>
+  <h2>6 · Open decisions</h2>
+  <ul>
+    <li>Confirm the live USD→IQD rate. Everything here uses <strong>1,450</strong> as a planning figure; Ivor's own published IQD pricing is the more reliable anchor.</li>
+    <li>Decide whether FIB processing fees are absorbed or passed through. At 30,000 IQD/month, ~2% is 600 IQD — enough to notice.</li>
+    <li>Set the trial length. <code>TRIAL_DAYS = 7</code> is currently in the code; 14 days may convert better in a market where trials are expected.</li>
+    <li>Confirm the annual discount is 10 months across all three tiers before it appears in public copy.</li>
+  </ul>
+</section>
+
+<footer>
+  Hemlo Systems · pricing brief · 6 October 2026 · internal document, not customer-facing copy
+</footer>
+
+</div>
+</body>
+</html>

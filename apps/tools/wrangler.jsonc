@@ -1,0 +1,10 @@
+{
+  // Hemlo Tools: static site from ./dist on tools.hemlohq.com (free Workers static assets, no code).
+  // Publish:  node build.js  &&  npx wrangler deploy
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "hemlo-tools",
+  "compatibility_date": "2026-09-01",
+  "assets": { "directory": "./dist", "html_handling": "auto-trailing-slash", "not_found_handling": "none" },
+  "routes": [{ "pattern": "tools.hemlohq.com", "custom_domain": true }],
+  "workers_dev": false
+}

@@ -1,0 +1,99 @@
+---
+// The header's account area.
+//   Signed out: 🌐 Language | Sign in (Early access)
+//   Signed in:  🌐 Language | (AH) Ahmed ▾  → Your account · Manage business · Sign out
+// Both states are rendered; a class on <html> (set before paint from the "hemlo.hint" cookie) picks one,
+// then /v1/me fills in the name. Anonymous visitors never call the API.
+import { t, href, accountUrl, productLinks, SYSTEM_URL, type Lang, type PageKey, type Trade } from '../i18n/strings';
+interface Props { lang: Lang; pageKey: PageKey; product?: Trade }
+const { lang, pageKey, product } = Astro.props;
+const s = t(lang);
+const other: Lang = lang === 'ar' ? 'en' : 'ar';
+// signing in from the website lands in the workspace (it offers a way to start when there's no business yet)
+const P = product ? productLinks(product, lang) : null;
+const signIn = P?.signIn ?? `${accountUrl(lang, 'sign-in')}?return_to=${encodeURIComponent(SYSTEM_URL)}`;
+const workspace = P?.open ?? `${SYSTEM_URL}?lang=${lang}`;
+const primary = P ? [P.start, s.product.start] : [href(lang, 'earlyAccess'), s.nav.earlyAccess];
+const openLabel = P ? s.product.open : s.nav.open;
+---
+<div class="account-area flex items-center gap-1.5 sm:gap-2">
+  <a href={href(other, pageKey)} hreflang={other} lang={other} class="lang-btn" data-astro-reload aria-label={`${s.nav.language}: ${s.nav.switchTo}`}>
+    <svg viewBox="0 0 24 24" aria-hidden="true" class="h-[17px] w-[17px]"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+    <span class="hidden sm:inline">{s.nav.switchTo}</span><span class="sm:hidden">{other === 'ar' ? 'ع' : 'EN'}</span>
+  </a>
+  <span class="hidden sm:block h-5 w-px bg-line-strong mx-1.5" aria-hidden="true"></span>
+
+  <div class="auth-out hidden sm:flex items-center gap-1">
+    <a href={signIn} class="nav-link">{s.nav.signIn}</a>
+    <a href={primary[0]} class="btn btn-primary !py-2 !px-4 text-[13.5px]">{primary[1]}</a>
+  </div>
+
+  <a href={workspace} class="auth-in-only btn btn-primary !py-2 !px-4 text-[13.5px] hidden">{openLabel}</a>
+  <details class="auth-in relative" id="account-menu">
+    <summary class="account-chip" aria-label={s.nav.account}>
+      <span class="account-avatar" data-me="initials"></span>
+      <span class="hidden sm:inline max-w-[9rem] truncate" data-me="first">&nbsp;</span>
+      <svg viewBox="0 0 12 8" class="hidden sm:block h-2 w-2.5 opacity-60" aria-hidden="true"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </summary>
+    <div class="account-pop">
+      <div class="flex items-center gap-3 px-4 pt-4 pb-3">
+        <span class="account-avatar !h-10 !w-10 text-base" data-me="initials"></span>
+        <div class="min-w-0"><p class="truncate font-medium" data-me="name"></p><p class="truncate text-[13px] text-muted" dir="ltr" data-me="contact"></p></div>
+      </div>
+      <div class="border-t border-line py-1.5">
+        <a href={workspace} class="account-item font-medium"><span>{s.nav.open}</span><span class="text-[12.5px] text-muted">{s.nav.openSub}</span></a>
+        <a href={accountUrl(lang)} class="account-item">{s.nav.account}</a>
+        <a href={accountUrl(lang, 'business')} class="account-item" data-me="business-link" hidden><span>{s.nav.business}</span><span class="text-[12.5px] text-muted truncate" data-me="business"></span></a>
+      </div>
+      <div class="border-t border-line py-1.5"><button type="button" class="account-item w-full" data-me="sign-out">{s.nav.signOut}</button></div>
+    </div>
+  </details>
+</div>
+
+<script>
+  import { API_URL } from '../i18n/strings';
+  const HINT = /(?:^|;\s*)hemlo\.hint=1/;
+  const root = document.documentElement;
+  const clearHint = () => { document.cookie = 'hemlo.hint=; Max-Age=0; Path=/; Domain=.hemlohq.com; Secure; SameSite=Lax'; root.classList.remove('signed-in'); sessionStorage.removeItem('hemlo.me'); };
+  // one letter for Arabic-script names (two read oddly, like «أا»), two for Latin names
+  const initials = (n: string) => { const w = (n || '·').trim().split(/\s+/); return /[؀-ۿ]/.test(w[0]) ? w[0][0] : w.slice(0, 2).map((x) => x[0]).join('').toUpperCase(); };
+  const local = (p?: string | null) => (p ? p.replace(/^\+964(\d{3})(\d{3})(\d{4})$/, '0$1 $2 $3') : '');
+
+  function fill(me: any) {
+    const name = me.user.name || '';
+    document.querySelectorAll<HTMLElement>('[data-me="initials"]').forEach((e) => (e.textContent = initials(name)));
+    document.querySelectorAll<HTMLElement>('[data-me="first"]').forEach((e) => (e.textContent = name.split(/\s+/)[0] || '—'));
+    document.querySelectorAll<HTMLElement>('[data-me="name"]').forEach((e) => (e.textContent = name || '—'));
+    document.querySelectorAll<HTMLElement>('[data-me="contact"]').forEach((e) => (e.textContent = me.user.email || local(me.user.phoneNumber)));
+    const org = me.organizations?.find((o: any) => o.id === me.activeOrganizationId);
+    document.querySelectorAll<HTMLElement>('[data-me="business-link"]').forEach((e) => (e.hidden = !org));
+    document.querySelectorAll<HTMLElement>('[data-me="business"]').forEach((e) => (e.textContent = org?.name ?? ''));
+  }
+
+  async function load() {
+    if (!HINT.test(document.cookie)) { root.classList.remove('signed-in'); return; }
+    root.classList.add('signed-in');
+    try { const cached = JSON.parse(sessionStorage.getItem('hemlo.me') || 'null'); if (cached && Date.now() - cached.at < 5 * 60_000) return fill(cached.me); } catch {}
+    try {
+      const res = await fetch(`${API_URL}/v1/me`, { credentials: 'include' });
+      if (res.status === 401) return clearHint();
+      if (!res.ok) return;
+      const me = await res.json();
+      if (me.session?.secondFactorPending) return clearHint();
+      sessionStorage.setItem('hemlo.me', JSON.stringify({ at: Date.now(), me }));
+      fill(me);
+    } catch { /* offline: keep the signed-in look */ }
+  }
+
+  document.addEventListener('click', (e) => {
+    const menu = document.getElementById('account-menu') as HTMLDetailsElement | null;
+    if (menu?.open && !menu.contains(e.target as Node)) menu.open = false;
+    const out = (e.target as HTMLElement).closest('[data-me="sign-out"]');
+    if (out) {
+      (out as HTMLButtonElement).disabled = true;
+      fetch(`${API_URL}/v1/auth/sign-out`, { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: '{}' })
+        .finally(() => { clearHint(); location.reload(); });
+    }
+  });
+  document.addEventListener('astro:page-load', load);
+</script>

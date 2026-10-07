@@ -1,0 +1,54 @@
+---
+// The private early-access link: create your account, and your business is set up with you as owner.
+import Layout from '../layouts/Layout.astro';
+import Mark from '../components/Mark.astro';
+import { STRINGS, type Lang } from '../lib/i18n';
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const s = STRINGS[lang].welcome;
+---
+<Layout lang={lang} title={STRINGS[lang].brand} page="welcome" auth>
+  <div class="pt-6 sm:pt-10 lg:pt-0">
+    <Mark class="h-10 w-auto text-brass lg:hidden" />
+    <div id="w-body" class="mt-8 lg:mt-0">
+      <span class="skeleton block h-9 w-64"></span>
+      <span class="skeleton mt-4 block h-5 w-full"></span>
+    </div>
+    <p class="error-text mt-4" id="w-error" role="alert" hidden></p>
+    <div class="mt-8 space-y-3" id="w-actions"></div>
+  </div>
+</Layout>
+
+<script>
+  import { authClient, api, ba, busy, h, t, fill, page, goSignIn, formatIraqiPhone, $, type Me } from '../lib/client';
+
+  const token = new URLSearchParams(location.search).get('t') ?? '';
+  const body = $('#w-body'), actions = $('#w-actions');
+  const problem = (m: string) => { $('#w-error').textContent = m; $('#w-error').hidden = false; };
+
+  const link = await api<any>(`/v1/early-access/claim/${encodeURIComponent(token)}`).catch(() => ({ status: 'invalid' }));
+  const me = await api<Me>('/v1/me').catch(() => null);
+
+  if (link.status !== 'open') {
+    body.replaceChildren(h('h1', { class: 'auth-title', text: t.brand }));
+    problem((t.welcome as any)[link.status] ?? t.welcome.invalid);
+    actions.append(h('a', { class: 'btn btn-primary btn-block', href: me ? page() : page('sign-in'), text: me ? t.home.title : t.welcome.signIn }));
+  } else {
+    body.replaceChildren(
+      h('h1', { class: 'auth-title', text: fill(t.welcome.title, { name: link.name }) }),
+      h('p', { class: 'mt-3 text-lg text-fg-2', text: fill(t.welcome.body, { business: link.business }) }));
+    if (!me) {
+      actions.append(h('button', { class: 'btn btn-primary btn-block', text: t.welcome.create, onclick: () => goSignIn(location.href) }));
+    } else {
+      const who = me.user.name || me.user.email || formatIraqiPhone(me.user.phoneNumber ?? '');
+      const go = h('button', { class: 'btn btn-primary btn-block', text: fill(t.welcome.setup, { business: link.business }) });
+      go.addEventListener('click', () => busy(go, async () => {
+        await api(`/v1/early-access/claim/${encodeURIComponent(token)}`, { method: 'POST', body: {} });
+        location.href = page('business');
+      }, problem));
+      actions.append(go,
+        h('p', { class: 'pt-2 text-center text-sm muted' }, fill(t.welcome.signedInAs, { who }), ' ',
+          h('button', { class: 'link-arrow', text: t.welcome.notYou, onclick: async () => { await ba(authClient.signOut()); location.reload(); } })));
+    }
+  }
+</script>

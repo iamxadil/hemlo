@@ -1,0 +1,563 @@
+---
+// Hemlo Systems: what the business does → its system, shown working (a short story per trade, with the AI moments
+// marked), how it works in three steps, what the AI does in each system, then every system in one list.
+// The hero is plain HTML and CSS (no 3D, no library): light on any phone.
+import Base from '../layouts/Base.astro';
+import Mark from '../components/Mark.astro';
+import Compare from '../components/Compare.astro';
+import { BRANCH } from '../brand/brand';
+import { t, href, EMAIL, SYSTEM_URL, type Lang } from '../i18n/strings';
+interface Props { lang: Lang; }
+const { lang } = Astro.props;
+const ar = lang === 'ar';
+const s = t(lang).systems;
+const b = BRANCH.systems;
+const ask = (kind: string) => `${href(lang, 'earlyAccess')}?kind=${kind}`;
+const mail = `mailto:${EMAIL}?subject=${encodeURIComponent('Hemlo Systems')}`;
+const L2 = <T,>(a: T, e: T) => (ar ? a : e);
+
+// ---------- every system (the list further down) ----------
+type Sys = { points: string[]; page?: string; demo?: string; pic?: string };
+const SYS: Record<string, Sys> = ar ? {
+  dental: { points: ['المواعيد ولوحة اليوم المباشرة', 'مخطط الأسنان وخطط العلاج بالدينار والدولار', 'المختبر وحصص الأطباء', 'شاشة انتظار للمرضى'], page: href(lang, 'dental'), demo: `${SYSTEM_URL}?demo=dental&lang=ar`, pic: '/images/dental/chart-ar-1000.webp' },
+  stores: { points: ['كاشير بالباركود: القطعة والكارتون والميزان', 'دفتر الديون مع تذكير واتساب', 'البضاعة والموردون والمصاريف والصندوق', 'يعمل بدون إنترنت'], page: href(lang, 'stores'), demo: `${SYSTEM_URL}?demo=1&lang=ar`, pic: '/images/stores/sell-ar-1000.webp' },
+  gym: { points: ['الاستقبال بمسحة بطاقة، وأوقات السيدات', 'الاشتراكات والإيقاف المؤقت والتجديد بالواتساب', 'التدريب الشخصي وحصة المدرب، والكلاسات', 'شاشة عند الباب ترحّب بكل مشترك'], page: href(lang, 'gym'), demo: `${SYSTEM_URL}?demo=gym&lang=ar`, pic: '/images/gym/desk-ar-1000.webp' },
+  'phone-repair': { points: ['بطاقة لكل جهاز: العطل والحالة', 'القطع والأجرة في فاتورة واحدة', 'رسالة للزبون حين يجهز جهازه'] },
+  'clinic-salon': { points: ['المواعيد حسب الموظف', 'الخدمات والباقات', 'ملف لكل زبون'] },
+  'cafe-restaurant': { points: ['الطاولات والطلبات', 'شاشة للمطبخ', 'المنيو والأسعار'] },
+  other: { points: ['الغرف والحجوزات', 'الدخول والخروج', 'فاتورة الإقامة'] },
+} : {
+  dental: { points: ['Appointments and a live board of the day', 'Tooth chart and treatment plans in dinars and dollars', 'The lab and dentists’ shares', 'A waiting-room screen for patients'], page: href(lang, 'dental'), demo: `${SYSTEM_URL}?demo=dental&lang=en`, pic: '/images/dental/chart-en-1000.webp' },
+  stores: { points: ['A barcode till: piece, carton and scale', 'The debt book, with WhatsApp reminders', 'Stock, suppliers, expenses and the drawer', 'Keeps working without internet'], page: href(lang, 'stores'), demo: `${SYSTEM_URL}?demo=1&lang=en`, pic: '/images/stores/sell-en-1000.webp' },
+  gym: { points: ['Check-in with a scan, and ladies’ hours', 'Memberships, pauses, renewals on WhatsApp', 'Personal training with the coach’s share, and classes', 'A screen at the door that greets every member'], page: href(lang, 'gym'), demo: `${SYSTEM_URL}?demo=gym&lang=en`, pic: '/images/gym/desk-en-1000.webp' },
+  'phone-repair': { points: ['A job card for every device: fault and status', 'Parts and labour on one bill', 'A message to the customer when it’s ready'] },
+  'clinic-salon': { points: ['Appointments by staff member', 'Services and packages', 'A file for every client'] },
+  'cafe-restaurant': { points: ['Tables and orders', 'A screen for the kitchen', 'The menu and prices'] },
+  other: { points: ['Rooms and bookings', 'Check-in and check-out', 'The stay’s bill'] },
+};
+const ORDER = ['dental', 'stores', 'gym', 'phone-repair', 'clinic-salon', 'cafe-restaurant', 'other'];
+const systems = ORDER.map((k) => s.trades.find(([, , , kind]) => kind === k)!).filter(Boolean);
+const L = L2({ open: 'صفحة النظام', demo: 'جرّبه الآن', ask: 'أريده لعملي', soon: 'ما سيفعله' }, { open: 'See the system', demo: 'Try it now', ask: 'I want this', soon: 'What it will do' });
+
+// ---------- the hero: "what does your business do?" → that system, working, in three short scenes ----------
+const H = L2({
+  eyebrow: 'هيملو · الأنظمة', title: ['أدِر عملك كله', 'من مكان واحد.'],
+  sub: 'اختر ما تعمله وشاهد يوماً يمرّ. بالعربي، بالدينار، ويعمل حين ينقطع الإنترنت. ويقرأ حتى فواتير مورّديك عنك.',
+  pick: 'ماذا يعمل عملك؟', play: 'تشغيل', pause: 'إيقاف مؤقت', step: 'الخطوة',
+}, {
+  eyebrow: 'Hemlo Systems', title: ['Run your whole business', 'from one place.'],
+  sub: 'Pick what you do and watch a day go by. In Arabic, in dinars, still working when the internet drops. It even reads your supplier’s invoices for you.',
+  pick: 'What does your business do?', play: 'Play', pause: 'Pause', step: 'Step',
+});
+type Scene = { title: string; line: string; ai?: 'live' | 'soon' };
+const TRADES = [
+  { kind: 'stores', color: '#A8532E', title: L2('متجر أو ماركت', 'Shop or market'), need: L2('أبيع بضاعة على الكاونتر', 'I sell products at a counter'), demo: SYS.stores.demo!, page: SYS.stores.page!,
+    scenes: [
+      { title: L2('صوّر فاتورة المورّد', 'Photograph the supplier’s invoice'), line: L2('يقرؤها هيملو ويملأ البضاعة والأسعار والمورّد. تلقي نظرة، وتحفظ.', 'Hemlo reads it and fills in the products, prices and supplier. You glance, and save.') },
+      { title: L2('بِع بضغطة', 'Sell with a beep'), line: L2('باركود القطعة والكارتون والميزان. المخزون والربح والصندوق تتحدث وحدها.', 'Piece, carton and scale barcodes. Stock, profit and the drawer update themselves.') },
+      { title: L2('اسأل محلك', 'Ask your shop'), line: L2('اكتبها كما تقولها: «شكد ربحت اليوم؟» والجواب من أرقامك أنت.', 'Type it the way you’d say it. The answer comes from your own numbers.') },
+    ] as Scene[] },
+  { kind: 'dental', color: '#B38B3A', title: L2('عيادة أسنان', 'Dental clinic'), need: L2('أستقبل المرضى بمواعيد', 'I see patients by appointment'), demo: SYS.dental.demo!, page: SYS.dental.page!,
+    scenes: [
+      { title: L2('يومك على لوحة واحدة', 'Your day on one board'), line: L2('من وصل، من ينتظر، ومن على أي كرسي. اسحب المريض للخطوة التالية.', 'Who’s arrived, who’s waiting, who’s in which chair. Drag a patient to the next step.') },
+      { title: L2('سجّل على مخطط الأسنان', 'Mark it on the tooth chart'), line: L2('خطة علاج بسعر واضح، تصل المريض على الواتساب.', 'A treatment plan with a clear price, sent to the patient on WhatsApp.') },
+      { title: L2('شاشة الانتظار تنادي المريض', 'The waiting room calls them in'), line: L2('تلفزيون يعرض من التالي، ويناديه باسمه بنغمة هادئة.', 'A TV shows who’s next and calls them by name with a soft chime.') },
+    ] as Scene[] },
+  { kind: 'gym', color: '#E4572E', title: L2('نادٍ رياضي', 'Gym'), need: L2('مشتركون باشتراكات شهرية', 'Members on monthly memberships'), demo: SYS.gym.demo!, page: SYS.gym.page!,
+    scenes: [
+      { title: L2('مسحة واحدة عند الاستقبال', 'One scan at the desk'), line: L2('يدخل ويظهر كم بقي له. أو يظهر السبب بالأحمر، ومعه زر التجديد.', 'In, with the days left. Or the reason in red, with a renew button.') },
+      { title: L2('التجديدات على الواتساب', 'Renewals on WhatsApp'), line: L2('من ينتهي هذا الأسبوع، برسالة جاهزة بكلماتك. لا اشتراك يفوتك.', 'Who ends this week, each with a message in your words. No renewal slips by.') },
+      { title: L2('شاشة الباب ترحّب', 'The door says hello'), line: L2('تلفزيون عند المدخل يرحّب بكل مشترك باسمه، ويعرض كلاسات اليوم.', 'A TV at the entrance greets every member by name and shows today’s classes.') },
+    ] as Scene[] },
+];
+const SC = {
+  inv: L2([['بيبسي 330 مل · كارتون', '×3', '30,000'], ['ماء 500 مل · كارتون', '×5', '12,000'], ['سكر 1 كغ', '×20', '23,000'], ['شيبس ليز · كارتون', '×2', '19,200']], [['Pepsi 330ml · carton', '×3', '30,000'], ['Water 500ml · carton', '×5', '12,000'], ['Sugar 1kg', '×20', '23,000'], ['Lay’s chips · carton', '×2', '19,200']]),
+  invSupplier: L2('جملة بغداد', 'Baghdad Wholesale'), invRead: L2('قرأها هيملو في 7 ثوانٍ', 'Read by Hemlo in 7 s'), total: L2('المجموع', 'Total'),
+  till: L2([['بيبسي 330 مل', '×2', '1,000'], ['جبن أبيض', '1.25 كغ', '15,000']], [['Pepsi 330ml', '×2', '1,000'], ['White cheese', '1.25 kg', '15,000']]),
+  effects: L2(['المخزون −2', 'الربح +3,250', 'الصندوق +16,000'], ['Stock −2', 'Profit +3,250', 'Drawer +16,000']),
+  q: L2('شكد ربحت اليوم؟', 'How much profit today?'),
+  a: L2(['بعت بـ', '116,750', 'د.ع في 33 فاتورة، والربح', '32,055', 'د.ع.'], ['You sold', '116,750', 'IQD in 33 receipts, with', '32,055', 'IQD profit.']),
+  cols: L2(['قادمون', 'في الانتظار', 'على الكرسي'], ['Coming', 'Waiting', 'In the chair']),
+  p1: L2('يوسف أحمد', 'Yousif Ahmed'), p2: L2('نور الهدى', 'Noor Al-Huda'), p3: L2('زينب حسين', 'Zainab Hussein'),
+  plan: L2('46 · تاج · مخطط', '46 · Crown · planned'), price: L2('350,000 د.ع', '350,000 IQD'), sent: L2('أُرسلت الخطة بالواتساب', 'Plan sent on WhatsApp'),
+  gName: L2('زينب علي', 'Zainab Ali'), gMs: L2('ثلاثة أشهر', 'Three months'), gDays: L2('يوم متبقٍّ', 'days left'), gIn: L2('أهلاً بك', 'Welcome in'), gNo: L2('رقم 3', 'No. 3'),
+  gRenew: L2([['مصطفى جاسم', 'ينتهي اليوم'], ['فاطمة كاظم', 'بعد 3 أيام'], ['كرار حميد', 'بعد 5 أيام']], [['Mustafa Jasim', 'ends today'], ['Fatima Kadhim', 'in 3 days'], ['Karrar Hameed', 'in 5 days']]), gRemind: L2('تذكير', 'Remind'),
+  gDoor: L2('أهلاً زينب ع.', 'Welcome, Zainab A.'), gDoorDays: L2('13 يوماً متبقياً', '13 days left'),
+  tvName: L2('نور ا.', 'Noor A.'), tvGo: L2('يُرجى التوجّه إلى', 'Please go to'), tvChair: L2('كرسي 1', 'Chair 1'),
+};
+
+// ---------- how it works ----------
+const HOW = L2({
+  title: 'كيف يعمل؟ ثلاث خطوات.',
+  steps: [['اختر نظام مهنتك', 'جرّب نسخة جاهزة الآن، بلا تسجيل.'], ['نجهّزه معك', 'منتجاتك أو قائمة أسعارك، وموظفوك كلٌّ بصلاحياته. دقائق، لا أيام.'], ['أدِر يومك', 'كل شيء مترابط: البيع الواحد يحدّث المخزون والديون والصندوق والربح معاً. على الحاسبة والموبايل، وبدون إنترنت.']],
+}, {
+  title: 'How it works. Three steps.',
+  steps: [['Pick your trade’s system', 'Try a ready-made copy now, no sign-up.'], ['We set it up with you', 'Your products or price list, your staff each with their own access. Minutes, not days.'], ['Run your day', 'Everything is connected: one sale updates stock, debts, the drawer and profit at once. On a computer or a phone, even offline.']],
+});
+
+// ---------- the quiet helper: one line, not a pitch ----------
+const HELPER = L2(
+  { lead: 'ومعه مساعد هادئ.', body: 'يقرأ فواتير المورّدين، ويجيب عن أسئلتك عن أرقامك. هو يكتب المسودة، وأنت تقرّر. ويصل قريباً إلى العيادات أيضاً.' },
+  { lead: 'And a quiet helper.', body: 'It reads supplier invoices and answers questions about your numbers. It drafts; you decide. Clinics get theirs soon.' });
+const END = L2(
+  { title: 'نظام لمهنتك، لا العكس.', sub: 'المتاجر والعيادات والأندية الرياضية متاحة الآن. ولكل مهنة أخرى، أخبرنا كيف يسير عملك ونبني إصدارها.' },
+  { title: 'A system for your trade, not the other way round.', sub: 'Shops, clinics and gyms are live now. For any other trade, tell us how your work runs and we’ll build its edition.' });
+const num = (i: number) => (ar ? ['١', '٢', '٣', '٤', '٥'][i] : String(i + 1));
+---
+<Base lang={lang} page="systems" title={t(lang).nav.systems} description={s.sub}>
+  <div class="sys" style={`--c:${b.color};--cd:${b.dark};--t:${b.tint};--td:${b.tintDark}`}>
+
+    <!-- the hero: pick what the business does, and watch its system work -->
+    <section class="hx" data-hx data-trade="stores" style={`--acc:${TRADES[0].color}`}>
+      <div class="hx-glow" aria-hidden="true"></div>
+      <div class="wrap hx-grid">
+        <div class="hx-copy">
+          <p class="font-medium accent rise">{H.eyebrow}</p>
+          <h1 class="mt-5 text-[clamp(2.3rem,4.6vw,3.9rem)] font-semibold leading-[1.05] tracking-tight rise rise-2"><span class="block">{H.title[0]}</span><span class="block hx-acc">{H.title[1]}</span></h1>
+          <p class="mt-6 max-w-xl text-lead text-fg-2 rise rise-3">{H.sub}</p>
+          <p class="mt-9 text-sm font-semibold text-fg-2 rise rise-4">{H.pick}</p>
+          <div class="hx-pick rise rise-4" role="tablist" aria-label={H.pick}>
+            {TRADES.map((x, i) => (
+              <button type="button" role="tab" aria-selected={i === 0 ? 'true' : 'false'} data-pick={x.kind} style={`--k:${x.color}`}>
+                <b>{x.title}</b><span>{x.need}</span>
+              </button>
+            ))}
+            <a class="hx-other" href="#trades"><b>{L2('شيء آخر', 'Something else')}</b><span>{L2('ورشة، صالون، مقهى، فندق…', 'Workshop, salon, café, hotel…')}</span></a>
+          </div>
+        </div>
+
+        <!-- one stage per trade; three scenes each, playing in turn (tap a step to jump) -->
+        <div class="hx-side rise rise-3">
+          {TRADES.map((x, ti) => (
+            <div class="hx-stage" data-stage={x.kind} hidden={ti !== 0} style={`--k:${x.color}`}>
+              <div class="hx-bar">
+                <span class="hx-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span class="hx-name">Hemlo · {x.title}</span>
+                <span class="hx-steps" role="tablist">
+                  {x.scenes.map((_, i) => <button type="button" role="tab" aria-selected={i === 0 ? 'true' : 'false'} data-step={i} aria-label={`${H.step} ${i + 1}`}><span class="hx-prog"></span></button>)}
+                </span>
+              </div>
+              <div class="hx-view">
+                {x.kind === 'stores' ? <>
+                  <!-- 1 · the invoice photo, read by AI -->
+                  <div class="sc sc-inv" data-scene="0">
+                    <div class="inv-photo"><img src="/images/stores/invoice-photo.webp" width="560" height="493" alt="" loading="eager" decoding="async" /><i class="beam" aria-hidden="true"></i></div>
+                    <div class="inv-out">
+                      <p class="inv-head"><span class="spark" aria-hidden="true">✦</span><span class="text-xs text-fg-2">{SC.invRead}</span></p>
+                      <p class="inv-sup">{SC.invSupplier} · INV-4200</p>
+                      <ul>{SC.inv.map(([n, q, v], i) => <li style={`--i:${i}`}><span class="ok">✓</span><span class="flex-1 truncate">{n}</span><span class="text-fg-2" dir="ltr">{q}</span><b dir="ltr">{v}</b></li>)}</ul>
+                      <p class="inv-total"><span>{SC.total}</span><b dir="ltr">84,200</b></p>
+                    </div>
+                  </div>
+                  <!-- 2 · the till -->
+                  <div class="sc sc-till" data-scene="1">
+                    <div class="till">
+                      <p class="scan"><span class="barcode" aria-hidden="true"></span><span dir="ltr">6281036001017</span><span class="beep">✓</span></p>
+                      <ul>{SC.till.map(([n, q, v], i) => <li style={`--i:${i}`}><span class="flex-1 truncate">{n}</span><span class="text-fg-2" dir="ltr">{q}</span><b dir="ltr">{v}</b></li>)}</ul>
+                      <p class="till-total"><span>{SC.total}</span><b dir="ltr">16,000</b></p>
+                    </div>
+                    <div class="fx">{SC.effects.map((e, i) => <span style={`--i:${i}`}>{e}</span>)}</div>
+                  </div>
+                  <!-- 3 · ask your shop -->
+                  <div class="sc sc-ask" data-scene="2">
+                    <p class="bubble q">{SC.q}</p>
+                    <div class="bubble a"><p>{SC.a[0]} <b dir="ltr">{SC.a[1]}</b> {SC.a[2]} <b dir="ltr">{SC.a[3]}</b> {SC.a[4]}</p></div>
+                  </div>
+                </> : x.kind === 'gym' ? <>
+                  <!-- 1 · the desk: a scan, and the pass -->
+                  <div class="sc sc-gpass" data-scene="0">
+                    <div class="till gpass">
+                      <p class="scan"><span class="barcode" aria-hidden="true"></span><span dir="ltr">HEMLO-GYM:WJ23N26MZC</span><span class="beep">✓</span></p>
+                      <div class="gp"><span class="gp-face">{SC.gName.slice(0, 1)}</span><div class="min-w-0 flex-1"><p class="gp-in">✓ {SC.gIn}</p><b>{SC.gName}</b><small>{SC.gNo} · {SC.gMs}</small></div><span class="gp-days"><b>13</b><small>{SC.gDays}</small></span></div>
+                    </div>
+                  </div>
+                  <!-- 2 · renewals, each a WhatsApp away -->
+                  <div class="sc sc-grenew" data-scene="1">
+                    <div class="till"><ul>{SC.gRenew.map(([n, w], i) => <li style={`--i:${i}`}><span class="flex-1 truncate">{n}</span><span class="text-fg-2">{w}</span><b class="gwa">{SC.gRemind}</b></li>)}</ul></div>
+                  </div>
+                  <!-- 3 · the door screen -->
+                  <div class="sc sc-tv" data-scene="2">
+                    <div class="tv gtv"><i class="ring" aria-hidden="true"></i><b>{SC.gDoor}</b><em>{SC.gDoorDays}</em></div>
+                  </div>
+                </> : <>
+                  <!-- 1 · today's board -->
+                  <div class="sc sc-board" data-scene="0">
+                    {SC.cols.map((c, i) => <div class="col"><p>{c}</p>{i === 0 && <span class="card">{SC.p1}<small>15:00</small></span>}{i === 1 && <span class="card mover">{SC.p2}<small>14:30</small></span>}{i === 2 && <span class="card on">{SC.p3}<small>{SC.tvChair}</small></span>}</div>)}
+                  </div>
+                  <!-- 2 · the chart -->
+                  <div class="sc sc-chart" data-scene="1">
+                    <div class="chart-box">
+                      <img src="/images/dental/chart-closeup-1100.webp" srcset="/images/dental/chart-closeup-640.webp 640w, /images/dental/chart-closeup-1100.webp 1100w" sizes="(min-width: 1024px) 420px, 80vw" width="1100" height="894" alt="" loading="lazy" decoding="async" />
+                      <p class="pin"><i class="dot-r" aria-hidden="true"></i><b>{SC.plan}</b><span dir="ltr">{SC.price}</span></p>
+                    </div>
+                    <p class="wa"><span class="dotg"></span>{SC.sent}</p>
+                  </div>
+                  <!-- 3 · the waiting-room TV -->
+                  <div class="sc sc-tv" data-scene="2">
+                    <div class="tv"><i class="ring" aria-hidden="true"></i><b>{SC.tvName}</b><span>{SC.tvGo}</span><em>{SC.tvChair}</em></div>
+                  </div>
+                </>}
+              </div>
+              <div class="hx-caps">
+                {x.scenes.map((sc, i) => (
+                  <div class="hx-cap" data-cap={i} hidden={i !== 0}>
+                    <p class="hx-cap-t"><span class="n">{num(i)}</span>{sc.title}</p>
+                    <p class="hx-cap-l">{sc.line}</p>
+                  </div>
+                ))}
+              </div>
+              <div class="hx-go">
+                <a class="btn btn-k" href={x.demo}>{L.demo}<span class="arr" aria-hidden="true">→</span></a>
+                <a class="link-quiet" href={x.page}>{L.open}</a>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- how it works -->
+    <section class="wrap border-t border-line py-20 sm:py-24">
+      <h2 class="reveal text-[clamp(1.8rem,3.6vw,2.8rem)] font-semibold tracking-tight">{HOW.title}</h2>
+      <ol class="how3 mt-10">
+        {HOW.steps.map(([title, body], i) => (
+          <li class="reveal"><span class="n">{num(i)}</span><h3 class="mt-4 text-xl font-medium tracking-tight">{title}</h3><p class="mt-2 leading-relaxed text-fg-2">{body}</p></li>
+        ))}
+      </ol>
+      <p class="reveal helper"><span class="spark" aria-hidden="true">✦</span><span><b>{HELPER.lead}</b> {HELPER.body}</span></p>
+    </section>
+
+    <!-- a system, or a website built for you? the difference at a glance -->
+    <section class="wrap py-20 sm:py-24"><Compare lang={lang} here="systems" /></section>
+
+    <!-- every system -->
+    <section class="wrap border-t border-line py-20 sm:py-24" id="trades">
+      <div class="max-w-3xl">
+        <h2 class="reveal text-[clamp(1.8rem,3.6vw,2.8rem)] font-semibold tracking-tight">{s.pickTitle}</h2>
+        <p class="reveal mt-4 text-lead text-fg-2">{s.pickSub}</p>
+      </div>
+      <!-- every system, one line each; open one to see what it does (native exclusive accordion: no script) -->
+      <div class="mt-10 acc">
+        {systems.map(([name, examples, status, kind], i) => {
+          const d = SYS[kind], live = !!d.page;
+          return (
+            <details name="systems" class:list={['reveal sys-item', `sys-${kind}`, live && 'is-live']} open={i === 0}>
+              <summary>
+                <span class="sys-name">{name}</span>
+                <span class="sys-ex">{examples}</span>
+                <span class="sys-status">{live && <span class="dot" aria-hidden="true"></span>}{status}</span>
+                <span class="sys-chev" aria-hidden="true"></span>
+              </summary>
+              <div class="sys-body">
+                <div class="sys-text">
+                  {!live && <p class="sys-soon">{L.soon}</p>}
+                  <ul class="sys-points">{d.points.map((p) => <li>{p}</li>)}</ul>
+                  <div class="sys-go">
+                    {live ? <>
+                      <a class="btn btn-sys" href={d.page}>{L.open}<span class="arr" aria-hidden="true">→</span></a>
+                      <a class="btn btn-secondary" href={d.demo}>{L.demo}</a>
+                    </> : <a class="btn btn-secondary" href={ask(kind)}>{L.ask}<span class="arr" aria-hidden="true">→</span></a>}
+                  </div>
+                </div>
+                {d.pic && <a class="sys-pic" href={d.page} tabindex="-1" aria-hidden="true"><img src={d.pic} width="1000" height="625" alt="" loading="lazy" decoding="async" /></a>}
+              </div>
+            </details>
+          );
+        })}
+      </div>
+      <p class="reveal mt-8 text-fg-2">{s.otherTrade} <a class="link-arrow" href={ask('other')}>{s.tellUs} <span class="arr">→</span></a></p>
+    </section>
+
+    <!-- the end -->
+    <section class="wrap pb-24 sm:pb-32">
+      <div class="reveal end relative overflow-hidden rounded-[2rem] p-10 sm:p-16">
+        <Mark class="end-mark" />
+        <div class="relative max-w-2xl">
+          <h2 class="text-display font-semibold tracking-tight">{END.title}</h2>
+          <p class="mt-4 text-lead text-fg-2">{END.sub}</p>
+          <div class="mt-9 flex flex-wrap items-center gap-x-7 gap-y-4">
+            <a class="btn btn-sys" href="#trades">{s.heroCta}<span class="arr" aria-hidden="true">→</span></a>
+            <a class="btn btn-secondary" href={ask('other')}>{s.tellUs}</a>
+            <a class="link-quiet" href={mail} dir="ltr">{EMAIL}</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</Base>
+
+<script>
+  // The hero's story: scenes play in turn (4.8 s each) while the hero is on screen and not being touched; a step or a
+  // trade can be picked by hand. With reduced motion, nothing plays by itself.
+  const STEP_MS = 4800;
+  let stop: (() => void) | null = null;
+  const init = () => {
+    const root = document.querySelector<HTMLElement>('[data-hx]');
+    if (!root) return;
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let trade = root.dataset.trade!, step = 0, timer = 0, visible = true, held = false;
+    const stage = () => root.querySelector<HTMLElement>(`[data-stage="${trade}"]`)!;
+    const show = (i: number) => {
+      const st = stage(), n = st.querySelectorAll('[data-scene]').length;
+      step = (i + n) % n;
+      st.querySelectorAll<HTMLElement>('[data-scene]').forEach((el) => { el.classList.remove('on'); });
+      void st.offsetWidth; // restart the scene's animations
+      st.querySelector<HTMLElement>(`[data-scene="${step}"]`)!.classList.add('on');
+      st.querySelectorAll<HTMLElement>('[data-cap]').forEach((el) => { el.hidden = Number(el.dataset.cap) !== step; });
+      st.querySelectorAll<HTMLElement>('[data-step]').forEach((el) => { const k = Number(el.dataset.step); el.setAttribute('aria-selected', String(k === step)); el.classList.toggle('done', k < step); });
+      schedule();
+    };
+    const schedule = () => {
+      clearTimeout(timer);
+      root.classList.toggle('playing', !reduced && visible && !held);
+      if (!reduced && visible && !held) timer = window.setTimeout(() => show(step + 1), STEP_MS);
+    };
+    const pickTrade = (k: string) => {
+      trade = k; root.dataset.trade = k;
+      const x = root.querySelector<HTMLElement>(`[data-pick="${k}"]`)!;
+      root.style.setProperty('--acc', x.style.getPropertyValue('--k'));
+      root.querySelectorAll('[data-pick]').forEach((b) => b.setAttribute('aria-selected', String(b === x)));
+      root.querySelectorAll<HTMLElement>('[data-stage]').forEach((s) => { s.hidden = s.dataset.stage !== k; });
+      show(0);
+    };
+    root.querySelectorAll<HTMLElement>('[data-pick]').forEach((b) => b.addEventListener('click', () => pickTrade(b.dataset.pick!)));
+    root.querySelectorAll<HTMLElement>('[data-step]').forEach((b) => b.addEventListener('click', () => show(Number(b.dataset.step))));
+    const side = root.querySelector<HTMLElement>('.hx-side')!;
+    const hold = (on: boolean) => () => { held = on; schedule(); };
+    side.addEventListener('pointerenter', hold(true)); side.addEventListener('pointerleave', hold(false));
+    side.addEventListener('focusin', hold(true)); side.addEventListener('focusout', hold(false));
+    const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; schedule(); }, { threshold: 0.25 });
+    io.observe(side);
+    const vis = () => { visible = !document.hidden; schedule(); };
+    document.addEventListener('visibilitychange', vis);
+    show(0);
+    stop = () => { clearTimeout(timer); io.disconnect(); document.removeEventListener('visibilitychange', vis); };
+  };
+  document.addEventListener('astro:page-load', init);
+  document.addEventListener('astro:before-swap', () => { stop?.(); stop = null; });
+</script>
+
+<style>
+  .accent { color: var(--c); }
+  @media (prefers-color-scheme: dark) { .accent { color: var(--cd); } }
+  .spark { color: var(--acc, var(--c)); font-size: .9em; line-height: 1; }
+  /* motion: a strong ease-out for things arriving, a strong ease-in-out for things moving across the screen */
+  .hx { --out: cubic-bezier(.23, 1, .32, 1); --io: cubic-bezier(.77, 0, .175, 1); }
+
+  /* ---------- the hero ---------- */
+  .hx { --acc: #A8532E; position: relative; overflow: hidden; padding: 3rem 0 4rem; }
+  @media (min-width: 640px) { .hx { padding: 4.5rem 0 5.5rem; } }
+  .hx-glow { position: absolute; inset: 0; pointer-events: none; transition: background .8s ease;
+    background: radial-gradient(46% 52% at 78% 42%, color-mix(in oklab, var(--acc) 14%, transparent), transparent 70%); }
+  :global(html[dir="rtl"]) .hx-glow { transform: scaleX(-1); }
+  .hx-grid { position: relative; display: grid; gap: 2.5rem; align-items: center; }
+  @media (min-width: 1024px) { .hx-grid { grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); gap: 3rem; } }
+  .hx-acc { color: var(--acc); transition: color .5s ease; }
+  .hx-pick { display: grid; gap: .55rem; margin-top: .8rem; }
+  @media (min-width: 560px) { .hx-pick { grid-template-columns: 1fr 1fr; } }
+  .hx-pick button, .hx-other { display: grid; gap: .15rem; padding: .85rem 1rem; border-radius: 1rem; border: 1px solid var(--line); background: var(--surface); text-align: start; color: var(--fg);
+    transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease, transform .16s var(--out); }
+  .hx-pick button:active, .hx-other:active, .hx-steps button:active, .btn-k:active { transform: scale(.97); }
+  .hx-pick b, .hx-other b { font-weight: 600; }
+  .hx-pick span, .hx-other span { font-size: .88rem; color: var(--fg-2); }
+  .hx-pick button[aria-selected="true"] { border-color: var(--k); background: color-mix(in oklab, var(--k) 7%, var(--surface)); box-shadow: 0 0 0 3px color-mix(in oklab, var(--k) 16%, transparent); }
+  .hx-other { padding-block: .7rem; }
+  @media (hover: hover) and (pointer: fine) { .hx-pick button:not([aria-selected="true"]):hover, .hx-other:hover { border-color: var(--line-strong); } }
+
+  .hx-side { min-width: 0; }
+  .hx-stage { border-radius: 1.6rem; background: var(--surface); border: 1px solid var(--line); box-shadow: 0 40px 90px -46px rgb(30 20 10 / .45); overflow: hidden; }
+  .hx-stage[hidden] { display: none; }
+  .hx-bar { display: flex; align-items: center; gap: .75rem; padding: .7rem 1rem; border-bottom: 1px solid var(--line); }
+  .hx-dots { display: inline-flex; gap: .3rem; } .hx-dots i { width: .5rem; height: .5rem; border-radius: 999px; background: var(--line-strong); }
+  .hx-name { flex: 1; font-size: .8rem; font-weight: 600; color: var(--fg-2); }
+  .hx-steps { display: inline-flex; gap: .35rem; }
+  .hx-steps button { position: relative; width: 2.1rem; height: .4rem; border-radius: 999px; background: var(--sunken); overflow: hidden; cursor: pointer; }
+  .hx-steps button::before { content: ""; position: absolute; inset: -.6rem -.1rem; } /* a bigger tap target */
+  .hx-prog { position: absolute; inset: 0; background: var(--acc); transform-origin: left; transform: scaleX(0); }
+  :global(html[dir="rtl"]) .hx-prog { transform-origin: right; }
+  .hx-steps button.done .hx-prog { transform: scaleX(1); }
+  .hx-steps button[aria-selected="true"] .hx-prog { transform: scaleX(1); }
+  .hx.playing .hx-steps button[aria-selected="true"] .hx-prog { animation: prog 4.8s linear both; }
+  @keyframes prog { from { transform: scaleX(0); } }
+
+  .hx-view { position: relative; aspect-ratio: 16 / 10.5; background: color-mix(in oklab, var(--acc) 5%, var(--canvas)); overflow: hidden; }
+  @media (max-width: 520px) { .hx-view { aspect-ratio: 1 / .95; } }
+  .sc { position: absolute; inset: 0; display: grid; place-items: center; padding: 1.2rem; opacity: 0; visibility: hidden; transform: scale(.98); filter: blur(3px);
+    transition: opacity .35s var(--out), transform .35s var(--out), filter .35s var(--out), visibility 0s .35s; }
+  .sc.on { opacity: 1; visibility: visible; transform: none; filter: none; transition: opacity .5s var(--out), transform .5s var(--out), filter .5s var(--out); }
+  .hx-caps { padding: 1rem 1.2rem .3rem; min-height: 6.2rem; }
+  .hx-cap-t { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; font-weight: 600; font-size: 1.05rem; }
+  .hx-cap-t .n { display: grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 999px; background: var(--acc); color: #fff; font-size: .75rem; }
+  .hx-cap-l { margin-top: .35rem; color: var(--fg-2); line-height: 1.5; font-size: .95rem; }
+  .hx-go { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1.2rem; padding: .7rem 1.2rem 1.2rem; }
+  .btn-k { background: var(--k); color: #fff; padding: .75rem 1.2rem; transition: transform .16s var(--out), filter .2s ease; }
+  .btn-k:hover { filter: brightness(1.07); }
+  [data-stage="dental"] .btn-k, [data-stage="dental"] .hx-cap-t .n { color: #0B1019; } /* ink on brass reads; white doesn't */
+  :global(html[dir="rtl"]) .btn-k .arr { transform: scaleX(-1); }
+  .ok { display: grid; place-items: center; width: 1.1rem; height: 1.1rem; border-radius: 999px; background: color-mix(in oklab, #1F9D5B 16%, transparent); color: #1F9D5B; font-size: .65rem; flex: none; }
+
+  /* shop 1 · the invoice, read */
+  .sc-inv { grid-template-columns: .9fr 1.1fr; gap: 1rem; align-items: center; }
+  .inv-photo { position: relative; border-radius: .7rem; overflow: hidden; box-shadow: 0 18px 30px -16px rgb(0 0 0 / .45); transform: rotate(-3deg); }
+  :global(html[dir="rtl"]) .inv-photo { transform: rotate(3deg); }
+  .inv-photo img { display: block; width: 100%; height: auto; }
+  .beam { position: absolute; inset-inline: 0; top: 0; height: 26%; background: linear-gradient(180deg, transparent, color-mix(in oklab, var(--acc) 45%, transparent), transparent); opacity: 0; }
+  .on .beam { animation: beam 1.3s ease-in-out 2 alternate both; }
+  @keyframes beam { from { opacity: 1; transform: translateY(-30%); } to { opacity: 1; transform: translateY(300%); } }
+  .inv-out { display: grid; gap: .45rem; padding: .8rem; border-radius: .9rem; background: var(--surface); border: 1px solid var(--line); font-size: .8rem; }
+  .inv-head { display: flex; align-items: center; justify-content: space-between; gap: .4rem; }
+  .inv-sup { font-weight: 600; }
+  .inv-out ul { display: grid; gap: .25rem; }
+  .inv-out li { display: flex; align-items: center; gap: .45rem; padding: .3rem .4rem; border-radius: .45rem; background: var(--sunken); }
+  .on .inv-out li { animation: pop .4s var(--out) both; animation-delay: calc(1.4s + var(--i) * .12s); }
+  .inv-total { display: flex; justify-content: space-between; font-weight: 600; padding-top: .3rem; border-top: 1px dashed var(--line-strong); }
+  .on .inv-total, .on .inv-head, .on .inv-sup { animation: pop .4s var(--out) both 1.2s; }
+  @keyframes pop { from { opacity: 0; transform: translateY(6px); } }
+  @media (max-width: 520px) { .sc-inv { grid-template-columns: 1fr; } .inv-photo { display: none; } }
+
+  /* shop 2 · the till */
+  .sc-till { grid-template-rows: auto auto; gap: .9rem; }
+  .till { width: min(22rem, 100%); padding: .9rem; border-radius: 1rem; background: var(--surface); border: 1px solid var(--line); display: grid; gap: .5rem; font-size: .85rem; }
+  .scan { display: flex; align-items: center; gap: .55rem; padding: .45rem .6rem; border-radius: .6rem; border: 1.5px solid var(--acc); font-family: ui-monospace, monospace; font-size: .78rem; }
+  .barcode { width: 1.4rem; height: .9rem; background: repeating-linear-gradient(90deg, var(--fg) 0 1px, transparent 1px 3px, var(--fg) 3px 5px, transparent 5px 6px); }
+  .beep { margin-inline-start: auto; color: #1F9D5B; font-weight: 700; opacity: 0; }
+  .on .beep { animation: pop .3s both .5s; }
+  .till ul { display: grid; gap: .3rem; }
+  .till li { display: flex; gap: .6rem; padding: .35rem .2rem; border-bottom: 1px solid var(--line); }
+  .on .till li { animation: pop .35s var(--out) both; animation-delay: calc(.7s + var(--i) * .5s); }
+  .till-total { display: flex; justify-content: space-between; font-size: 1.05rem; font-weight: 700; }
+  .fx { display: flex; flex-wrap: wrap; justify-content: center; gap: .45rem; }
+  .fx span { padding: .3rem .7rem; border-radius: 999px; font-size: .78rem; font-weight: 600; background: var(--surface); border: 1px solid color-mix(in oklab, var(--acc) 35%, var(--line)); color: var(--acc); }
+  .on .fx span { animation: pop .4s var(--out) both; animation-delay: calc(2s + var(--i) * .25s); }
+
+  /* shop 3 · ask */
+  .sc-ask { align-content: center; gap: .8rem; justify-items: stretch; padding-inline: clamp(1rem, 6%, 3rem); }
+  .bubble { max-width: 85%; padding: .7rem 1rem; border-radius: 1.1rem; font-size: .95rem; line-height: 1.5; }
+  .bubble.q { justify-self: end; background: var(--acc); color: #fff; border-end-end-radius: .3rem; }
+  .bubble.a { justify-self: start; display: grid; gap: .4rem; background: var(--surface); border: 1px solid var(--line); border-end-start-radius: .3rem; }
+  .on .bubble.q { animation: pop .4s var(--out) both .2s; }
+  .on .bubble.a { animation: pop .45s var(--out) both 1.3s; }
+
+  /* clinic 1 · the board */
+  .sc-board { grid-template-columns: repeat(3, minmax(0, 1fr)); place-items: stretch; gap: .6rem; padding: 1rem; }
+  .col { display: flex; flex-direction: column; gap: .5rem; padding: .6rem; border-radius: .9rem; background: var(--surface); border: 1px solid var(--line); }
+  .col p { font-size: .72rem; font-weight: 600; color: var(--fg-2); text-transform: uppercase; letter-spacing: .06em; }
+  :global(html[lang="ar"]) .col p { letter-spacing: 0; font-size: .8rem; }
+  .card { display: grid; gap: .1rem; padding: .5rem .6rem; border-radius: .6rem; background: var(--canvas); border: 1px solid var(--line); border-inline-start: 3px solid var(--acc); font-size: .8rem; font-weight: 600; }
+  .card small { font-weight: 400; color: var(--fg-2); }
+  .card.on { background: color-mix(in oklab, var(--acc) 12%, var(--surface)); }
+  .card.mover { position: relative; z-index: 1; }
+  .on .card.mover { animation: move 1.1s var(--io) both 1.2s; }
+  /* one column across (its width + the column's padding and border + the gap), and down below the patient already seated */
+  @keyframes move { 40% { transform: translate(0, -.3rem) scale(1.04); box-shadow: 0 14px 24px -12px rgb(0 0 0 / .35); } to { transform: translate(calc(100% + 1.85rem), calc(100% + .5rem)); background: color-mix(in oklab, var(--acc) 12%, var(--surface)); } }
+  :global(html[dir="rtl"]) .on .card.mover { animation-name: move-rtl; }
+  @keyframes move-rtl { 40% { transform: translate(0, -.3rem) scale(1.04); box-shadow: 0 14px 24px -12px rgb(0 0 0 / .35); } to { transform: translate(calc(-100% - 1.85rem), calc(100% + .5rem)); background: color-mix(in oklab, var(--acc) 12%, var(--surface)); } }
+
+  /* clinic 2 · the chart */
+  /* a close-up of one side of the jaw, on paper: an existing filling (blue), a crown planned on 46 (red), a filling done (green) */
+  .sc-chart { background: #FAF8F6; padding: 3rem 1rem 3.4rem; }
+  .chart-box { position: relative; width: 100%; height: 100%; min-height: 0; }
+  .chart-box img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; } /* always whole, never cropped */
+  .on .chart-box img { animation: settle 1.1s var(--out) both; }
+  @keyframes settle { from { opacity: 0; transform: scale(1.04); } }
+  .pin, .wa { position: absolute; display: flex; align-items: center; gap: .5rem; padding: .45rem .75rem; border-radius: .8rem; background: #fff; color: #0E1420; font-size: .8rem;
+    border: 1px solid rgb(14 20 32 / .08); box-shadow: 0 10px 24px -12px rgb(14 20 32 / .35); white-space: nowrap; }
+  .pin { top: -2.2rem; left: 50%; translate: -50% 0; } /* above tooth 46 (the chart is drawn left to right in every language) */
+  .pin span { color: #6B7280; }
+  .dot-r { width: .5rem; height: .5rem; border-radius: 999px; background: #D23C4B; }
+  .wa { bottom: .7rem; left: 50%; translate: -50% 0; }
+  .dotg { width: .55rem; height: .55rem; border-radius: 999px; background: #25D366; }
+  .on .pin { animation: pop .4s var(--out) both .8s; }
+  .on .wa { animation: pop .4s var(--out) both 2.2s; }
+
+  /* clinic 3 · the TV */
+  .sc-tv { padding: 1.4rem; }
+  /* the gym's scenes */
+  .gp { display: flex; align-items: center; gap: .8rem; padding: .7rem; border-radius: .9rem; background: color-mix(in oklab, #1E8E50 8%, var(--surface)); border-inline-start: 4px solid #1E8E50; }
+  .on .gp { animation: pop .45s var(--out) both .7s; }
+  .gp-face { display: grid; place-items: center; width: 2.6rem; height: 2.6rem; border-radius: 999px; background: var(--sunken); box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px #1E8E50; font-weight: 700; flex: none; }
+  .gp-in { font-size: .7rem; font-weight: 700; color: #1E8E50; }
+  .gp b { display: block; font-size: 1rem; }
+  .gp small { color: var(--fg-2); font-size: .74rem; }
+  .gp-days { display: grid; justify-items: center; line-height: 1; }
+  .gp-days b { font-size: 1.7rem; font-weight: 750; }
+  .gp-days small { font-size: .62rem; }
+  .gwa { padding: .15rem .55rem; border-radius: 999px; background: #1E8E50; color: #fff; font-size: .72rem; font-weight: 600; }
+  .gtv { background: radial-gradient(70% 70% at 80% 0%, rgb(228 87 46 / .3), transparent 70%), #0E0F12 !important; }
+  .gtv em { color: #7FE0AB !important; }
+  .tv { position: relative; display: grid; place-content: center; justify-items: center; gap: .2rem; width: 100%; height: 100%; border-radius: 1rem; overflow: hidden; color: #F4F1EA; text-align: center;
+    background: radial-gradient(60% 60% at 50% 50%, rgb(201 165 90 / .25), #0B1019 75%); box-shadow: 0 0 0 .5rem #1A202C, 0 24px 50px -20px rgb(0 0 0 / .6); }
+  .tv b { font-size: clamp(1.8rem, 5vw, 2.8rem); font-weight: 600; }
+  .tv span { color: rgb(244 241 234 / .7); font-size: .9rem; }
+  .tv em { font-style: normal; font-size: 1.4rem; color: #E3C88A; font-weight: 500; }
+  .ring { position: absolute; width: 40%; aspect-ratio: 1; border-radius: 999px; border: 2px solid rgb(227 200 138 / .7); opacity: 0; }
+  .on .ring { animation: ring 2.2s var(--ease-soft) infinite .3s; }
+  @keyframes ring { from { transform: scale(.6); opacity: .8; } to { transform: scale(2.4); opacity: 0; } }
+  .on .tv > :not(.ring) { animation: pop .5s var(--out) both .3s; }
+
+  /* ---------- how it works, and the quiet helper ---------- */
+  .helper { display: flex; gap: .75rem; align-items: baseline; max-width: 46rem; margin-top: 2.5rem; padding-top: 1.4rem; border-top: 1px solid var(--line); color: var(--fg-2); line-height: 1.6; }
+  .helper b { color: var(--fg); font-weight: 600; }
+  .helper .spark { color: var(--c); font-size: 1.1rem; }
+  @media (prefers-color-scheme: dark) { .helper .spark { color: var(--cd); } }
+  .how3 { display: grid; gap: 2rem; }
+  @media (min-width: 860px) { .how3 { grid-template-columns: repeat(3, 1fr); } }
+  .how3 li { padding-top: 1.2rem; border-top: 2px solid var(--line); }
+  .how3 .n { display: grid; place-items: center; width: 2.2rem; height: 2.2rem; border-radius: 999px; background: var(--c); color: #fff; font-weight: 600; }
+
+  /* ---------- every system: an accordion ---------- */
+  .acc { display: grid; gap: .6rem; }
+  .sys-item { --k: var(--c); border-radius: 1.25rem; border: 1px solid var(--line); background: var(--surface); transition: border-color .2s ease, box-shadow .2s ease; }
+  .sys-item[open] { border-color: color-mix(in oklab, var(--k) 35%, var(--line)); box-shadow: 0 24px 50px -36px color-mix(in oklab, var(--k) 55%, transparent); }
+  .sys-dental { --k: #B38B3A; }
+  .sys-item summary { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: .35rem 1rem; padding: 1.15rem 1.35rem; cursor: pointer; list-style: none; border-radius: inherit; }
+  .sys-item summary::-webkit-details-marker { display: none; }
+  .sys-name { font-size: clamp(1.15rem, 2vw, 1.4rem); font-weight: 600; letter-spacing: -.015em; }
+  :global(html[lang="ar"]) .sys-name { letter-spacing: 0; }
+  .sys-ex { grid-column: 1 / -1; grid-row: 2; font-size: .92rem; color: var(--fg-2); }
+  @media (min-width: 900px) { .sys-item summary { grid-template-columns: 15rem minmax(0, 1fr) auto auto; } .sys-ex { grid-column: auto; grid-row: auto; } }
+  .sys-status { display: inline-flex; align-items: center; gap: .45rem; padding: .28rem .75rem; border-radius: 999px; font-size: .78rem; font-weight: 500; white-space: nowrap; background: var(--sunken); color: var(--muted); }
+  .is-live .sys-status { background: color-mix(in oklab, var(--k) 14%, transparent); color: var(--k); }
+  .sys-dental.is-live .sys-status { color: #8A6A22; }
+  @media (prefers-color-scheme: dark) { .sys-dental.is-live .sys-status { color: #D7B46A; } }
+  .is-live .sys-status .dot, .is-live .sys-status .dot::after { background: currentColor; }
+  .sys-chev { width: .6rem; height: .6rem; margin-inline: .2rem .1rem; border-right: 1.6px solid var(--muted); border-bottom: 1.6px solid var(--muted); /* physical: a down chevron in both directions */ transform: rotate(45deg) translate(-2px, -2px); transition: transform .22s var(--ease-soft); }
+  .sys-item[open] .sys-chev { transform: rotate(225deg) translate(-2px, -2px); }
+  @media (hover: hover) and (pointer: fine) { .sys-item:not([open]):hover { border-color: var(--line-strong); } }
+  .sys-item summary:focus-visible { outline: 2px solid var(--brass-soft); outline-offset: 2px; }
+  .sys-item::details-content { height: 0; overflow: clip; opacity: 0; transition: height .22s var(--ease-soft), opacity .22s var(--ease-soft), content-visibility .22s allow-discrete; }
+  .sys-item[open]::details-content { height: auto; opacity: 1; }
+  @supports (interpolate-size: allow-keywords) { .acc { interpolate-size: allow-keywords; } }
+  .sys-body { display: grid; gap: 1.5rem; padding: .2rem 1.35rem 1.4rem; }
+  @media (min-width: 900px) { .sys-item.is-live .sys-body { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); align-items: center; gap: 2.5rem; } }
+  .sys-soon { font-size: .8rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: .6rem; }
+  :global(html[lang="ar"]) .sys-soon { letter-spacing: 0; font-size: .9rem; }
+  .sys-points { display: grid; gap: .55rem; }
+  .sys-points li { position: relative; padding-inline-start: 1.4rem; line-height: 1.5; }
+  .sys-points li::before { content: ""; position: absolute; inset-inline-start: .2rem; top: .62em; width: .42rem; height: .42rem; border-radius: 999px; background: var(--k); opacity: .85; }
+  .sys-item:not(.is-live) .sys-points li::before { background: var(--line-strong); }
+  .sys-go { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.4rem; }
+  :global(html[dir="rtl"]) .sys-go .btn-secondary .arr { display: inline-block; transform: scaleX(-1); }
+  .sys-dental .btn-sys { background: #0B1019; color: #F4F1EA; }
+  @media (prefers-color-scheme: dark) { .sys-dental .btn-sys { background: #C9A55A; color: #0B1019; } }
+  .sys-pic { display: block; border-radius: .9rem; overflow: hidden; border: 1px solid var(--line); box-shadow: 0 30px 60px -36px rgb(40 30 10 / .45); }
+  .sys-pic img { display: block; width: 100%; height: auto; }
+
+  .dot { position: relative; width: .5rem; height: .5rem; border-radius: 999px; background: #1F9D5B; flex: none; }
+  .dot::after { content: ""; position: absolute; inset: -4px; border-radius: 999px; background: #1F9D5B; opacity: .35; animation: pulse 2.2s var(--ease-soft) infinite; }
+  @keyframes pulse { 0% { transform: scale(.6); opacity: .5 } 80%, 100% { transform: scale(1.8); opacity: 0 } }
+  .btn-sys { background: var(--c); color: #fff; padding: .95rem 1.5rem; }
+  .btn-sys:hover { filter: brightness(1.07); }
+  :global(html[dir="rtl"]) .btn-sys .arr { transform: scaleX(-1); }
+  .link-quiet { color: var(--fg-2); font-weight: 500; text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 5px; }
+  .link-quiet:hover { color: var(--fg); text-decoration-color: currentColor; }
+  .end { background: var(--t); }
+  @media (prefers-color-scheme: dark) { .end { background: var(--td); } }
+  .end :global(.end-mark) { position: absolute; inset-inline-end: -2rem; bottom: -3rem; height: 20rem; width: auto; color: var(--c); opacity: .09; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dot::after, .beam, .ring, .hx-prog { animation: none !important; }
+    .sc, .sc.on { transition: opacity .25s ease; transform: none; filter: none; }
+    .on *, .on .card.mover { animation: none !important; }
+  }
+</style>

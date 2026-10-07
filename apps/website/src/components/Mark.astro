@@ -1,0 +1,7 @@
+---
+// The founder's H mark, cropped to its own bounds. Colour comes from `currentColor`.
+import { MARK_PATH, MARK_VIEWBOX } from '../brand/brand';
+interface Props { class?: string; label?: string; }
+const { class: cls = '', label } = Astro.props;
+---
+<svg class={cls} viewBox={MARK_VIEWBOX} role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : 'true'}><path d={MARK_PATH} fill="currentColor" /></svg>

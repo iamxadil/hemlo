@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Hemlo · Elegantly solved.</title>
+<meta name="description" content="Software for the way Iraq works. Coming soon. هيملو: برامج تناسب طريقة العمل في العراق. قريباً.">
+<meta name="theme-color" content="#FAFAF7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0B0F16" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://hemlohq.com/">
+<meta property="og:title" content="Hemlo · Elegantly solved.">
+<meta property="og:description" content="Software for the way Iraq works. Coming soon.">
+<meta property="og:image" content="https://hemlohq.com/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600&family=Poppins:wght@300;600&family=Vazirmatn:wght@300;400;600;700&display=swap">
+<style>
+:root{
+  --bg:#FAFAF7;--tile:#F1F0EB;--ink:#0E1420;--ink2:#3A4252;--muted:#6B7280;--rule:#E3E1DA;--brass:#8A6A22;--nav:rgba(250,250,247,.72);
+  --f:"Readex Pro",system-ui,-apple-system,sans-serif;--f-ar:"Vazirmatn",Tahoma,sans-serif;--f-l:"Poppins",var(--f);
+  --ease:cubic-bezier(.2,0,0,1);--pad:max(20px,env(safe-area-inset-left))
+}
+@media (prefers-color-scheme:dark){:root{--bg:#0B0F16;--tile:#141A24;--ink:#F2F1EC;--ink2:#C9CED6;--muted:#8E96A3;--rule:#222A36;--brass:#D7B46A;--nav:rgba(11,15,22,.72)}}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:64px}
+body{background:var(--bg);color:var(--ink);font-family:var(--f);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow-x:hidden}
+.ar{font-family:var(--f-ar);direction:rtl}
+a{color:inherit;text-decoration:none}
+.w{width:100%;max-width:1080px;margin:0 auto;padding-inline:var(--pad)}
+.c{text-align:center}
+
+/* nav */
+nav{position:sticky;top:0;z-index:10;background:var(--nav);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid transparent;transition:border-color .3s}
+nav.s{border-bottom-color:var(--rule)}
+nav .w{height:52px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.lockup{height:22px;width:auto;display:block;color:var(--ink)}
+nav ul{list-style:none;display:flex;gap:28px;font-size:13px;color:var(--ink2)}
+nav ul a:hover{color:var(--ink)}
+nav .cta{font-size:13px;font-weight:500;padding:6px 14px;border-radius:999px;background:var(--ink);color:var(--bg)}
+
+/* hero */
+.hero{padding-block:clamp(56px,10vw,120px) clamp(40px,8vw,96px);text-align:center}
+.eyebrow{font-size:clamp(15px,1.6vw,19px);font-weight:500;color:var(--brass);letter-spacing:.01em}
+h1{font-weight:600;font-size:clamp(46px,9vw,104px);line-height:1.02;letter-spacing:-.04em;margin-top:10px}
+.tag-ar{font-family:var(--f-ar);font-weight:600;font-size:clamp(24px,3.6vw,40px);color:var(--muted);margin-top:8px;direction:rtl}
+.sub{font-size:clamp(17px,2vw,22px);line-height:1.45;color:var(--ink2);max-width:30em;margin:22px auto 0;font-weight:400}
+.links{display:flex;justify-content:center;flex-wrap:wrap;gap:12px 32px;margin-top:26px;font-size:clamp(16px,1.6vw,19px)}
+.links a{color:var(--brass);font-weight:500}
+.links a:hover{text-decoration:underline;text-underline-offset:4px}
+.links a span{display:inline-block;transition:transform .2s var(--ease)}
+.links a:hover span{transform:translateX(3px)}
+.stage{position:relative;margin:clamp(48px,7vw,84px) auto 0;width:min(100%,560px);aspect-ratio:1/1;display:grid;place-items:center}
+.stage::before{content:"";position:absolute;inset:8% 14%;border-radius:50%;background:radial-gradient(closest-side,rgba(179,139,58,.16),transparent 70%);filter:blur(8px)}
+.hmark{position:relative;height:88%;width:auto;fill:var(--ink)}
+.stage .sheen{position:absolute;inset:0;pointer-events:none}
+
+/* sections */
+section{padding-block:clamp(80px,12vw,150px)}
+section+section{border-top:1px solid var(--rule)}
+h2{font-weight:600;font-size:clamp(34px,6vw,64px);line-height:1.05;letter-spacing:-.035em}
+.lead{font-size:clamp(17px,2vw,22px);color:var(--ink2);margin-top:14px;line-height:1.45}
+.lead-ar{font-family:var(--f-ar);font-size:clamp(16px,1.8vw,20px);color:var(--muted);margin-top:6px;direction:rtl}
+
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:clamp(40px,6vw,64px)}
+.tile{position:relative;overflow:hidden;border-radius:28px;background:var(--t);padding:clamp(28px,4vw,44px) clamp(24px,3.6vw,40px) 0;min-height:clamp(340px,40vw,440px);display:flex;flex-direction:column;text-align:left}
+.tile>*{position:relative;z-index:1}
+.tile .nm{font-family:var(--f-l);font-weight:600;font-size:clamp(26px,3vw,34px);letter-spacing:-.01em;line-height:1}
+.tile .nm i{display:block;font-style:normal;font-weight:300;font-size:.62em;color:var(--c);margin-top:6px;letter-spacing:.01em}
+.tile .nm i span{font-family:var(--f-ar);font-weight:400;margin-inline-start:.5em;opacity:.85}
+.tile p{font-size:clamp(16px,1.6vw,18px);color:var(--ink2);margin-top:14px;line-height:1.4;max-width:18em}
+.tile p.ar{font-family:var(--f-ar);color:var(--muted);margin-top:4px;text-align:left;font-size:clamp(15px,1.5vw,17px)}
+.tile .big{position:absolute;z-index:0;right:clamp(20px,4vw,40px);bottom:-18%;height:64%;width:auto;fill:var(--c);transition:transform .6s var(--ease)}
+@media (hover:hover){.tile:hover .big{transform:translateY(-4%)}}
+@media (prefers-color-scheme:dark){.tile{background:var(--td)}.tile .big{fill:var(--cd)}.tile .nm i{color:var(--cd)}}
+
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(24px,4vw,48px);margin-top:clamp(40px,6vw,64px);text-align:left}
+.fact{border-top:1px solid var(--rule);padding-top:20px}
+.fact b{display:block;font-weight:500;font-size:clamp(20px,2.2vw,26px);letter-spacing:-.02em;line-height:1.2}
+.fact span{display:block;font-family:var(--f-ar);direction:rtl;text-align:left;color:var(--muted);font-size:clamp(16px,1.7vw,19px);margin-top:8px}
+
+.end{padding-bottom:clamp(110px,14vw,180px)}
+.end .mark-s{height:44px;width:auto;fill:var(--ink);margin:0 auto 26px;display:block}
+.mail{display:inline-block;margin-top:26px;font-weight:500;font-size:clamp(24px,4.4vw,48px);letter-spacing:-.03em;color:var(--ink);border-bottom:2px solid var(--brass);padding-bottom:4px;transition:opacity .2s}
+.mail:hover{opacity:.7}
+a:focus-visible{outline:2px solid var(--brass);outline-offset:4px;border-radius:4px}
+
+footer{border-top:1px solid var(--rule);padding:22px 0 max(26px,env(safe-area-inset-bottom));font-size:12px;color:var(--muted)}
+footer .w{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+
+/* reveal on scroll (added by JS so the page still works without it) */
+.js .rv{opacity:0;transform:translateY(24px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
+.js .rv.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:no-preference){
+  .hmark{animation:wipe 1.4s var(--ease) .2s both}
+  @keyframes wipe{from{clip-path:polygon(0 0,0 0,0 100%,0 100%);transform:scale(.96)}to{clip-path:polygon(0 0,140% 0,100% 100%,0 100%);transform:none}}
+  .hero .rise{animation:rise 1s var(--ease) both}.hero .r2{animation-delay:.08s}.hero .r3{animation-delay:.16s}.hero .r4{animation-delay:.24s}.hero .r5{animation-delay:.32s}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+}
+@media (prefers-reduced-motion:reduce){.js .rv{opacity:1;transform:none;transition:none}}
+
+/* tablet */
+@media (max-width:860px){nav ul{display:none}.facts{grid-template-columns:1fr}.tile{min-height:360px}}
+/* phone */
+@media (max-width:600px){.tiles{grid-template-columns:1fr}.tile{min-height:330px}.tile .big{height:50%;bottom:-14%}.stage{width:min(100%,380px)}}
+</style>
+<script>document.documentElement.classList.add('js')</script>
+</head>
+<body>
+<nav id="nav" aria-label="Main">
+  <div class="w">
+    <a href="#top" aria-label="Hemlo, home"><svg class="lockup" role="img" aria-label="Hemlo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 586.4246 140"><path d="M217.37 20L217.37 120L197.313 120L197.313 77.45L154.476 77.45L154.476 120L134.419 120L134.419 20L154.476 20L154.476 61.117L197.313 61.117L197.313 20L217.37 20ZM309.491 78.596C309.491 81.461 309.3 84.04 308.918 86.332L250.895 86.332C251.372 92.063 253.378 96.552 256.912 99.799C260.446 103.046 264.792 104.67 269.949 104.67C277.399 104.67 282.7 101.471 285.852 95.072L307.485 95.072C305.193 102.713 300.799 108.992 294.304 113.911C287.809 118.83 279.834 121.289 270.379 121.289C262.738 121.289 255.885 119.594 249.82 116.203C243.755 112.812 239.028 108.013 235.637 101.805C232.246 95.597 230.551 88.434 230.551 80.315C230.551 72.101 232.222 64.89 235.565 58.682C238.908 52.474 243.588 47.698 249.605 44.355C255.622 41.012 262.547 39.341 270.379 39.341C277.924 39.341 284.682 40.965 290.651 44.212C296.62 47.459 301.253 52.068 304.548 58.037C307.843 64.006 309.491 70.859 309.491 78.596ZM288.717 72.865C288.622 67.708 286.759 63.577 283.13 60.473C279.5 57.369 275.059 55.817 269.806 55.817C264.839 55.817 260.661 57.321 257.27 60.33C253.879 63.338 251.802 67.516 251.038 72.865L288.717 72.865ZM421.238 39.484C430.981 39.484 438.837 42.469 444.806 48.438C450.775 54.408 453.76 62.741 453.76 73.438L453.76 120L433.703 120L433.703 76.16C433.703 69.952 432.127 65.2 428.975 61.905C425.823 58.61 421.525 56.963 416.081 56.963C410.637 56.963 406.315 58.61 403.115 61.905C399.916 65.2 398.316 69.952 398.316 76.16L398.316 120L378.259 120L378.259 76.16C378.259 69.952 376.683 65.2 373.531 61.905C370.379 58.61 366.081 56.963 360.637 56.963C355.097 56.963 350.727 58.61 347.528 61.905C344.328 65.2 342.728 69.952 342.728 76.16L342.728 120L322.671 120L322.671 40.63L342.728 40.63L342.728 50.229C345.307 46.886 348.626 44.26 352.685 42.35C356.744 40.439 361.21 39.484 366.081 39.484C372.289 39.484 377.829 40.797 382.7 43.424C387.571 46.051 391.343 49.799 394.018 54.67C396.597 50.086 400.345 46.409 405.264 43.639C410.183 40.869 415.507 39.484 421.238 39.484ZM491.439 13.983L491.439 120L471.382 120L471.382 13.983L491.439 13.983ZM545.021 121.289C537.38 121.289 530.503 119.594 524.39 116.203C518.277 112.812 513.478 108.013 509.992 101.805C506.506 95.597 504.763 88.434 504.763 80.315C504.763 72.197 506.554 65.034 510.135 58.825C513.717 52.617 518.612 47.818 524.82 44.427C531.028 41.036 537.953 39.341 545.594 39.341C553.235 39.341 560.159 41.036 566.367 44.427C572.576 47.818 577.471 52.617 581.052 58.825C584.634 65.034 586.425 72.197 586.425 80.315C586.425 88.434 584.586 95.597 580.909 101.805C577.232 108.013 572.265 112.812 566.009 116.203C559.753 119.594 552.757 121.289 545.021 121.289ZM545.021 103.811C548.65 103.811 552.065 102.927 555.264 101.16C558.464 99.393 561.019 96.743 562.929 93.209C564.839 89.675 565.794 85.377 565.794 80.315C565.794 72.77 563.812 66.967 559.849 62.908C555.885 58.849 551.038 56.819 545.307 56.819C539.576 56.819 534.777 58.849 530.909 62.908C527.041 66.967 525.107 72.77 525.107 80.315C525.107 87.86 526.993 93.663 530.766 97.722C534.539 101.781 539.29 103.811 545.021 103.811Z" fill="currentColor"/><path d="M72.561 18.416L69.268 16.208C61.604 11.068 51.306 16.561 51.306 25.789L51.306 67.906L43.569 64.909C40.884 63.87 39.114 61.287 39.114 58.407L39.114 39.211C39.114 27.292 33.175 16.158 23.275 9.519L10.856 1.19C6.224 -1.917 0 1.404 0 6.981L0 91.435C0 105.668 7.263 118.919 19.264 126.575L28.392 132.398C33.033 135.359 39.114 132.025 39.114 126.52L39.114 88.315C39.114 83.415 44.034 80.044 48.603 81.813L51.306 82.86L51.306 99.185C51.306 114.978 59.365 129.679 72.679 138.172C80.359 143.071 90.419 137.555 90.419 128.446L90.419 51.898C90.419 38.458 83.72 25.901 72.559 18.416Z" fill="currentColor"/></svg></a>
+    <ul><li><a href="https://tools.hemlohq.com/">Tools</a></li><li><a href="#branches">Studio</a></li><li><a href="#branches">Workshops</a></li><li><a href="#branches">School</a></li></ul>
+    <a class="cta" href="#contact">Contact</a>
+  </div>
+</nav>
+
+<main id="top">
+  <header class="hero w">
+    <p class="eyebrow rise">Coming soon · <span class="ar" lang="ar">قريباً</span></p>
+    <h1 class="rise r2">Elegantly solved.</h1>
+    <p class="tag-ar rise r3" lang="ar">حلولٌ بإتقان.</p>
+    <p class="sub rise r4">Software for the way Iraq works.</p>
+    <p class="links rise r5"><a href="#branches">See what's coming <span>›</span></a><a href="#contact">Get in touch <span>›</span></a></p>
+    <div class="stage" aria-hidden="true"><svg class="hmark" viewBox="4.896 1 14.209 22"><path d="M16.298 3.894L15.781 3.547C14.576 2.739 12.958 3.602 12.958 5.053L12.958 11.671L11.742 11.2C11.32 11.037 11.042 10.631 11.042 10.178L11.042 7.162C11.042 5.289 10.109 3.539 8.553 2.496L6.602 1.187C5.874 0.699 4.896 1.221 4.896 2.097L4.896 15.368C4.896 17.605 6.037 19.687 7.923 20.89L9.357 21.805C10.087 22.271 11.042 21.747 11.042 20.882L11.042 14.878C11.042 14.108 11.815 13.578 12.533 13.856L12.958 14.021L12.958 16.586C12.958 19.068 14.224 21.378 16.317 22.713C17.523 23.483 19.104 22.616 19.104 21.184L19.104 9.155C19.104 7.043 18.052 5.07 16.298 3.894Z"/></svg></div>
+  </header>
+
+  <section id="branches" class="w c">
+    <h2 class="rv">Four branches.<br>One standard.</h2>
+    <p class="lead rv">Each one does one job, properly.</p>
+    <p class="lead-ar rv" lang="ar">أربعة فروع، ومعيار واحد.</p>
+    <div class="tiles">
+      <a class="tile rv" href="https://tools.hemlohq.com/" style="--c:#3B5BC4;--cd:#8EA6F0;--t:#EEF1FB;--td:#161D33" aria-label="Hemlo Tools">
+        <span class="nm">Hemlo<i>Tools<span lang="ar">الأدوات</span></i></span>
+        <p>Free tools for everyday work. Try the invoice maker ›</p>
+        <p class="ar" lang="ar">أدوات مجانية للعمل اليومي. جرّب صانع الفواتير.</p>
+        <svg class="big" viewBox="4.896 1 14.209 22" aria-hidden="true"><path d="M16.298 3.894L15.781 3.547C14.576 2.739 12.958 3.602 12.958 5.053L12.958 11.671L11.742 11.2C11.32 11.037 11.042 10.631 11.042 10.178L11.042 7.162C11.042 5.289 10.109 3.539 8.553 2.496L6.602 1.187C5.874 0.699 4.896 1.221 4.896 2.097L4.896 15.368C4.896 17.605 6.037 19.687 7.923 20.89L9.357 21.805C10.087 22.271 11.042 21.747 11.042 20.882L11.042 14.878C11.042 14.108 11.815 13.578 12.533 13.856L12.958 14.021L12.958 16.586C12.958 19.068 14.224 21.378 16.317 22.713C17.523 23.483 19.104 22.616 19.104 21.184L19.104 9.155C19.104 7.043 18.052 5.07 16.298 3.894Z"/></svg>
+      </a>
+      <a class="tile rv" href="#contact" style="--c:#0F766E;--cd:#4FC1B3;--t:#E9F4F2;--td:#0F2224" aria-label="Hemlo Studio">
+        <span class="nm">Hemlo<i>Studio<span lang="ar">ستوديو</span></i></span>
+        <p>Websites, apps and systems, made to order.</p>
+        <p class="ar" lang="ar">مواقع وتطبيقات وأنظمة حسب الطلب.</p>
+        <svg class="big" viewBox="4.896 1 14.209 22" aria-hidden="true"><path d="M16.298 3.894L15.781 3.547C14.576 2.739 12.958 3.602 12.958 5.053L12.958 11.671L11.742 11.2C11.32 11.037 11.042 10.631 11.042 10.178L11.042 7.162C11.042 5.289 10.109 3.539 8.553 2.496L6.602 1.187C5.874 0.699 4.896 1.221 4.896 2.097L4.896 15.368C4.896 17.605 6.037 19.687 7.923 20.89L9.357 21.805C10.087 22.271 11.042 21.747 11.042 20.882L11.042 14.878C11.042 14.108 11.815 13.578 12.533 13.856L12.958 14.021L12.958 16.586C12.958 19.068 14.224 21.378 16.317 22.713C17.523 23.483 19.104 22.616 19.104 21.184L19.104 9.155C19.104 7.043 18.052 5.07 16.298 3.894Z"/></svg>
+      </a>
+      <a class="tile rv" href="#contact" style="--c:#A8532E;--cd:#E0896A;--t:#F8EDE7;--td:#27180F" aria-label="Hemlo Workshops">
+        <span class="nm">Hemlo<i>Workshops<span lang="ar">الورش</span></i></span>
+        <p>Stock, job cards and warranty.</p>
+        <p class="ar" lang="ar">المخزون وأوامر العمل والضمان.</p>
+        <svg class="big" viewBox="4.896 1 14.209 22" aria-hidden="true"><path d="M16.298 3.894L15.781 3.547C14.576 2.739 12.958 3.602 12.958 5.053L12.958 11.671L11.742 11.2C11.32 11.037 11.042 10.631 11.042 10.178L11.042 7.162C11.042 5.289 10.109 3.539 8.553 2.496L6.602 1.187C5.874 0.699 4.896 1.221 4.896 2.097L4.896 15.368C4.896 17.605 6.037 19.687 7.923 20.89L9.357 21.805C10.087 22.271 11.042 21.747 11.042 20.882L11.042 14.878C11.042 14.108 11.815 13.578 12.533 13.856L12.958 14.021L12.958 16.586C12.958 19.068 14.224 21.378 16.317 22.713C17.523 23.483 19.104 22.616 19.104 21.184L19.104 9.155C19.104 7.043 18.052 5.07 16.298 3.894Z"/></svg>
+      </a>
+      <a class="tile rv" href="#contact" style="--c:#6E4A86;--cd:#B08CC8;--t:#F2EDF6;--td:#1E1628" aria-label="Hemlo School">
+        <span class="nm">Hemlo<i>School<span lang="ar">المدارس</span></i></span>
+        <p>Everything a private school runs on.</p>
+        <p class="ar" lang="ar">كل ما تحتاجه المدرسة الأهلية.</p>
+        <svg class="big" viewBox="4.896 1 14.209 22" aria-hidden="true"><path d="M16.298 3.894L15.781 3.547C14.576 2.739 12.958 3.602 12.958 5.053L12.958 11.671L11.742 11.2C11.32 11.037 11.042 10.631 11.042 10.178L11.042 7.162C11.042 5.289 10.109 3.539 8.553 2.496L6.602 1.187C5.874 0.699 4.896 1.221 4.896 2.097L4.896 15.368C4.896 17.605 6.037 19.687 7.923 20.89L9.357 21.805C10.087 22.271 11.042 21.747 11.042 20.882L11.042 14.878C11.042 14.108 11.815 13.578 12.533 13.856L12.958 14.021L12.958 16.586C12.958 19.068 14.224 21.378 16.317 22.713C17.523 23.483 19.104 22.616 19.104 21.184L19.104 9.155C19.104 7.043 18.052 5.07 16.298 3.894Z"/></svg>
+      </a>
+    </div>
+  </section>
+
+  <section class="w c">
+    <h2 class="rv">Made for here.</h2>
+    <p class="lead-ar rv" lang="ar" style="margin-top:10px">مصنوع لهنا.</p>
+    <div class="facts">
+      <div class="fact rv"><b>Arabic, Kurdish, English.</b><span lang="ar">بالعربية والكردية والإنجليزية.</span></div>
+      <div class="fact rv"><b>Priced and paid in dinars.</b><span lang="ar">الأسعار والدفع بالدينار.</span></div>
+      <div class="fact rv"><b>Made for a weak signal.</b><span lang="ar">يعمل حتى مع إنترنت ضعيف.</span></div>
+    </div>
+  </section>
+
+  <section id="contact" class="w c end">
+    <svg class="mark-s rv" viewBox="4.896 1 14.209 22" aria-hidden="true"><path d="M16.298 3.894L15.781 3.547C14.576 2.739 12.958 3.602 12.958 5.053L12.958 11.671L11.742 11.2C11.32 11.037 11.042 10.631 11.042 10.178L11.042 7.162C11.042 5.289 10.109 3.539 8.553 2.496L6.602 1.187C5.874 0.699 4.896 1.221 4.896 2.097L4.896 15.368C4.896 17.605 6.037 19.687 7.923 20.89L9.357 21.805C10.087 22.271 11.042 21.747 11.042 20.882L11.042 14.878C11.042 14.108 11.815 13.578 12.533 13.856L12.958 14.021L12.958 16.586C12.958 19.068 14.224 21.378 16.317 22.713C17.523 23.483 19.104 22.616 19.104 21.184L19.104 9.155C19.104 7.043 18.052 5.07 16.298 3.894Z"/></svg>
+    <h2 class="rv">Let's talk.</h2>
+    <p class="lead rv">Tell us how your work runs today.</p>
+    <p class="lead-ar rv" lang="ar">أخبرنا كيف يسير عملك اليوم.</p>
+    <a class="mail rv" href="mailto:hello@hemlohq.com">hello@hemlohq.com</a>
+  </section>
+</main>
+
+<footer>
+  <div class="w"><span>© 2026 Hemlo. Baghdad, Iraq.</span><span class="ar" lang="ar">هيملو · حلولٌ بإتقان</span></div>
+</footer>
+<script>
+(function(){
+  var nav=document.getElementById('nav');
+  function onScroll(){nav.classList.toggle('s',window.scrollY>8)}
+  onScroll();window.addEventListener('scroll',onScroll,{passive:true});
+  var els=document.querySelectorAll('.rv');
+  if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('in')});return}
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{rootMargin:'0px 0px -8% 0px'});
+  els.forEach(function(e){io.observe(e)});
+})();
+</script>
+</body>
+</html>

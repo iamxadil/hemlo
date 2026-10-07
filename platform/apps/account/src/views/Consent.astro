@@ -1,0 +1,42 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Mark from '../components/Mark.astro';
+import { STRINGS, type Lang } from '../lib/i18n';
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const s = STRINGS[lang].consent;
+---
+<Layout lang={lang} title={s.title} page="consent">
+  <div class="pt-6 sm:pt-12">
+    <Mark class="h-10 w-auto text-fg" />
+    <h1 class="mt-8 text-[1.75rem] font-semibold tracking-tight">{s.title}</h1>
+    <p class="mt-2 text-lg text-fg-2" id="body"></p>
+    <p class="mt-6 text-sm font-medium">{s.scopes}</p>
+    <ul class="mt-2 space-y-1 text-fg-2 ltr" id="scopes"></ul>
+    <div class="mt-8 grid grid-cols-2 gap-3">
+      <button type="button" class="btn btn-secondary btn-block" id="deny">{s.deny}</button>
+      <button type="button" class="btn btn-primary btn-block" id="allow">{s.allow}</button>
+    </div>
+    <p class="error-text mt-4" id="error" role="alert" hidden></p>
+  </div>
+</Layout>
+
+<script>
+  // OAuth consent for apps that sign in with Hemlo ID (mobile apps, custom domains).
+  import { api, busy, h, t, fill, requireMe, $ } from '../lib/client';
+
+  await requireMe();
+  const q = new URLSearchParams(location.search);
+  const clientId = q.get('client_id') ?? '';
+  const scopes = (q.get('scope') ?? 'openid profile').split(' ').filter(Boolean);
+  const info = await api<any>(`/v1/auth/oauth2/public-client?client_id=${encodeURIComponent(clientId)}`).catch(() => null);
+  $('#body').textContent = fill(t.consent.body, { app: info?.client_name ?? clientId });
+  $('#scopes').replaceChildren(...scopes.map((s) => h('li', { text: `• ${s}` })));
+  const decide = (accept: boolean) => async () => {
+    const r = await api<any>('/v1/auth/oauth2/consent', { body: { accept, oauth_query: location.search.slice(1) } });
+    const to = r?.url ?? r?.redirectURI ?? r?.redirect_uri;
+    if (to) location.href = to;
+  };
+  $('#allow').addEventListener('click', () => busy($('#allow') as HTMLButtonElement, decide(true), (m) => { $('#error').textContent = m; $('#error').hidden = false; }));
+  $('#deny').addEventListener('click', () => busy($('#deny') as HTMLButtonElement, decide(false)));
+</script>

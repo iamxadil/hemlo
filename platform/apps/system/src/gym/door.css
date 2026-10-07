@@ -1,0 +1,76 @@
+/* The door screen: iron and ember, readable from across the entrance. Big numbers, few words, one greeting at a time.
+   The ladies' hours tint the room a warmer colour so everyone sees whose time it is at a glance. */
+html, body { background: #0B0C0F; }
+.door { --ember: #EE6236; --ok: #3DBE7B; --bad: #F26B6B; --ink: #F4F3EF; --mute: #8B919C; --card: #15171C; --line: #262A32; --ease: cubic-bezier(.23, 1, .32, 1);
+  position: relative; display: grid; grid-template-rows: auto 1fr; min-height: 100dvh; padding: clamp(1.2rem, 3vw, 2.6rem); gap: clamp(1rem, 2.5vw, 2rem);
+  color: var(--ink); background: radial-gradient(120% 90% at 85% -10%, rgb(238 98 54 / .16), transparent 55%), #0B0C0F; overflow: hidden; font-feature-settings: "tnum" 1;
+  transition: background-color 1s; }
+.door.ladies { background: radial-gradient(120% 90% at 85% -10%, rgb(214 103 140 / .22), transparent 55%), #0E0B0F; }
+.door-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.door-brand { display: flex; align-items: center; gap: .9rem; min-width: 0; }
+.door-brand img { width: clamp(2.6rem, 4vw, 3.6rem); height: clamp(2.6rem, 4vw, 3.6rem); border-radius: 1rem; object-fit: cover; }
+.door-brand b { font-size: clamp(1.3rem, 2.4vw, 2.1rem); font-weight: 650; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.door-h { width: clamp(2.4rem, 3.6vw, 3.2rem); height: clamp(2.4rem, 3.6vw, 3.2rem); color: var(--ember); }
+.door-clock { font-size: clamp(1.8rem, 4vw, 3.4rem); font-weight: 650; letter-spacing: -.03em; color: var(--ink); opacity: .92; }
+
+.door-main { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.2fr) minmax(0, 1fr); gap: clamp(1rem, 2.5vw, 2rem); align-items: stretch; }
+@media (max-width: 900px), (orientation: portrait) { .door-main { grid-template-columns: minmax(0, 1fr); align-content: start; } }
+.door-now { position: relative; display: grid; align-content: center; justify-items: start; gap: .3rem; padding: clamp(1.4rem, 3vw, 2.4rem); border-radius: 2rem; background: var(--card); overflow: hidden; }
+.door-now > b { font-size: clamp(5rem, 12vw, 10rem); font-weight: 750; letter-spacing: -.06em; line-height: .9; }
+.door-now > span:not(.door-pulse) { font-size: clamp(1.1rem, 2vw, 1.6rem); color: var(--mute); font-weight: 500; }
+.door-pulse { position: absolute; top: 1.6rem; inset-inline-end: 1.6rem; width: 1rem; height: 1rem; border-radius: 999px; background: var(--ember); animation: door-pulse 2s ease-out infinite; }
+@keyframes door-pulse { 0% { box-shadow: 0 0 0 0 rgb(238 98 54 / .7); } 80%, 100% { box-shadow: 0 0 0 1.3rem transparent; } }
+.door-hours { margin-top: 1.2rem; padding: .55rem 1rem; border-radius: 999px; background: rgb(255 255 255 / .07); font-size: clamp(.95rem, 1.6vw, 1.25rem); font-weight: 600; }
+.door-hours.f { background: rgb(214 103 140 / .22); color: #F4B5CA; }
+.door-hours.m { background: rgb(91 149 214 / .2); color: #A9C9EE; }
+.door-mid { display: grid; align-content: center; justify-items: center; gap: 1.2rem; text-align: center; min-height: 14rem; }
+.door-motto { max-width: 18ch; font-size: clamp(1.8rem, 3.6vw, 3.2rem); font-weight: 650; letter-spacing: -.025em; line-height: 1.15; animation: door-in .8s var(--ease) backwards; text-wrap: balance; }
+html:is([lang="ar"], [lang="ckb"]) .door-motto { letter-spacing: 0; line-height: 1.45; }
+@keyframes door-in { from { opacity: 0; transform: translateY(10px); filter: blur(6px); } }
+.door-scan-t { display: flex; align-items: center; gap: .7rem; font-size: clamp(1.4rem, 2.6vw, 2.2rem); font-weight: 650; }
+.door-scan-t svg { width: 2.2rem; height: 2.2rem; color: var(--ember); }
+.door-cam { width: min(100%, 30rem); }
+.door-card-hint { display: grid; place-items: center; width: 14rem; height: 9rem; }
+.door-card { width: 11rem; height: 7rem; border-radius: 1rem; background: linear-gradient(150deg, #1F2430, #111318); box-shadow: inset 0 -5px 0 var(--ember), 0 20px 40px -20px #000; animation: door-card 2.6s var(--ease) infinite; }
+@keyframes door-card { 0%, 100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-10px) rotate(-4deg); } }
+.door-hidden { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.door-classes { display: grid; align-content: start; gap: .65rem; padding: clamp(1.2rem, 2.4vw, 1.8rem); border-radius: 2rem; background: var(--card); }
+.door-k { font-size: .85rem; font-weight: 650; letter-spacing: .1em; text-transform: uppercase; color: var(--mute); margin-bottom: .3rem; }
+html:is([lang="ar"], [lang="ckb"]) .door-k { letter-spacing: 0; font-size: 1rem; }
+.door-none { color: var(--mute); font-size: 1.1rem; }
+.door-class { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: .9rem; padding: .75rem .9rem; border-radius: 1.1rem; background: rgb(255 255 255 / .04); box-shadow: inset 4px 0 0 var(--k); }
+html[dir="rtl"] .door-class { box-shadow: inset -4px 0 0 var(--k); }
+.door-class > span { font-size: 1.25rem; font-weight: 700; color: var(--k); }
+.door-class b { display: block; font-size: 1.12rem; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.door-class small { display: block; font-size: .85rem; color: var(--mute); }
+.door-class em { font-style: normal; font-size: .85rem; font-weight: 650; padding: .25rem .6rem; border-radius: 999px; background: rgb(255 255 255 / .08); white-space: nowrap; }
+.door-class em.full { color: var(--bad); }
+
+/* the greeting */
+.door-hi { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 2rem; background: rgb(8 9 11 / .72); backdrop-filter: blur(14px); animation: door-fade .25s ease-out; }
+@keyframes door-fade { from { opacity: 0; } }
+.door-hi-card { display: grid; justify-items: center; gap: .8rem; width: min(52rem, 100%); padding: clamp(2rem, 5vw, 4rem); border-radius: 2.4rem; text-align: center;
+  background: linear-gradient(160deg, rgb(61 190 123 / .2), rgb(61 190 123 / .05)), #121519; box-shadow: inset 0 0 0 2px rgb(61 190 123 / .5), 0 40px 120px -40px #000;
+  animation: door-hi .45s var(--ease) backwards; }
+@keyframes door-hi { from { opacity: 0; transform: scale(.94) translateY(14px); filter: blur(8px); } }
+.door-hi.no .door-hi-card { background: linear-gradient(160deg, rgb(242 107 107 / .22), rgb(242 107 107 / .05)), #151112; box-shadow: inset 0 0 0 2px rgb(242 107 107 / .55), 0 40px 120px -40px #000; }
+.door-hi-ic { display: grid; place-items: center; width: clamp(4rem, 8vw, 6rem); height: clamp(4rem, 8vw, 6rem); border-radius: 999px; background: var(--ok); color: #07140C; }
+.door-hi.no .door-hi-ic { background: var(--bad); color: #1A0606; }
+.door-hi-ic svg { width: 55%; height: 55%; stroke-width: 2.6; }
+.door-hi-card h2 { font-size: clamp(2.2rem, 6vw, 4.8rem); font-weight: 750; letter-spacing: -.035em; line-height: 1.1; text-wrap: balance; }
+html:is([lang="ar"], [lang="ckb"]) .door-hi-card h2 { letter-spacing: 0; line-height: 1.35; }
+.door-hi-big { font-size: clamp(1.6rem, 4vw, 3rem); font-weight: 700; color: #7FE0AB; }
+.door-hi.no .door-hi-big { color: #FFB1B1; }
+.door-hi-sub { font-size: clamp(1rem, 2vw, 1.4rem); color: var(--mute); }
+
+/* controls: they show while the mouse moves */
+.door-start { position: fixed; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; gap: .8rem; font-size: 1.5rem; font-weight: 650; color: #fff; background: rgb(8 9 11 / .6); backdrop-filter: blur(6px); }
+.door-start svg { width: 2rem; height: 2rem; color: var(--ember); }
+.door-ctl { position: fixed; bottom: 1.2rem; inset-inline-end: 1.2rem; z-index: 25; display: flex; gap: .4rem; opacity: 0; transition: opacity .4s; }
+.door.ui .door-ctl { opacity: 1; }
+.door-ctl button { display: flex; align-items: center; gap: .4rem; padding: .55rem .9rem; border-radius: 999px; background: rgb(255 255 255 / .08); color: var(--mute); font-size: .85rem; }
+.door-ctl button[aria-pressed="true"] { color: #fff; background: rgb(238 98 54 / .3); }
+.door-ctl svg { width: 1.05rem; height: 1.05rem; }
+.door-off { position: fixed; bottom: 1.2rem; inset-inline-start: 1.2rem; padding: .4rem .9rem; border-radius: 999px; background: rgb(240 162 58 / .2); color: #F5C27A; font-size: .85rem; }
+.door-msg { place-items: center; align-content: center; text-align: center; font-size: 1.4rem; color: var(--mute); }
+@media (prefers-reduced-motion: reduce) { .door-pulse, .door-card { animation: none; } .door-motto, .door-hi-card, .door-hi { animation: none; } }

@@ -1,0 +1,88 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Hemlo website display</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Vazirmatn:wght@400;500;600;700;800&display=swap"><style>*{box-sizing:border-box;margin:0;padding:0}html,body{width:1600px;height:1000px;overflow:hidden}
+body{position:relative;font-family:"IBM Plex Sans",sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}.grain{position:absolute;inset:0;pointer-events:none;border-radius:inherit}
+.disp{font-family:"Readex Pro",sans-serif}.mono{font-family:"IBM Plex Mono",monospace}.ar{font-family:"Vazirmatn",sans-serif;direction:rtl}
+.light{position:absolute;inset:0;pointer-events:none}
+.sh-paper{box-shadow:1px 2px 2px rgba(20,18,12,.10),6px 12px 18px rgba(20,18,12,.12),18px 34px 60px rgba(20,18,12,.16)}
+.sh-obj{box-shadow:2px 3px 3px rgba(0,0,0,.22),8px 14px 22px rgba(0,0,0,.20),22px 40px 70px rgba(0,0,0,.18)}
+body{background:#DEDCD5}
+.wall{position:absolute;left:0;right:0;top:0;height:735px;background:radial-gradient(1200px 700px at 50% 30%,#EDECE7,#DCDAD3 60%,#C9C7C0)}
+.desk{position:absolute;left:0;right:0;top:735px;bottom:0;background:linear-gradient(180deg,#2E333B 0%,#1E2228 30%,#15181D 100%)}
+.desk:before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,rgba(255,255,255,.08),rgba(255,255,255,.3),rgba(255,255,255,.08))}
+.mon{position:absolute;left:260px;top:70px;width:1080px;height:626px;border-radius:18px;background:#0A0C0F;padding:14px;box-shadow:0 2px 0 #1A1D22,0 30px 60px rgba(20,18,12,.25),0 60px 120px rgba(20,18,12,.18)}
+.scr{width:100%;height:100%;border-radius:6px;overflow:hidden;position:relative;background:#F7F7F4}
+.scr .inner{transform:scale(0.54792);transform-origin:0 0}
+.glare{position:absolute;inset:0;background:linear-gradient(115deg,rgba(255,255,255,.14) 0%,rgba(255,255,255,.03) 38%,transparent 50%);pointer-events:none}
+.neck{position:absolute;left:748px;top:696px;width:104px;height:66px;background:linear-gradient(90deg,#8C9097,#D9DCE0 45%,#A5A9AF 70%,#7C8087)}
+.base{position:absolute;left:640px;top:752px;width:320px;height:22px;border-radius:6px 6px 10px 10px;background:linear-gradient(180deg,#E3E5E8,#A9ADB3 55%,#6F737A);box-shadow:0 10px 18px rgba(0,0,0,.5)}
+</style></head><body><svg width="0" height="0" style="position:absolute"><defs>
+<linearGradient id="foil" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="1" y2="1">
+  <stop offset="0" stop-color="#7C5E1E"/><stop offset=".2" stop-color="#C39A45"/><stop offset=".36" stop-color="#F2DEA0"/><stop offset=".5" stop-color="#B38B3A"/><stop offset=".68" stop-color="#E3C77F"/><stop offset=".84" stop-color="#8F6E27"/><stop offset="1" stop-color="#D2B062"/>
+</linearGradient>
+<linearGradient id="brassH" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#E9D08E"/><stop offset=".35" stop-color="#C9A24E"/><stop offset=".6" stop-color="#9E7B2E"/><stop offset="1" stop-color="#D9B869"/>
+</linearGradient>
+<filter id="brushed" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+  <feTurbulence type="fractalNoise" baseFrequency="0.003 0.55" numOctaves="2" seed="9" result="t"/>
+  <feColorMatrix in="t" type="matrix" values="0 0 0 0 1  0 0 0 0 .96  0 0 0 0 .86  1.1 0 0 0 -.45" result="streak"/>
+  <feComposite in="streak" in2="SourceAlpha" operator="in" result="lines"/>
+  <feBlend in="lines" in2="SourceGraphic" mode="soft-light" result="brushedFace"/>
+  <feGaussianBlur in="SourceAlpha" stdDeviation="2.2" result="bl"/>
+  <feSpecularLighting in="bl" surfaceScale="4" specularConstant="1.2" specularExponent="22" lighting-color="#FFF4D6" result="sp"><feDistantLight azimuth="235" elevation="38"/></feSpecularLighting>
+  <feComposite in="sp" in2="SourceAlpha" operator="in" result="sp2"/>
+  <feComposite in="brushedFace" in2="sp2" operator="arithmetic" k1="0" k2="1" k3=".6" k4="0"/>
+</filter>
+<filter id="foilSheen" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+  <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" result="g"/>
+  <feColorMatrix in="g" type="matrix" values="0 0 0 0 1  0 0 0 0 .95  0 0 0 0 .8  .9 0 0 0 -.5" result="gr"/>
+  <feComposite in="gr" in2="SourceAlpha" operator="in" result="grain"/>
+  <feBlend in="grain" in2="SourceGraphic" mode="soft-light" result="face"/>
+  <feGaussianBlur in="SourceAlpha" stdDeviation="0.8" result="bl"/>
+  <feSpecularLighting in="bl" surfaceScale="1.6" specularConstant="1" specularExponent="30" lighting-color="#FFF6DE" result="sp"><feDistantLight azimuth="235" elevation="45"/></feSpecularLighting>
+  <feComposite in="sp" in2="SourceAlpha" operator="in" result="sp2"/>
+  <feComposite in="face" in2="sp2" operator="arithmetic" k1="0" k2="1" k3=".45" k4="0" result="lit"/>
+  <feDropShadow dx="0.6" dy="0.8" stdDeviation="0.5" flood-color="#000" flood-opacity=".35"/>
+</filter>
+<filter id="ink" x="-5%" y="-5%" width="110%" height="110%">
+  <feTurbulence type="fractalNoise" baseFrequency="0.028" numOctaves="3" seed="11" result="n"/>
+  <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -1.3 0 0 0 1.6" result="m1"/>
+  <feComposite in="SourceGraphic" in2="m1" operator="in" result="patchy"/>
+  <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="5" result="fn"/>
+  <feColorMatrix in="fn" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -1.0 0 0 0 1.38" result="m2"/>
+  <feComposite in="patchy" in2="m2" operator="in" result="speck"/>
+  <feGaussianBlur in="speck" stdDeviation="0.35"/>
+</filter>
+</defs></svg>
+<div class="wall"></div><div class="grain" data-grain=".05,200" style="mix-blend-mode:multiply;bottom:265px"></div>
+<div class="desk"><div class="grain" data-grain=".07,180" style="mix-blend-mode:overlay"></div></div>
+<div class="neck"></div><div class="base"></div>
+<div class="mon"><div class="scr"><div class="inner"><div style="width:1920px;height:1080px;background:#F7F7F4;position:relative;font-family:'IBM Plex Sans'">
+  <div style="display:flex;align-items:center;padding:40px 96px"><svg width="185" height="44" viewBox="0 0 185 44" style="overflow:visible;"><g><path d="M68.316 6.286L68.316 37.714L62.013 37.714L62.013 24.341L48.55 24.341L48.55 37.714L42.246 37.714L42.246 6.286L48.55 6.286L48.55 19.208L62.013 19.208L62.013 6.286L68.316 6.286ZM97.269 24.702C97.269 25.602 97.209 26.413 97.088 27.133L78.853 27.133C79.003 28.934 79.633 30.345 80.744 31.365C81.854 32.386 83.22 32.896 84.841 32.896C87.182 32.896 88.849 31.891 89.839 29.88L96.638 29.88C95.918 32.281 94.537 34.255 92.495 35.801C90.454 37.346 87.948 38.119 84.976 38.119C82.575 38.119 80.421 37.587 78.515 36.521C76.609 35.455 75.123 33.947 74.057 31.996C72.992 30.045 72.459 27.793 72.459 25.242C72.459 22.66 72.984 20.394 74.035 18.443C75.085 16.492 76.556 14.991 78.447 13.94C80.338 12.89 82.515 12.364 84.976 12.364C87.348 12.364 89.471 12.875 91.347 13.895C93.223 14.916 94.679 16.364 95.715 18.24C96.751 20.116 97.269 22.27 97.269 24.702ZM90.74 22.9C90.71 21.28 90.124 19.981 88.984 19.006C87.843 18.03 86.447 17.542 84.796 17.542C83.235 17.542 81.922 18.015 80.856 18.961C79.791 19.906 79.138 21.219 78.898 22.9L90.74 22.9ZM132.389 12.409C135.451 12.409 137.92 13.347 139.796 15.223C141.672 17.1 142.61 19.719 142.61 23.081L142.61 37.714L136.307 37.714L136.307 23.936C136.307 21.985 135.811 20.492 134.821 19.456C133.83 18.42 132.479 17.903 130.768 17.903C129.057 17.903 127.699 18.42 126.693 19.456C125.688 20.492 125.185 21.985 125.185 23.936L125.185 37.714L118.881 37.714L118.881 23.936C118.881 21.985 118.386 20.492 117.395 19.456C116.405 18.42 115.054 17.903 113.343 17.903C111.602 17.903 110.229 18.42 109.223 19.456C108.217 20.492 107.714 21.985 107.714 23.936L107.714 37.714L101.411 37.714L101.411 12.769L107.714 12.769L107.714 15.786C108.525 14.736 109.568 13.91 110.844 13.31C112.12 12.71 113.523 12.409 115.054 12.409C117.005 12.409 118.746 12.822 120.277 13.648C121.808 14.473 122.994 15.651 123.834 17.182C124.645 15.741 125.823 14.586 127.369 13.715C128.915 12.845 130.588 12.409 132.389 12.409ZM154.452 4.395L154.452 37.714L148.149 37.714L148.149 4.395L154.452 4.395ZM171.292 38.119C168.891 38.119 166.729 37.587 164.808 36.521C162.887 35.455 161.379 33.947 160.283 31.996C159.188 30.045 158.64 27.793 158.64 25.242C158.64 22.69 159.203 20.439 160.328 18.488C161.454 16.537 162.992 15.028 164.943 13.963C166.894 12.897 169.071 12.364 171.472 12.364C173.874 12.364 176.05 12.897 178.001 13.963C179.952 15.028 181.491 16.537 182.616 18.488C183.742 20.439 184.305 22.69 184.305 25.242C184.305 27.793 183.727 30.045 182.571 31.996C181.416 33.947 179.855 35.455 177.888 36.521C175.922 37.587 173.724 38.119 171.292 38.119ZM171.292 32.626C172.433 32.626 173.506 32.349 174.511 31.793C175.517 31.238 176.32 30.405 176.92 29.294C177.521 28.184 177.821 26.833 177.821 25.242C177.821 22.87 177.198 21.047 175.952 19.771C174.707 18.495 173.183 17.857 171.382 17.857C169.581 17.857 168.073 18.495 166.857 19.771C165.641 21.047 165.034 22.87 165.034 25.242C165.034 27.613 165.626 29.437 166.812 30.713C167.998 31.988 169.491 32.626 171.292 32.626Z" fill="#0E1420"/><path d="M22.805 5.788L21.77 5.094C19.361 3.479 16.125 5.205 16.125 8.105L16.125 21.342L13.693 20.4C12.849 20.073 12.293 19.261 12.293 18.357L12.293 12.324C12.293 8.578 10.426 5.078 7.315 2.992L3.412 0.374C1.956 -0.602 0 0.441 0 2.194L0 28.737C0 33.21 2.283 37.375 6.054 39.781L8.923 41.611C10.382 42.541 12.293 41.494 12.293 39.763L12.293 27.756C12.293 26.216 13.839 25.157 15.275 25.713L16.125 26.042L16.125 31.172C16.125 36.136 18.658 40.756 22.842 43.425C25.256 44.965 28.417 43.232 28.417 40.369L28.417 16.311C28.417 12.087 26.312 8.14 22.804 5.788Z" fill="#0E1420"/></g></svg>
+    <div style="display:flex;gap:44px;margin-left:90px;font-size:19px;color:#2B3445"><span>Products</span><span>How we build</span><span>Field notes</span><span>About</span></div>
+    <div style="margin-left:auto;display:flex;gap:30px;align-items:center;font-size:19px"><span class="ar">العربية</span><span style="background:#0E1420;color:#fff;border-radius:10px;padding:14px 24px">Talk to us</span></div></div>
+  <div style="display:grid;grid-template-columns:1fr 600px;gap:40px;padding:80px 96px 0;align-items:center">
+    <div><div class="mono" style="font-size:16px;letter-spacing:.22em;color:#8A6A22">COMING SOON</div>
+      <div class="disp" style="font-size:118px;font-weight:600;letter-spacing:-0.03em;line-height:1;margin-top:26px;color:#0E1420">Elegantly solved.</div>
+      <div style="font-size:26px;color:#5E6776;margin-top:30px;max-width:820px;line-height:1.5">Software that earns its place. Focused software for the everyday work of Iraqi businesses.</div>
+      <div style="display:flex;gap:14px;margin-top:46px"><div style="background:#fff;border:1px solid #E2E2DB;border-radius:10px;padding:18px 20px;width:380px;color:#5E6776;font-size:19px">Your WhatsApp number</div><div style="background:#0E1420;color:#fff;border-radius:10px;padding:18px 26px;font-size:19px">Notify me</div></div>
+      <div class="ar" style="font-size:30px;font-weight:600;color:#2B3445;margin-top:36px;text-align:left">حلولٌ بإتقان.</div></div>
+    <div><svg width="600" height="600" viewBox="0 0 600 600" style="overflow:visible;"><g><g transform="scale(25)"><path d="M16.298 3.894L15.781 3.547C14.576 2.739 12.958 3.602 12.958 5.053L12.958 11.671L11.742 11.2C11.32 11.037 11.042 10.631 11.042 10.178L11.042 7.162C11.042 5.289 10.109 3.539 8.553 2.496L6.602 1.187C5.874 0.699 4.896 1.221 4.896 2.097L4.896 15.368C4.896 17.605 6.037 19.687 7.923 20.89L9.357 21.805C10.087 22.271 11.042 21.747 11.042 20.882L11.042 14.878C11.042 14.108 11.815 13.578 12.533 13.856L12.958 14.021L12.958 16.586C12.958 19.068 14.224 21.378 16.317 22.713C17.523 23.483 19.104 22.616 19.104 21.184L19.104 9.155C19.104 7.043 18.052 5.07 16.298 3.894Z" fill="#0E1420"/><path d="" fill="#B38B3A"/></g></g></svg></div>
+  </div></div></div><div class="glare"></div></div></div>
+<svg class="abs" style="left:1350px;top:640px;overflow:visible" width="132" height="165" viewBox="0 0 120 150">
+  <defs><linearGradient id="teaSide" x1="0" x2="1"><stop offset="0" stop-color="#5A1B05"/><stop offset=".5" stop-color="#A8461A"/><stop offset="1" stop-color="#4E1604"/></linearGradient>
+  <linearGradient id="glassSide" x1="0" x2="1"><stop offset="0" stop-color="rgba(255,255,255,.55)"/><stop offset=".2" stop-color="rgba(255,255,255,.05)"/><stop offset=".8" stop-color="rgba(255,255,255,.05)"/><stop offset="1" stop-color="rgba(255,255,255,.4)"/></linearGradient></defs>
+  <ellipse cx="60" cy="138" rx="58" ry="10" fill="rgba(0,0,0,.35)"/>
+  <ellipse cx="60" cy="133" rx="56" ry="10" fill="#F2F0EA"/><ellipse cx="60" cy="131" rx="44" ry="6.5" fill="none" stroke="#C9A24E" stroke-width="1.6"/>
+  <path d="M32 22 C30 50 46 62 44 84 C42 104 34 112 38 128 L82 128 C86 112 78 104 76 84 C74 62 90 50 88 22 Z" fill="url(#teaSide)"/>
+  <path d="M30 12 C28 48 44 60 42 84 C40 104 32 112 36 130 L84 130 C88 112 80 104 78 84 C76 60 92 48 90 12 Z" fill="url(#glassSide)" stroke="rgba(255,255,255,.55)" stroke-width="1"/>
+  <ellipse cx="60" cy="12" rx="30" ry="4" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="1.2"/>
+  <ellipse cx="60" cy="22" rx="28" ry="3.4" fill="#C06A2E" opacity=".75"/>
+  <path d="M38 30 C36 52 48 62 47 84" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2.4" stroke-linecap="round"/>
+</svg>
+<div class="abs" style="left:330px;top:770px;transform:perspective(900px) rotateX(62deg) rotateZ(-10deg);transform-origin:center"><div class="abs sh-obj" style="left:0px;top:0px;width:260px;height:168px;transform:rotate(0deg);border-radius:6px;background:linear-gradient(135deg,#182030,#0E1420 55%,#0B1019);display:flex;align-items:center;justify-content:center">
+  <div class="grain" data-grain=".05,160" style="mix-blend-mode:overlay"></div>
+  <svg width="78" height="78" viewBox="0 0 78 78" style="overflow:visible;"><g filter="url(#foilSheen)"><g transform="scale(3.25)"><path d="M16.298 3.894L15.781 3.547C14.576 2.739 12.958 3.602 12.958 5.053L12.958 11.671L11.742 11.2C11.32 11.037 11.042 10.631 11.042 10.178L11.042 7.162C11.042 5.289 10.109 3.539 8.553 2.496L6.602 1.187C5.874 0.699 4.896 1.221 4.896 2.097L4.896 15.368C4.896 17.605 6.037 19.687 7.923 20.89L9.357 21.805C10.087 22.271 11.042 21.747 11.042 20.882L11.042 14.878C11.042 14.108 11.815 13.578 12.533 13.856L12.958 14.021L12.958 16.586C12.958 19.068 14.224 21.378 16.317 22.713C17.523 23.483 19.104 22.616 19.104 21.184L19.104 9.155C19.104 7.043 18.052 5.07 16.298 3.894Z" fill="url(#foil)"/><path d="" fill="url(#foil)"/></g></g></svg>
+</div></div>
+<div class="light" style="background:radial-gradient(ellipse at 50% 40%,transparent 60%,rgba(0,0,0,.22) 100%)"></div>
+<script>(function(){function n(a,s){var c=document.createElement('canvas');c.width=c.height=s;var x=c.getContext('2d'),d=x.createImageData(s,s);for(var i=0;i<d.data.length;i+=4){var v=Math.random()*255|0;d.data[i]=d.data[i+1]=d.data[i+2]=v;d.data[i+3]=a*255}x.putImageData(d,0,0);return c.toDataURL()}
+document.querySelectorAll('[data-grain]').forEach(function(el){var p=el.getAttribute('data-grain').split(',').map(Number);el.style.backgroundImage='url('+n(p[0],p[1]||180)+')';el.style.backgroundSize=(p[2]||p[1]||180)+'px'})})();</script></body></html>

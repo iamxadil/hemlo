@@ -1,0 +1,1025 @@
+---
+import '../styles/admin.css';
+import Lockup from './Lockup.astro';
+import { STRINGS, type Lang } from '../lib/i18n';
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const s = STRINGS[lang];
+const other = lang === 'ar' ? '/en/' : '/';
+const I = {
+  overview: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>',
+  requests: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11Z"/></svg>',
+  users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  team: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v5c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6l-8-3Z"/><circle cx="12" cy="10" r="2.5"/><path d="M8 16.5c.8-1.6 2.2-2.5 4-2.5s3.2.9 4 2.5"/></svg>',
+  activity: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>',
+  usage: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.9 19a9 9 0 1 1 14.2 0"/><path d="m12 13 3.5-4.5"/><circle cx="12" cy="13" r="1.3"/></svg>',
+  billing: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19M6.5 15h4"/></svg>',
+  businesses: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M9 10h.01M15 10h.01"/></svg>',
+};
+---
+<!doctype html>
+<html lang={lang} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>{s.appName}</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="theme-color" content="#0E1420" />
+  <!-- use-credentials: behind Cloudflare Access the manifest needs the Access cookie, or installing the app breaks -->
+  <link rel="manifest" href="/manifest.webmanifest" crossorigin="use-credentials" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="preload" href={lang === 'ar' ? '/fonts/vazirmatn-arabic.woff2' : '/fonts/readex-pro-latin.woff2'} as="font" type="font/woff2" crossorigin />
+</head>
+<body>
+  <!-- access checks -->
+  <div id="gate" class="gate">
+    <div class="box">
+      <Lockup class="mx-auto h-7 w-auto text-white" />
+      <h1 id="gate-title" class="mt-8 text-2xl font-semibold">{s.gate.checking}</h1>
+      <p id="gate-body" class="mt-2"></p>
+      <div id="gate-actions" class="mt-8 flex flex-col items-center gap-5"></div>
+    </div>
+  </div>
+
+  <div id="app" class="shell" hidden>
+    <aside class="sidebar" aria-label={s.menu}>
+      <div class="brand"><Lockup class="h-[22px] w-auto" /><small>Admin</small></div>
+      <nav class="grid gap-1">
+        <a class="nav-item" href="#/overview" data-nav="overview" data-perm="overview.view"><Fragment set:html={I.overview} />{s.nav.overview}</a>
+        <a class="nav-item" href="#/requests" data-nav="requests" data-perm="requests.view"><Fragment set:html={I.requests} />{s.nav.requests}<span class="nav-count" id="new-count" hidden></span></a>
+        <a class="nav-item" href="#/users" data-nav="users" data-perm="users.view"><Fragment set:html={I.users} />{s.nav.users}</a>
+        <a class="nav-item" href="#/businesses" data-nav="businesses" data-perm="businesses.view"><Fragment set:html={I.businesses} />{s.nav.businesses}</a>
+        <a class="nav-item" href="#/usage" data-nav="usage" data-perm="usage.view"><Fragment set:html={I.usage} />{s.nav.usage}</a>
+        <a class="nav-item" href="#/billing" data-nav="billing" data-perm="usage.view"><Fragment set:html={I.billing} />{s.nav.billing}<span class="nav-count" id="bill-count" hidden></span></a>
+        <hr class="nav-div" data-perm-any="team.view activity.view" />
+        <a class="nav-item" href="#/team" data-nav="team" data-perm="team.view"><Fragment set:html={I.team} />{s.nav.team}</a>
+        <a class="nav-item" href="#/activity" data-nav="activity" data-perm="activity.view"><Fragment set:html={I.activity} />{s.nav.activity}</a>
+      </nav>
+      <div class="side-foot">
+        <button type="button" class="nav-item" id="install" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>{s.nav.install}</button>
+        <a class="nav-item" href={other} id="lang-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z"/></svg>{s.switchTo}</a>
+        <div class="me-row"><span class="av" id="me-av"></span><div class="min-w-0"><p class="truncate text-sm text-white" id="me-name"></p><p class="truncate text-xs" style="color:var(--sidebar-muted)" id="me-mail"></p></div></div>
+        <button type="button" class="nav-item" id="sign-out">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>{s.nav.signOut}</button>
+      </div>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <button type="button" class="icon-btn menu-btn" id="menu-btn" aria-label={s.menu}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+        <div class="min-w-0 flex-1"><h1 class="page-title truncate" id="title"></h1></div>
+        <label class="search" id="search-box" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="search" type="search" autocomplete="off" /></label>
+        <span class="hidden text-xs text-muted lg:block" id="updated"></span>
+        <button type="button" class="icon-btn" id="refresh" aria-label={s.refresh} title={s.refresh}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg></button>
+      </header>
+      <main class="content" id="view"></main>
+    </div>
+  </div>
+
+  <div class="scrim" id="scrim"></div>
+  <aside class="drawer" id="drawer" aria-modal="true" role="dialog"></aside>
+
+  <script>
+    import { createAuthClient } from 'better-auth/client';
+    import { passkeyClient } from '@better-auth/passkey/client';
+    import { STRINGS, fill, type Lang } from '../lib/i18n';
+    import { STAFF_ROLES, PERMISSION_IMPLIES, normalizePermissions, roleFor, type StaffPermission } from '@hemlo/core/staff';
+
+    const API = (import.meta.env.PUBLIC_API_URL as string) ?? 'http://localhost:8787';
+    const ACCOUNT = (import.meta.env.PUBLIC_ACCOUNT_URL as string) ?? 'http://localhost:4321';
+    const lang = document.documentElement.lang as Lang;
+    const t = STRINGS[lang];
+    const auth = createAuthClient({ baseURL: `${API}/v1/auth`, fetchOptions: { credentials: 'include' }, plugins: [passkeyClient()] });
+    const $ = <T extends HTMLElement = HTMLElement>(s: string) => document.querySelector(s) as T;
+
+    // ---------- helpers ----------
+    class ApiError extends Error { constructor(public status: number, public code: string) { super(code); } }
+    async function api<T = any>(path: string, init: { method?: string; body?: unknown } = {}): Promise<T> {
+      let res: Response;
+      try { res = await fetch(API + path, { method: init.method ?? (init.body ? 'POST' : 'GET'), credentials: 'include', headers: init.body ? { 'content-type': 'application/json' } : {}, body: init.body ? JSON.stringify(init.body) : undefined }); }
+      catch { throw new ApiError(0, 'NETWORK'); }
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new ApiError(res.status, json.error ?? 'ERROR');
+      return json;
+    }
+    type Kid = Node | string | null | undefined | false;
+    function h<K extends keyof HTMLElementTagNameMap>(tag: K, a: Record<string, any> = {}, ...kids: Kid[]): HTMLElementTagNameMap[K] {
+      const el = document.createElement(tag);
+      for (const [k, v] of Object.entries(a)) {
+        if (v == null || v === false) continue;
+        if (k.startsWith('on')) el.addEventListener(k.slice(2).toLowerCase(), v);
+        else if (k === 'class') el.className = v; else if (k === 'text') el.textContent = v; else if (k === 'html') el.innerHTML = v;
+        else el.setAttribute(k, v === true ? '' : String(v));
+      }
+      for (const k of kids) if (k != null && k !== false) el.append(k);
+      return el;
+    }
+    const SVG = (inner: string, cls = '') => h('span', { class: `inline-flex ${cls}`, html: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">${inner}</svg>` });
+    const ICON = {
+      wa: '<path d="M3 21l1.65-4.94A9 9 0 1 1 7.9 19.3L3 21Z"/><path d="M9 10c.5 2 2 3.5 4 4l1.2-1.2a1 1 0 0 1 1-.25l1.8.6"/>',
+      phone: '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2Z"/>',
+      mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
+      close: '<path d="M18 6 6 18M6 6l12 12"/>', key: '<circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.3-9.3M17 6l3 3M14 9l2 2"/>',
+      check: '<path d="M20 6 9 17l-5-5"/>', lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>', plus: '<path d="M12 5v14M5 12h14"/>', link: '<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.8 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
+    };
+    const initials = (n: string) => { const w = (n || '·').trim().split(/\s+/); return /[؀-ۿ]/.test(w[0]) ? w[0][0] : w.slice(0, 2).map((x) => x[0]).join('').toUpperCase(); };
+    const local = (p?: string | null) => (p ? p.replace(/^\+964(\d{3})(\d{3})(\d{4})$/, '0$1 $2 $3') : '—');
+    const locale = lang === 'ar' ? 'ar-IQ-u-nu-latn' : 'en-GB';
+    const date = (d: string | Date | null) => (d ? new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(d)) : '—');
+    const dateTime = (d: string | Date | null) => (d ? new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(d)) : '—');
+    const rtf = new Intl.RelativeTimeFormat(lang === 'ar' ? 'ar-u-nu-latn' : 'en', { numeric: 'auto' });
+    function ago(d: string | Date | null) {
+      if (!d) return '—';
+      const s = (new Date(d).getTime() - Date.now()) / 1000, a = Math.abs(s);
+      return a < 60 ? rtf.format(Math.round(s), 'second') : a < 3600 ? rtf.format(Math.round(s / 60), 'minute') : a < 86400 ? rtf.format(Math.round(s / 3600), 'hour') : a < 86400 * 30 ? rtf.format(Math.round(s / 86400), 'day') : date(d);
+    }
+    const num = (n: number) => new Intl.NumberFormat(locale).format(n);
+    const sum = (xs: { n: number }[]) => xs.reduce((s, x) => s + x.n, 0);
+    function toast(text: string, kind: 'ok' | 'error' = 'ok') {
+      const el = h('div', { class: `toast ${kind}`, role: 'status', text }); document.body.append(el);
+      setTimeout(() => el.classList.add('out'), 2600); setTimeout(() => el.remove(), 3000);
+    }
+    async function act(btn: HTMLButtonElement | null, fn: () => Promise<unknown>) {
+      if (btn) btn.disabled = true;
+      try { await fn(); } catch (e) { toast(e instanceof ApiError && e.code === 'NETWORK' ? t.errors.network : t.errors.generic, 'error'); }
+      finally { if (btn) btn.disabled = false; }
+    }
+    const pill = (status: string) => h('span', { class: `pill ${status}`, text: (t.status as any)[status] ?? status });
+
+    // ---------- gate: signed in, Hemlo staff, fresh passkey session ----------
+    function gate(title: string, body: string, actions: Node[]) {
+      $('#gate-title').textContent = title; $('#gate-body').textContent = body;
+      $('#gate-actions').replaceChildren(...actions); $('#gate').hidden = false; $('#app').hidden = true;
+    }
+    const signInUrl = () => `${ACCOUNT}${lang === 'en' ? '/en' : ''}/sign-in/?return_to=${encodeURIComponent(location.href)}`;
+
+    let me: any;
+    const perms = new Set<string>();
+    const can = (p: string) => perms.has(p);
+    const signOutTo = async (url: string) => { await auth.signOut().catch(() => {}); location.href = url; };
+    const passkeySignIn = async () => { const r: any = await auth.signIn.passkey(); if (r?.error) throw new Error('passkey'); location.reload(); };
+
+    async function boot() {
+      if (location.hash.startsWith('#/join')) return join();
+      try { me = await api('/v1/me'); }
+      catch (e) {
+        if (e instanceof ApiError && e.status === 401) return gate(t.gate.signInTitle, t.gate.signInBody, [h('a', { class: 'btn btn-primary', href: signInUrl(), text: t.gate.signIn })]);
+        return gate(t.errors.generic, '', [h('button', { class: 'btn btn-primary', text: t.refresh, onclick: () => location.reload() })]);
+      }
+      const back = h('a', { class: 'btn btn-secondary', href: `${ACCOUNT}${lang === 'en' ? '/en/' : '/'}`, text: t.gate.back });
+      if (me.staff?.state === 'suspended') return gate(t.access.suspendedTitle, t.access.suspendedBody, [back]);
+      if (me.staff?.state === 'expired') return gate(t.access.expiredTitle, t.access.expiredBody, [back]);
+      if (!me.user.hemloStaff) return gate(t.gate.deniedTitle, t.gate.deniedBody, [back]);
+      me.staff.permissions.forEach((p: string) => perms.add(p));
+      try { await api('/v1/admin/check'); }
+      catch (e) {
+        if (e instanceof ApiError && ['PASSKEY_REQUIRED', 'SESSION_TOO_OLD'].includes(e.code)) {
+          // Team members join without a passkey; the first visit creates one, then signs in with it.
+          if (!me.backup.passkeys) {
+            const b = h('button', { class: 'btn btn-primary' }, SVG(ICON.key), t.access.create);
+            b.addEventListener('click', () => act(b, async () => {
+              const r: any = await auth.passkey.addPasskey({ name: 'Hemlo Admin' });
+              if (r?.error) {
+                if (r.error.code === 'SESSION_NOT_FRESH') return gate(t.access.createTitle, t.access.notFresh, [h('button', { class: 'btn btn-primary', text: t.access.signInAgain, onclick: () => signOutTo(signInUrl()) })]);
+                throw new Error('passkey');
+              }
+              await passkeySignIn();
+            }));
+            return gate(t.access.createTitle, t.access.createBody, [b]);
+          }
+          const b = h('button', { class: 'btn btn-primary' }, SVG(ICON.key), t.gate.passkey);
+          b.addEventListener('click', () => act(b, passkeySignIn));
+          return gate(t.gate.passkeyTitle, t.gate.passkeyBody, [b]);
+        }
+        return gate(t.errors.generic, '', []);
+      }
+      $('#gate').hidden = true; $('#app').hidden = false;
+      document.querySelectorAll<HTMLElement>('[data-perm]').forEach((el) => { el.hidden = !can(el.dataset.perm!); });
+      document.querySelectorAll<HTMLElement>('[data-perm-any]').forEach((el) => { el.hidden = !el.dataset.permAny!.split(' ').some(can); });
+      $('#me-av').textContent = initials(me.user.name); $('#me-name').textContent = me.user.name;
+      $('#me-mail').textContent = [t.roles[me.staff.role], me.staff.title].filter(Boolean).join(' · ');
+      if (can('requests.view')) api('/v1/admin/early-access?status=new').then((r) => setNewCount(r.requests.length)).catch(() => {});
+      route();
+    }
+
+    // ---------- joining the team from an invite link ----------
+    async function join() {
+      const token = new URLSearchParams(location.hash.split('?')[1]).get('t') ?? '';
+      const inv = await api(`/v1/team-invites/${encodeURIComponent(token)}`).catch(() => ({ status: 'invalid' }));
+      const done = () => { history.replaceState(null, '', location.pathname); location.reload(); };
+      if (inv.status !== 'open') return gate(t.join.title, (t.join as any)[inv.status] ?? t.join.invalid, [h('a', { class: 'btn btn-secondary', href: `${ACCOUNT}${lang === 'en' ? '/en/' : '/'}`, text: t.gate.back })]);
+      const role = t.roles[inv.role] ?? inv.role;
+      const intro = [inv.inviter ? fill(t.join.by, { inviter: inv.inviter, role }) : fill(t.join.plain, { role }), inv.accessUntil ? fill(t.join.until, { date: date(inv.accessUntil) }) : ''].filter(Boolean).join(' ');
+      const list = h('ul', { class: 'join-perms' }, ...inv.permissions.map((p: string) => h('li', {}, SVG(ICON.check), t.perms[p]?.[0] ?? p)));
+      const me0 = await api('/v1/me').catch(() => null);
+      if (!me0) return gate(t.join.title, `${intro} ${fill(t.join.forEmail, { email: inv.email })}`, [h('a', { class: 'btn btn-primary', href: signInUrl(), text: t.join.signIn }), list]);
+      const accept = h('button', { class: 'btn btn-primary' }, t.join.accept);
+      accept.addEventListener('click', () => act(accept, async () => {
+        try { await api(`/v1/team-invites/${encodeURIComponent(token)}`, { method: 'POST', body: {} }); done(); }
+        catch (e) {
+          if (e instanceof ApiError && e.code === 'WRONG_ACCOUNT') return gate(t.join.title, fill(t.join.wrong, { email: inv.email }), [h('button', { class: 'btn btn-primary', text: t.join.switch, onclick: () => signOutTo(signInUrl()) })]);
+          if (e instanceof ApiError && e.code === 'ALREADY_ON_TEAM') return done();
+          throw e;
+        }
+      }));
+      gate(t.join.title, intro, [accept, list]);
+    }
+
+    // ---------- routing ----------
+    let overview: any = null, requests: any[] = [], reqStatus = 'all', users: any[] = [], businesses: any[] = [];
+    const view = () => $('#view');
+    function setNewCount(n: number) { const b = $('#new-count'); b.textContent = String(n); b.hidden = !n; }
+    function stamp() { $('#updated').textContent = fill(t.updated, { t: new Intl.DateTimeFormat(locale, { timeStyle: 'short' }).format(new Date()) }); }
+    const PAGES: [string, string][] = [['overview', 'overview.view'], ['requests', 'requests.view'], ['users', 'users.view'], ['businesses', 'businesses.view'], ['usage', 'usage.view'], ['billing', 'usage.view'], ['team', 'team.view'], ['activity', 'activity.view']];
+    function route() {
+      let [path, query] = (location.hash.slice(2) || 'overview').split('?');
+      const allowed = PAGES.filter(([, p]) => can(p)).map(([name]) => name);
+      if (!allowed.includes(path)) { path = allowed[0] ?? 'overview'; query = ''; history.replaceState(null, '', `#/${path}`); }
+      const params = new URLSearchParams(query);
+      document.querySelectorAll('[data-nav]').forEach((a) => a.toggleAttribute('aria-current', false));
+      document.querySelector(`[data-nav="${path}"]`)?.setAttribute('aria-current', 'page');
+      document.body.classList.remove('nav-open');
+      const sb = $('#search-box'), si = $('#search') as HTMLInputElement;
+      sb.hidden = !['requests', 'users', 'usage'].includes(path); si.value = ''; si.placeholder = path === 'users' ? t.users.search : path === 'usage' ? t.usage.search : t.requests.search;
+      if (path === 'requests') { reqStatus = params.get('status') ?? 'all'; showRequests(params.get('id')); }
+      else if (path === 'users') showUsers();
+      else if (path === 'businesses') showBusinesses();
+      else if (path === 'usage') { usageStatus = params.get('s') ?? 'all'; showUsage(params.get('id')); }
+      else if (path === 'billing') showBilling();
+      else if (path === 'team') showTeam(params.get('id'));
+      else if (path === 'activity') showActivity();
+      else showOverview();
+    }
+    window.addEventListener('hashchange', () => { if (me?.user) route(); });
+    const header = (title: string, sub: string) => { $('#title').textContent = title; document.title = `${title} · ${t.appName}`; return h('p', { class: 'page-sub mb-6', text: sub }); };
+    const put = (...kids: Kid[]) => view().replaceChildren(...(kids.filter((x) => x != null && x !== false) as (Node | string)[]));
+    const loading = () => view().replaceChildren(h('div', { class: 'grid gap-4' }, ...[1, 2, 3].map(() => h('div', { class: 'skeleton h-24' }))));
+
+    // ---------- overview ----------
+    async function showOverview(fresh = false) {
+      const hour = new Date().getHours(), first = (me.user.name || '').split(/\s+/)[0];
+      const sub = header(t.overview.title, `${fill(hour < 12 ? t.overview.morning : t.overview.evening, { name: first })} ${t.overview.sub}`);
+      if (fresh || !overview) { loading(); overview = await api('/v1/admin/overview'); if (can('requests.view')) setNewCount(overview.requests.new); }
+      stamp();
+      const o = overview, week = (n: number) => (n ? fill(t.overview.week, { n }) : t.overview.none);
+      const kpi = (label: string, value: number, delta: string, attention = false) =>
+        h('div', { class: `panel kpi${attention ? ' attention' : ''}` }, h('p', { class: 'label', text: label }), h('p', { class: 'value', text: num(value) }), h('p', { class: 'delta', text: delta }));
+      const funnel = [['new', o.requests.new], ['contacted', o.requests.contacted], ['approved', o.requests.approved], ['activated', o.requests.activated]] as const;
+      const total = Math.max(1, o.requests.total);
+      const conv = Math.round((o.requests.activated / total) * 100);
+      put(sub,
+        h('section', { class: 'kpis' },
+          kpi(t.overview.kNew, o.requests.new, o.requests.new ? t.overview.kNewHint : t.overview.none, o.requests.new > 0),
+          kpi(t.overview.kBusinesses, o.businesses.total, week(o.businesses.week)),
+          kpi(t.overview.kUsers, o.users.total, week(o.users.week)),
+          kpi(t.overview.kActive, o.activeUsers7, fill(t.overview.ofUsers, { p: Math.round((o.activeUsers7 / Math.max(1, o.users.total)) * 100) }))),
+        h('section', { class: 'mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]' },
+          h('div', { class: 'panel chart-panel' },
+            h('div', { class: 'panel-h flex-wrap' }, h('div', {}, h('h2', { text: t.overview.chart }), h('p', { text: t.overview.chartSub })),
+              h('div', { class: 'legend' },
+                h('span', {}, h('i', { style: 'background:var(--s1)' }), t.overview.sRequests, h('b', { text: num(sum(o.series.requests)) })),
+                h('span', {}, h('i', { style: 'background:var(--s2)' }), t.overview.sUsers, h('b', { text: num(sum(o.series.users)) })))),
+            chart(o.series.requests, o.series.users),
+            h('details', { class: 'mt-auto px-5 pb-4 text-sm' }, h('summary', { class: 'cursor-pointer text-muted', text: t.overview.table }), dataTable(o.series.requests, o.series.users))),
+          h('div', { class: 'panel' },
+            h('div', { class: 'panel-h' }, h('div', {}, h('h2', { text: t.overview.pipeline }), h('p', { text: t.overview.pipelineSub }))),
+            h('div', { class: 'stages !grid-cols-2' }, ...funnel.map(([st, n]) => h(can('requests.view') ? 'a' : 'div', { class: 'stage hover:border-[var(--line-strong)]', href: can('requests.view') ? `#/requests?status=${st}` : null },
+              pill(st), h('p', { class: 'n mt-2', text: num(n) }), h('div', { class: 'bar' }, h('span', { style: `width:${Math.round((n / total) * 100)}%` }))))),
+            h('p', { class: 'px-5 pb-5 text-sm text-fg-2' }, fill(t.overview.conversion, { p: conv }), h('span', { class: 'text-muted' }, ' · ' + fill(t.overview.declined, { n: o.requests.declined }))))),
+        can('requests.view') && h('section', { class: 'panel mt-4' },
+          h('div', { class: 'panel-h' }, h('h2', { text: t.overview.latest }), h('a', { class: 'link-arrow text-sm', href: '#/requests' }, t.overview.all, ' ', h('span', { class: 'arr', text: '→' }))),
+          requestTable(o.latest)));
+    }
+
+    // Drawn at the container's real width (redrawn on resize), so text stays 11px on every screen.
+    type ChartOpts = { labels?: [string, string | null]; extra?: (i: number) => string; aria?: string };
+    function chart(a: { day: string; n: number }[], b: { day: string; n: number }[] | null, o: ChartOpts = {}) {
+      const wrap = h('div', { class: 'chart-wrap', dir: 'ltr' });
+      let drawn = 0;
+      new ResizeObserver(() => {
+        const w = Math.round(wrap.clientWidth - 40);
+        if (w > 0 && Math.abs(w - drawn) > 4) { drawn = w; drawChart(wrap, a, b, w, o); }
+      }).observe(wrap);
+      return wrap;
+    }
+    function drawChart(wrap: HTMLElement, a: { day: string; n: number }[], b: { day: string; n: number }[] | null, W: number, o: ChartOpts = {}) {
+      const [la, lb] = o.labels ?? [t.overview.sRequests, t.overview.sUsers];
+      const H = W < 480 ? 200 : 250, L = 26, R = 4, T = 10, B = 26, n = a.length;
+      const max = Math.max(4, ...a.map((x) => x.n), ...(b ?? []).map((x) => x.n));
+      const step = max <= 5 ? 1 : Math.ceil(max / 4);
+      const top = Math.ceil(max / step) * step;
+      const y = (v: number) => T + (H - T - B) * (1 - v / top);
+      const colW = (W - L - R) / n, bw = b ? Math.max(2, Math.min(12, (colW - 6) / 2)) : Math.max(3, Math.min(18, colW - 6));
+      const every = W < 480 ? 10 : 7, fmt = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' });
+      const ticks = Array.from({ length: Math.floor(top / step) + 1 }, (_, i) => i * step);
+      const bar = (x: number, v: number, color: string) => { if (!v) return ''; const hgt = y(0) - y(v), r = Math.min(4, bw / 2, hgt); return `<path d="M${x},${y(0)} v${-(hgt - r)} q0,${-r} ${r},${-r} h${bw - 2 * r} q${r},0 ${r},${r} v${hgt - r} z" fill="${color}"/>`; };
+      let g = ticks.map((v) => `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end">${num(v)}</text>`).join('');
+      a.forEach((d, i) => {
+        const x0 = L + i * colW + (colW - (b ? 2 * bw + 2 : bw)) / 2;
+        g += bar(x0, d.n, 'var(--s1)') + (b ? bar(x0 + bw + 2, b[i].n, 'var(--s2)') : '');
+        // a tick every week, plus the last day unless it would crowd the previous tick
+        const last = i === n - 1 && (n - 1) % every >= every / 2;
+        if (i % every === 0 || last) g += `<text x="${L + i * colW + colW / 2}" y="${H - 6}" text-anchor="${i === 0 ? 'start' : last ? 'end' : 'middle'}" dx="${i === 0 ? -colW / 2 : last ? colW / 2 : 0}">${fmt.format(new Date(d.day))}</text>`;
+        g += `<rect class="hit" data-i="${i}" x="${L + i * colW}" y="${T}" width="${colW}" height="${H - T - B}" fill="transparent"/>`;
+      });
+      g += `<line x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}" stroke="var(--line-strong)" stroke-width="1"/>`;
+      wrap.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${o.aria ?? t.overview.chart}">${g}</svg>`;
+      const tip = h('div', { class: 'tip' }); wrap.append(tip);
+      const guide = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      guide.setAttribute('fill', 'var(--sunken)'); guide.setAttribute('opacity', '0'); guide.setAttribute('y', String(T)); guide.setAttribute('height', String(H - T - B)); guide.setAttribute('width', String(colW));
+      wrap.querySelector('svg')!.prepend(guide);
+      wrap.querySelectorAll<SVGRectElement>('.hit').forEach((r) => {
+        r.addEventListener('mouseenter', () => {
+          const i = +r.dataset.i!;
+          guide.setAttribute('x', r.getAttribute('x')!); guide.setAttribute('opacity', '1');
+          tip.innerHTML = `<b>${new Intl.DateTimeFormat(locale, { weekday: 'short', day: 'numeric', month: 'long' }).format(new Date(a[i].day))}</b><br><i style="background:var(--s1)"></i>${la}: ${num(a[i].n)}` + (b && lb ? `<br><i style="background:var(--s2)"></i>${lb}: ${num(b[i].n)}` : '') + (o.extra ? `<br>${o.extra(i)}` : '');
+          const box = wrap.getBoundingClientRect(), rb = r.getBoundingClientRect();
+          const left = Math.min(Math.max(8, rb.left - box.left + rb.width / 2 - 70), box.width - 150);
+          tip.style.left = `${left}px`; tip.style.top = '4px'; tip.style.opacity = '1';
+        });
+      });
+      wrap.onmouseleave = () => { tip.style.opacity = '0'; guide.setAttribute('opacity', '0'); };
+    }
+    const dataTable = (a: any[], b: any[]) => h('table', { class: 'tbl mt-3' },
+      h('thead', {}, h('tr', {}, h('th', { text: t.overview.day }), h('th', { text: t.overview.sRequests }), h('th', { text: t.overview.sUsers }))),
+      h('tbody', {}, ...a.filter((d, i) => d.n || b[i].n).map((d) => h('tr', {}, h('td', { text: date(d.day) }), h('td', { text: num(d.n) }), h('td', { text: num(b[a.indexOf(d)].n) })))));
+
+    // ---------- requests ----------
+    function requestTable(rows: any[]) {
+      if (!rows.length) return h('p', { class: 'px-5 pb-6 pt-2 text-muted', text: t.requests.empty });
+      return h('table', { class: 'tbl' },
+        h('thead', {}, h('tr', {}, ...[t.requests.cName, t.requests.cKind, t.requests.cCity, t.requests.cPhone, t.requests.cDate, t.requests.cStatus].map((c) => h('th', { text: c })))),
+        h('tbody', {}, ...rows.map((r) => h('tr', { class: 'click', onclick: () => (location.hash = `#/requests?status=${reqStatus}&id=${r.id}`) },
+          h('td', {}, h('div', { class: 'flex items-center gap-3' }, h('span', { class: 'avatar', text: initials(r.name) }), h('div', { class: 'min-w-0' }, h('p', { class: 'font-medium truncate', text: r.name }), h('p', { class: 'sub truncate', text: r.business })))),
+          h('td', { 'data-hide-sm': true, text: t.kinds[r.kind] ?? r.kind }),
+          h('td', { 'data-hide-sm': true, text: r.city ?? '—' }),
+          h('td', { dir: 'ltr', class: 'm-first whitespace-nowrap text-start', text: local(r.phoneNumber) }),
+          h('td', { class: 'sub whitespace-nowrap', text: ago(r.createdAt) }),
+          h('td', { class: 'm-end' }, pill(r.status))))));
+    }
+
+    async function showRequests(openId: string | null, fresh = false, link?: { url: string; whatsappUrl: string; emailed: boolean }) {
+      drawerBack = `#/requests?status=${reqStatus}`;
+      const sub = header(t.requests.title, t.requests.sub);
+      if (fresh || !requests.length) { loading(); requests = (await api('/v1/admin/early-access')).requests; }
+      stamp();
+      const counts: Record<string, number> = { all: requests.length };
+      for (const r of requests) counts[r.status] = (counts[r.status] ?? 0) + 1;
+      const q = ($('#search') as HTMLInputElement).value.trim().toLowerCase();
+      const rows = requests.filter((r) => (reqStatus === 'all' || r.status === reqStatus)
+        && (!q || [r.name, r.business, r.phoneNumber, local(r.phoneNumber), r.email, r.city].some((x) => x && String(x).toLowerCase().includes(q))));
+      const tabs = h('div', { class: 'tabs mb-4', role: 'tablist' }, ...['all', 'new', 'contacted', 'approved', 'activated', 'declined'].map((st) =>
+        h('a', { class: 'tab', role: 'tab', href: `#/requests?status=${st}`, 'aria-selected': String(st === reqStatus) }, st === 'all' ? t.requests.all : (t.status as any)[st], h('span', { class: 'n', text: num(counts[st] ?? 0) }))));
+      view().replaceChildren(sub, tabs, h('div', { class: 'panel overflow-clip' }, requestTable(rows)));
+      if (openId) openRequest(openId, link); else closeDrawer();
+    }
+
+    // ---------- the request drawer ----------
+    const drawer = () => $('#drawer');
+    let drawerBack = '#/requests';
+    function closeDrawer() { drawer().classList.remove('open'); $('#scrim').classList.remove('open'); }
+    function openDrawer() { drawer().classList.add('open'); $('#scrim').classList.add('open'); }
+    $('#scrim').addEventListener('click', () => { location.hash = drawerBack; });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && drawer().classList.contains('open')) location.hash = drawerBack;
+      if (e.key === '/' && !(e.target as HTMLElement).matches('input,textarea') && !$('#search-box').hidden) { e.preventDefault(); ($('#search') as HTMLInputElement).focus(); }
+    });
+
+    function openRequest(id: string, link?: { url: string; whatsappUrl: string; emailed: boolean }) {
+      const r = requests.find((x) => x.id === id);
+      if (!r) return closeDrawer();
+      const digits = r.phoneNumber.replace(/\D/g, '');
+      const update = (next: any) => { const i = requests.findIndex((x) => x.id === id); requests[i] = next; overview = null; showRequests(id); };
+      const setStatus = (btn: HTMLButtonElement, status: string) => act(btn, async () => { const { request } = await api(`/v1/admin/early-access/${id}`, { method: 'PATCH', body: { status } }); update(request); });
+      const note = h('textarea', { class: 'textarea', placeholder: t.requests.notePlaceholder }) as HTMLTextAreaElement;
+      note.value = r.adminNote ?? '';
+      note.addEventListener('change', () => act(null, async () => { const { request } = await api(`/v1/admin/early-access/${id}`, { method: 'PATCH', body: { adminNote: note.value } }); requests[requests.findIndex((x) => x.id === id)] = request; toast(t.requests.saved); }));
+
+      const approve = h('button', { class: 'btn btn-primary btn-sm justify-center' }, SVG(ICON.link), r.status === 'approved' ? t.requests.reapprove : t.requests.approve);
+      approve.addEventListener('click', () => act(approve, async () => {
+        const res = await api(`/v1/admin/early-access/${id}/approve`, { method: 'POST', body: {} });
+        requests[requests.findIndex((x) => x.id === id)] = res.request; overview = null;
+        showRequests(id, false, res);
+      }));
+      const contacted = h('button', { class: 'btn btn-secondary btn-sm justify-center', text: t.requests.markContacted });
+      contacted.addEventListener('click', () => setStatus(contacted, 'contacted'));
+      const decline = h('button', { class: 'btn btn-danger btn-sm justify-center', text: t.requests.decline });
+      decline.addEventListener('click', () => {
+        if (decline.dataset.confirm) return setStatus(decline, 'declined');
+        decline.dataset.confirm = '1'; decline.textContent = `${t.requests.decline}?`; setTimeout(() => { delete decline.dataset.confirm; decline.textContent = t.requests.decline; }, 3000);
+      });
+      const reopen = h('button', { class: 'btn btn-secondary btn-sm justify-center', text: t.requests.reopen });
+      reopen.addEventListener('click', () => setStatus(reopen, 'new'));
+
+      const linkBox = link ? h('div', { class: 'link-box' },
+        h('p', { class: 'font-medium flex items-center gap-2' }, SVG(ICON.check, 'text-[var(--ok)]'), t.requests.linkReady),
+        h('p', { class: 'text-sm text-fg-2', text: t.requests.linkBody }),
+        h('code', { text: link.url }),
+        h('div', { class: 'grid grid-cols-2 gap-2' },
+          link.whatsappUrl ? h('a', { class: 'btn btn-wa btn-sm justify-center', href: link.whatsappUrl, target: '_blank', rel: 'noopener' }, SVG(ICON.wa), t.requests.sendWhatsApp) : null,
+          h('button', { class: 'btn btn-secondary btn-sm justify-center', text: t.requests.copy, onclick: async (e: Event) => { await navigator.clipboard.writeText(link.url).catch(() => {}); (e.target as HTMLElement).textContent = t.requests.copied; } })),
+        link.emailed ? h('p', { class: 'text-xs text-muted', text: t.requests.emailed }) : null) : null;
+
+      drawer().replaceChildren(
+        h('div', { class: 'drawer-h' },
+          h('span', { class: 'avatar !h-11 !w-11 text-base', text: initials(r.name) }),
+          h('div', { class: 'min-w-0 flex-1' }, h('p', { class: 'text-lg font-semibold truncate', text: r.name }), h('p', { class: 'text-sm text-muted truncate', text: `${r.business} · ${t.kinds[r.kind] ?? r.kind}` }), h('div', { class: 'mt-2' }, pill(r.status))),
+          h('a', { class: 'icon-btn', href: `#/requests?status=${reqStatus}`, 'aria-label': t.close }, SVG(ICON.close))),
+        h('div', { class: 'drawer-b' },
+          linkBox,
+          h('section', {}, h('p', { class: 'sec-t', text: t.requests.contact }),
+            r.masked ? h('p', { class: 'masked-note' }, SVG(ICON.lock), t.masked) : h('div', { class: 'contact-row' },
+              h('a', { href: `https://wa.me/${digits}`, target: '_blank', rel: 'noopener' }, SVG(ICON.wa), t.requests.whatsapp),
+              h('a', { href: `tel:${r.phoneNumber}` }, SVG(ICON.phone), t.requests.call),
+              h('a', { href: r.email ? `mailto:${r.email}` : '#', 'aria-disabled': r.email ? null : 'true' }, SVG(ICON.mail), t.requests.email))),
+          h('section', {}, h('p', { class: 'sec-t', text: t.requests.details }),
+            h('dl', { class: 'kv' },
+              h('dt', { text: t.requests.cPhone }), h('dd', { dir: 'ltr', class: 'text-start', text: local(r.phoneNumber) }),
+              r.email ? h('dt', { text: t.requests.email }) : null, r.email ? h('dd', { dir: 'ltr', class: 'text-start break-all', text: r.email }) : null,
+              h('dt', { text: t.requests.cCity }), h('dd', { text: r.city ?? '—' }),
+              h('dt', { text: t.requests.locale }), h('dd', { text: r.locale === 'en' ? 'English' : 'العربية' }),
+              r.note ? h('dt', { text: t.requests.theirNote }) : null, r.note ? h('dd', { class: 'whitespace-pre-wrap', text: r.note }) : null)),
+          can('requests.update') ? h('section', {}, h('p', { class: 'sec-t', text: t.requests.note }), note)
+            : r.adminNote ? h('section', {}, h('p', { class: 'sec-t', text: t.requests.note }), h('p', { class: 'whitespace-pre-wrap text-sm text-fg-2', text: r.adminNote })) : null,
+          h('section', {}, h('p', { class: 'sec-t', text: t.requests.timeline }),
+            h('ol', { class: 'timeline' },
+              h('li', { class: 'done' }, h('span', { text: t.requests.tRequested }), h('time', { text: dateTime(r.createdAt) })),
+              h('li', { class: r.approvedAt ? 'done' : '' }, h('span', { text: t.requests.tApproved }), h('time', { text: r.approvedAt ? dateTime(r.approvedAt) : '—' })),
+              h('li', { class: r.claimedAt ? 'done' : '' }, h('span', { text: t.requests.tActivated }), h('time', { text: r.claimedAt ? dateTime(r.claimedAt) : '—' }))))),
+        r.status === 'activated' ? h('div', { class: 'drawer-f' }, h('p', { class: 'text-sm text-fg-2 text-center', text: t.status.activated }))
+          : (can('requests.approve') || can('requests.update')) ? h('div', { class: 'drawer-f' },
+            can('requests.approve') ? approve : null,
+            can('requests.update') ? h('div', { class: 'grid grid-cols-2 gap-2' }, r.status === 'declined' || r.status === 'contacted' ? reopen : contacted, r.status === 'declined' ? null : decline) : null)
+          : '');
+      openDrawer();
+    }
+
+    // ---------- users & businesses ----------
+    async function showUsers(fresh = false) {
+      const sub = header(t.users.title, t.users.sub);
+      if (fresh || !users.length) { loading(); users = (await api('/v1/admin/users')).users; }
+      stamp();
+      const q = ($('#search') as HTMLInputElement).value.trim().toLowerCase();
+      const rows = users.filter((u) => !q || [u.name, u.email, u.phoneNumber, local(u.phoneNumber)].some((x) => x && String(x).toLowerCase().includes(q)));
+      view().replaceChildren(sub, h('div', { class: 'panel overflow-clip' }, !rows.length ? h('p', { class: 'p-6 text-muted', text: t.users.empty }) :
+        h('table', { class: 'tbl' },
+          h('thead', {}, h('tr', {}, ...[t.users.cName, t.users.cContact, t.users.cBiz, t.users.cSecurity, t.users.cLast, t.users.cJoined].map((c) => h('th', { text: c })))),
+          h('tbody', {}, ...rows.map((u) => h('tr', {},
+            h('td', {}, h('div', { class: 'flex items-center gap-3' }, h('span', { class: 'avatar', text: initials(u.name) }),
+              h('div', { class: 'min-w-0' }, h('p', { class: 'font-medium truncate', text: u.name || '—' }),
+                h('div', { class: 'mt-1 flex gap-1.5' }, u.staff ? h('span', { class: 'tag gold', text: t.users.staff }) : null, u.earlyAccess ? h('span', { class: 'tag', text: t.users.early }) : null)))),
+            h('td', { dir: 'ltr', class: 'm-first text-start sub' }, u.email ?? local(u.phoneNumber)),
+            h('td', { 'data-hide-sm': true, text: num(u.businesses) }),
+            h('td', { 'data-hide-sm': true }, h('span', { class: `tag${u.passkeys ? ' gold' : ''}`, text: u.passkeys ? t.users.passkey : t.users.noPasskey })),
+            h('td', { class: 'm-end sub whitespace-nowrap', text: ago(u.lastActive) }),
+            h('td', { 'data-hide-sm': true, class: 'sub whitespace-nowrap', text: date(u.createdAt) })))))));
+    }
+
+    async function showBusinesses(fresh = false) {
+      const sub = header(t.businesses.title, t.businesses.sub);
+      if (fresh || !businesses.length) { loading(); businesses = (await api('/v1/admin/businesses')).businesses; }
+      stamp();
+      view().replaceChildren(sub, h('div', { class: 'panel overflow-clip' }, !businesses.length ? h('p', { class: 'p-6 text-muted', text: t.businesses.empty }) :
+        h('table', { class: 'tbl' },
+          h('thead', {}, h('tr', {}, ...[t.businesses.cName, t.businesses.cKind, t.businesses.cOwner, t.businesses.cTeam, t.businesses.cLoc, t.businesses.cCreated].map((c) => h('th', { text: c })))),
+          h('tbody', {}, ...businesses.map((b) => h('tr', {},
+            h('td', {}, h('div', { class: 'flex items-center gap-3' }, h('span', { class: 'avatar', text: initials(b.name) }), h('div', { class: 'min-w-0' }, h('p', { class: 'font-medium truncate', text: b.name }), h('p', { class: 'sub', text: b.city ?? '' })))),
+            h('td', { 'data-hide-sm': true, text: b.kind ? t.kinds[b.kind] ?? b.kind : '—' }),
+            h('td', { class: 'm-first', text: b.owner ?? '—' }),
+            h('td', { 'data-hide-sm': true, text: num(b.members) }),
+            h('td', { 'data-hide-sm': true, text: num(b.locations) }),
+            h('td', { class: 'm-end sub whitespace-nowrap', text: date(b.createdAt) })))))));
+    }
+
+    // ---------- usage: every shop, and the platform against its plan limits ----------
+    let usage: any = null, usageStatus = 'all';
+    const money = (n: number) => `${num(n)} ${lang === 'ar' ? 'د.ع' : 'IQD'}`;
+    const bytes = (b: number) => (b >= 1024 ** 3 ? `${(b / 1024 ** 3).toFixed(2)} GB` : b >= 1024 ** 2 ? `${(b / 1024 ** 2).toFixed(b >= 100 * 1024 ** 2 ? 0 : 1)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`);
+    const iso = (x: string) => `⁨${x}⁩`; // keep "10.2 MB" in one piece inside Arabic text
+    const level = (p: number) => (p >= 0.85 ? 'bad' : p >= 0.6 ? 'warn' : 'ok');
+    /** One plan limit: how much is used, a bar, and what to do about it. */
+    function meter(label: string, used: string | null, pct: number | null, hint: string, extra?: Node | null, off?: string) {
+      if (pct == null) return h('div', { class: 'panel meter off' }, h('p', { class: 'label', text: label }), h('p', { class: 'value', text: t.usage.notConnected }), h('p', { class: 'hint', text: off ?? '' }));
+      const lv = level(pct);
+      return h('div', { class: `panel meter ${lv}` },
+        h('div', { class: 'flex items-center justify-between gap-2' }, h('p', { class: 'label', text: label }), h('span', { class: `lvl ${lv}`, text: t.usage.level[lv] })),
+        h('p', { class: 'value' }, h('bdi', { text: used }), h('small', { text: ` ${Math.round(pct * 100)}%` })),
+        h('div', { class: 'track', role: 'meter', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(Math.round(pct * 100)), 'aria-label': label }, h('span', { style: `width:${Math.min(100, Math.max(1.5, pct * 100))}%` })),
+        h('p', { class: 'hint', text: hint }), extra ?? null);
+    }
+    /** 14 days of sales as a tiny bar line. */
+    function spark(xs: number[], W = 84, H = 22) {
+      const max = Math.max(1, ...xs), bw = W / xs.length;
+      const bars = xs.map((v, i) => { const hh = v ? Math.max(2, (v / max) * H) : 1; return `<rect x="${(i * bw + 1).toFixed(1)}" y="${(H - hh).toFixed(1)}" width="${(bw - 2).toFixed(1)}" height="${hh.toFixed(1)}" rx="1" fill="${v ? 'var(--s1)' : 'var(--line-strong)'}"/>`; }).join('');
+      return h('span', { class: 'spark', dir: 'ltr', html: `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">${bars}</svg>` });
+    }
+    function trend(week: number, prev: number) {
+      if (!week && !prev) return null;
+      if (!prev) return h('span', { class: 'trend up', text: '↑', title: t.usage.vsPrev });
+      const p = Math.round(((week - prev) / prev) * 100);
+      return h('span', { class: `trend ${p >= 0 ? 'up' : 'down'}`, title: t.usage.vsPrev, text: `${p >= 0 ? '↑' : '↓'} ${Math.abs(p)}%` });
+    }
+    const stPill = (st: string) => h('span', { class: `pill u-${st}`, title: t.usage.stHint[st], text: t.usage.st[st] });
+    /** The plan as a pill: trial (days left), active, grace, ended. Nothing for an old free shop. */
+    const planPill = (s: any) => !s || s.status === 'free' ? '' : h('span', { class: `pill plan-${s.status}`, text: s.status === 'trial' || s.status === 'grace' ? `${t.plan[s.status]} · ${fill(t.plan.daysLeft, { n: String(s.daysLeft ?? 0) })}` : t.plan[s.status] ?? s.status });
+    const words = (w: any) => (w ? w[lang] || w.en || w.ar : '');
+    const LIMIT_KEYS = ['users', 'devices', 'dentists', 'members', 'ai'] as const;
+    const METHODS = ['cash', 'fib', 'zaincash', 'transfer', 'other'] as const;
+
+    /** The drawer's plan section: what they're on, how much of it they use, and (billing.manage) change the plan, record
+     *  a payment, extend the trial, end it. Loads its own details (payments, usage) after the drawer opens. */
+    function planSection(x: any, onChanged: () => void) {
+      const box = h('section', { class: 'grid gap-3' }, h('p', { class: 'sec-t', text: t.plan.title }), h('div', { class: 'skeleton h-20' }));
+      api(`/v1/admin/subscriptions/${x.id}`).then((d: any) => {
+        const s = d.subscription;
+        const line = s.status === 'trial' ? fill(t.plan.trialUntil, { date: date(s.trialEndsAt) }) : (s.status === 'active' || s.status === 'grace') && s.paidUntil ? fill(t.plan.until, { date: date(s.paidUntil) }) : '';
+        const meters = LIMIT_KEYS.filter((k) => k !== 'ai' && (s.limits?.[k] != null || d.usage[k] > 0)).map((k) => h('span', { class: `chip${d.over.includes(k) ? ' bad' : ''}`, text: `${t.billing.limits[k]} ${num(d.usage[k] ?? 0)}${s.limits?.[k] != null ? ` / ${num(s.limits[k])}` : ''}` }));
+        const kids: Kid[] = [
+          h('div', { class: 'flex flex-wrap items-center gap-2' }, planPill(s) || h('span', { class: 'pill', text: t.plan.free }), s.plan ? h('b', { text: words(s.plan.name) }) : null,
+            h('span', { class: 'sub', text: [line, s.billing === 'year' ? t.billing.yearly : t.billing.monthly, s.price != null ? fill(t.billing.agreed, { v: money(s.price) }) : null].filter(Boolean).join(' · ') })),
+          meters.length ? h('div', { class: 'flex flex-wrap gap-1.5' }, ...meters) : null,
+          s.priceNote ? h('p', { class: 'sub', text: s.priceNote }) : null,
+        ];
+        if (can('billing.manage')) {
+          const send = (btn: HTMLButtonElement, path: string, body: any, method = 'PATCH') => act(btn, async () => { await api(path, { method, body }); toast(t.plan.saved); onChanged(); });
+          // the plan, the cycle, a price agreed for this business
+          const plan = h('select', { class: 'input' }, h('option', { value: '', text: '—' }), ...d.plans.map((p: any) => h('option', { value: p.id, selected: p.id === s.planId, text: `${words(p.name)} · ${money(p.priceMonth)}` }))) as HTMLSelectElement;
+          const cycle = h('select', { class: 'input' }, h('option', { value: 'month', selected: s.billing !== 'year', text: t.billing.monthly }), h('option', { value: 'year', selected: s.billing === 'year', text: t.billing.yearly })) as HTMLSelectElement;
+          const price = h('input', { class: 'input', type: 'number', min: '0', step: '1000', value: s.price ?? '', placeholder: t.billing.listPrice }) as HTMLInputElement;
+          const save = h('button', { type: 'button', class: 'btn btn-secondary btn-sm', text: t.plan.save }) as HTMLButtonElement;
+          save.addEventListener('click', () => send(save, `/v1/admin/subscriptions/${x.id}`, { planId: plan.value || null, billing: cycle.value, price: price.value === '' ? null : Number(price.value) }));
+          // a payment received: it moves paid-until on by its months
+          const months = h('select', { class: 'input' }, ...[1, 3, 6, 12].map((m) => h('option', { value: String(m), text: fill(t.billing.months, { n: num(m) }) }))) as HTMLSelectElement;
+          const method = h('select', { class: 'input' }, ...METHODS.map((m) => h('option', { value: m, text: t.billing.methods[m] }))) as HTMLSelectElement;
+          const amount = h('input', { class: 'input', type: 'number', min: '0', step: '1000' }) as HTMLInputElement;
+          const ref = h('input', { class: 'input', maxlength: '120', placeholder: t.billing.reference }) as HTMLInputElement;
+          const suggest = () => { const p = d.plans.find((z: any) => z.id === (plan.value || s.planId)); const m = Number(months.value); if (p) amount.value = String(price.value ? Number(price.value) * (cycle.value === 'year' ? Math.max(1, m / 12) : m) : m >= 12 && cycle.value === 'year' ? p.priceYear * (m / 12) : p.priceMonth * m); };
+          [plan, months, cycle, price].forEach((el) => el.addEventListener('change', suggest)); suggest();
+          const pay = h('button', { type: 'button', class: 'btn btn-primary btn-sm', text: t.billing.record }) as HTMLButtonElement;
+          pay.addEventListener('click', () => send(pay, `/v1/admin/subscriptions/${x.id}/payments`, { amount: Number(amount.value) || 0, months: Number(months.value), method: method.value, reference: ref.value || null, planId: plan.value || s.planId || null, billing: cycle.value, price: price.value === '' ? null : Number(price.value) }, 'POST'));
+          const b = (label: string, body: any) => { const el = h('button', { type: 'button', class: 'btn btn-secondary btn-sm', text: label }) as HTMLButtonElement; el.addEventListener('click', () => send(el, `/v1/admin/subscriptions/${x.id}`, body)); return el; };
+          const end = h('button', { type: 'button', class: 'btn btn-secondary btn-sm text-bad', text: t.plan.end }) as HTMLButtonElement;
+          end.addEventListener('click', () => { if (end.dataset.sure) send(end, `/v1/admin/subscriptions/${x.id}`, { action: 'end' }); else { end.dataset.sure = '1'; end.textContent = t.plan.confirmEnd; } });
+          const f = (label: string, el: Node) => h('label', { class: 'grid gap-1 text-xs text-muted' }, label, el);
+          kids.push(
+            h('div', { class: 'grid grid-cols-3 items-end gap-2' }, f(t.billing.plan, plan), f(t.billing.cycle, cycle), f(t.billing.price, price)), h('div', {}, save),
+            h('div', { class: 'pay-box' }, h('p', { class: 'text-sm font-medium', text: t.billing.payTitle }),
+              h('div', { class: 'grid grid-cols-2 gap-2' }, f(t.billing.amount, amount), f(t.billing.forMonths, months), f(t.billing.method, method), f(t.billing.reference, ref)), pay),
+            h('div', { class: 'flex flex-wrap gap-2' }, b(t.plan.extend, { action: 'extend', days: 7 }), b(t.billing.extend30, { action: 'extend', days: 30 }), b(t.plan.makeFree, { action: 'free' }), end));
+        }
+        if (d.payments.length) kids.push(h('div', {}, h('p', { class: 'sec-t', text: t.billing.payments }),
+          h('ul', { class: 'pay-list' }, ...d.payments.map((p: any) => h('li', {}, h('span', { text: `${date(p.createdAt)} · ${t.billing.methods[p.method] ?? p.method}${p.reference ? ` · ${p.reference}` : ''}` }), h('b', { text: money(p.amount) }))))));
+        const open = d.requests.find((r: any) => r.status === 'new');
+        if (open) kids.splice(1, 0, h('p', { class: 'nudge', text: fill(t.billing.wants, { plan: open.planId ? words(d.plans.find((p: any) => p.id === open.planId)?.name) : t.billing.enterprise }) + (open.message ? ` · “${open.message}”` : '') }));
+        box.replaceChildren(h('p', { class: 'sec-t', text: t.plan.title }), ...(kids.filter(Boolean) as Node[]));
+      }).catch(() => box.replaceChildren(h('p', { class: 'sub', text: '—' })));
+      return box;
+    }
+
+    // ---------- billing: the money, requests, trials ending, who is late, and the price list ----------
+    let billing: any = null;
+    async function showBilling(fresh = false) {
+      drawerBack = '#/billing';
+      const sub = header(t.billing.title, t.billing.sub);
+      if (fresh || !billing) { loading(); billing = await api('/v1/admin/billing'); }
+      stamp();
+      const B = billing;
+      const kpi = (label: string, value: string, delta = '') => h('div', { class: 'panel kpi' }, h('p', { class: 'label', text: label }), h('p', { class: 'value', text: value }), delta ? h('p', { class: 'delta', text: delta }) : null);
+      const bizLink = (id: string, name: string) => h('a', { class: 'font-medium hover:underline', href: `#/usage?id=${id}`, text: name });
+      const list = (title: string, rows: Node[], empty: string) => h('section', { class: 'panel' }, h('div', { class: 'panel-h' }, h('h2', { text: title })),
+        rows.length ? h('ul', { class: 'bill-list' }, ...rows) : h('p', { class: 'sub px-5 pb-5', text: empty }));
+      const planName = (id: string | null) => (id ? words(B.plans.find((p: any) => p.id === id)?.name) : t.billing.enterprise);
+      put(sub,
+        h('section', { class: 'kpis' },
+          kpi(t.billing.mrr, money(B.mrr), t.billing.mrrHint), kpi(t.billing.collected, money(B.collected30), t.billing.last30),
+          kpi(t.billing.paying, num(B.counts.active + B.counts.grace), B.counts.grace ? fill(t.billing.inGrace, { n: num(B.counts.grace) }) : ''), kpi(t.billing.trials, num(B.counts.trial), fill(t.billing.endedN, { n: num(B.counts.ended) }))),
+        h('section', { class: 'panel mt-4 overflow-clip' }, h('table', { class: 'tbl' },
+          h('thead', {}, h('tr', {}, ...[t.billing.edition, t.billing.paying, t.billing.trials, t.billing.mrr].map((x) => h('th', { text: x })))),
+          h('tbody', {}, ...B.byEdition.map((e: any) => h('tr', {}, h('td', { text: t.kinds[e.edition] ?? e.edition }), h('td', { text: num(e.paying) }), h('td', { text: num(e.trial) }), h('td', { text: money(e.mrr) })))))),
+        h('div', { class: 'mt-4 grid gap-4 xl:grid-cols-2' },
+          list(t.billing.requests, B.requests.map((r: any) => h('li', {}, h('div', { class: 'min-w-0 flex-1' }, bizLink(r.organizationId, r.business),
+            h('p', { class: 'sub', text: [planName(r.planId), r.billing === 'year' ? t.billing.yearly : t.billing.monthly, r.user, local(r.phone), ago(r.createdAt)].filter((v) => v && v !== '—').join(' · ') }), r.message ? h('p', { class: 'text-sm mt-1', text: `“${r.message}”` }) : null),
+            can('billing.manage') ? (() => { const no = h('button', { type: 'button', class: 'btn btn-secondary btn-sm', text: t.billing.dismiss }) as HTMLButtonElement;
+              no.addEventListener('click', () => act(no, async () => { await api(`/v1/admin/plan-requests/${r.id}`, { method: 'PATCH', body: { status: 'dismissed' } }); showBilling(true); })); return no; })() : null)), t.billing.noRequests),
+          list(t.billing.trialsEnding, B.trialsEnding.map((s: any) => h('li', {}, h('div', { class: 'min-w-0 flex-1' }, bizLink(s.id, s.name), h('p', { class: 'sub', text: `${t.kinds[s.edition] ?? s.edition} · ${fill(t.plan.trialUntil, { date: date(s.trialEndsAt) })}` })), planPill(s))), t.billing.none),
+          list(t.billing.dueSoon, B.dueSoon.map((s: any) => h('li', {}, h('div', { class: 'min-w-0 flex-1' }, bizLink(s.id, s.name), h('p', { class: 'sub', text: `${words(s.plan?.name)} · ${fill(t.plan.until, { date: date(s.paidUntil) })}` })), planPill(s))), t.billing.none),
+          list(t.billing.recent, B.payments.map((p: any) => h('li', {}, h('div', { class: 'min-w-0 flex-1' }, bizLink(p.organizationId, p.business), h('p', { class: 'sub', text: `${date(p.createdAt)} · ${t.billing.methods[p.method] ?? p.method} · ${fill(t.billing.months, { n: num(p.months) })}` })), h('b', { text: money(p.amount) }))), t.billing.none)),
+        await plansPanel());
+    }
+
+    /** The price list, per system: edit a plan's prices and limits, hide it, mark one "most chosen", add one. */
+    async function plansPanel() {
+      const { plans } = await api('/v1/admin/plans');
+      const by = (e: string) => plans.filter((p: any) => p.edition === e);
+      return h('section', { class: 'mt-4 grid gap-4' }, h('div', { class: 'flex items-end justify-between gap-3' }, h('div', {}, h('h2', { class: 'text-lg font-semibold', text: t.billing.plans }), h('p', { class: 'sub', text: t.billing.plansHint })),
+        can('billing.manage') ? (() => { const add = h('button', { type: 'button', class: 'btn btn-primary btn-sm', text: t.billing.addPlan }) as HTMLButtonElement; add.addEventListener('click', () => planDrawer(null)); return add; })() : null),
+        ...['store', 'dental', 'gym'].map((e) => h('div', { class: 'panel overflow-clip' }, h('div', { class: 'panel-h' }, h('h2', { text: t.kinds[e] ?? e })),
+          h('table', { class: 'tbl' }, h('thead', {}, h('tr', {}, ...[t.billing.plan, t.billing.perMonth, t.billing.perYear, t.billing.limitsT, t.billing.subscribers, ''].map((x) => h('th', { text: x })))),
+            h('tbody', {}, ...by(e).map((p: any) => {
+              const tr = h('tr', { class: can('billing.manage') ? 'click' : '' },
+                h('td', {}, h('b', { text: words(p.name) }), p.popular ? h('span', { class: 'pill ms-2', text: t.billing.popular }) : null, !p.public ? h('span', { class: 'pill ms-2', text: t.billing.hidden }) : null, !p.active ? h('span', { class: 'pill ms-2', text: t.billing.retired }) : null,
+                  h('p', { class: 'sub', text: words(p.tagline) })),
+                h('td', { text: money(p.priceMonth) }), h('td', { text: money(p.priceYear) }),
+                h('td', { class: 'sub', text: LIMIT_KEYS.filter((k) => p.limits[k] != null).map((k) => `${t.billing.limits[k]} ${num(p.limits[k])}`).join(' · ') || t.billing.noLimits }),
+                h('td', { text: num(p.subscribers) }), h('td', {}, can('billing.manage') ? SVG('<path d="m9 6 6 6-6 6"/>') : ''));
+              if (can('billing.manage')) tr.addEventListener('click', () => planDrawer(p));
+              return tr;
+            }))))));
+    }
+
+    function planDrawer(p: any) {
+      const field = (label: string, el: Node, hint = '') => h('label', { class: 'grid gap-1 text-sm' }, h('span', { class: 'text-muted text-xs', text: label }), el, hint ? h('span', { class: 'sub', text: hint }) : null);
+      const inp = (v: any, attrs: Record<string, any> = {}) => h('input', { class: 'input', value: v ?? '', ...attrs }) as HTMLInputElement;
+      const edition = h('select', { class: 'input', disabled: !!p }, ...['store', 'dental', 'gym'].map((e) => h('option', { value: e, selected: p?.edition === e, text: t.kinds[e] ?? e }))) as HTMLSelectElement;
+      const code = inp(p?.code, { disabled: !!p, placeholder: 'starter', dir: 'ltr' });
+      const nameAr = inp(p?.name?.ar), nameEn = inp(p?.name?.en, { dir: 'ltr' }), nameCkb = inp(p?.name?.ckb);
+      const tagAr = inp(p?.tagline?.ar), tagEn = inp(p?.tagline?.en, { dir: 'ltr' }), tagCkb = inp(p?.tagline?.ckb);
+      const month = inp(p?.priceMonth, { type: 'number', min: '0', step: '1000', dir: 'ltr' }), year = inp(p?.priceYear, { type: 'number', min: '0', step: '1000', dir: 'ltr' });
+      month.addEventListener('input', () => { if (!p) year.value = String((Number(month.value) || 0) * 10); });
+      const lim = Object.fromEntries(LIMIT_KEYS.map((k) => [k, inp(p?.limits?.[k], { type: 'number', min: '0', dir: 'ltr', placeholder: t.billing.noLimit })])) as Record<string, HTMLInputElement>;
+      const chk = (label: string, on: boolean) => { const c = h('input', { type: 'checkbox', checked: on }) as HTMLInputElement; return { c, el: h('label', { class: 'flex items-center gap-2 text-sm' }, c, label) }; };
+      const popular = chk(t.billing.popular, !!p?.popular), pub = chk(t.billing.public, p ? p.public : true), active = chk(t.billing.active, p ? p.active : true);
+      const sort = inp(p?.sort ?? 0, { type: 'number', dir: 'ltr' });
+      const err = h('p', { class: 'text-sm text-bad' });
+      const save = h('button', { type: 'button', class: 'btn btn-primary w-full justify-center', text: t.plan.save }) as HTMLButtonElement;
+      save.addEventListener('click', () => act(save, async () => {
+        const body: any = { name: { ar: nameAr.value, en: nameEn.value, ckb: nameCkb.value || undefined }, tagline: tagAr.value || tagEn.value ? { ar: tagAr.value, en: tagEn.value, ckb: tagCkb.value || undefined } : null,
+          priceMonth: Number(month.value), priceYear: Number(year.value), limits: Object.fromEntries(LIMIT_KEYS.filter((k) => lim[k].value !== '').map((k) => [k, Number(lim[k].value)])),
+          popular: popular.c.checked, public: pub.c.checked, active: active.c.checked, sort: Number(sort.value) || 0 };
+        try {
+          if (p) await api(`/v1/admin/plans/${p.id}`, { method: 'PATCH', body });
+          else await api('/v1/admin/plans', { body: { ...body, edition: edition.value, code: code.value.trim() } });
+        } catch (e: any) { err.textContent = t.billing.errors[e?.code] ?? e?.code ?? 'Error'; throw e; }
+        toast(t.plan.saved); closeDrawer(); showBilling(true);
+      }));
+      drawer().replaceChildren(
+        h('div', { class: 'drawer-h' }, h('div', { class: 'min-w-0 flex-1' }, h('p', { class: 'text-lg font-semibold', text: p ? words(p.name) : t.billing.addPlan }), h('p', { class: 'sub', text: p ? t.kinds[p.edition] ?? p.edition : t.billing.plansHint })),
+          h('a', { class: 'icon-btn', href: '#/billing', 'aria-label': t.close, onclick: (e: Event) => { e.preventDefault(); closeDrawer(); } }, SVG(ICON.close))),
+        h('div', { class: 'drawer-b grid gap-4' },
+          h('div', { class: 'grid grid-cols-2 gap-3' }, field(t.billing.edition, edition), field(t.billing.code, code)),
+          h('div', { class: 'grid grid-cols-3 gap-3' }, field('الاسم', nameAr), field('Name', nameEn), field('ناو', nameCkb)),
+          h('div', { class: 'grid grid-cols-3 gap-3' }, field('الوصف', tagAr), field('Tagline', tagEn), field('وەسف', tagCkb)),
+          h('div', { class: 'grid grid-cols-2 gap-3' }, field(t.billing.perMonth, month), field(t.billing.perYear, year, t.billing.yearHint)),
+          h('div', {}, h('p', { class: 'sec-t', text: t.billing.limitsT }), h('div', { class: 'grid grid-cols-3 gap-3' }, ...LIMIT_KEYS.map((k) => field(t.billing.limits[k], lim[k]))), h('p', { class: 'sub mt-1', text: t.billing.limitsHint })),
+          h('div', { class: 'flex flex-wrap gap-4' }, popular.el, pub.el, active.el), field(t.billing.sort, sort), err),
+        h('div', { class: 'drawer-f' }, save));
+      openDrawer();
+    }
+
+    async function showUsage(openId: string | null, fresh = false) {
+      drawerBack = `#/usage?s=${usageStatus}`;
+      const sub = header(t.usage.title, t.usage.sub);
+      if (fresh || !usage) { loading(); usage = await api('/v1/admin/usage'); }
+      stamp();
+      const u = usage, P = u.platform, T = u.totals;
+      const cf = P.requests, neon = P.compute;
+      const workers = cf ? h('p', { class: 'hint', text: Object.entries(cf.byWorker as Record<string, number>).sort((a, b) => b[1] - a[1]).map(([w, n]) => `${w.replace(/^hemlo-/, '')} ${num(n)}`).join(' · ') }) : null;
+      const meters = h('section', { class: 'meters' },
+        meter(t.usage.mDb, bytes(P.database.bytes), P.database.bytes / P.database.limit, fill(t.usage.mDbHint, { limit: iso(bytes(P.database.limit)), shops: iso(bytes(P.database.shopBytes)), demos: iso(bytes(P.database.demoBytes)) })),
+        meter(t.usage.mCompute, neon ? num(neon.cuHours) : null, neon ? neon.cuHours / neon.limit : null, neon ? fill(t.usage.mComputeHint, { limit: num(neon.limit) }) : '', null, t.usage.connectNeon),
+        meter(t.usage.mRequests, cf ? num(cf.today) : null, cf ? cf.today / cf.limit : null, cf ? fill(t.usage.mRequestsHint, { limit: num(cf.limit) }) : '', workers, t.usage.connectCf),
+        meter(t.usage.mDemos, num(P.demos.active), P.demos.active / P.demos.limit, fill(t.usage.mDemosHint, { limit: num(P.demos.limit), today: num(P.demos.today) })));
+      const kpi = (label: string, value: string, delta: string, attention = false) =>
+        h('div', { class: `panel kpi${attention ? ' attention' : ''}` }, h('p', { class: 'label', text: label }), h('p', { class: 'value', text: value }), h('p', { class: 'delta', text: delta }));
+      const needCall = T.byStatus.quiet + T.byStatus.asleep;
+      const kpis = h('section', { class: 'kpis mt-4' },
+        kpi(t.usage.kShops, num(T.shops), fill(t.usage.kShopsHint, { active: num(T.activeToday), week: num(T.active7) })),
+        kpi(t.usage.kSales, num(T.salesToday), fill(t.usage.kSalesHint, { n: money(T.revenueToday) })),
+        kpi(t.usage.kMonth, money(T.revenue30), fill(t.usage.kMonthHint, { n: num(T.sales30) })),
+        kpi(t.usage.kQuiet, num(needCall), t.usage.kQuietHint, needCall > 0));
+      const series = u.series as { day: string; sales: number; shops: number; revenue: number }[];
+      const chartPanel = h('section', { class: 'panel chart-panel mt-4' },
+        h('div', { class: 'panel-h flex-wrap' }, h('div', {}, h('h2', { text: t.usage.chart }), h('p', { text: t.usage.chartSub })),
+          h('div', { class: 'legend' }, h('span', {}, h('i', { style: 'background:var(--s1)' }), t.usage.sSales, h('b', { text: num(T.sales30) })))),
+        chart(series.map((x) => ({ day: x.day, n: x.sales })), null, { labels: [t.usage.sSales, null], aria: t.usage.chart,
+          extra: (i) => `${t.usage.sShops}: ${num(series[i].shops)}<br>${t.usage.sRevenue}: ${money(series[i].revenue)}` }));
+
+      const q = ($('#search') as HTMLInputElement).value.trim().toLowerCase();
+      const rows = (u.shops as any[]).filter((x) => (usageStatus === 'all' || x.status === usageStatus) && (!q || [x.name, x.owner, x.city].some((v) => v && String(v).toLowerCase().includes(q))));
+      const tabs = h('div', { class: 'tabs mb-3 mt-8', role: 'tablist' }, ...['all', 'active', 'quiet', 'asleep', 'new'].map((st) =>
+        h('a', { class: 'tab', role: 'tab', href: `#/usage?s=${st}`, 'aria-selected': String(st === usageStatus) }, st === 'all' ? t.usage.all : t.usage.st[st], h('span', { class: 'n', text: num(st === 'all' ? T.shops : T.byStatus[st] ?? 0) }))));
+      const table = !u.shops.length ? h('p', { class: 'p-6 text-muted', text: t.usage.empty }) : !rows.length ? h('p', { class: 'p-6 text-muted', text: t.usage.none }) :
+        h('table', { class: 'tbl' },
+          h('thead', {}, h('tr', {}, ...[t.usage.cShop, t.usage.cStatus, t.usage.cLast, t.usage.cToday, t.usage.cWeek, t.usage.cMonth, t.usage.cTrend, t.usage.cSize].map((c) => h('th', { text: c })))),
+          h('tbody', {}, ...rows.map((x) => h('tr', { class: 'click', onclick: () => (location.hash = `#/usage?s=${usageStatus}&id=${x.id}`) },
+            h('td', {}, h('div', { class: 'flex items-center gap-3' }, h('span', { class: 'avatar', text: initials(x.name) }),
+              h('div', { class: 'min-w-0' }, h('p', { class: 'font-medium truncate', text: x.name }), h('p', { class: 'sub truncate', text: [x.kind ? t.kinds[x.kind] ?? x.kind : null, x.city].filter(Boolean).join(' · ') })))),
+            h('td', { class: 'm-end' }, stPill(x.status), ' ', planPill(x.subscription)),
+            h('td', { class: 'm-first sub whitespace-nowrap', text: x.lastSaleAt ? ago(x.lastSaleAt) : t.usage.never }),
+            h('td', { class: 'num', text: num(x.today) }),
+            h('td', { class: 'num whitespace-nowrap' }, num(x.week), ' ', trend(x.week, x.prevWeek)),
+            h('td', { 'data-hide-sm': true, class: 'num whitespace-nowrap', text: money(x.revenueMonth) }),
+            h('td', { 'data-hide-sm': true }, spark(x.spark)),
+            h('td', { 'data-hide-sm': true, class: 'sub whitespace-nowrap' }, h('bdi', { text: bytes(x.bytes) }))))));
+      view().replaceChildren(sub,
+        h('div', { class: 'sec-head' }, h('h2', { text: t.usage.limits }), h('p', { text: t.usage.limitsSub })), meters, kpis, chartPanel,
+        tabs, h('div', { class: 'panel overflow-clip' }, table));
+      if (openId) openShop(openId); else closeDrawer();
+    }
+
+    function openShop(id: string) {
+      const x = usage?.shops.find((s: any) => s.id === id);
+      if (!x) return closeDrawer();
+      const digits = (x.ownerPhone ?? '').replace(/\D/g, '');
+      drawer().replaceChildren(
+        h('div', { class: 'drawer-h' },
+          h('span', { class: 'avatar !h-11 !w-11 text-base', text: initials(x.name) }),
+          h('div', { class: 'min-w-0 flex-1' }, h('p', { class: 'text-lg font-semibold truncate', text: x.name }),
+            h('p', { class: 'text-sm text-muted truncate', text: [x.kind ? t.kinds[x.kind] ?? x.kind : null, x.city].filter(Boolean).join(' · ') }), h('div', { class: 'mt-2' }, stPill(x.status))),
+          h('a', { class: 'icon-btn', href: drawerBack, 'aria-label': t.close }, SVG(ICON.close))),
+        h('div', { class: 'drawer-b' },
+          x.status !== 'active' ? h('p', { class: 'nudge', text: t.usage.nudge }) : null,
+          planSection(x, async () => { usage = await api('/v1/admin/usage'); billing = null; showUsage(x.id); }),
+          h('section', { class: 'mini-kpis' },
+            ...[[t.usage.cToday, num(x.today)], [t.usage.cWeek, num(x.week)], [t.usage.cMonth, num(x.month)], [t.usage.revenueMonth, money(x.revenueMonth)]].map(([k, v]) =>
+              h('div', {}, h('p', { class: 'k', text: k }), h('p', { class: 'v', text: v })))),
+          h('section', {}, h('p', { class: 'sec-t', text: t.usage.cTrend }), h('div', { class: 'spark-lg' }, spark(x.spark, 420, 64))),
+          h('section', {}, h('p', { class: 'sec-t', text: t.requests.details }),
+            h('dl', { class: 'kv' },
+              h('dt', { text: t.usage.owner }), h('dd', { text: x.owner ?? '—' }),
+              h('dt', { text: t.usage.phone }), h('dd', { dir: 'ltr', class: 'text-start', text: local(x.ownerPhone) }),
+              h('dt', { text: t.usage.cLast }), h('dd', { text: x.lastSaleAt ? dateTime(x.lastSaleAt) : t.usage.never }),
+              h('dt', { text: t.usage.lastSeen }), h('dd', { text: x.lastSeenAt ? ago(x.lastSeenAt) : '—' }),
+              h('dt', { text: t.usage.created }), h('dd', { text: date(x.createdAt) }),
+              h('dt', { text: t.usage.allSales }), h('dd', { text: num(x.allSales) }),
+              h('dt', { text: t.usage.products }), h('dd', { text: num(x.products) }),
+              h('dt', { text: t.usage.customers }), h('dd', { text: num(x.customers) }),
+              h('dt', { text: t.usage.devices }), h('dd', { text: num(x.devices) }),
+              h('dt', { text: t.usage.members }), h('dd', { text: num(x.members) }),
+              h('dt', { text: t.usage.space }), h('dd', {}, h('bdi', { text: bytes(x.bytes) }))))),
+        !x.masked && digits ? h('div', { class: 'drawer-f' }, h('div', { class: 'grid grid-cols-2 gap-2' },
+          h('a', { class: 'btn btn-wa btn-sm justify-center', href: `https://wa.me/${digits}`, target: '_blank', rel: 'noopener' }, SVG(ICON.wa), t.usage.whatsapp),
+          h('a', { class: 'btn btn-secondary btn-sm justify-center', href: `tel:${x.ownerPhone}` }, SVG(ICON.phone), t.usage.call))) : '');
+      openDrawer();
+    }
+
+    // ---------- team: members, invites, roles ----------
+    let team: { members: any[]; invites: any[] } | null = null;
+    const ROLE_ORDER = ['admin', 'onboarding', 'support', 'analyst'] as const;
+    const GROUPS: [string, StaffPermission[]][] = [
+      ['general', ['overview.view', 'usage.view', 'activity.view']], ['requests', ['requests.view', 'requests.update', 'requests.approve']],
+      ['people', ['people.contact', 'users.view', 'businesses.view', 'billing.manage']], ['team', ['team.view', 'team.manage']],
+    ];
+    const rolePill = (role: string) => h('span', { class: `role-pill ${role}`, text: t.roles[role] ?? role });
+    /** Ten small marks, one per permission, grouped: a whole role at a glance. */
+    const permDots = (list: string[]) => h('span', { class: 'perm-dots', title: list.map((p) => t.perms[p]?.[0] ?? p).join(' · ') },
+      ...GROUPS.map(([g, ps]) => h('span', { class: `g ${g}` }, ...ps.map((p) => h('i', { class: list.includes(p) ? 'on' : '' })))));
+    const accessText = (m: any) => (m.accessUntil ? fill(t.team.until, { date: date(m.accessUntil) }) : t.team.noEnd);
+
+    async function showTeam(openId: string | null, fresh = false) {
+      drawerBack = '#/team';
+      const sub = header(t.team.title, t.team.sub);
+      if (fresh || !team) { loading(); team = await api('/v1/admin/team'); }
+      stamp();
+      const { members, invites } = team!;
+      const head = h('div', { class: 'mb-6 flex flex-wrap items-end justify-between gap-3' }, sub,
+        can('team.manage') ? h('a', { class: 'btn btn-primary btn-sm', href: '#/team?id=invite' }, SVG(ICON.plus), t.team.invite) : null);
+      sub.classList.remove('mb-6');
+      const table = h('table', { class: 'tbl' },
+        h('thead', {}, h('tr', {}, ...[t.team.cMember, t.team.cRole, t.team.permissions, t.team.cAccess, t.team.cLast].map((c) => h('th', { text: c })))),
+        h('tbody', {}, ...members.map((m) => h('tr', { class: 'click', onclick: () => (location.hash = `#/team?id=${m.userId}`) },
+          h('td', {}, h('div', { class: 'flex items-center gap-3' }, h('span', { class: `avatar${m.founder ? ' founder' : ''}`, text: initials(m.name || m.email || '·') }),
+            h('div', { class: 'min-w-0' }, h('p', { class: 'font-medium truncate' }, m.name || m.email, m.you ? h('span', { class: 'you', text: ` · ${t.team.you}` }) : null),
+              h('p', { class: 'sub truncate', text: [m.title, m.email].filter(Boolean).join(' · ') })))),
+          h('td', { class: 'm-end' }, rolePill(m.role)),
+          h('td', { class: 'm-first' }, permDots(m.permissions)),
+          h('td', { 'data-hide-sm': true }, m.state === 'active' ? h('span', { class: 'sub', text: accessText(m) }) : h('span', { class: `pill ${m.state === 'suspended' ? 'contacted' : 'declined'}`, text: t.team.state[m.state] })),
+          h('td', { 'data-hide-sm': true, class: 'sub whitespace-nowrap' }, m.passkeys ? ago(m.lastActive) : h('span', { class: 'tag', text: t.team.noPasskey }))))));
+
+      const pending = invites.length ? h('section', { class: 'panel mt-4' },
+        h('div', { class: 'panel-h' }, h('h2', { text: t.team.pending })),
+        h('ul', { class: 'invite-list' }, ...invites.map((i) => {
+          const cancel = h('button', { class: 'btn btn-secondary btn-sm', text: t.team.cancel });
+          cancel.addEventListener('click', () => act(cancel, async () => { await api(`/v1/admin/team/invites/${i.id}`, { method: 'DELETE' }); toast(t.team.canceled); await showTeam(null, true); }));
+          return h('li', {}, h('span', { class: 'avatar' }, SVG(ICON.mail)),
+            h('div', { class: 'min-w-0 flex-1' }, h('p', { class: 'font-medium truncate', dir: 'ltr', text: i.email }), h('p', { class: 'sub', text: fill(t.team.expires, { date: date(i.expiresAt) }) })),
+            rolePill(i.role), cancel);
+        }))) : null;
+
+      const matrix = h('section', { class: 'panel mt-4 overflow-clip' },
+        h('div', { class: 'panel-h' }, h('div', {}, h('h2', { text: t.team.matrix }), h('p', { text: t.team.matrixSub }))),
+        h('div', { class: 'overflow-x-auto' }, h('table', { class: 'matrix' },
+          h('thead', {}, h('tr', {}, h('th', {}), ...ROLE_ORDER.map((r) => h('th', { title: t.roleDesc[r] }, rolePill(r), h('small', { text: t.roleDesc[r] }))))),
+          h('tbody', {}, ...GROUPS.flatMap(([g, ps]) => [
+            h('tr', { class: 'grp' }, h('td', { colspan: ROLE_ORDER.length + 1, text: t.permGroups[g] })),
+            ...ps.map((p) => h('tr', {}, h('td', {}, h('p', { text: t.perms[p][0] }), h('p', { class: 'sub', text: t.perms[p][1] })),
+              ...ROLE_ORDER.map((r) => h('td', { class: 'c' }, (STAFF_ROLES[r] as readonly string[]).includes(p) ? SVG(ICON.check, 'yes') : h('span', { class: 'no', text: '—' }))))),
+          ])))));
+
+      put(head, h('div', { class: 'panel overflow-clip' }, table), pending, matrix);
+      if (openId === 'invite' && can('team.manage')) inviteDrawer();
+      else if (openId) openMember(openId); else closeDrawer();
+    }
+
+    /** Role cards + a grouped checklist. Only permissions you hold can be ticked; implied ones follow along. */
+    function permEditor(initial: string[]) {
+      let cur = normalizePermissions(initial);
+      const cards = h('div', { class: 'role-cards' });
+      const list = h('div', { class: 'perm-list' });
+      const render = () => {
+        const role = roleFor(cur);
+        cards.replaceChildren(...[...ROLE_ORDER, 'custom' as const].map((r) => {
+          const set = r === 'custom' ? null : normalizePermissions(STAFF_ROLES[r]);
+          const allowed = !set || set.every(can);
+          return h('button', { type: 'button', class: `role-card${role === r ? ' on' : ''}`, disabled: !allowed || r === 'custom' ? true : null, 'aria-pressed': String(role === r),
+            onclick: () => { if (set) { cur = set; render(); } } }, h('b', { text: t.roles[r] }), h('span', { text: t.roleDesc[r] }));
+        }));
+        list.replaceChildren(...GROUPS.map(([g, ps]) => h('fieldset', {}, h('legend', { text: t.permGroups[g] }), ...ps.map((p) => {
+          const box = h('input', { type: 'checkbox', checked: cur.includes(p) ? true : null, disabled: can(p) ? null : true }) as HTMLInputElement;
+          box.addEventListener('change', () => {
+            if (box.checked) cur = normalizePermissions([...cur, p]);
+            else cur = cur.filter((x) => x !== p && !(PERMISSION_IMPLIES[x as StaffPermission] ?? []).includes(p));
+            render();
+          });
+          return h('label', { class: `perm${can(p) ? '' : ' locked'}` }, box, h('span', {}, h('b', { text: t.perms[p][0] }), h('small', { text: can(p) ? t.perms[p][1] : `${t.perms[p][1]} · ${t.team.notYours}` })));
+        }))));
+      };
+      render();
+      return { el: h('div', { class: 'grid gap-4' }, h('section', {}, h('p', { class: 'sec-t', text: t.team.role }), cards), h('section', {}, h('p', { class: 'sec-t', text: t.team.permissions }), list)), get: () => cur };
+    }
+
+    /** Chips: no end / 7 / 30 / 90 days. */
+    function accessPicker(initial: number | null) {
+      let val = initial;
+      const wrap = h('div', { class: 'chips' });
+      const render = () => wrap.replaceChildren(...[null, 7, 30, 90].map((d) => h('button', { type: 'button', class: `chip${val === d ? ' on' : ''}`, 'aria-pressed': String(val === d), text: d ? fill(t.team.days, { n: d }) : t.team.forever, onclick: () => { val = d; render(); } })));
+      render();
+      return { el: wrap, get: () => val };
+    }
+    const field = (label: string, input: HTMLElement, optional = false) => h('label', { class: 'field' }, h('span', {}, label, optional ? h('small', { text: ` · ${t.team.optional}` }) : null), input);
+    const apiMessage = (e: unknown) => (e instanceof ApiError ? t.apiErrors[e.code] : null) ?? t.errors.generic;
+
+    function inviteDrawer() {
+      const email = h('input', { class: 'input', type: 'email', dir: 'ltr', autocomplete: 'off', required: true, placeholder: 'name@hemlohq.com' }) as HTMLInputElement;
+      const name = h('input', { class: 'input', autocomplete: 'off' }) as HTMLInputElement;
+      const title = h('input', { class: 'input', autocomplete: 'off', placeholder: t.team.titlePh }) as HTMLInputElement;
+      const start = normalizePermissions(STAFF_ROLES.onboarding).every(can) ? STAFF_ROLES.onboarding : [...perms].filter((p) => p !== 'team.manage');
+      const editor = permEditor(start as string[]);
+      const access = accessPicker(null);
+      let mailLang: Lang = lang;
+      const langs = h('div', { class: 'chips' });
+      const renderLangs = () => langs.replaceChildren(...(['ar', 'en'] as Lang[]).map((l) => h('button', { type: 'button', class: `chip${mailLang === l ? ' on' : ''}`, text: l === 'ar' ? 'العربية' : 'English', onclick: () => { mailLang = l; renderLangs(); } })));
+      renderLangs();
+      const err = h('p', { class: 'form-error', role: 'alert', hidden: true });
+      const send = h('button', { class: 'btn btn-primary btn-sm justify-center', type: 'submit' }, SVG(ICON.mail), t.team.send);
+      const form = h('form', { class: 'contents' });
+      form.addEventListener('submit', (e) => {
+        e.preventDefault(); err.hidden = true;
+        act(send, async () => {
+          try {
+            const res = await api('/v1/admin/team/invites', { body: { email: email.value, name: name.value, title: title.value, permissions: editor.get(), accessDays: access.get(), locale: mailLang } });
+            team = null; inviteSent(res);
+          } catch (x) { err.textContent = apiMessage(x); err.hidden = false; }
+        });
+      });
+      form.append(
+        h('div', { class: 'drawer-h' }, h('span', { class: 'avatar !h-11 !w-11' }, SVG(ICON.plus)),
+          h('div', { class: 'min-w-0 flex-1' }, h('p', { class: 'text-lg font-semibold', text: t.team.inviteTitle }), h('p', { class: 'text-sm text-muted', text: t.team.sub })),
+          h('a', { class: 'icon-btn', href: '#/team', 'aria-label': t.close }, SVG(ICON.close))),
+        h('div', { class: 'drawer-b' },
+          h('section', { class: 'grid gap-3' }, field(t.team.email, email), h('div', { class: 'grid grid-cols-2 gap-3' }, field(t.team.name, name, true), field(t.team.titleField, title, true))),
+          editor.el,
+          h('section', {}, h('p', { class: 'sec-t', text: t.team.accessLen }), access.el),
+          h('section', {}, h('p', { class: 'sec-t', text: t.team.emailLang }), langs), err),
+        h('div', { class: 'drawer-f' }, send));
+      drawer().replaceChildren(form);
+      openDrawer(); setTimeout(() => email.focus(), 300);
+    }
+
+    function inviteSent(res: any) {
+      const copy = h('button', { class: 'btn btn-secondary btn-sm justify-center', type: 'button' }, SVG(ICON.link), t.team.copy);
+      copy.addEventListener('click', async () => { await navigator.clipboard.writeText(res.url).catch(() => {}); copy.lastChild!.textContent = t.team.copied; });
+      drawer().replaceChildren(
+        h('div', { class: 'drawer-h' }, h('span', { class: 'avatar !h-11 !w-11 ok' }, SVG(ICON.check)),
+          h('div', { class: 'min-w-0 flex-1' }, h('p', { class: 'text-lg font-semibold', text: t.team.sent }), h('p', { class: 'text-sm text-muted', dir: 'auto', text: res.invite.email })),
+          h('a', { class: 'icon-btn', href: '#/team', 'aria-label': t.close }, SVG(ICON.close))),
+        h('div', { class: 'drawer-b' },
+          h('div', { class: 'link-box' },
+            h('div', { class: 'flex items-center justify-between gap-2' }, rolePill(res.invite.role), permDots(res.invite.permissions)),
+            h('p', { class: 'text-sm text-fg-2', text: fill(t.team.sentBody, { email: res.invite.email }) }),
+            h('code', { text: res.url }), copy),
+          h('p', { class: 'cf-note' }, SVG(ICON.lock), t.team.cfNote)),
+        h('div', { class: 'drawer-f' }, h('a', { class: 'btn btn-primary btn-sm justify-center', href: '#/team', text: t.close })));
+      showTeamBehind();
+    }
+    const showTeamBehind = () => api('/v1/admin/team').then((x) => { team = x; if (location.hash.startsWith('#/team')) showTeam('keep'); }).catch(() => {});
+
+    function openMember(id: string) {
+      if (id === 'keep') return;
+      const m = team?.members.find((x) => x.userId === id);
+      if (!m) return closeDrawer();
+      const facts = h('dl', { class: 'kv' },
+        h('dt', { text: t.team.cAccess }), h('dd', { text: m.state === 'active' ? accessText(m) : t.team.state[m.state] }),
+        h('dt', { text: t.team.cLast }), h('dd', { text: m.passkeys ? ago(m.lastActive) : t.team.noPasskey }),
+        h('dt', { text: t.users.cJoined }), h('dd', {}, date(m.since), m.invitedBy ? h('span', { class: 'sub', text: ` · ${fill(t.team.invitedBy, { name: m.invitedBy })}` }) : null));
+      const readOnly = (note: string) => h('div', { class: 'drawer-b' },
+        h('p', { class: 'cf-note' }, SVG(ICON.lock), note),
+        h('section', {}, h('p', { class: 'sec-t', text: t.team.permissions }), h('ul', { class: 'join-perms !text-start' }, ...m.permissions.map((p: string) => h('li', {}, SVG(ICON.check), t.perms[p]?.[0] ?? p)))),
+        h('section', {}, facts));
+      const headEl = h('div', { class: 'drawer-h' },
+        h('span', { class: `avatar !h-11 !w-11 text-base${m.founder ? ' founder' : ''}`, text: initials(m.name || m.email || '·') }),
+        h('div', { class: 'min-w-0 flex-1' }, h('p', { class: 'text-lg font-semibold truncate', text: m.name || m.email }), h('p', { class: 'text-sm text-muted truncate', dir: 'auto', text: [m.title, m.email].filter(Boolean).join(' · ') }),
+          h('div', { class: 'mt-2 flex items-center gap-2' }, rolePill(m.role), m.state !== 'active' ? h('span', { class: `pill ${m.state === 'suspended' ? 'contacted' : 'declined'}`, text: t.team.state[m.state] }) : null)),
+        h('a', { class: 'icon-btn', href: '#/team', 'aria-label': t.close }, SVG(ICON.close)));
+
+      if (!m.canManage) {
+        drawer().replaceChildren(headEl, readOnly(m.founder ? t.team.founderNote : m.you ? t.team.selfNote : t.team.cantManage));
+        return openDrawer();
+      }
+      const title = h('input', { class: 'input', autocomplete: 'off', placeholder: t.team.titlePh, value: m.title ?? '' }) as HTMLInputElement;
+      const editor = permEditor(m.permissions);
+      const days = m.accessUntil ? Math.max(1, Math.round((new Date(m.accessUntil).getTime() - Date.now()) / 86400_000)) : null;
+      const access = accessPicker([7, 30, 90].includes(days as number) ? days : null);
+      const patch = (body: unknown) => api(`/v1/admin/team/${m.userId}`, { method: 'PATCH', body });
+      const refresh = async (msg: string) => { toast(msg); team = await api('/v1/admin/team'); showTeam(m.userId); };
+      const save = h('button', { class: 'btn btn-primary btn-sm justify-center' }, t.team.save);
+      save.addEventListener('click', () => act(save, async () => {
+        const d = access.get();
+        await patch({ permissions: editor.get(), title: title.value, ...(d !== days ? { accessUntil: d ? new Date(Date.now() + d * 86400_000).toISOString() : null } : {}) });
+        await refresh(t.team.saved);
+      }));
+      const pause = h('button', { class: 'btn btn-secondary btn-sm justify-center', text: m.state === 'suspended' ? t.team.resume : t.team.pause });
+      pause.addEventListener('click', () => act(pause, async () => { await patch({ suspended: m.state !== 'suspended' }); await refresh(t.team.saved); }));
+      const remove = h('button', { class: 'btn btn-danger btn-sm justify-center', text: t.team.remove });
+      remove.addEventListener('click', () => {
+        if (!remove.dataset.confirm) { remove.dataset.confirm = '1'; remove.textContent = t.team.removeConfirm; setTimeout(() => { delete remove.dataset.confirm; remove.textContent = t.team.remove; }, 3000); return; }
+        act(remove, async () => { await api(`/v1/admin/team/${m.userId}`, { method: 'DELETE' }); toast(t.team.removed); team = null; location.hash = '#/team'; });
+      });
+      drawer().replaceChildren(headEl,
+        h('div', { class: 'drawer-b' },
+          m.state === 'suspended' ? h('p', { class: 'cf-note warn' }, SVG(ICON.lock), t.team.pausedAt) : null,
+          field(t.team.titleField, title, true), editor.el,
+          h('section', {}, h('p', { class: 'sec-t', text: t.team.accessLen }), access.el, m.accessUntil ? h('p', { class: 'sub mt-2', text: accessText(m) }) : null),
+          h('section', {}, facts)),
+        h('div', { class: 'drawer-f' }, save, h('div', { class: 'grid grid-cols-2 gap-2' }, pause, remove)));
+      openDrawer();
+    }
+
+    // ---------- activity: what the team did ----------
+    function sentence(e: any) {
+      const d = e.detail ?? {}, who = e.actor || t.activity.someone, role = t.roles[d.role] ?? d.role ?? '';
+      const A = t.activity;
+      switch (e.kind) {
+        case 'admin.early_access_approved': return ['grant', fill(A.approved, { who, business: d.business ?? '' })];
+        case 'admin.early_access_updated':
+          if (d.status === 'contacted') return ['work', fill(A.contacted, { who, business: d.business ?? '' })];
+          if (d.status === 'declined') return ['stop', fill(A.declined, { who, business: d.business ?? '' })];
+          if (d.status === 'new') return ['work', fill(A.reopened, { who, business: d.business ?? '' })];
+          return ['work', fill(A.noted, { who, business: d.business ?? '' })];
+        case 'early_access.activated': return ['live', fill(A.activated, { business: d.business ?? '' })];
+        case 'staff.invited': return ['team', fill(A.invited, { who, email: d.email ?? '', role })];
+        case 'staff.invite_canceled': return ['stop', fill(A.inviteCanceled, { who, email: d.email ?? '' })];
+        case 'staff.joined': return ['team', fill(A.joined, { who, role })];
+        case 'staff.removed': return ['stop', fill(A.removed, { who, name: d.name || t.activity.someone })];
+        case 'staff.updated': {
+          const name = d.name || t.activity.someone;
+          if (d.change === 'suspended') return ['stop', fill(A.paused, { who, name })];
+          if (d.change === 'resumed') return ['team', fill(A.resumed, { who, name })];
+          if (d.change === 'permissions') return ['team', fill(A.perms, { who, name, role })];
+          if (d.change === 'access') return ['team', fill(A.accessChanged, { who, name })];
+          return ['team', fill(A.titleChanged, { who, name })];
+        }
+      }
+      return ['work', e.kind];
+    }
+
+    async function showActivity() {
+      const sub = header(t.activity.title, t.activity.sub);
+      loading();
+      const { events } = await api('/v1/admin/activity');
+      stamp();
+      if (!events.length) return put(sub, h('div', { class: 'panel p-6 text-muted', text: t.activity.empty }));
+      const dayOf = (d: string) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x.getTime(); };
+      const today = dayOf(new Date().toISOString()), label = (k: number) => (k === today ? t.activity.today : k === today - 86400_000 ? t.activity.yesterday : date(new Date(k)));
+      const days = new Map<number, any[]>();
+      for (const e of events) { const k = dayOf(e.at); days.set(k, [...(days.get(k) ?? []), e]); }
+      const time = new Intl.DateTimeFormat(locale, { timeStyle: 'short' });
+      put(sub, ...[...days].map(([k, list]) => h('section', { class: 'panel mb-4' },
+        h('div', { class: 'panel-h' }, h('h2', { text: label(k) }), h('span', { class: 'sub', text: num(list.length) })),
+        h('ol', { class: 'feed' }, ...list.map((e) => { const [kind, text] = sentence(e); return h('li', { class: kind },
+          h('span', { class: 'avatar', text: initials(e.actor || '·') }), h('p', { class: 'min-w-0 flex-1', text }), h('time', { text: time.format(new Date(e.at)) })); })))));
+    }
+
+    // ---------- chrome ----------
+    ($('#search') as HTMLInputElement).addEventListener('input', () => { const p = location.hash.slice(2).split('?')[0]; if (p === 'requests') showRequests(null); else if (p === 'users') showUsers(); else if (p === 'usage') showUsage(null); });
+    $('#refresh').addEventListener('click', () => act($('#refresh') as HTMLButtonElement, async () => {
+      const p = location.hash.slice(2).split('?')[0] || 'overview';
+      if (p === 'requests') await showRequests(new URLSearchParams(location.hash.split('?')[1]).get('id'), true);
+      else if (p === 'users') await showUsers(true); else if (p === 'businesses') await showBusinesses(true); else if (p === 'billing') await showBilling(true);
+      else if (p === 'team') await showTeam(new URLSearchParams(location.hash.split('?')[1]).get('id'), true); else if (p === 'activity') await showActivity(); else await showOverview(true);
+    }));
+    $('#menu-btn').addEventListener('click', () => document.body.classList.toggle('nav-open'));
+    document.body.addEventListener('click', (e) => { if (document.body.classList.contains('nav-open') && !(e.target as HTMLElement).closest('.sidebar,#menu-btn')) document.body.classList.remove('nav-open'); });
+    $('#lang-link').addEventListener('click', (e) => { (e.currentTarget as HTMLAnchorElement).href += location.hash; });
+    $('#sign-out').addEventListener('click', async () => { await auth.signOut().catch(() => {}); document.cookie = 'hemlo.hint=; Max-Age=0; Path=/; Domain=.hemlohq.com'; location.href = `${ACCOUNT}${lang === 'en' ? '/en' : ''}/sign-in/`; });
+    let installEvt: any = null;
+    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; $('#install').hidden = false; });
+    $('#install').addEventListener('click', async () => { await installEvt?.prompt(); $('#install').hidden = true; });
+
+    boot();
+  </script>
+</body>
+</html>

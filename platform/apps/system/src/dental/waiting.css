@@ -1,0 +1,168 @@
+/* The waiting-room TV. Dark ink, brass light, large type that reads across a room. Sizes follow the screen's width
+   (a 1080p or 4K TV, or a laptop showing it on a second screen), so nothing is tuned to one display. */
+.wr {
+  --ink: #0B1019; --ink-2: #121A27; --line: rgb(255 255 255 / .08); --line-2: rgb(255 255 255 / .14);
+  --fg: #F4F1EA; --fg-2: rgb(244 241 234 / .72); --mute: rgb(244 241 234 / .45);
+  --brass: #C9A55A; --brass-2: #E3C88A; --terra: #C0673F; --free: #7FB59A;
+  --ease: cubic-bezier(.2, 0, 0, 1);
+  position: fixed; inset: 0; overflow: hidden; display: grid; grid-template-rows: auto 1fr auto; gap: 1.6em;
+  padding: 2.4em 3em 2em; background: var(--ink); color: var(--fg);
+  font-size: clamp(15px, 1.12vw, 44px); line-height: 1.25; cursor: none; user-select: none;
+}
+.wr.wr-ui { cursor: default; }
+html:is([lang="ar"], [lang="ckb"]) .wr { font-family: var(--font-ar); }
+
+/* slow light behind everything (and it keeps a TV's pixels moving) */
+.wr-glow { position: absolute; inset: -30%; z-index: 0; pointer-events: none; opacity: .9;
+  background:
+    radial-gradient(38% 34% at 22% 28%, rgb(201 165 90 / .16), transparent 70%),
+    radial-gradient(30% 30% at 78% 70%, rgb(192 103 63 / .13), transparent 70%),
+    radial-gradient(40% 40% at 60% 18%, rgb(80 110 160 / .10), transparent 70%);
+  animation: wr-drift 70s ease-in-out infinite alternate; }
+@keyframes wr-drift { 0% { transform: translate3d(0, 0, 0) rotate(0); } 50% { transform: translate3d(4%, -3%, 0) rotate(6deg); } 100% { transform: translate3d(-3%, 3%, 0) rotate(-4deg); } }
+.wr > :is(.wr-top, .wr-body, .wr-welcome, .wr-foot) { position: relative; z-index: 1; }
+
+/* ---- top: the clinic, the time ---- */
+.wr-top { display: flex; align-items: center; justify-content: space-between; gap: 2em; }
+.wr-clinic { display: flex; align-items: center; gap: .9em; min-width: 0; }
+.wr-clinic b { font-size: 1.7em; font-weight: 600; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wr-logo { width: 3.2em; height: 3.2em; border-radius: .9em; object-fit: cover; background: #fff; }
+.wr-mono { display: grid; place-items: center; width: 2.8em; height: 2.8em; border-radius: .9em; font-size: 1.15em; font-weight: 600;
+  background: linear-gradient(140deg, var(--brass-2), var(--brass)); color: var(--ink); }
+.wr-time { display: grid; justify-items: end; gap: .15em; }
+.wr-time b { font-size: 3.4em; font-weight: 300; letter-spacing: -.03em; font-variant-numeric: tabular-nums; line-height: 1; font-family: "Readex Pro", var(--font-sans); }
+.wr-time > span { font-size: 1.05em; color: var(--fg-2); }
+.wr-colon { animation: wr-blink 2s steps(1) infinite; }
+@keyframes wr-blink { 50% { opacity: .25; } }
+
+/* ---- the body: chairs, then who's next ---- */
+.wr-body { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 2.2em; min-height: 0; }
+.wr h2 { display: flex; align-items: baseline; justify-content: space-between; gap: 1em; margin-bottom: 1em; font-size: .95em; font-weight: 500;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--brass-2); }
+html:is([lang="ar"], [lang="ckb"]) .wr h2 { letter-spacing: 0; font-size: 1.1em; }
+.wr h2 span { letter-spacing: 0; text-transform: none; color: var(--mute); font-weight: 400; }
+
+.wr-chairs { display: flex; flex-direction: column; min-height: 0; }
+.wr-chair-grid { flex: 1; display: grid; gap: 1.1em; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(9em, 21em); align-content: start; min-height: 0; }
+.wr-chair-grid[data-n="1"] { grid-template-columns: 1fr; }
+.wr-chair-grid:is([data-n="5"], [data-n="6"]) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.wr-chair { --dc: var(--brass); position: relative; display: flex; flex-direction: column; justify-content: flex-end; gap: .55em; min-height: 9em; padding: 1.5em 1.7em;
+  border-radius: 1.6em; overflow: hidden; background: rgb(255 255 255 / .035); border: 1px solid var(--line);
+  transition: background .8s var(--ease), border-color .8s var(--ease); }
+.wr-chair::before { content: ""; position: absolute; inset: 0 0 auto; height: 3px; background: var(--dc); opacity: 0; transition: opacity .8s var(--ease); }
+.wr-chair::after { content: ""; position: absolute; inset: -40% -20% auto auto; width: 70%; aspect-ratio: 1; border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in oklab, var(--dc) 45%, transparent), transparent 65%); opacity: 0; transition: opacity 1s var(--ease); }
+.wr-chair.busy { background: linear-gradient(160deg, rgb(255 255 255 / .075), rgb(255 255 255 / .03)); border-color: var(--line-2); }
+.wr-chair.busy::before { opacity: 1; } .wr-chair.busy::after { opacity: .55; }
+.wr-chair > * { position: relative; z-index: 1; }
+.wr-chair-num { position: absolute !important; z-index: 0 !important; inset: auto -.04em -.2em auto; font-size: 11em; font-weight: 600; line-height: 1; letter-spacing: -.06em; color: rgb(255 255 255 / .035); font-family: "Readex Pro", var(--font-sans); }
+[dir="rtl"] .wr-chair-num { inset: auto auto -.2em -.04em; }
+.wr-chair-name { position: absolute; inset: 1.4em 1.7em auto; font-size: 1em; color: var(--fg-2); font-weight: 500; }
+.wr-chair-who { font-size: 2.9em; font-weight: 600; letter-spacing: -.02em; line-height: 1.05; animation: wr-rise .9s var(--ease) both; }
+.wr-chair-free { font-size: 1.6em; font-weight: 400; color: var(--mute); }
+.wr-chair-dr, .wr-dr, .wr-call-dr { display: inline-flex; align-items: center; gap: .55em; color: var(--fg-2); }
+.wr-chair-dr { font-size: 1.15em; }
+.wr-chair-dr i, .wr-dr i, .wr-call-dr i { width: .62em; height: .62em; border-radius: 50%; background: var(--dc, var(--brass)); box-shadow: 0 0 0 .22em color-mix(in oklab, var(--dc, var(--brass)) 25%, transparent); }
+@keyframes wr-rise { from { opacity: 0; transform: translateY(.4em); filter: blur(6px); } }
+
+.wr-next { display: flex; flex-direction: column; min-height: 0; padding: 1.6em 1.7em; border-radius: 1.6em; background: rgb(255 255 255 / .035); border: 1px solid var(--line); }
+.wr-next ol { display: grid; gap: .25em; align-content: start; }
+.wr-next li { --dc: var(--brass); display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 1em; padding: .85em .4em; border-bottom: 1px solid var(--line);
+  animation: wr-rise .8s var(--ease) both; }
+.wr-next li:last-child { border-bottom: 0; }
+.wr-next li:nth-child(2) { animation-delay: .06s; } .wr-next li:nth-child(3) { animation-delay: .12s; } .wr-next li:nth-child(4) { animation-delay: .18s; }
+.wr-n { display: grid; place-items: center; width: 2.3em; height: 2.3em; border-radius: 50%; font-size: 1em; font-weight: 600; background: rgb(255 255 255 / .07); color: var(--fg-2); font-variant-numeric: tabular-nums; }
+.wr-who { display: grid; min-width: 0; }
+.wr-who b { font-size: 1.75em; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wr-who em { font-style: normal; font-size: .95em; color: var(--brass-2); }
+.wr-dr { font-size: 1em; white-space: nowrap; }
+.wr-next li.first { margin-inline: -.6em; padding-inline: 1em; border-radius: 1.1em; border-bottom-color: transparent;
+  background: linear-gradient(100deg, rgb(201 165 90 / .16), rgb(201 165 90 / .04)); box-shadow: inset 0 0 0 1px rgb(227 200 138 / .22); }
+.wr-next li.first .wr-n { background: var(--brass); color: var(--ink); }
+.wr-next li.first .wr-who b { font-size: 2.1em; font-weight: 600; }
+.wr-none { margin-top: .5em; font-size: 1.4em; color: var(--mute); }
+
+/* nobody in the clinic right now */
+.wr-welcome { display: grid; place-content: center; justify-items: center; gap: .4em; text-align: center; }
+.wr-welcome h1 { font-size: 7.5em; font-weight: 300; letter-spacing: -.04em; line-height: 1; animation: wr-rise 1.4s var(--ease) both;
+  background: linear-gradient(180deg, var(--fg), color-mix(in oklab, var(--brass-2) 70%, var(--fg))); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.wr-welcome p { font-size: 1.7em; color: var(--fg-2); animation: wr-rise 1.4s var(--ease) both .15s; }
+.wr-logo-lg { width: 7em; height: 7em; border-radius: 2em; object-fit: cover; background: #fff; margin-bottom: 1.4em; box-shadow: 0 2em 5em -2em rgb(0 0 0 / .6); animation: wr-rise 1.2s var(--ease) both; }
+
+/* ---- bottom: a care tip, and Hemlo ---- */
+.wr-foot { display: flex; align-items: center; justify-content: space-between; gap: 2em; }
+.wr-tip { position: relative; display: flex; align-items: center; gap: 1.1em; max-width: 62%; padding: 1em 1.4em 1.15em; border-radius: 1.3em; overflow: hidden;
+  background: rgb(255 255 255 / .04); border: 1px solid var(--line); animation: wr-tip 1s var(--ease) both; }
+@keyframes wr-tip { from { opacity: 0; transform: translateY(.5em); } }
+.wr-tip-icon { flex: none; display: grid; place-items: center; width: 2.6em; height: 2.6em; border-radius: .9em; background: rgb(201 165 90 / .14); color: var(--brass-2); }
+.wr-tip-icon svg { width: 1.6em; height: 1.6em; }
+.wr-tip-text { display: grid; gap: .2em; font-size: 1.2em; }
+.wr-tip-text small { font-size: .7em; letter-spacing: .12em; text-transform: uppercase; color: var(--brass-2); }
+html:is([lang="ar"], [lang="ckb"]) .wr-tip-text small { letter-spacing: 0; font-size: .8em; }
+.wr-tip-bar { position: absolute; inset: auto 0 0; height: 2px; background: var(--brass); transform-origin: left; animation: wr-bar 14s linear both; opacity: .6; }
+[dir="rtl"] .wr-tip-bar { transform-origin: right; }
+@keyframes wr-bar { from { transform: scaleX(0); } }
+.wr-by { display: flex; align-items: center; gap: 1.2em; color: var(--mute); font-size: .9em; }
+.wr-by img { height: 1.7em; opacity: .55; }
+.wr-off { display: inline-flex; align-items: center; gap: .5em; }
+.wr-off::before { content: ""; width: .55em; height: .55em; border-radius: 50%; background: var(--terra); animation: wr-blink 1.4s steps(1) infinite; }
+
+/* ---- controls ---- */
+.wr-start { display: flex; align-items: center; gap: 1em; cursor: default; }
+.wr-start small { max-width: 17em; font-size: .9em; line-height: 1.35; color: var(--mute); text-align: end; }
+.wr-start button { flex: none; padding: .75em 1.35em; border-radius: 999px; font-size: 1.05em; font-weight: 600; background: var(--brass); color: var(--ink); cursor: pointer; transition: transform .3s var(--ease); }
+.wr-start button:hover { transform: scale(1.04); }
+.wr-ctrl { position: fixed; z-index: 5; inset: 1.2em auto auto 50%; translate: -50% 0; display: flex; gap: .4em; padding: .4em; border-radius: 999px;
+  background: rgb(18 26 39 / .82); border: 1px solid var(--line-2); backdrop-filter: blur(14px); opacity: 0; pointer-events: none; transition: opacity .4s var(--ease); }
+.wr-ui .wr-ctrl { opacity: 1; pointer-events: auto; }
+.wr-ctrl button { padding: .5em 1em; border-radius: 999px; font-size: .9em; color: var(--fg-2); cursor: pointer; }
+.wr-ctrl button[aria-pressed="true"] { background: rgb(201 165 90 / .2); color: var(--brass-2); }
+.wr-ctrl button:hover { color: var(--fg); }
+
+/* ---- calling a patient in ---- */
+.wr-call { --dc: var(--brass); position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; overflow: hidden;
+  background: radial-gradient(60% 60% at 50% 50%, color-mix(in oklab, var(--dc) 22%, rgb(11 16 25 / .9)), rgb(11 16 25 / .96));
+  backdrop-filter: blur(18px); animation: wr-call-in .7s var(--ease) both; }
+@keyframes wr-call-in { from { opacity: 0; } }
+.wr-rings { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+.wr-rings i { position: absolute; width: 30vmin; aspect-ratio: 1; border-radius: 50%; border: 2px solid color-mix(in oklab, var(--dc) 70%, white);
+  animation: wr-ring 3s var(--ease) infinite; opacity: 0; }
+.wr-rings i:nth-child(2) { animation-delay: 1s; } .wr-rings i:nth-child(3) { animation-delay: 2s; }
+@keyframes wr-ring { 0% { transform: scale(.6); opacity: .7; } 100% { transform: scale(3.4); opacity: 0; } }
+.wr-call-card { position: relative; display: grid; justify-items: center; gap: .5em; text-align: center; animation: wr-pop .9s var(--ease) both .1s; }
+@keyframes wr-pop { from { opacity: 0; transform: scale(.92); filter: blur(10px); } }
+.wr-call-name { font-size: 8em; font-weight: 600; letter-spacing: -.04em; line-height: 1; }
+.wr-call-go { margin-top: .6em; font-size: 1.7em; color: var(--fg-2); }
+.wr-call-chair { font-size: 3.6em; font-weight: 500; color: color-mix(in oklab, var(--dc) 55%, var(--brass-2)); line-height: 1.1; }
+.wr-call-chair:empty { display: none; }
+.wr-call-dr { margin-top: .5em; font-size: 1.4em; }
+.wr-call-bar { position: absolute; inset: auto 0 0; height: 4px; background: var(--dc); transform-origin: left; animation: wr-bar 9s linear both; }
+[dir="rtl"] .wr-call-bar { transform-origin: right; }
+
+/* a message instead of the screen (link reset, or not signed in) */
+.wr-note { display: grid; place-items: center; text-align: center; }
+.wr-note p { max-width: 30em; font-size: 1.8em; line-height: 1.5; color: var(--fg-2); }
+
+/* a TV standing on its side, or a narrow window */
+@media (max-aspect-ratio: 1/1) {
+  .wr { padding: 1.6em 1.6em 1.4em; font-size: clamp(14px, 2vw, 44px); }
+  .wr-body { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .wr-chair-grid { grid-auto-rows: auto; }
+  .wr-tip { max-width: none; flex: 1; }
+  .wr-by img { display: none; }
+}
+@media (max-width: 640px) {
+  .wr { font-size: 14px; gap: 1.2em; }
+  .wr-time b { font-size: 2.4em; }
+  .wr-clinic b { font-size: 1.3em; }
+  .wr-chair-grid { grid-template-columns: 1fr 1fr !important; }
+  .wr-chair { min-height: 7em; padding: 1.1em; }
+  .wr-chair-name { inset: 1em 1.1em auto; }
+  .wr-chair-who { font-size: 1.8em; }
+  .wr-welcome h1 { font-size: 4.5em; }
+  .wr-call-name { font-size: 4.2em; }
+  .wr-call-chair { font-size: 2.2em; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wr *, .wr *::before, .wr *::after { animation: none !important; transition: none !important; }
+}

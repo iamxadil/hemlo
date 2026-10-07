@@ -1,0 +1,224 @@
+[
+ {
+  "kind": "png",
+  "html": "pattern/_pattern-ink.html",
+  "out": "pattern/hemlo-pattern-ink.png",
+  "w": 2400,
+  "h": 1600,
+  "dsf": 1,
+  "t": false
+ },
+ {
+  "kind": "png",
+  "html": "pattern/_pattern-stone.html",
+  "out": "pattern/hemlo-pattern-stone.png",
+  "w": 2400,
+  "h": 1600,
+  "dsf": 1,
+  "t": false
+ },
+ {
+  "kind": "png",
+  "html": "pattern/_pattern-brass.html",
+  "out": "pattern/hemlo-pattern-brass.png",
+  "w": 2400,
+  "h": 1600,
+  "dsf": 1,
+  "t": false
+ },
+ {
+  "kind": "png",
+  "html": "social/_linkedin-banner.html",
+  "out": "social/linkedin-banner-1584x396.png",
+  "w": 1584,
+  "h": 396,
+  "dsf": 2,
+  "t": false
+ },
+ {
+  "kind": "png",
+  "html": "social/_x-header.html",
+  "out": "social/x-header-1500x500.png",
+  "w": 1500,
+  "h": 500,
+  "dsf": 2,
+  "t": false
+ },
+ {
+  "kind": "png",
+  "html": "email/_lockup-email.html",
+  "out": "email/hemlo-lockup-email.png",
+  "w": 264,
+  "h": 66,
+  "dsf": 1,
+  "t": true
+ },
+ {
+  "kind": "png",
+  "html": "poster/_poster-4x5.html",
+  "out": "poster/hemlo-poster-4x5.png",
+  "w": 1080,
+  "h": 1350,
+  "dsf": 2,
+  "t": false
+ },
+ {
+  "kind": "png",
+  "html": "poster/_poster-a3.html",
+  "out": "poster/hemlo-poster-a3-preview.png",
+  "w": 1080,
+  "h": 1527,
+  "dsf": 1,
+  "t": false
+ },
+ {
+  "kind": "pdf",
+  "html": "poster/_poster-a3.html",
+  "out": "poster/hemlo-poster-a3.pdf"
+ },
+ {
+  "kind": "pdf",
+  "html": "print/_business-card.html",
+  "out": "print/hemlo-business-card.pdf"
+ },
+ {
+  "kind": "pdf",
+  "html": "print/_letterhead.html",
+  "out": "print/hemlo-letterhead-a4.pdf"
+ },
+ {
+  "kind": "png",
+  "html": "logo/png/_branches/hemlo-tools.html",
+  "out": "logo/png/branches/hemlo-tools.png",
+  "w": 1600,
+  "h": 506,
+  "dsf": 1,
+  "t": true
+ },
+ {
+  "kind": "png",
+  "html": "logo/png/_branches/hemlo-tools-ar.html",
+  "out": "logo/png/branches/hemlo-tools-ar.png",
+  "w": 1600,
+  "h": 771,
+  "dsf": 1,
+  "t": true
+ },
+ {
+  "kind": "png",
+  "html": "logo/png/_branches/hemlo-studio.html",
+  "out": "logo/png/branches/hemlo-studio.png",
+  "w": 1600,
+  "h": 506,
+  "dsf": 1,
+  "t": true
+ },
+ {
+  "kind": "png",
+  "html": "logo/png/_branches/hemlo-studio-ar.html",
+  "out": "logo/png/branches/hemlo-studio-ar.png",
+  "w": 1600,
+  "h": 699,
+  "dsf": 1,
+  "t": true
+ },
+ {
+  "kind": "png",
+  "html": "logo/png/_branches/hemlo-systems.html",
+  "out": "logo/png/branches/hemlo-systems.png",
+  "w": 1600,
+  "h": 506,
+  "dsf": 1,
+  "t": true
+ },
+ {
+  "kind": "png",
+  "html": "logo/png/_branches/hemlo-systems-ar.html",
+  "out": "logo/png/branches/hemlo-systems-ar.png",
+  "w": 1600,
+  "h": 724,
+  "dsf": 1,
+  "t": true
+ },
+ {
+  "kind": "png",
+  "html": "logo/png/_branches/hemlo-school.html",
+  "out": "logo/png/branches/hemlo-school.png",
+  "w": 1600,
+  "h": 506,
+  "dsf": 1,
+  "t": true
+ },
+ {
+  "kind": "png",
+  "html": "logo/png/_branches/hemlo-school-ar.html",
+  "out": "logo/png/branches/hemlo-school-ar.png",
+  "w": 1600,
+  "h": 730,
+  "dsf": 1,
+  "t": true
+ },
+ {
+  "kind": "png",
+  "html": "logo/png/_hemlo-lockup-ar.html",
+  "out": "logo/png/hemlo-lockup-ar.png",
+  "w": 1600,
+  "h": 520,
+  "dsf": 1,
+  "t": true
+ },
+ {
+  "kind": "png",
+  "html": "logo/png/_hemlo-lockup-ar-on-dark.html",
+  "out": "logo/png/hemlo-lockup-ar-on-dark.png",
+  "w": 1600,
+  "h": 520,
+  "dsf": 1,
+  "t": true
+ },
+ {
+  "kind": "png",
+  "html": "logo/png/_hemlo-lockup-bilingual.html",
+  "out": "logo/png/hemlo-lockup-bilingual.png",
+  "w": 1600,
+  "h": 229,
+  "dsf": 1,
+  "t": true
+ },
+ {
+  "kind": "png",
+  "html": "logo/png/_hemlo-lockup-bilingual-on-dark.html",
+  "out": "logo/png/hemlo-lockup-bilingual-on-dark.png",
+  "w": 1600,
+  "h": 229,
+  "dsf": 1,
+  "t": true
+ },
+ {
+  "kind": "png",
+  "html": "logo/png/_hemlo-lockup-stacked.html",
+  "out": "logo/png/hemlo-lockup-stacked.png",
+  "w": 1600,
+  "h": 1332,
+  "dsf": 1,
+  "t": true
+ },
+ {
+  "kind": "png",
+  "html": "logo/png/_hemlo-lockup-stacked-bilingual.html",
+  "out": "logo/png/hemlo-lockup-stacked-bilingual.png",
+  "w": 1600,
+  "h": 1886,
+  "dsf": 1,
+  "t": true
+ },
+ {
+  "kind": "png",
+  "html": "logo/png/_hemlo-lockup-stacked-bilingual-on-dark.html",
+  "out": "logo/png/hemlo-lockup-stacked-bilingual-on-dark.png",
+  "w": 1600,
+  "h": 1886,
+  "dsf": 1,
+  "t": true
+ }
+]

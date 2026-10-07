@@ -1,0 +1,209 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Mark from '../components/Mark.astro';
+import { STRINGS, type Lang } from '../lib/i18n';
+interface Props { lang: Lang; mode?: 'sign-in' | 'sign-up' }
+const { lang, mode = 'sign-in' } = Astro.props;
+const s = STRINGS[lang].signIn, u = STRINGS[lang].signUp;
+const up = mode === 'sign-up';
+// sign-up links back to sign-in; sign-in sends newcomers to early access on hemlohq.com (accounts are invite-only for now)
+const other = up ? (lang === 'en' ? '/en/' : '/') + 'sign-in/' : `https://hemlohq.com/${lang === 'en' ? 'en/' : ''}early-access/`;
+---
+<Layout lang={lang} title={up ? u.title : s.title} page={mode} auth>
+  <div class="pt-6 sm:pt-10 lg:pt-0" id="auth" data-mode={mode}>
+    <Mark class="h-10 w-auto text-fg lg:hidden" />
+
+    <!-- 1. phone or email -->
+    <section id="start" class="mt-8">
+      <h1 class="auth-title">{up ? u.title : s.title}</h1>
+      <p class="mt-2 muted">{up ? u.sub : s.sub}</p>
+      <div class="seg mt-7" role="tablist" id="tabs">
+        <button type="button" role="tab" data-tab="phone" aria-selected="true">{s.phoneTab}</button>
+        <button type="button" role="tab" data-tab="email" aria-selected="false">{s.emailTab}</button>
+      </div>
+      <form id="start-form" class="mt-5 space-y-4" novalidate>
+        <div data-for="phone">
+          <label class="label" for="phone">{s.phoneLabel}</label>
+          <input class="input ltr" id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder={s.phonePlaceholder} />
+          <p id="phone-off" class="mt-2 text-sm muted" hidden>{s.phoneOff}</p>
+        </div>
+        <div data-for="email" hidden>
+          <label class="label" for="email">{s.emailLabel}</label>
+          <input class="input ltr" id="email" name="email" type="email" inputmode="email" autocomplete="username webauthn" placeholder={s.emailPlaceholder} />
+        </div>
+        <p id="start-error" class="error-text" role="alert" hidden></p>
+        <button class="btn btn-primary btn-block" id="send">{s.sendCode}</button>
+      </form>
+      <div class="divider my-6" id="or">{s.or}</div>
+      <div class="space-y-3">
+        <button type="button" class="btn btn-secondary btn-block" id="passkey-btn" hidden data-signup={up ? '1' : undefined}>{s.passkey}</button>
+        <button type="button" class="btn btn-secondary btn-block" id="google-btn" hidden>{s.google}</button>
+      </div>
+      <p class="switch-line">{up ? u.haveAccount : u.newHere} <a href={other} id="switch-link">{up ? u.signInLink : u.createLink}</a></p>
+      <p class="mt-6 text-center text-xs muted">{s.terms}</p>
+    </section>
+
+    <!-- 2. the code -->
+    <section id="code" class="mt-8" hidden>
+      <h1 class="text-[1.75rem] font-semibold tracking-tight">{s.codeTitle}</h1>
+      <p class="mt-1 muted"><span id="code-sent"></span> <button type="button" class="link-arrow" id="change">{s.change}</button></p>
+      <form id="code-form" class="mt-7 space-y-4" novalidate>
+        <input class="input code-input" id="otp" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" aria-label={s.codeTitle} />
+        <p id="code-error" class="error-text" role="alert" hidden></p>
+        <button class="btn btn-primary btn-block" id="verify">{s.verify}</button>
+      </form>
+      <button type="button" class="btn-ghost mt-4" id="resend" disabled></button>
+    </section>
+
+    <!-- 3. first time: name and language -->
+    <section id="profile" class="mt-8" hidden>
+      <h1 class="text-[1.75rem] font-semibold tracking-tight">{s.profileTitle}</h1>
+      <p class="mt-1 muted">{s.profileSub}</p>
+      <form id="profile-form" class="mt-7 space-y-4">
+        <div><label class="label" for="name">{s.nameLabel}</label><input class="input" id="name" autocomplete="name" required maxlength="80" /></div>
+        <div><label class="label" for="locale">{s.languageLabel}</label>
+          <select class="input" id="locale"><option value="ar">العربية</option><option value="en">English</option></select></div>
+        <button class="btn btn-primary btn-block" id="save-profile">{s.continue}</button>
+      </form>
+    </section>
+
+    <!-- 4. offer a passkey -->
+    <section id="offer" class="mt-8" hidden>
+      <h1 class="text-[1.75rem] font-semibold tracking-tight">{s.passkeyTitle}</h1>
+      <p class="mt-2 muted">{s.passkeySub}</p>
+      <div class="mt-7 space-y-3">
+        <button type="button" class="btn btn-primary btn-block" id="offer-add">{s.passkeyAdd}</button>
+        <button type="button" class="btn btn-secondary btn-block" id="offer-skip">{s.notNow}</button>
+      </div>
+    </section>
+  </div>
+</Layout>
+
+<script>
+  import { authClient, api, ba, busy, t, fill, lang, normalizeIraqiPhone, formatIraqiPhone, returnTarget, passkeysSupported, page, type Me, $ } from '../lib/client';
+
+  type Method = 'phone' | 'email';
+  let method: Method = 'phone', target = '', resendWait = 30, timer = 0;
+  const show = (id: string) => ['start', 'code', 'profile', 'offer'].forEach((s) => ($('#' + s).hidden = s !== id));
+  const err = (id: string, msg = '') => { const el = $('#' + id); el.textContent = msg; el.hidden = !msg; };
+
+  function setTab(m: Method) {
+    method = m;
+    document.querySelectorAll<HTMLButtonElement>('#tabs [data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === m)));
+    document.querySelectorAll<HTMLElement>('[data-for]').forEach((el) => (el.hidden = el.dataset.for !== m));
+    err('start-error');
+    ($('#' + m) as HTMLInputElement).focus();
+  }
+
+  const config = await api<{ phone: boolean; google: boolean }>('/v1/config').catch(() => ({ phone: false, google: false }));
+  if (!config.phone) { setTab('email'); ($('#tabs [data-tab="phone"]') as HTMLButtonElement).disabled = true; $('#phone-off').hidden = false; }
+  $('#google-btn').hidden = !config.google;
+  $('#passkey-btn').hidden = !passkeysSupported() || !!$('#passkey-btn').dataset.signup;
+  $('#or').hidden = $('#passkey-btn').hidden && $('#google-btn').hidden;
+  // keep return_to when switching between sign-in and create-account
+  const sw = $('#switch-link') as HTMLAnchorElement;
+  if (location.search && sw.host === location.host) sw.href += location.search;
+  document.querySelectorAll<HTMLButtonElement>('#tabs [data-tab]').forEach((b) => b.addEventListener('click', () => !b.disabled && setTab(b.dataset.tab as Method)));
+
+  // Already signed in? Go on.
+  api<Me>('/v1/me').then((me) => (me.session.secondFactorPending ? (location.href = `${page('confirm')}${location.search}`) : location.replace(returnTarget()))).catch(() => {});
+
+  async function sendCode() {
+    if (method === 'phone') {
+      const p = normalizeIraqiPhone(($('#phone') as HTMLInputElement).value);
+      if (!p) return err('start-error', t.errors.invalidPhone);
+      target = p;
+      await ba(authClient.phoneNumber.sendOtp({ phoneNumber: p }));
+    } else {
+      const e = ($('#email') as HTMLInputElement).value.trim().toLowerCase();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) return err('start-error', t.errors.invalidEmail);
+      target = e;
+      await ba(authClient.emailOtp.sendVerificationOtp({ email: e, type: 'sign-in' }));
+    }
+    // the number or email stays left-to-right inside Arabic text
+    const [before, after] = (method === 'phone' ? t.signIn.codeSentPhone : t.signIn.codeSentEmail).split('{to}');
+    $('#code-sent').replaceChildren(before, Object.assign(document.createElement('bdi'), { dir: 'ltr', textContent: method === 'phone' ? formatIraqiPhone(target) : target }), after);
+    ($('#otp') as HTMLInputElement).value = '';
+    err('code-error');
+    show('code');
+    ($('#otp') as HTMLInputElement).focus();
+    startResendTimer();
+  }
+
+  function startResendTimer() {
+    const btn = $('#resend') as HTMLButtonElement;
+    let left = resendWait;
+    btn.disabled = true;
+    clearInterval(timer);
+    const tick = () => { btn.textContent = left > 0 ? fill(t.signIn.resendIn, { s: left }) : t.signIn.resend; btn.disabled = left > 0; left--; if (left < -1) clearInterval(timer); };
+    tick(); timer = window.setInterval(tick, 1000);
+    resendWait = Math.min(resendWait * 2, 120);
+  }
+
+  async function verify() {
+    const code = ($('#otp') as HTMLInputElement).value.replace(/\D/g, '');
+    if (code.length !== 6) return err('code-error', t.errors.invalidCode);
+    if (method === 'phone') await ba(authClient.phoneNumber.verify({ phoneNumber: target, code }));
+    else await ba(authClient.signIn.emailOtp({ email: target, otp: code }));
+    await afterSignIn();
+  }
+
+  async function afterSignIn() {
+    const me = await api<Me>('/v1/me');
+    if (me.session.secondFactorPending) { location.href = `${page('confirm')}${location.search}`; return; }
+    // Joining through an invitation? It carries the person's name: go straight back to it.
+    if (/\/(invite|welcome)\//.test(returnTarget())) { location.replace(returnTarget()); return; }
+    if (!me.user.name) {
+      ($('#locale') as HTMLSelectElement).value = lang;
+      show('profile'); ($('#name') as HTMLInputElement).focus(); return;
+    }
+    offerPasskeyOrGo(me);
+  }
+
+  function offerPasskeyOrGo(me: Me) {
+    let skipped = false;
+    try { skipped = localStorage.getItem('hemlo.passkey.skip') === '1'; } catch {}
+    if (passkeysSupported() && me.backup.passkeys === 0 && !skipped) show('offer');
+    else location.replace(returnTarget());
+  }
+
+  $('#start-form').addEventListener('submit', (e) => { e.preventDefault(); busy($('#send') as HTMLButtonElement, sendCode, (m) => err('start-error', m)); });
+  $('#code-form').addEventListener('submit', (e) => { e.preventDefault(); busy($('#verify') as HTMLButtonElement, verify, (m) => err('code-error', m)); });
+  $('#otp').addEventListener('input', (e) => {
+    const el = e.target as HTMLInputElement;
+    el.value = el.value.replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x660)).replace(/\D/g, '').slice(0, 6);
+    if (el.value.length === 6) ($('#verify') as HTMLButtonElement).click();
+  });
+  $('#resend').addEventListener('click', () => busy($('#resend') as HTMLButtonElement, sendCode, (m) => err('code-error', m)));
+  $('#change').addEventListener('click', () => { clearInterval(timer); show('start'); });
+
+  $('#profile-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    busy($('#save-profile') as HTMLButtonElement, async () => {
+      const name = ($('#name') as HTMLInputElement).value.trim();
+      if (!name) return;
+      await ba(authClient.updateUser({ name, locale: ($('#locale') as HTMLSelectElement).value } as any));
+      offerPasskeyOrGo(await api<Me>('/v1/me'));
+    });
+  });
+
+  $('#offer-add').addEventListener('click', () => busy($('#offer-add') as HTMLButtonElement, async () => {
+    await ba(authClient.passkey.addPasskey({ name: navigator.userAgent.includes('iPhone') ? 'iPhone' : navigator.userAgent.includes('Android') ? 'Android' : 'Computer' }));
+    location.replace(returnTarget());
+  }));
+  $('#offer-skip').addEventListener('click', () => { try { localStorage.setItem('hemlo.passkey.skip', '1'); } catch {} location.replace(returnTarget()); });
+
+  $('#passkey-btn').addEventListener('click', () => busy($('#passkey-btn') as HTMLButtonElement, async () => {
+    await ba(authClient.signIn.passkey());
+    await afterSignIn();
+  }, (m) => err('start-error', m)));
+
+  $('#google-btn').addEventListener('click', () => busy($('#google-btn') as HTMLButtonElement, async () => {
+    await ba(authClient.signIn.social({ provider: 'google', callbackURL: new URL(returnTarget(), location.origin).href }));
+  }));
+
+  // Passkeys offered right in the email field, when the browser supports it
+  if (passkeysSupported() && (window.PublicKeyCredential as any).isConditionalMediationAvailable?.()) {
+    (window.PublicKeyCredential as any).isConditionalMediationAvailable().then((ok: boolean) => ok && authClient.signIn.passkey({ autoFill: true }).then((r: any) => !r?.error && afterSignIn()).catch(() => {}));
+  }
+</script>

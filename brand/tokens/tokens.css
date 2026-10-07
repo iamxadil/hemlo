@@ -1,0 +1,28 @@
+/* Hemlo design tokens · v3 */
+:root{
+  --ink-950:#0E1420;--ink-700:#2B3445;--slate-500:#5E6776;--slate-400:#8A919C;
+  --stone-50:#F7F7F4;--stone-100:#EFEFEA;--stone-200:#E2E2DB;--stone-300:#CBCBC2;
+  --night-900:#0C111A;--night-800:#131A26;--night-700:#1A2230;--night-600:#283243;
+  --brass-300:#D7B46A;--brass-500:#B38B3A;--brass-700:#8A6A22;
+  --success:#1F7A4D;--warning:#B8520A;--danger:#B42331;--info:#2F5DA8;
+
+  --color-bg:var(--stone-50);--color-surface:#FFFFFF;--color-surface-muted:var(--stone-100);
+  --color-border:var(--stone-200);--color-border-strong:var(--stone-300);
+  --color-text:var(--ink-950);--color-text-muted:var(--slate-500);
+  --color-primary:var(--ink-950);--color-primary-fg:#FFFFFF;
+  --color-accent:var(--brass-500);--color-accent-text:var(--brass-700);--color-focus:var(--brass-500);
+  --color-product:#3B5BC4;
+
+  --font-display:"Readex Pro",system-ui,sans-serif;--font-sans:"IBM Plex Sans",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,monospace;--font-ar-display:"Vazirmatn",Tahoma,sans-serif;--font-ar:"Vazirmatn",Tahoma,sans-serif;
+  --radius-sm:6px;--radius-md:10px;--radius-lg:14px;--radius-xl:20px;--radius-full:999px;
+  --shadow-sm:0 1px 2px rgb(14 20 32 / .06);--shadow-md:0 2px 4px rgb(14 20 32 / .06),0 8px 24px rgb(14 20 32 / .08);
+  --duration-micro:120ms;--duration-standard:180ms;--duration-enter:240ms;--duration-exit:160ms;
+  --ease-standard:cubic-bezier(.2,0,0,1);--ease-exit:cubic-bezier(.4,0,1,1);
+}
+[data-theme="dark"]{
+  --color-bg:var(--night-900);--color-surface:var(--night-700);--color-surface-muted:var(--night-800);
+  --color-border:var(--night-600);--color-text:#E9EAE6;--color-text-muted:#A3ABB8;
+  --color-primary:#E9EAE6;--color-primary-fg:var(--ink-950);--color-accent:var(--brass-300);--color-accent-text:var(--brass-300);
+}
+:lang(ar),:lang(ckb){font-family:var(--font-ar);line-height:1.8;letter-spacing:0}

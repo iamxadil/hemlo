@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>وصل التصليح وكارت الضمان مجاناً · Hemlo Tools</title>
+<meta name="description" content="أنشئ وصل استلام تصليح وكارت ضمان جاهز للطباعة على A5 أو طابعة حرارية 80 مم، مع المبلغ بالحروف، والتفاصيل والأدوات المستلمة، ومتابعة عبر واتساب. مجاني وبدون تسجيل. Free Iraqi repair receipt and warranty card maker.">
+<link rel="canonical" href="https://tools.hemlohq.com/repair-receipt/">
+<meta name="theme-color" content="#FAFAF7">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="../shared/favicon.ico" sizes="32x32">
+<link rel="icon" href="../shared/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../shared/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="تصليح هيملو">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tools.hemlohq.com/repair-receipt/">
+<meta property="og:title" content="وصل التصليح وكارت الضمان · Hemlo Tools">
+<meta property="og:description" content="وصل استلام تصليح وكارت ضمان، للطباعة على A5 أو طابعة 80 مم حرارية. مجاناً.">
+<meta property="og:image" content="https://tools.hemlohq.com/repair-receipt/og.png">
+<meta property="og:locale" content="ar_IQ">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preload" href="../shared/fonts/vazirmatn-arabic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../shared/fonts/readex-pro-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../shared/fonts.css">
+<link rel="stylesheet" href="styles.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"وصل التصليح وكارت الضمان · Repair receipt & warranty card","url":"https://tools.hemlohq.com/repair-receipt/","applicationCategory":"BusinessApplication","operatingSystem":"Any","inLanguage":["ar","en"],"isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"IQD"},"publisher":{"@type":"Organization","name":"Hemlo","url":"https://hemlohq.com"}}</script>
+</head>
+<body>
+<header class="bar">
+  <a class="brand" href="https://hemlohq.com" aria-label="Hemlo Tools"><img src="../shared/hemlo-tools.svg" alt="Hemlo Tools" height="34"></a>
+  <h1 class="app-title" data-t="appTitle"></h1>
+  <div class="actions">
+    <button type="button" class="btn ghost" id="lang" aria-label="Language">EN</button>
+    <button type="button" class="btn ghost" id="new" data-t="newJob"></button>
+    <button type="button" class="btn ghost" id="wa" data-t="whatsapp"></button>
+    <button type="button" class="btn primary" id="print" data-t="print"></button>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="View">
+  <button type="button" class="tab on" data-view="edit" data-t="tabEdit"></button>
+  <button type="button" class="tab" data-view="preview" data-t="tabPreview"></button>
+</nav>
+
+<main class="layout">
+  <form id="editor" class="editor" autocomplete="off" onsubmit="return false">
+
+    <fieldset>
+      <legend data-t="secDoc"></legend>
+      <div class="seg" role="radiogroup" data-seg="docType">
+        <button type="button" data-v="receipt" data-t="receipt"></button>
+        <button type="button" data-v="warranty" data-t="warranty"></button>
+      </div>
+      <div class="seg" role="radiogroup" data-seg="paper">
+        <button type="button" data-v="a5" data-t="paperA5"></button>
+        <button type="button" data-v="thermal" data-t="paperThermal"></button>
+      </div>
+      <div class="row2">
+        <label><span data-t="number"></span><input data-k="number"></label>
+        <label><span data-t="date"></span><input type="date" data-k="date"></label>
+      </div>
+      <label data-only="receipt"><span data-t="readyDate"></span><input type="date" data-k="ready"></label>
+      <div class="row2" data-only="warranty">
+        <label><span data-t="warrantyFor"></span><input type="number" inputmode="numeric" min="0" step="1" data-k="warrantyVal"></label>
+        <label><span data-t="warrantyUnit"></span>
+          <select data-k="warrantyUnit">
+            <option value="d">يوم / days</option>
+            <option value="m">شهر / months</option>
+          </select>
+        </label>
+      </div>
+      <p class="hint" data-only="warranty" data-t="warrantyExpiry"></p>
+    </fieldset>
+
+    <fieldset>
+      <legend data-t="secBiz"></legend>
+      <p class="hint" data-t="bizHint"></p>
+      <div class="uploads">
+        <div class="up" data-img="logo"><span class="up-prev"></span><span class="up-txt" data-t="logo"></span><input type="file" accept="image/*" aria-label="Logo"><button type="button" class="x" aria-label="Remove">×</button></div>
+        <div class="up" data-img="stamp"><span class="up-prev"></span><span class="up-txt" data-t="stamp"></span><input type="file" accept="image/*" aria-label="Stamp"><button type="button" class="x" aria-label="Remove">×</button></div>
+      </div>
+      <label><span data-t="bizName"></span><input data-k="biz.name"></label>
+      <div class="row2">
+        <label><span data-t="phone"></span><input type="tel" dir="ltr" data-k="biz.phone" placeholder="07XX XXX XXXX"></label>
+        <label><span data-t="extra"></span><input data-k="biz.extra"></label>
+      </div>
+      <label><span data-t="address"></span><input data-k="biz.address"></label>
+    </fieldset>
+
+    <fieldset>
+      <legend data-t="secCust"></legend>
+      <label><span data-t="custName"></span><input data-k="cust.name"></label>
+      <label><span data-t="phone"></span><input type="tel" dir="ltr" data-k="cust.phone" placeholder="07XX XXX XXXX"></label>
+    </fieldset>
+
+    <fieldset>
+      <legend data-t="secDevice"></legend>
+      <label><span data-t="deviceType"></span>
+        <select data-k="device.type">
+          <option value="">—</option>
+          <option value="phone">هاتف · Phone</option>
+          <option value="laptop">لابتوب · Laptop</option>
+          <option value="ac">مكيف · AC</option>
+          <option value="tv">تلفاز · TV</option>
+          <option value="car">سيارة · Car</option>
+          <option value="other">أخرى · Other</option>
+        </select>
+      </label>
+      <div class="row2">
+        <label><span data-t="brand"></span><input data-k="device.brand"></label>
+        <label><span data-t="model"></span><input data-k="device.model"></label>
+      </div>
+      <label><span data-t="serial"></span><input dir="ltr" data-k="device.serial"></label>
+    </fieldset>
+
+    <fieldset>
+      <legend data-t="secFault"></legend>
+      <label><span data-t="reported"></span><textarea rows="2" data-k="fault.reported"></textarea></label>
+      <label data-only="receipt"><span data-t="diagnosis"></span><textarea rows="2" data-k="fault.diagnosis"></textarea></label>
+      <label><span data-t="workDone"></span><textarea rows="2" data-k="fault.done"></textarea></label>
+    </fieldset>
+
+    <fieldset data-only="receipt">
+      <legend data-t="secCondition"></legend>
+      <p class="hint" data-t="conditionHint"></p>
+      <div class="chips" id="condition"></div>
+      <label><span data-t="conditionNote"></span><input data-k="conditionNote"></label>
+    </fieldset>
+
+    <fieldset data-only="receipt">
+      <legend data-t="secAcc"></legend>
+      <div class="chips" id="acc"></div>
+      <label><span data-t="accOther"></span><input data-k="accOther"></label>
+    </fieldset>
+
+    <fieldset data-only="receipt">
+      <legend data-t="secItems"></legend>
+      <div id="items" class="items"></div>
+      <button type="button" class="btn add" id="addItem" data-t="addItem"></button>
+      <label class="check"><input type="checkbox" data-k="words"><span data-t="showWords"></span></label>
+    </fieldset>
+
+    <fieldset data-only="warranty">
+      <legend data-t="secWarranty"></legend>
+      <label><span data-t="warrantyTerms"></span><textarea rows="5" data-k="warrantyTerms"></textarea></label>
+    </fieldset>
+
+    <fieldset>
+      <legend data-t="secNotes"></legend>
+      <label><span data-t="notes"></span><textarea rows="3" data-k="notes"></textarea></label>
+    </fieldset>
+
+    <aside class="upsell">
+      <div class="u-l" data-t="upsellL"></div>
+      <div class="u-b" data-t="upsellB"></div>
+      <div class="board" aria-hidden="true">
+        <div class="b-row"><span class="dot w"></span><span data-t="b1"></span><span class="b-n" dir="ltr">0770…</span></div>
+        <div class="b-row"><span class="dot o"></span><span data-t="b2"></span><span class="b-n" dir="ltr">0781…</span></div>
+        <div class="b-row"><span class="dot g"></span><span data-t="b3"></span><span class="b-n" dir="ltr">0750…</span></div>
+      </div>
+      <p class="u-n" data-t="upsellN"></p>
+      <a class="u-a" href="https://hemlohq.com/systems/" target="_blank" rel="noopener" data-t="upsellA"></a>
+      <a class="u-a en" href="https://hemlohq.com/en/systems/" target="_blank" rel="noopener" dir="ltr">hemlohq.com/en/systems/</a>
+    </aside>
+
+    <p class="privacy" data-t="privacy"></p>
+  </form>
+
+  <section class="preview" aria-label="Preview">
+    <div class="page-wrap" id="pageWrap"><article class="page" id="page"></article></div>
+  </section>
+</main>
+
+<script src="../shared/tafqit.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

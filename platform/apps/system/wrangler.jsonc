@@ -1,0 +1,9 @@
+{
+  // system.hemlohq.com: Hemlo Systems, the app shops run their day on (static; talks to api.hemlohq.com).
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "hemlo-system",
+  "compatibility_date": "2026-09-01",
+  "assets": { "directory": "./dist", "not_found_handling": "single-page-application" },
+  "routes": [{ "pattern": "system.hemlohq.com", "custom_domain": true }],
+  "workers_dev": false
+}

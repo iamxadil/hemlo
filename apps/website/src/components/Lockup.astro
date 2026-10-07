@@ -1,0 +1,7 @@
+---
+// The logo: the H + "Hemlo" (Poppins, outlined). Colour comes from `currentColor`.
+import { LOCKUP_PATHS, LOCKUP_VIEWBOX } from '../brand/brand';
+interface Props { class?: string; }
+const { class: cls = '' } = Astro.props;
+---
+<svg class={cls} viewBox={LOCKUP_VIEWBOX} role="img" aria-label="Hemlo">{LOCKUP_PATHS.map((d) => <path d={d} fill="currentColor" />)}</svg>

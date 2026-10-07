@@ -1,0 +1,121 @@
+---
+// A system's prices: three plans in dinars (monthly or yearly), and Enterprise through Hemlo Studio. The plans come from
+// Hemlo's price list (edited in the admin dashboard): read at build time, then refreshed in the browser, so a price
+// changed in the dashboard shows here within minutes without rebuilding the site. Every plan has every feature.
+import { API_URL, SYSTEM_URL, studioUrl, type Lang } from '../i18n/strings';
+interface Props { lang: Lang; edition: 'store' | 'dental' | 'gym'; color?: string; dark?: boolean }
+const { lang, edition, color = '#A8532E', dark = false } = Astro.props;
+type Plan = { id: string; code: string; name: Record<string, string>; tagline: Record<string, string> | null; priceMonth: number; priceYear: number; limits: Record<string, number>; popular: boolean };
+let plans: Plan[] = [];
+try { plans = (await (await fetch(`${API_URL}/v1/plans?edition=${edition}`, { signal: AbortSignal.timeout(6000) })).json()).plans; } catch { plans = []; }
+const ar = lang === 'ar';
+const L = ar ? {
+  title: 'الأسعار', sub: 'كل الخطط فيها كل المزايا والتحديثات والدعم. الفرق في الحجم فقط. ابدأ بثلاثين يوماً مجاناً على أكبر خطة، بلا بطاقة.',
+  monthly: 'شهري', yearly: 'سنوي', twoFree: 'شهران مجاناً', month: 'شهرياً', year: 'سنوياً', popular: 'الأكثر اختياراً', iqd: 'د.ع', start: 'ابدأ 30 يوماً مجاناً',
+  upTo: 'حتى {n} {w}', unlimited: '{w} بلا حد', all: 'كل المزايا',
+  limits: { users: 'حسابات موظفين', devices: 'أجهزة كاشير مشتركة', dentists: 'أطباء', members: 'مشتركين فعّالين', ai: 'مهمة ذكاء اصطناعي شهرياً' } as Record<string, string>,
+  one: { users: 'حساب موظف واحد', devices: 'جهاز كاشير واحد', dentists: 'طبيب واحد', members: 'مشترك واحد', ai: 'مهمة واحدة' } as Record<string, string>,
+  ent: 'المؤسسات', entTag: 'للسلاسل والفروع والاحتياجات الخاصة', quote: 'بسعر متفق عليه', entGo: 'تحدّث مع هيملو ستوديو',
+  entList: ['عدة فروع في حساب واحد', 'ربط بأجهزة وأنظمة أخرى', 'ميزات وتقارير خاصة يبنيها ستوديو', 'مدير حساب ودعم مقدّم'],
+  pay: 'الدفع عبر FIB أو زين كاش أو نقداً أو تحويل. بعد انتهاء المدة لديك 7 أيام سماح، وسجلاتك تبقى لك دائماً.',
+} : {
+  title: 'Pricing', sub: 'Every plan has every feature, updates and support; they differ by size. Start with 30 days free on the biggest plan, no card.',
+  monthly: 'Monthly', yearly: 'Yearly', twoFree: '2 months free', month: 'a month', year: 'a year', popular: 'Most chosen', iqd: 'IQD', start: 'Start 30 days free',
+  upTo: 'Up to {n} {w}', unlimited: 'Unlimited {w}', all: 'Every feature',
+  limits: { users: 'staff accounts', devices: 'shared till devices', dentists: 'dentists', members: 'active members', ai: 'AI tasks a month' } as Record<string, string>,
+  one: { users: 'One staff account', devices: 'One till device', dentists: 'One dentist', members: 'One member', ai: 'One AI task' } as Record<string, string>,
+  ent: 'Enterprise', entTag: 'For chains, branches and special needs', quote: 'By quote', entGo: 'Talk to Hemlo Studio',
+  entList: ['Several branches in one account', 'Links to devices and other systems', 'Custom features and reports built by Studio', 'An account manager and priority support'],
+  pay: 'Pay by FIB, Zain Cash, cash or transfer. When a period ends you have 7 days of grace, and your records are always yours.',
+};
+const nf = new Intl.NumberFormat('en-US');
+const fill = (s: string, v: Record<string, string>) => s.replace(/\{(\w+)\}/g, (_, k) => v[k] ?? '');
+const lines = (p: Plan) => [...(['dentists', 'members', 'users', 'devices', 'ai'] as const).filter((k) => p.limits[k] != null || (k === 'members' && edition === 'gym'))
+  .map((k) => (p.limits[k] == null ? fill(L.unlimited, { w: L.limits[k] }) : p.limits[k] === 1 ? L.one[k] : fill(L.upTo, { n: nf.format(p.limits[k]), w: L.limits[k] }))), L.all];
+const start = `${SYSTEM_URL}?start=${edition}&lang=${lang}`;
+const studio = `${studioUrl(lang)}?from=systems&edition=${edition}`;
+---
+<section class:list={['pricing', dark && 'dark']} id="pricing" style={`--pc:${color}`} data-pricing={edition} data-lang={lang} data-api={API_URL}>
+  <div class="wrap py-20 sm:py-28">
+    <div class="flex flex-wrap items-end justify-between gap-6">
+      <div class="max-w-2xl"><h2 class="reveal text-display font-semibold tracking-tight">{L.title}</h2><p class="reveal mt-4 text-lead pr-sub">{L.sub}</p></div>
+      <div class="pr-seg reveal" role="tablist"><button type="button" role="tab" aria-selected="true" data-cycle="month">{L.monthly}</button><button type="button" role="tab" aria-selected="false" data-cycle="year">{L.yearly}<span>{L.twoFree}</span></button></div>
+    </div>
+    <div class="pr-grid mt-12">
+      {plans.map((p) => (
+        <article class:list={['pr-card reveal', p.popular && 'popular']} data-plan={p.id}>
+          {p.popular && <span class="pr-badge">{L.popular}</span>}
+          <h3>{p.name[lang] ?? p.name.en}</h3>
+          <p class="pr-tag">{p.tagline?.[lang] ?? ''}</p>
+          <p class="pr-price"><b data-m={p.priceMonth} data-y={p.priceYear}>{nf.format(p.priceMonth)}</b> <span>{L.iqd}</span> <small data-per>{L.month}</small></p>
+          <ul>{lines(p).map((x) => <li>{x}</li>)}</ul>
+          <a class:list={['btn pr-go', p.popular ? 'pr-main' : 'pr-alt']} href={start}>{L.start}</a>
+        </article>
+      ))}
+      <article class="pr-card reveal ent">
+        <h3>{L.ent}</h3>
+        <p class="pr-tag">{L.entTag}</p>
+        <p class="pr-price"><b class="!text-[1.4rem]">{L.quote}</b></p>
+        <ul>{L.entList.map((x) => <li>{x}</li>)}</ul>
+        <a class="btn pr-go pr-alt" href={studio}>{L.entGo}</a>
+      </article>
+    </div>
+    <p class="reveal mt-8 text-[.95rem] pr-sub">{L.pay}</p>
+  </div>
+</section>
+
+<script>
+  // Monthly ↔ yearly, and the latest prices from Hemlo's price list (edited in the admin dashboard).
+  const nf = new Intl.NumberFormat('en-US');
+  for (const box of document.querySelectorAll<HTMLElement>('[data-pricing]')) {
+    const ar = box.dataset.lang === 'ar';
+    let cycle: 'month' | 'year' = 'month';
+    const paint = () => {
+      box.querySelectorAll<HTMLElement>('[data-cycle]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.cycle === cycle)));
+      box.querySelectorAll<HTMLElement>('.pr-price b[data-m]').forEach((b) => { b.textContent = nf.format(Number(cycle === 'year' ? b.dataset.y : b.dataset.m)); });
+      box.querySelectorAll<HTMLElement>('[data-per]').forEach((s) => { s.textContent = cycle === 'year' ? (ar ? 'سنوياً' : 'a year') : ar ? 'شهرياً' : 'a month'; });
+    };
+    box.querySelectorAll<HTMLElement>('[data-cycle]').forEach((b) => b.addEventListener('click', () => { cycle = b.dataset.cycle as 'month' | 'year'; paint(); }));
+    fetch(`${box.dataset.api}/v1/plans?edition=${box.dataset.pricing}`).then((r) => r.json()).then(({ plans }) => {
+      for (const p of plans ?? []) { const b = box.querySelector<HTMLElement>(`[data-plan="${p.id}"] .pr-price b`); if (b) { b.dataset.m = String(p.priceMonth); b.dataset.y = String(p.priceYear); } }
+      paint();
+    }).catch(() => {});
+  }
+</script>
+
+<style>
+  .pricing { border-top: 1px solid var(--line); }
+  .pricing.dark { background: #0E0F12; color: #F2F1EC; border-top: 0; }
+  .pr-sub { color: var(--fg-2); }
+  .dark .pr-sub { color: #B4B8C0; }
+  .pr-seg { display: inline-flex; padding: .25rem; border-radius: 999px; background: var(--sunken); }
+  .dark .pr-seg { background: rgb(255 255 255 / .07); }
+  .pr-seg button { padding: .55rem 1.1rem; border-radius: 999px; font-weight: 500; color: var(--fg-2); transition: background-color .2s, color .2s; display: inline-flex; align-items: center; gap: .45rem; }
+  .dark .pr-seg button { color: #B4B8C0; }
+  .pr-seg button[aria-selected="true"] { background: var(--surface); color: var(--fg); box-shadow: 0 1px 3px rgb(0 0 0 / .12); }
+  .dark .pr-seg button[aria-selected="true"] { background: #fff; color: #111318; }
+  .pr-seg span { font-size: .72rem; padding: .1rem .45rem; border-radius: 999px; background: color-mix(in oklab, #1F7A4D 14%, transparent); color: #1F7A4D; }
+  .pr-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; align-items: stretch; }
+  @media (max-width: 1100px) { .pr-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 620px) { .pr-grid { grid-template-columns: minmax(0, 1fr); } }
+  .pr-card { position: relative; display: flex; flex-direction: column; gap: .5rem; padding: 1.6rem 1.4rem 1.4rem; border-radius: 1.5rem; background: var(--surface); border: 1px solid var(--line); }
+  .dark .pr-card { background: #17191E; border-color: rgb(255 255 255 / .08); }
+  .pr-card.popular { border: 2px solid var(--pc); box-shadow: 0 30px 60px -36px color-mix(in oklab, var(--pc) 70%, transparent); }
+  .pr-card.ent { border-style: dashed; background: transparent; }
+  .pr-badge { position: absolute; top: -.8rem; inset-inline-start: 1.2rem; padding: .2rem .7rem; border-radius: 999px; background: var(--pc); color: #fff; font-size: .78rem; font-weight: 600; }
+  .pr-card h3 { font-size: 1.3rem; font-weight: 650; }
+  .pr-tag { color: var(--muted); font-size: .92rem; min-height: 2.6em; }
+  .dark .pr-tag { color: #8B919C; }
+  .pr-price { margin: .4rem 0 .2rem; display: flex; align-items: baseline; gap: .35rem; flex-wrap: wrap; }
+  .pr-price b { font-size: 2rem; font-weight: 700; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+  .pr-price span, .pr-price small { color: var(--muted); font-size: .9rem; }
+  .pr-card ul { display: grid; gap: .45rem; margin: .6rem 0 1.2rem; font-size: .93rem; flex: 1; }
+  .pr-card li { display: flex; gap: .5rem; }
+  .pr-card li::before { content: "✓"; color: var(--pc); font-weight: 700; }
+  .pr-go { justify-content: center; padding: .8rem 1rem; transition: transform .16s cubic-bezier(.23, 1, .32, 1), filter .2s; }
+  .pr-go:active { transform: scale(.97); }
+  .pr-main { background: var(--pc); color: #fff; }
+  .pr-main:hover { filter: brightness(1.07); }
+  .pr-alt { border: 1px solid var(--line-strong); }
+  .dark .pr-alt { border-color: rgb(255 255 255 / .22); color: #fff; }
+</style>

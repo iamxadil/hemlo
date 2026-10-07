@@ -1,0 +1,122 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { STRINGS, type Lang } from '../lib/i18n';
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const s = STRINGS[lang].counter;
+---
+<Layout lang={lang} title={s.title} page="counter" wide>
+  <div class="pt-4 sm:pt-8">
+    <p class="text-sm muted" id="org"></p>
+    <h1 class="text-[1.75rem] font-semibold tracking-tight" id="title">{s.title}</h1>
+
+    <section id="not-device" class="panel mt-6" hidden>
+      <h2>{s.notDevice}</h2><p class="mt-2 muted">{s.notDeviceSub}</p>
+    </section>
+
+    <section id="pick" class="mt-6" hidden>
+      <p class="text-lg text-fg-2">{s.pick}</p>
+      <div id="staff" class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4"></div>
+      <p id="no-staff" class="panel mt-4 muted" hidden>{s.noStaff}</p>
+    </section>
+
+    <section id="pin" class="mx-auto mt-6 max-w-xs text-center" hidden>
+      <div class="avatar mx-auto !h-16 !w-16 text-2xl" id="pin-avatar"></div>
+      <p class="mt-3 text-lg font-medium" id="pin-name"></p>
+      <p class="mt-1 text-sm muted">{s.enterPin}</p>
+      <div class="dots mt-6" id="dots"></div>
+      <p class="error-text mt-3 min-h-[1.25rem]" id="pin-error" role="alert"></p>
+      <div class="pinpad mt-4" id="pad"></div>
+    </section>
+
+    <section id="working" class="panel mt-6" hidden>
+      <div class="flex items-center gap-4">
+        <div class="avatar !h-14 !w-14 text-xl" id="w-avatar"></div>
+        <div class="flex-1"><p class="text-lg font-medium" id="w-name"></p><p class="text-sm muted" id="w-idle"></p></div>
+        <button type="button" class="btn btn-primary" id="lock">{s.lock}</button>
+      </div>
+    </section>
+
+    <button type="button" class="btn-ghost btn-danger mt-10" id="forget" hidden>{s.forget}</button>
+  </div>
+</Layout>
+
+<script>
+  import { api as baseApi, busy, h, t, fill, initials, ApiError, $ } from '../lib/client';
+  // Every request from this screen acts as the counter device, never as a signed-in person.
+  const api = <T = any>(path: string, init: { method?: string; body?: unknown } = {}) => baseApi<T>(path, { ...init, headers: { 'x-hemlo-as': 'counter' } });
+
+  type Staff = { memberId: string; name: string; role: string; locked: boolean };
+  type State = { device: { name: string; organization: { name: string } }; staff: Staff[]; active: Staff | null; idleMinutes: number };
+  let state: State, chosen: Staff | null = null, entry = '';
+  const sections = ['not-device', 'pick', 'pin', 'working'];
+  const show = (id: string) => sections.forEach((s) => ($('#' + s).hidden = s !== id));
+
+  async function load() {
+    try { state = await api<State>('/v1/counter/state'); }
+    catch (e) { if (e instanceof ApiError && e.status === 401) { show('not-device'); return; } throw e; }
+    $('#org').textContent = state.device.organization.name;
+    $('#title').textContent = state.device.name;
+    $('#forget').hidden = false;
+    if (state.active) return working();
+    pick();
+  }
+
+  function pick() {
+    chosen = null; entry = '';
+    $('#staff').replaceChildren(...state.staff.map((s) => h('button', { type: 'button', class: 'panel !p-4 text-center disabled:opacity-50', disabled: s.locked, onclick: () => pinFor(s) },
+      h('div', { class: 'avatar mx-auto !h-14 !w-14 text-xl', text: initials(s.name) }), h('p', { class: 'mt-2 truncate font-medium', text: s.name }),
+      s.locked ? h('p', { class: 'mt-1 text-xs error-text', text: t.counter.locked }) : null)));
+    $('#no-staff').hidden = state.staff.length > 0;
+    show('pick');
+  }
+
+  function pinFor(s: Staff) {
+    chosen = s; entry = '';
+    $('#pin-avatar').textContent = initials(s.name);
+    $('#pin-name').textContent = s.name;
+    $('#pin-error').textContent = '';
+    dots();
+    const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '←', '0', '✓'];
+    $('#pad').replaceChildren(...keys.map((k) => h('button', { type: 'button', text: k, 'aria-label': k === '←' ? 'Back' : k === '✓' ? 'OK' : k, onclick: (e: Event) => press(k, e.currentTarget as HTMLButtonElement) })));
+    show('pin');
+  }
+
+  const dots = () => $('#dots').replaceChildren(...Array.from({ length: 6 }, (_, i) => h('i', { class: i < entry.length ? 'on' : '' })));
+
+  function press(k: string, btn: HTMLButtonElement) {
+    if (k === '←') { if (!entry) return pick(); entry = entry.slice(0, -1); return dots(); }
+    if (k === '✓') return unlock(btn);
+    if (entry.length < 6) { entry += k; dots(); }
+    if (entry.length === 6) unlock(btn);
+  }
+
+  function unlock(btn: HTMLButtonElement) {
+    if (!chosen || entry.length < 4) return;
+    busy(btn, async () => {
+      state = await api<State>('/v1/counter/unlock', { body: { memberId: chosen!.memberId, pin: entry } });
+      working();
+    }, (m, e) => {
+      entry = ''; dots();
+      if (e instanceof ApiError && e.code === 'WRONG_PIN') $('#pin-error').textContent = fill(t.counter.wrong, { left: e.message });
+      else if (e instanceof ApiError && e.code === 'PIN_LOCKED') { $('#pin-error').textContent = t.counter.locked; setTimeout(load, 1500); }
+      else $('#pin-error').textContent = m;
+    });
+  }
+
+  function working() {
+    const a = state.active!;
+    $('#w-avatar').textContent = initials(a.name);
+    $('#w-name').textContent = fill(t.counter.working, { name: a.name });
+    $('#w-idle').textContent = fill(t.counter.idle, { m: state.idleMinutes });
+    show('working');
+  }
+
+  // the POS of each Systems edition lives here; this screen only proves who is working.
+  $('#lock').addEventListener('click', () => busy($('#lock') as HTMLButtonElement, async () => { await api('/v1/counter/lock', { body: {} }); await load(); }));
+  $('#forget').addEventListener('click', () => busy($('#forget') as HTMLButtonElement, async () => { await api('/v1/counter/forget', { body: {} }); await load(); }));
+  document.addEventListener('keydown', (e) => { if (!$('#pin').hidden && /^[0-9]$/.test(e.key)) press(e.key, $('#pad button') as HTMLButtonElement); if (!$('#pin').hidden && e.key === 'Backspace') press('←', $('#pad button') as HTMLButtonElement); });
+  setInterval(() => { if (!$('#working').hidden) load().catch(() => {}); }, 60_000); // notices the idle lock
+
+  await load();
+</script>

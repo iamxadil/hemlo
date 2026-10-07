@@ -1,0 +1,182 @@
+---
+import '../styles/global.css';
+import { ClientRouter } from 'astro:transitions';
+import Lockup from '../components/Lockup.astro';
+import AccountArea from '../components/AccountArea.astro';
+import { t, href, EMAIL, TOOLS_URL, studioUrl, accountUrl, SYSTEM_URL, PRODUCT, TRADES_PAGES, productLinks, type Lang, type PageKey, type Trade } from '../i18n/strings';
+
+interface Props { lang: Lang; page: PageKey | '404'; title?: string; description?: string; image?: string; }
+const { lang, page, title, description, image = '/og.png' } = Astro.props;
+const s = t(lang);
+const site = 'https://hemlohq.com';
+const other: Lang = lang === 'ar' ? 'en' : 'ar';
+const pageKey: PageKey = page === '404' ? 'home' : page;
+const canonical = site + href(lang, pageKey);
+const fullTitle = title ? `${title} · ${s.meta.siteName}` : s.meta.homeTitle;
+const desc = description ?? s.meta.homeDesc;
+const links: [string, string, boolean?][] = [
+  [TOOLS_URL, s.nav.tools, true], [studioUrl(lang), s.nav.studio, true], [href(lang, 'systems'), s.nav.systems], [href(lang, 'school'), s.nav.school], [href(lang, 'about'), s.nav.about], [href(lang, 'contact'), s.nav.contact],
+];
+const pages = links.filter(([, , ext]) => !ext);
+// a product page (Hemlo Gym, …) is its own small site: its name in the header, its own sections, its own trial.
+// No list of Hemlo's other branches or businesses: someone who came for a gym system sees a gym system.
+const product = (TRADES_PAGES as string[]).includes(page) ? (page as Trade) : undefined;
+const P = product ? productLinks(product, lang) : null;
+const productNav: [string, string, boolean?][] = product ? [['#features', s.product.features], ['#pricing', s.product.pricing], [P!.demo, s.product.demo, true]] : [];
+const isCurrent = (u: string) => u === href(lang, pageKey) || ((pageKey === 'dental' || pageKey === 'stores' || pageKey === 'gym') && u === href(lang, 'systems'));
+---
+<!doctype html>
+<html lang={lang} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>{fullTitle}</title>
+  <meta name="description" content={desc} />
+  {page !== '404' && <link rel="canonical" href={canonical} />}
+  {page !== '404' && <link rel="alternate" hreflang="ar" href={site + href('ar', pageKey)} />}
+  {page !== '404' && <link rel="alternate" hreflang="en" href={site + href('en', pageKey)} />}
+  {page !== '404' && <link rel="alternate" hreflang="x-default" href={site + href('ar', pageKey)} />}
+  <meta name="theme-color" content="#FAFAF7" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0B0F16" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="preload" href={lang === 'ar' ? '/fonts/vazirmatn-arabic.woff2' : '/fonts/readex-pro-latin.woff2'} as="font" type="font/woff2" crossorigin />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Hemlo" />
+  <meta property="og:title" content={fullTitle} />
+  <meta property="og:description" content={desc} />
+  <meta property="og:url" content={canonical} />
+  <meta property="og:image" content={site + image} />
+  <meta property="og:locale" content={lang === 'ar' ? 'ar_IQ' : 'en_US'} />
+  <meta name="twitter:card" content="summary_large_image" />
+  {page === 'home' && <script type="application/ld+json" set:html={JSON.stringify({ '@context': 'https://schema.org', '@type': 'Organization', name: 'Hemlo', alternateName: 'هيملو', url: site, logo: site + '/icon-512.png', email: EMAIL, address: { '@type': 'PostalAddress', addressLocality: 'Baghdad', addressCountry: 'IQ' }, slogan: 'Elegantly solved.' })} />}
+  <script is:inline>
+    // 'signed-in' is decided before paint (from the non-secret hemlo.hint cookie), so the header never flickers
+    (function () { var r = document.documentElement, f = function () { r.classList.add('js'); if (/(?:^|;\s*)hemlo\.hint=1/.test(document.cookie)) r.classList.add('signed-in'); }; f(); document.addEventListener('astro:after-swap', f); })();
+  </script>
+  <ClientRouter />
+</head>
+<body class="min-h-dvh flex flex-col">
+  <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:start-3 focus:z-50 btn btn-primary">{lang === 'ar' ? 'انتقل إلى المحتوى' : 'Skip to content'}</a>
+
+  <header id="nav" class="sticky top-0 z-40 border-b border-transparent bg-[var(--nav)] backdrop-blur-xl backdrop-saturate-150 transition-colors duration-300" transition:persist={product ? `nav-${product}` : "nav"}>
+    <nav class="wrap flex h-14 items-center gap-6" aria-label={lang === 'ar' ? 'الرئيسية' : 'Main'}>
+      {product ? (
+        <span class="product-lockup shrink-0 text-fg"><a href={href(lang, 'home')} aria-label="Hemlo" class="pl-home"><Lockup class="h-[22px] w-auto" /></a><span class="pl-sep" aria-hidden="true"></span><a href={href(lang, product)} class="pl-name" aria-label={PRODUCT[product].full[lang]}>{PRODUCT[product].label[lang]}</a></span>
+      ) : (
+        <a href={href(lang, 'home')} class="shrink-0 text-fg" aria-label="Hemlo"><Lockup class="h-[22px] w-auto" /></a>
+      )}
+      {product && <ul class="hidden md:flex items-center gap-7 text-[13.5px] text-fg-2">
+        {productNav.map(([u, label, ext]) => <li><a href={u} class="transition-colors hover:text-fg" rel={ext ? 'noopener' : undefined}>{label}</a></li>)}
+      </ul>}
+      {!product && <ul class="hidden md:flex items-center gap-7 text-[13.5px] text-fg-2">
+        {links.map(([u, label, ext]) => <li><a href={u} class:list={['transition-colors hover:text-fg', isCurrent(u) && 'text-fg font-medium']} aria-current={isCurrent(u) ? 'page' : undefined} rel={ext ? 'noopener' : undefined}>{label}</a></li>)}
+      </ul>}
+      <div class="ms-auto flex items-center gap-2">
+        <AccountArea lang={lang} pageKey={pageKey} product={product} />
+        <button type="button" id="menu-btn" class="mnav-btn md:hidden" aria-expanded="false" aria-controls="menu-panel" aria-label={s.nav.menu} data-open={s.nav.menu} data-close={s.nav.close}><span></span><span></span></button>
+      </div>
+    </nav>
+  </header>
+  <div id="menu-panel" class="mnav md:hidden" data-open="false" inert>
+    <div class="mnav-sheet">
+      <ul class="wrap mnav-list">
+        {(product ? productNav : pages).map(([u, label], i) => <li style={`--i:${i}`}><a href={u} class="mnav-link" aria-current={isCurrent(u) ? 'page' : undefined}><span class="mnav-no">{String(i + 1).padStart(2, '0')}</span>{label}</a></li>)}
+      </ul>
+      {!product && <div class="wrap mnav-branches" style={`--i:${pages.length}`}>
+        <a href={TOOLS_URL} rel="noopener" class="mnav-card"><span class="mnav-card-t">{s.nav.tools}<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 8.5l5-5M4.5 3.5h4v4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="mnav-card-d">{s.home.branches.tools}</span></a>
+        <a href={studioUrl(lang)} rel="noopener" class="mnav-card"><span class="mnav-card-t">{s.nav.studio}<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 8.5l5-5M4.5 3.5h4v4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="mnav-card-d">{s.home.branches.studio}</span></a>
+      </div>}
+      <div class="wrap mnav-foot" style={`--i:${pages.length + 1}`}>
+        <div class="auth-out flex gap-3"><a href={P?.signIn ?? `${accountUrl(lang, 'sign-in')}?return_to=${encodeURIComponent(SYSTEM_URL)}`} class="btn btn-secondary flex-1 justify-center">{s.nav.signIn}</a><a href={P?.start ?? href(lang, 'earlyAccess')} class="btn btn-primary flex-1 justify-center">{P ? s.product.start : s.nav.earlyAccess}</a></div>
+        <div class="auth-in"><a href={P?.open ?? `${SYSTEM_URL}?lang=${lang}`} class="btn btn-primary w-full justify-center">{P ? s.product.open : s.nav.open}</a></div>
+        <div class="mnav-meta">{product && <a href={href(lang, 'home')} dir="ltr">hemlohq.com</a>}<a href={`mailto:${EMAIL}`} dir="ltr">{EMAIL}</a><a href={href(other, pageKey)} hreflang={other} lang={other} data-astro-reload>{s.nav.switchTo}</a></div>
+      </div>
+    </div>
+  </div>
+
+  <main id="main" class="flex-1">
+    <slot />
+  </main>
+
+  <footer class="border-t border-line mt-8">
+    {product ? (
+    <div class="wrap grid gap-10 py-14 sm:grid-cols-[1.4fr_1fr]">
+      <div>
+        <span class="product-lockup text-fg"><a href={href(lang, 'home')} aria-label="Hemlo" class="pl-home"><Lockup class="h-6 w-auto" /></a><span class="pl-sep" aria-hidden="true"></span><span class="pl-name">{PRODUCT[product].label[lang]}</span></span>
+        <p class="mt-4 max-w-sm text-fg-2">{s.product.partOfLong}</p>
+        <a class="mt-2 inline-block text-muted hover:text-fg" href={`mailto:${EMAIL}`} dir="ltr">{EMAIL}</a>
+      </div>
+      <ul class="space-y-2.5 text-fg-2 sm:justify-self-end">
+        {productNav.map(([u, label, ext]) => <li><a class="hover:text-fg" href={u} rel={ext ? 'noopener' : undefined}>{label}</a></li>)}
+        <li><a class="hover:text-fg" href={href(other, pageKey)} hreflang={other} lang={other} data-astro-reload>{s.nav.switchTo}</a></li>
+        <li><a class="hover:text-fg" href={href(lang, 'home')}>hemlohq.com</a></li>
+      </ul>
+    </div>
+    ) : (
+    <div class="wrap grid gap-10 py-14 sm:grid-cols-[1.4fr_1fr_1fr]">
+      <div>
+        <Lockup class="h-6 w-auto text-fg" />
+        <p class="mt-4 text-fg-2">{s.meta.tagline}</p>
+        <a class="mt-2 inline-block text-muted hover:text-fg" href={`mailto:${EMAIL}`} dir="ltr">{EMAIL}</a>
+      </div>
+      <div>
+        <h2 class="text-sm font-medium text-muted">{s.footer.branches}</h2>
+        <ul class="mt-4 space-y-2.5 text-fg-2">
+          <li><a class="hover:text-fg" href={TOOLS_URL} rel="noopener">{s.nav.tools}</a></li>
+          <li><a class="hover:text-fg" href={studioUrl(lang)} rel="noopener">{s.nav.studio}</a></li>
+          <li><a class="hover:text-fg" href={href(lang, 'systems')}>{s.nav.systems}</a></li>
+          <li><a class="hover:text-fg" href={href(lang, 'school')}>{s.nav.school}</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2 class="text-sm font-medium text-muted">{s.footer.company}</h2>
+        <ul class="mt-4 space-y-2.5 text-fg-2">
+          <li><a class="hover:text-fg" href={href(lang, 'about')}>{s.nav.about}</a></li>
+          <li><a class="hover:text-fg" href={href(lang, 'contact')}>{s.nav.contact}</a></li>
+          <li><a class="hover:text-fg" href={href(other, pageKey)} hreflang={other} lang={other} data-astro-reload>{s.nav.switchTo}</a></li>
+        </ul>
+      </div>
+    </div>
+    )}
+    <div class="wrap flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-between border-t border-line py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-[13px] text-muted">
+      <span>© {new Date().getFullYear()} Hemlo. {s.footer.rights}</span>
+      <span class="">{s.footer.founder} <a href="https://xadil.is-a.dev" target="_blank" rel="noopener" class="founder">{s.footer.founderName}<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 8.5l5-5M4.5 3.5h4v4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a></span>
+      <span>{s.footer.made}</span>
+    </div>
+  </footer>
+
+  <script>
+    // phone menu: one button toggles the sheet; a link, Escape, or growing past phone width closes it
+    const menu = (open?: boolean) => {
+      const b = document.getElementById('menu-btn'), p = document.getElementById('menu-panel');
+      if (!b || !p) return;
+      const on = open ?? b.getAttribute('aria-expanded') !== 'true';
+      b.setAttribute('aria-expanded', String(on)); b.setAttribute('aria-label', (on ? b.dataset.close : b.dataset.open) ?? '');
+      p.dataset.open = String(on); p.inert = !on;
+      document.documentElement.classList.toggle('menu-open', on);
+    };
+    document.addEventListener('click', (e) => {
+      const el = e.target as Element;
+      if (el.closest('#menu-btn')) menu();
+      else if (el.closest('#menu-panel a')) menu(false);
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') menu(false); });
+    matchMedia('(min-width: 768px)').addEventListener('change', (m) => { if (m.matches) menu(false); });
+
+    // nav hairline on scroll, close the mobile menu after navigating, and reveal-on-scroll
+    function init() {
+      const nav = document.getElementById('nav');
+      const onScroll = () => nav?.classList.toggle('!border-line', window.scrollY > 8);
+      onScroll(); window.addEventListener('scroll', onScroll, { passive: true });
+      menu(false);
+      const els = document.querySelectorAll('.reveal:not(.in)');
+      if (!('IntersectionObserver' in window)) { els.forEach((e) => e.classList.add('in')); return; }
+      const io = new IntersectionObserver((entries) => entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -8% 0px' });
+      els.forEach((e) => io.observe(e));
+    }
+    document.addEventListener('astro:page-load', init);
+  </script>
+</body>
+</html>

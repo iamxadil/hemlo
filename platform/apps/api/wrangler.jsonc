@@ -1,0 +1,37 @@
+{
+  // api.hemlohq.com: Hemlo ID + the platform API. Deploy: npm run deploy -w @hemlo/api
+  // Secrets (wrangler secret put …): AUTH_SECRET, RESEND_API_KEY, GOOGLE_CLIENT_SECRET (optional)
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "hemlo-api",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "routes": [{ "pattern": "api.hemlohq.com", "custom_domain": true }],
+  "workers_dev": false,
+  "observability": { "enabled": true },
+  // hourly: delete demo shops older than 24 hours (src/worker.ts scheduled)
+  // demo clean-up every 6 hours (hourly kept waking the free-plan database for nothing)
+  "triggers": { "crons": ["17 */6 * * *"] },
+  // Create with: npx wrangler hyperdrive create hemlo-db --connection-string="postgres://…neon…"
+  // then paste the id here.
+  // run next to the database (Neon via Hyperdrive): one hop from the visitor, then fast queries, instead of many slow ones
+  "placement": { "mode": "smart" },
+  // pictures (logos, product photos, invoice and receipt photos): o/{organization}/{file id}
+  "r2_buckets": [{ "binding": "UPLOADS", "bucket_name": "hemlo-uploads" }],
+  // Hemlo AI (src/ai): Cloudflare's models on the free daily allowance; with the ANTHROPIC_API_KEY secret set, Claude instead
+  "ai": { "binding": "AI" },
+  // the waiting-room screens' live line: one hub per clinic (src/screen-hub.ts), on the free plan's SQLite Durable Objects
+  "durable_objects": { "bindings": [{ "name": "SCREENS", "class_name": "ScreenHub" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["ScreenHub"] }],
+  "hyperdrive": [{ "binding": "HYPERDRIVE", "id": "30b542d94ea14cdea52381a5f26cd74e" }],
+  "vars": {
+    "API_URL": "https://api.hemlohq.com",
+    "CF_ACCOUNT_ID": "7438b8edfc81f18f2d61025d5e000f92", // for the admin usage meters (with the CF_API_TOKEN secret)
+    "ACCOUNT_URL": "https://account.hemlohq.com",
+    "COOKIE_DOMAIN": ".hemlohq.com",
+    "TRUSTED_ORIGINS": "https://hemlohq.com,https://account.hemlohq.com,https://admin.hemlohq.com,https://*.hemlohq.com",
+    "PASSKEY_RP_ID": "hemlohq.com",
+    "PHONE_SIGN_IN": "0",
+    "EMAIL_FROM": "Hemlo <no-reply@hemlohq.com>"
+  }
+}

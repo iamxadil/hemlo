@@ -1,0 +1,55 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Mark from '../components/Mark.astro';
+import { STRINGS, type Lang } from '../lib/i18n';
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const s = STRINGS[lang].invite;
+---
+<Layout lang={lang} title={s.title} page="invite" auth>
+  <div class="pt-6 sm:pt-12">
+    <div class="avatar !h-16 !w-16 text-2xl" id="org-avatar"><Mark class="h-7 w-auto" /></div>
+    <h1 class="mt-6 text-[1.75rem] font-semibold tracking-tight">{s.title}</h1>
+    <p class="mt-2 text-lg text-fg-2" id="body"><span class="skeleton inline-block w-64"></span></p>
+    <p class="mt-2 text-sm muted" id="sent-to"></p>
+    <p class="error-text mt-4" id="problem" role="alert" hidden></p>
+    <div class="mt-8 space-y-3" id="actions"></div>
+  </div>
+</Layout>
+
+<script>
+  import { authClient, api, ba, busy, h, t, fill, page, roleName, initials, goSignIn, ApiError, $, type Me } from '../lib/client';
+
+  const token = new URLSearchParams(location.search).get('t') ?? '';
+  const problem = (m: string) => { $('#problem').textContent = m; $('#problem').hidden = false; };
+
+  try {
+    const inv = await api<any>(`/v1/invites/by-token/${encodeURIComponent(token)}`);
+    const contact = inv.contact.phone ?? inv.contact.email;
+    $('#org-avatar').textContent = initials(inv.organization.name);
+    $('#body').textContent = fill(t.invite.body, { inviter: inv.inviter || '—', org: inv.organization.name, role: roleName(inv.role) });
+    $('#sent-to').replaceChildren(fill(t.invite.sentTo, { contact: '' }), h('span', { class: 'ltr', text: contact }));
+    if (inv.status !== 'open') problem((t.invite as any)[inv.status] ?? t.errors.generic);
+    else {
+      const me = await api<Me>('/v1/me').catch(() => null);
+      const actions = $('#actions');
+      if (!me) actions.append(h('button', { class: 'btn btn-primary btn-block', text: t.invite.signInToAccept, onclick: () => goSignIn(location.href) }));
+      else {
+        const accept = h('button', { class: 'btn btn-primary btn-block', text: t.invite.accept });
+        accept.addEventListener('click', () => busy(accept, async () => {
+          await api(`/v1/invites/by-token/${encodeURIComponent(token)}/accept`, { method: 'POST', body: {} });
+          location.href = page();
+        }, (m, e) => {
+          if (e instanceof ApiError && e.code === 'CONTACT_MISMATCH') {
+            problem(fill(t.invite.mismatch, { contact }));
+            actions.append(h('button', { class: 'btn btn-secondary btn-block', text: t.home.signOut, onclick: async () => { await ba(authClient.signOut()); goSignIn(location.href); } }));
+          } else problem(m);
+        }));
+        actions.append(accept);
+      }
+    }
+  } catch (e) {
+    $('#body').textContent = '';
+    problem(e instanceof ApiError && e.status === 404 ? t.invite.canceled : t.errors.generic);
+  }
+</script>

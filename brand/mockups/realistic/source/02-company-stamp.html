@@ -1,0 +1,92 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Hemlo company stamp</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Vazirmatn:wght@400;500;600;700;800&display=swap"><style>*{box-sizing:border-box;margin:0;padding:0}html,body{width:1600px;height:1000px;overflow:hidden}
+body{position:relative;font-family:"IBM Plex Sans",sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}.grain{position:absolute;inset:0;pointer-events:none;border-radius:inherit}
+.disp{font-family:"Readex Pro",sans-serif}.mono{font-family:"IBM Plex Mono",monospace}.ar{font-family:"Vazirmatn",sans-serif;direction:rtl}
+.light{position:absolute;inset:0;pointer-events:none}
+.sh-paper{box-shadow:1px 2px 2px rgba(20,18,12,.10),6px 12px 18px rgba(20,18,12,.12),18px 34px 60px rgba(20,18,12,.16)}
+.sh-obj{box-shadow:2px 3px 3px rgba(0,0,0,.22),8px 14px 22px rgba(0,0,0,.20),22px 40px 70px rgba(0,0,0,.18)}
+body{background:#BDB9AF}
+.surf{position:absolute;inset:0;background:radial-gradient(1400px 1000px at 22% 10%,#D8D4CA,#BDB9AF 50%,#A29E94)}
+.doc{position:absolute;left:170px;top:60px;width:980px;height:1260px;transform:rotate(-3deg);background:linear-gradient(170deg,#FFFFFF,#F7F6F1);padding:64px 70px;color:#0E1420}
+.row{display:grid;grid-template-columns:60px 1fr 140px 160px;padding:13px 0;border-bottom:1px solid #E2E2DB;font-size:15px;align-items:center}
+.row.h{font-family:"IBM Plex Mono";font-size:11.5px;letter-spacing:.08em;color:#5E6776;border-bottom:1.5px solid #0E1420}
+.num{font-family:"IBM Plex Mono";text-align:right}
+.pad{position:absolute;left:1290px;top:110px;width:210px;height:210px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#E9EAEE,#AEB1B8 45%,#6E727A 80%,#50545B);box-shadow:3px 5px 5px rgba(0,0,0,.25),14px 24px 36px rgba(0,0,0,.25)}
+.pad .in{position:absolute;inset:16px;border-radius:50%;background:radial-gradient(circle at 45% 40%,#34448F,#1E2A66 60%,#141C47);box-shadow:inset 3px 5px 10px rgba(0,0,0,.55)}
+</style></head><body><svg width="0" height="0" style="position:absolute"><defs>
+<linearGradient id="foil" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="1" y2="1">
+  <stop offset="0" stop-color="#7C5E1E"/><stop offset=".2" stop-color="#C39A45"/><stop offset=".36" stop-color="#F2DEA0"/><stop offset=".5" stop-color="#B38B3A"/><stop offset=".68" stop-color="#E3C77F"/><stop offset=".84" stop-color="#8F6E27"/><stop offset="1" stop-color="#D2B062"/>
+</linearGradient>
+<linearGradient id="brassH" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#E9D08E"/><stop offset=".35" stop-color="#C9A24E"/><stop offset=".6" stop-color="#9E7B2E"/><stop offset="1" stop-color="#D9B869"/>
+</linearGradient>
+<filter id="brushed" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+  <feTurbulence type="fractalNoise" baseFrequency="0.003 0.55" numOctaves="2" seed="9" result="t"/>
+  <feColorMatrix in="t" type="matrix" values="0 0 0 0 1  0 0 0 0 .96  0 0 0 0 .86  1.1 0 0 0 -.45" result="streak"/>
+  <feComposite in="streak" in2="SourceAlpha" operator="in" result="lines"/>
+  <feBlend in="lines" in2="SourceGraphic" mode="soft-light" result="brushedFace"/>
+  <feGaussianBlur in="SourceAlpha" stdDeviation="2.2" result="bl"/>
+  <feSpecularLighting in="bl" surfaceScale="4" specularConstant="1.2" specularExponent="22" lighting-color="#FFF4D6" result="sp"><feDistantLight azimuth="235" elevation="38"/></feSpecularLighting>
+  <feComposite in="sp" in2="SourceAlpha" operator="in" result="sp2"/>
+  <feComposite in="brushedFace" in2="sp2" operator="arithmetic" k1="0" k2="1" k3=".6" k4="0"/>
+</filter>
+<filter id="foilSheen" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+  <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" result="g"/>
+  <feColorMatrix in="g" type="matrix" values="0 0 0 0 1  0 0 0 0 .95  0 0 0 0 .8  .9 0 0 0 -.5" result="gr"/>
+  <feComposite in="gr" in2="SourceAlpha" operator="in" result="grain"/>
+  <feBlend in="grain" in2="SourceGraphic" mode="soft-light" result="face"/>
+  <feGaussianBlur in="SourceAlpha" stdDeviation="0.8" result="bl"/>
+  <feSpecularLighting in="bl" surfaceScale="1.6" specularConstant="1" specularExponent="30" lighting-color="#FFF6DE" result="sp"><feDistantLight azimuth="235" elevation="45"/></feSpecularLighting>
+  <feComposite in="sp" in2="SourceAlpha" operator="in" result="sp2"/>
+  <feComposite in="face" in2="sp2" operator="arithmetic" k1="0" k2="1" k3=".45" k4="0" result="lit"/>
+  <feDropShadow dx="0.6" dy="0.8" stdDeviation="0.5" flood-color="#000" flood-opacity=".35"/>
+</filter>
+<filter id="ink" x="-5%" y="-5%" width="110%" height="110%">
+  <feTurbulence type="fractalNoise" baseFrequency="0.028" numOctaves="3" seed="11" result="n"/>
+  <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -1.3 0 0 0 1.6" result="m1"/>
+  <feComposite in="SourceGraphic" in2="m1" operator="in" result="patchy"/>
+  <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="5" result="fn"/>
+  <feColorMatrix in="fn" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -1.0 0 0 0 1.38" result="m2"/>
+  <feComposite in="patchy" in2="m2" operator="in" result="speck"/>
+  <feGaussianBlur in="speck" stdDeviation="0.35"/>
+</filter>
+</defs></svg>
+<div class="surf"></div><div class="grain" data-grain=".08,220" style="mix-blend-mode:multiply"></div>
+<div class="doc sh-paper">
+  <div class="grain" data-grain=".04,160" style="mix-blend-mode:multiply"></div>
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;position:relative"><svg width="193" height="46" viewBox="0 0 193 46" style="overflow:visible;"><g><path d="M71.422 6.571L71.422 39.429L64.831 39.429L64.831 25.448L50.756 25.448L50.756 39.429L44.166 39.429L44.166 6.571L50.756 6.571L50.756 20.081L64.831 20.081L64.831 6.571L71.422 6.571ZM101.69 25.824C101.69 26.766 101.627 27.613 101.502 28.366L82.437 28.366C82.594 30.249 83.253 31.724 84.414 32.791C85.575 33.858 87.003 34.392 88.697 34.392C91.145 34.392 92.887 33.34 93.923 31.238L101.031 31.238C100.278 33.748 98.834 35.812 96.7 37.428C94.566 39.044 91.946 39.852 88.839 39.852C86.328 39.852 84.077 39.295 82.084 38.181C80.091 37.067 78.538 35.49 77.424 33.45C76.309 31.41 75.752 29.057 75.752 26.389C75.752 23.69 76.302 21.321 77.4 19.281C78.498 17.241 80.036 15.672 82.013 14.574C83.99 13.475 86.265 12.926 88.839 12.926C91.318 12.926 93.538 13.46 95.5 14.527C97.461 15.594 98.983 17.108 100.066 19.069C101.148 21.031 101.69 23.282 101.69 25.824ZM94.864 23.941C94.833 22.247 94.221 20.89 93.028 19.87C91.836 18.85 90.376 18.34 88.65 18.34C87.019 18.34 85.646 18.834 84.532 19.823C83.417 20.811 82.735 22.184 82.484 23.941L94.864 23.941ZM138.407 12.973C141.608 12.973 144.189 13.954 146.15 15.915C148.112 17.877 149.093 20.615 149.093 24.13L149.093 39.429L142.502 39.429L142.502 25.024C142.502 22.984 141.985 21.423 140.949 20.34C139.913 19.258 138.501 18.716 136.712 18.716C134.924 18.716 133.503 19.258 132.452 20.34C131.401 21.423 130.875 22.984 130.875 25.024L130.875 39.429L124.285 39.429L124.285 25.024C124.285 22.984 123.767 21.423 122.732 20.34C121.696 19.258 120.284 18.716 118.495 18.716C116.675 18.716 115.239 19.258 114.188 20.34C113.136 21.423 112.611 22.984 112.611 25.024L112.611 39.429L106.02 39.429L106.02 13.35L112.611 13.35L112.611 16.504C113.458 15.406 114.549 14.543 115.882 13.915C117.216 13.287 118.683 12.973 120.284 12.973C122.323 12.973 124.144 13.405 125.744 14.268C127.345 15.131 128.584 16.363 129.463 17.963C130.31 16.457 131.542 15.249 133.158 14.339C134.774 13.428 136.524 12.973 138.407 12.973ZM161.473 4.594L161.473 39.429L154.883 39.429L154.883 4.594L161.473 4.594ZM179.078 39.852C176.568 39.852 174.308 39.295 172.3 38.181C170.291 37.067 168.714 35.49 167.569 33.45C166.423 31.41 165.851 29.057 165.851 26.389C165.851 23.722 166.439 21.368 167.616 19.328C168.793 17.288 170.401 15.712 172.441 14.597C174.481 13.483 176.756 12.926 179.267 12.926C181.777 12.926 184.052 13.483 186.092 14.597C188.132 15.712 189.74 17.288 190.917 19.328C192.094 21.368 192.682 23.722 192.682 26.389C192.682 29.057 192.078 31.41 190.87 33.45C189.662 35.49 188.03 37.067 185.974 38.181C183.919 39.295 181.62 39.852 179.078 39.852ZM179.078 34.109C180.271 34.109 181.393 33.819 182.444 33.238C183.495 32.658 184.335 31.787 184.962 30.626C185.59 29.465 185.904 28.052 185.904 26.389C185.904 23.91 185.253 22.004 183.95 20.67C182.648 19.336 181.055 18.669 179.172 18.669C177.289 18.669 175.712 19.336 174.441 20.67C173.171 22.004 172.535 23.91 172.535 26.389C172.535 28.868 173.155 30.775 174.394 32.109C175.634 33.442 177.195 34.109 179.078 34.109Z" fill="#0E1420"/><path d="M23.841 6.051L22.76 5.326C20.241 3.637 16.858 5.441 16.858 8.474L16.858 22.312L14.315 21.327C13.433 20.986 12.852 20.137 12.852 19.191L12.852 12.884C12.852 8.968 10.9 5.309 7.647 3.128L3.567 0.391C2.045 -0.63 0 0.461 0 2.294L0 30.043C0 34.72 2.386 39.073 6.33 41.589L9.329 43.502C10.854 44.475 12.852 43.38 12.852 41.571L12.852 29.018C12.852 27.408 14.468 26.3 15.97 26.881L16.858 27.225L16.858 32.589C16.858 37.779 19.506 42.609 23.88 45.399C26.404 47.009 29.709 45.197 29.709 42.204L29.709 17.052C29.709 12.636 27.508 8.51 23.841 6.051Z" fill="#0E1420"/></g></svg>
+    <div style="text-align:right"><div class="disp" style="font-size:26px;font-weight:600">Delivery note</div><div class="ar" style="font-size:20px;font-weight:600;color:#5E6776;margin-top:2px">وصل تسليم</div></div></div>
+  <div class="mono" style="display:flex;gap:40px;margin-top:40px;font-size:13px;color:#5E6776;position:relative"><span>No. HML-DN-2026-0142</span><span>27 Sep 2026</span><span>Client: Nahr Trading (sample)</span></div>
+  <div style="margin-top:34px;position:relative">
+    <div class="row h"><span>#</span><span>ITEM</span><span style="text-align:right">QTY</span><span style="text-align:right">AMOUNT (IQD)</span></div>
+    <div class="row"><span class="mono">01</span><span>Shipment file setup · <span class="ar" style="font-size:14px">إعداد ملف الشحنة</span></span><span class="num">1</span><span class="num">250,000</span></div>
+    <div class="row"><span class="mono">02</span><span>Deposit schedule 2026 · <span class="ar" style="font-size:14px">جدول الأمانات</span></span><span class="num">1</span><span class="num">150,000</span></div>
+    <div class="row"><span class="mono">03</span><span>Supplier document review · <span class="ar" style="font-size:14px">مراجعة مستندات المورّد</span></span><span class="num">6</span><span class="num">180,000</span></div>
+    <div class="row" style="border-bottom:none;font-weight:600"><span></span><span>Total · <span class="ar" style="font-size:14px">المجموع</span></span><span></span><span class="num">580,000</span></div>
+  </div>
+  <div style="display:flex;justify-content:space-between;margin-top:70px;position:relative">
+    <div><div class="mono" style="font-size:12px;color:#5E6776">Received by · <span class="ar">المستلم</span></div><div style="margin-top:14px"><svg width="210" height="67" viewBox="0 0 200 64" style="overflow:visible"><path d="M6 44C18 40 24 18 34 14c9-4 6 30-2 38-6 6-4-10 6-16 12-7 16 6 24 3 7-3 8-14 15-13 8 1 3 19 11 19 6 0 9-11 16-11 6 0 5 9 11 9 8 0 14-12 24-14 8-2 12 4 20 1 9-3 14-10 24-12" fill="none" stroke="#1D2B5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/></svg></div><div style="border-top:1px solid #CBCBC2;width:260px;margin-top:4px"></div></div>
+    <div style="position:relative;width:300px;height:300px;margin-top:-40px;margin-right:30px"><div style="position:absolute;inset:0;transform:rotate(11deg);mix-blend-mode:multiply;opacity:.92"><svg width="300" height="300" viewBox="0 0 300 300" style="overflow:visible">
+<defs><path id="ringp" d="M150 150m-124 0a124 124 0 1 1 248 0a124 124 0 1 1 -248 0"/></defs>
+<g filter="url(#ink)" fill="#2B3A86" stroke="#2B3A86">
+  <circle cx="150" cy="150" r="143" fill="none" stroke-width="5"/>
+  <circle cx="150" cy="150" r="108" fill="none" stroke-width="2"/>
+  <text font-family="Readex Pro" font-weight="600" font-size="19" letter-spacing="4.2" stroke="none"><textPath href="#ringp" startOffset="0">HEMLO · ELEGANTLY SOLVED · IRAQ · 2026 · </textPath></text>
+  <g transform="translate(96 72) scale(4.5)" stroke="none"><path d="M16.298 3.894L15.781 3.547C14.576 2.739 12.958 3.602 12.958 5.053L12.958 11.671L11.742 11.2C11.32 11.037 11.042 10.631 11.042 10.178L11.042 7.162C11.042 5.289 10.109 3.539 8.553 2.496L6.602 1.187C5.874 0.699 4.896 1.221 4.896 2.097L4.896 15.368C4.896 17.605 6.037 19.687 7.923 20.89L9.357 21.805C10.087 22.271 11.042 21.747 11.042 20.882L11.042 14.878C11.042 14.108 11.815 13.578 12.533 13.856L12.958 14.021L12.958 16.586C12.958 19.068 14.224 21.378 16.317 22.713C17.523 23.483 19.104 22.616 19.104 21.184L19.104 9.155C19.104 7.043 18.052 5.07 16.298 3.894Z"/><path d=""/></g>
+  <text x="150" y="222" text-anchor="middle" font-family="Vazirmatn" font-weight="700" font-size="22" stroke="none">هيملو</text>
+</g></svg></div></div>
+  </div>
+  <div style="position:absolute;left:70px;right:70px;bottom:40px;border-top:1px solid #D7B46A;padding-top:12px;display:flex;justify-content:space-between;font-size:12px;color:#5E6776"><span class="mono">Elegantly solved.</span><span class="ar">حلولٌ بإتقان</span></div>
+</div>
+<div class="pad"><div class="in"><div class="grain" data-grain=".18,120" style="mix-blend-mode:overlay;border-radius:50%"></div></div></div>
+<div class="abs" style="left:1280px;top:560px;width:230px;height:230px;border-radius:50%;
+  background:radial-gradient(circle at 34% 30%,#F6E6B4 0%,#D9B869 18%,#B38B3A 46%,#7E5F1F 78%,#5C4414 100%);
+  box-shadow:inset -6px -8px 14px rgba(60,40,5,.45),inset 5px 6px 10px rgba(255,245,210,.55),3px 5px 4px rgba(0,0,0,.28),14px 22px 34px rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center">
+  <div style="width:170px;height:170px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#6A4A2A,#3E2716 70%,#2A190D);box-shadow:inset 3px 4px 8px rgba(255,220,170,.25),inset -4px -6px 10px rgba(0,0,0,.5),0 2px 3px rgba(0,0,0,.4)">
+    <div class="grain" data-grain=".12,120" style="mix-blend-mode:overlay;border-radius:50%;position:relative;width:100%;height:100%"></div>
+  </div>
+</div>
+<div class="light" style="background:radial-gradient(1200px 900px at 22% 6%,rgba(255,255,255,.14),transparent 60%)"></div>
+<div class="light" style="background:radial-gradient(ellipse at 45% 45%,transparent 55%,rgba(20,18,12,.26) 100%)"></div>
+<script>(function(){function n(a,s){var c=document.createElement('canvas');c.width=c.height=s;var x=c.getContext('2d'),d=x.createImageData(s,s);for(var i=0;i<d.data.length;i+=4){var v=Math.random()*255|0;d.data[i]=d.data[i+1]=d.data[i+2]=v;d.data[i+3]=a*255}x.putImageData(d,0,0);return c.toDataURL()}
+document.querySelectorAll('[data-grain]').forEach(function(el){var p=el.getAttribute('data-grain').split(',').map(Number);el.style.backgroundImage='url('+n(p[0],p[1]||180)+')';el.style.backgroundSize=(p[2]||p[1]||180)+'px'})})();</script></body></html>

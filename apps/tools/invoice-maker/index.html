@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>صانع الفواتير وعروض الأسعار مجاناً · Hemlo Tools</title>
+<meta name="description" content="أنشئ فاتورة أو عرض سعر احترافي بالدينار العراقي أو الدولار، مع كتابة المبلغ بالحروف (تفقيط) تلقائياً، واحفظه PDF أو أرسله واتساب. مجاني وبدون تسجيل. Free Iraqi invoice and quotation maker.">
+<link rel="canonical" href="https://tools.hemlohq.com/invoice-maker/">
+<meta name="theme-color" content="#FAFAF7">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="../shared/favicon.ico" sizes="32x32">
+<link rel="icon" href="../shared/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../shared/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="فواتير هيملو">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tools.hemlohq.com/invoice-maker/">
+<meta property="og:title" content="صانع الفواتير وعروض الأسعار · Hemlo Tools">
+<meta property="og:description" content="فاتورة أو عرض سعر احترافي بالدينار أو الدولار، مع التفقيط، PDF وواتساب. مجاناً.">
+<meta property="og:image" content="https://tools.hemlohq.com/invoice-maker/og.png">
+<meta property="og:locale" content="ar_IQ">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preload" href="../shared/fonts/vazirmatn-arabic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../shared/fonts/readex-pro-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../shared/fonts.css">
+<link rel="stylesheet" href="styles.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"صانع الفواتير وعروض الأسعار · Invoice & quotation maker","url":"https://tools.hemlohq.com/invoice-maker/","applicationCategory":"BusinessApplication","operatingSystem":"Any","inLanguage":["ar","en"],"isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"IQD"},"publisher":{"@type":"Organization","name":"Hemlo","url":"https://hemlohq.com"}}</script>
+</head>
+<body>
+<header class="bar">
+  <a class="brand" href="https://hemlohq.com" aria-label="Hemlo Tools"><img src="../shared/hemlo-tools.svg" alt="Hemlo Tools" height="34"></a>
+  <h1 class="app-title" data-t="appTitle"></h1>
+  <div class="actions">
+    <button type="button" class="btn ghost" id="lang" aria-label="Language">EN</button>
+    <button type="button" class="btn ghost" id="new" data-t="newDoc"></button>
+    <button type="button" class="btn ghost" id="wa" data-t="whatsapp"></button>
+    <button type="button" class="btn primary" id="print" data-t="print"></button>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="View">
+  <button type="button" class="tab on" data-view="edit" data-t="tabEdit"></button>
+  <button type="button" class="tab" data-view="preview" data-t="tabPreview"></button>
+</nav>
+
+<main class="layout">
+  <form id="editor" class="editor" autocomplete="off" onsubmit="return false">
+
+    <fieldset>
+      <legend data-t="secDoc"></legend>
+      <div class="seg" role="radiogroup" data-seg="type">
+        <button type="button" data-v="invoice" data-t="invoice"></button>
+        <button type="button" data-v="quote" data-t="quote"></button>
+      </div>
+      <div class="row2">
+        <label><span data-t="number"></span><input data-k="number"></label>
+        <label><span data-t="date"></span><input type="date" data-k="date"></label>
+      </div>
+      <div class="row2">
+        <label><span data-t="dueOrValid"></span><input type="date" data-k="due"></label>
+        <label><span data-t="docLang"></span>
+          <select data-k="docLang">
+            <option value="ar">العربية</option>
+            <option value="en">English</option>
+            <option value="bi">العربية + English</option>
+          </select>
+        </label>
+      </div>
+      <div class="row2">
+        <label><span data-t="currency"></span>
+          <select data-k="currency"><option value="IQD">IQD · دينار عراقي</option><option value="USD">USD · دولار</option></select>
+        </label>
+        <label><span data-t="rate"></span><input type="number" inputmode="decimal" min="0" step="1" data-k="rate" placeholder="1500"></label>
+      </div>
+      <label class="check"><input type="checkbox" data-k="showAlt"><span data-t="showAlt"></span></label>
+    </fieldset>
+
+    <fieldset>
+      <legend data-t="secBiz"></legend>
+      <p class="hint" data-t="bizHint"></p>
+      <div class="uploads">
+        <div class="up" data-img="logo"><span class="up-prev"></span><span class="up-txt" data-t="logo"></span><input type="file" accept="image/*" aria-label="Logo"><button type="button" class="x" aria-label="Remove">×</button></div>
+        <div class="up" data-img="stamp"><span class="up-prev"></span><span class="up-txt" data-t="stamp"></span><input type="file" accept="image/*" aria-label="Stamp"><button type="button" class="x" aria-label="Remove">×</button></div>
+      </div>
+      <label><span data-t="bizName"></span><input data-k="biz.name"></label>
+      <div class="row2">
+        <label><span data-t="phone"></span><input type="tel" dir="ltr" data-k="biz.phone" placeholder="07XX XXX XXXX"></label>
+        <label><span data-t="extra"></span><input data-k="biz.extra"></label>
+      </div>
+      <label><span data-t="address"></span><input data-k="biz.address"></label>
+    </fieldset>
+
+    <fieldset>
+      <legend data-t="secCust"></legend>
+      <label><span data-t="custName"></span><input data-k="cust.name"></label>
+      <div class="row2">
+        <label><span data-t="phone"></span><input type="tel" dir="ltr" data-k="cust.phone" placeholder="07XX XXX XXXX"></label>
+        <label><span data-t="address"></span><input data-k="cust.address"></label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend data-t="secItems"></legend>
+      <div id="items" class="items"></div>
+      <button type="button" class="btn add" id="addItem" data-t="addItem"></button>
+    </fieldset>
+
+    <fieldset>
+      <legend data-t="secTotals"></legend>
+      <div class="row2">
+        <label><span data-t="discount"></span><input type="number" inputmode="decimal" min="0" step="any" data-k="discount"></label>
+        <label><span data-t="tax"></span><input type="number" inputmode="decimal" min="0" max="100" step="any" data-k="tax"></label>
+      </div>
+      <label><span data-t="paid"></span><input type="number" inputmode="decimal" min="0" step="any" data-k="paid"></label>
+      <label class="check"><input type="checkbox" data-k="words"><span data-t="showWords"></span></label>
+      <label><span data-t="notes"></span><textarea rows="3" data-k="notes"></textarea></label>
+    </fieldset>
+
+    <p class="privacy" data-t="privacy"></p>
+  </form>
+
+  <section class="preview" aria-label="Preview">
+    <div class="page-wrap" id="pageWrap"><article class="page" id="page"></article></div>
+  </section>
+</main>
+
+<script src="../shared/tafqit.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
