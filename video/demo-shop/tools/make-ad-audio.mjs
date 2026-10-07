@@ -9,7 +9,7 @@
 // out of tune with each other (the shimmer), a soft felt hammer, and dampers that close when the key is let go.
 // Run: node tools/make-ad-audio.mjs  → public/ad/audio/ad.wav
 import { mkdirSync } from 'node:fs';
-import { SR, rnd, mtof, buf, add, onePoleLP, onePoleHP, noise, reverb, writeWav } from './synth.mjs';
+import { SR, rnd, mtof, buf, add, noise, reverb, writeWav, piano, strings, hit, pulse, swell } from './synth.mjs';
 
 const BEAT = 60 / 90, BAR = BEAT * 4, BARS = 17, TAIL = 5, LEN = BARS * BAR;
 const OUT = new URL('../public/ad/audio/', import.meta.url);
@@ -17,93 +17,9 @@ mkdirSync(OUT, { recursive: true });
 const dry = buf(LEN + TAIL), hall = buf(LEN + TAIL);
 const at = (bar, beat = 0) => bar * BAR + beat * BEAT;
 
-// ---------- the piano ----------
-const cache = new Map();
-/** One piano note: `held` is how long the key stays down; velocity 0–1. */
-function piano(midi, held, vel = 0.6) {
-  const key = `${midi}|${held.toFixed(3)}|${vel.toFixed(2)}`;
-  if (cache.has(key)) return cache.get(key);
-  const f0 = mtof(midi), Bc = 0.00012 * Math.pow(2, (midi - 60) / 24); // inharmonicity grows up the keyboard
-  const ring = Math.min(held + 1.2, 9), n = Math.ceil(ring * SR), out = new Float32Array(n);
-  const maxP = Math.max(3, Math.min(28, Math.floor(7500 / f0)));
-  const bright = 0.35 + 0.65 * vel;
-  for (let p = 1; p <= maxP; p++) {
-    const fp = p * f0 * Math.sqrt(1 + Bc * p * p);
-    if (fp > 16000) break;
-    // felt hammer: a soft fall-off of the upper partials, brighter when struck harder; a hollow at the strike point
-    let amp = Math.pow(p, -1.05) * Math.exp(-(p - 1) * (0.42 - 0.3 * bright)) * (0.55 + 0.45 * Math.abs(Math.sin(Math.PI * p / 7.5)));
-    if (amp < 1e-4) continue;
-    const fast = 1.1 + p * 0.55 + f0 / 520, slow = 0.22 + p * 0.07 + f0 / 1900; // two-stage decay, like a real string
-    for (const det of [-0.0009, 0.0009]) {
-      const w = 2 * Math.PI * fp * (1 + det) / SR;
-      let c = Math.cos(w), s = Math.sin(w), x = 1, y = 0; // a rotating phasor instead of Math.sin per sample
-      const ph = rnd() * Math.PI; x = Math.cos(ph); y = Math.sin(ph);
-      for (let i = 0; i < n; i++) {
-        const t = i / SR;
-        let env = 0.62 * Math.exp(-t * fast) + 0.38 * Math.exp(-t * slow);
-        if (t > held) env *= Math.exp(-(t - held) * (7 + p * 0.6)); // the damper
-        if (env < 2e-5) break;
-        out[i] += amp * env * y;
-        const nx = x * c - y * s; y = x * s + y * c; x = nx;
-      }
-    }
-  }
-  // the attack: a 3 ms rise, and the felt's soft thump
-  const thump = noise(0.05, 70, 40, 900 + 2500 * vel);
-  for (let i = 0; i < n; i++) out[i] *= Math.min(1, i / (0.003 * SR));
-  for (let i = 0; i < thump.length; i++) out[i] += thump[i] * 0.05 * vel;
-  const g = 0.16 * vel * (midi < 48 ? 1.25 : 1);
-  for (let i = 0; i < n; i++) out[i] *= g;
-  cache.set(key, out);
-  return out;
-}
 const pan = (midi) => Math.max(-0.6, Math.min(0.6, (midi - 62) / 40));
 /** Play a note on the piano: dry for presence, and into the hall. */
 const play = (midi, t, held, vel) => { const s = piano(midi, held, vel); add(dry, s, t, 0.85, pan(midi)); add(hall, s, t, 0.6, pan(midi)); };
-
-// ---------- strings, a low drone, and hits ----------
-/** An ensemble of strings: many slightly detuned voices with a slow vibrato, a slow swell and release. */
-function strings(notes, dur, attack = 1.6, release = 2.2, gain = 1) {
-  const n = Math.ceil((dur + release) * SR), out = new Float32Array(n);
-  for (const m of notes) for (const det of [-0.004, -0.0015, 0.0015, 0.004]) {
-    const f = mtof(m) * (1 + det), vib = 4.6 + rnd() * 0.8, vph = rnd() * 6;
-    for (let h = 1; h <= 9; h++) {
-      if (f * h > 5000) break;
-      const amp = Math.pow(h, -1.25) * Math.exp(-h * 0.18), ph0 = rnd() * 6.28;
-      let ph = ph0;
-      for (let i = 0; i < n; i++) {
-        const t = i / SR;
-        ph += 2 * Math.PI * f * h * (1 + 0.0025 * Math.sin(2 * Math.PI * vib * t + vph)) / SR;
-        out[i] += amp * Math.sin(ph);
-      }
-    }
-  }
-  const norm = 0.05 * gain / Math.sqrt(notes.length * 4);
-  for (let i = 0; i < n; i++) {
-    const t = i / SR, a = Math.min(1, t / attack), r = t > dur ? Math.max(0, 1 - (t - dur) / release) : 1;
-    out[i] *= norm * (a * a * (3 - 2 * a)) * r;
-  }
-  return onePoleLP(out, 3800);
-}
-/** A deep cinematic hit: a falling sub, a drum's body, and air. */
-function hit(gain = 1) {
-  const n = Math.ceil(4 * SR), out = new Float32Array(n); let ph = 0;
-  for (let i = 0; i < n; i++) { const t = i / SR, f = 34 + 70 * Math.exp(-t * 14); ph += 2 * Math.PI * f / SR; out[i] = gain * (Math.sin(ph) * Math.exp(-t * 1.1)); }
-  const body = noise(1.6, 3.5, 60, 700); for (let i = 0; i < body.length; i++) out[i] += body[i] * 0.35 * gain;
-  return out;
-}
-/** A soft low pulse under the trades: a heartbeat, felt more than heard. */
-function pulse(gain = 0.5) {
-  const n = Math.ceil(0.7 * SR), out = new Float32Array(n); let ph = 0;
-  for (let i = 0; i < n; i++) { const t = i / SR, f = 48 + 30 * Math.exp(-t * 30); ph += 2 * Math.PI * f / SR; out[i] = gain * Math.sin(ph) * Math.exp(-t * 6); }
-  return out;
-}
-/** Air rising into a moment. */
-function swell(dur, gain = 0.35) {
-  const n = Math.ceil(dur * SR), out = new Float32Array(n); let y = 0;
-  for (let i = 0; i < n; i++) { const t = i / n, cut = 200 + 6000 * t * t * t, a = Math.exp(-2 * Math.PI * cut / SR); y = (1 - a) * rnd() + a * y; out[i] = y * gain * t * t; }
-  return onePoleHP(out, 150);
-}
 
 // ---------- 1 · the night (bars 0–2): A minor, alone ----------
 add(hall, strings([33, 40], 3 * BAR - 0.4, 3, 1.2, 0.55), 0, 1);           // a low drone, A and E

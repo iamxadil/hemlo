@@ -2,6 +2,7 @@ import React from 'react';
 import { Composition } from 'remotion';
 import { DemoShop, DURATION } from './DemoShop';
 import { HemloAd, AD_DURATION } from './ad/HemloAd';
+import { HemloFilm, FILM_FRAMES } from './ad2/HemloFilm';
 
 export const Root: React.FC = () => (
   <>
@@ -10,5 +11,7 @@ export const Root: React.FC = () => (
     {/* the ad: vertical, for Reels, TikTok and Stories */}
     <Composition id="HemloAdAr" component={HemloAd} durationInFrames={AD_DURATION} fps={60} width={1080} height={1920} defaultProps={{ lang: 'ar' as const }} />
     <Composition id="HemloAdEn" component={HemloAd} durationInFrames={AD_DURATION} fps={60} width={1080} height={1920} defaultProps={{ lang: 'en' as const }} />
+    {/* the film: 16:9, English, narrated */}
+    <Composition id="HemloFilm" component={HemloFilm} durationInFrames={FILM_FRAMES} fps={60} width={1920} height={1080} />
   </>
 );
