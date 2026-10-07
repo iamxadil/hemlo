@@ -5,7 +5,10 @@
   "scripts": {
     "studio": "remotion studio src/index.ts",
     "render:ar": "remotion render src/index.ts DemoShopAr out/hemlo-demo-shop-ar.mp4 --codec h264 --crf 16",
-    "render:en": "remotion render src/index.ts DemoShopEn out/hemlo-demo-shop-en.mp4 --codec h264 --crf 16"
+    "render:en": "remotion render src/index.ts DemoShopEn out/hemlo-demo-shop-en.mp4 --codec h264 --crf 16",
+    "audio:ad": "node tools/make-ad-audio.mjs",
+    "render:ad:ar": "remotion render src/index.ts HemloAdAr out/hemlo-ad-ar.mp4 --codec h264 --crf 17",
+    "render:ad:en": "remotion render src/index.ts HemloAdEn out/hemlo-ad-en.mp4 --codec h264 --crf 17"
   },
   "dependencies": {
     "@remotion/cli": "^4.0.530",
