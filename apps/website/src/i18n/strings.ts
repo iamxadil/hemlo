@@ -42,12 +42,13 @@ const ar = {
     sub: 'هيملو شركة برمجيات عراقية. نصنع أدوات مجانية، ومواقع وتطبيقات حسب الطلب، وأنظمة جاهزة تدير بها محلك. بالعربية، وبالدينار.',
     cta1: 'اختر ما يناسبك', cta2: 'تواصل معنا',
     hero: {
-      sub: 'أنظمة جاهزة تدير بها ناديك أو عيادتك أو محلك، من الهاتف أو الحاسوب. بالعربية وبالدينار، وتبقى تعمل حين ينقطع الإنترنت.',
+      sub: 'أنظمة جاهزة تدير بها ناديك أو عيادتك أو محلك أو مكتبك العقاري، من الهاتف أو الحاسوب. بالعربية وبالدينار، وتبقى تعمل حين ينقطع الإنترنت.',
       iRun: 'أنا أدير',
       trades: {
         gym: { pick: 'نادياً رياضياً', see: 'شاهد نظام النادي', toast: ['أُرسل تذكير التجديد', 'إلى 14 مشتركاً · واتساب'] },
         dental: { pick: 'عيادة أسنان', see: 'شاهد نظام العيادة', toast: ['التالي: يوسف أحمد', '15:30 · بعد 13 دقيقة'] },
         stores: { pick: 'متجراً', see: 'شاهد نظام المتجر', toast: ['حُفظ البيع بدون إنترنت', 'يتزامن حين يعود الاتصال'] },
+        realestate: { pick: 'مكتب عقارات', see: 'شاهد نظام العقارات', toast: ['أحمد فتح صفحة الفيلا', '3 مرات · قبل دقيقة'] },
       },
       facts: ['الشهر الأول مجاني', 'يعمل بدون إنترنت', 'عربي · كردي · إنجليزي'],
       else: 'تبحث عن شيء آخر؟', tools: 'أدوات مجانية', studio: 'موقع أو تطبيق حسب الطلب', all: 'كل ما نقدّمه',
@@ -218,12 +219,13 @@ const en: typeof ar = {
     sub: 'Hemlo is an Iraqi software company. We make free tools, websites and apps built to order, and ready-made systems to run your shop. In Arabic, in dinars.',
     cta1: 'Find what fits you', cta2: 'Talk to us',
     hero: {
-      sub: 'Ready-made systems to run your gym, clinic or shop, from a phone or a computer. In Arabic, in dinars, and still working when the internet drops.',
+      sub: 'Ready-made systems to run your gym, clinic, shop or real estate office, from a phone or a computer. In Arabic, in dinars, and still working when the internet drops.',
       iRun: 'I run a',
       trades: {
         gym: { pick: 'Gym', see: 'See Hemlo Gym', toast: ['Renewal reminders sent', '14 members · WhatsApp'] },
         dental: { pick: 'Dental clinic', see: 'See Hemlo Dental', toast: ['Next up: Yousif Ahmed', '15:30 · in 13 min'] },
         stores: { pick: 'Store', see: 'See Hemlo Store', toast: ['Sale saved offline', 'Syncs when you’re back online'] },
+        realestate: { pick: 'Real estate office', see: 'See Hemlo Real Estate', toast: ['Ahmed opened the villa’s page', '3 times · a minute ago'] },
       },
       facts: ['First month free', 'Works offline', 'Arabic · Kurdish · English'],
       else: 'Looking for something else?', tools: 'Free tools', studio: 'A website or app built for you', all: 'Everything we do',

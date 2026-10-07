@@ -1,21 +1,32 @@
 ---
-// The home hero: one line, one question ("I run a … gym / clinic / store"), and the answer on three real phones.
+// The home hero: one line, one question ("I run a … gym / clinic / store / real estate office"), and the answer on real phones.
 // Picking a business brings its phone forward, tints the page in its colour and points both buttons at its product.
-// Until someone picks, it turns slowly through the three on its own (not with reduced motion, not off-screen).
+// Until someone picks, it turns slowly through them on its own (not with reduced motion, not off-screen).
 import Mark from './Mark.astro';
 import { t, href, TOOLS_URL, studioUrl, PRODUCT, TRADES_PAGES, productLinks, type Lang, type Trade } from '../i18n/strings';
 interface Props { lang: Lang }
 const { lang } = Astro.props;
 const s = t(lang), H = s.home.hero;
-type Home = Exclude<Trade, 'realestate'>; // the home hero shows three trades; the rest are one tap away on /systems/
-const SHOT: Record<Home, string> = { gym: 'gym/phone-desk', dental: 'dental/phone-today', stores: 'stores/phone-sell' };
-// a small line icon for each one's floating moment: a WhatsApp-style bubble, a clock, a cloud that's offline
-const ICON: Record<Home, string> = {
+const ORDER: Trade[] = ['gym', 'dental', 'stores', 'realestate'];
+const SHOT: Record<Trade, string> = { gym: 'gym/phone-desk', dental: 'dental/phone-today', stores: 'stores/phone-sell', realestate: 'realestate/phone-today' };
+// a small line icon for each one's floating moment: a WhatsApp-style bubble, a clock, a cloud that's offline, an eye (the page was opened)
+const ICON: Record<Trade, string> = {
   gym: 'M2.5 7.5a5.5 5.5 0 1 1 2.4 4.5L2.5 13l.9-2.6a5.5 5.5 0 0 1-.9-2.9ZM6 7.5l1.5 1.5L10.5 6',
   dental: 'M8 2.5a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11ZM8 5v3l2 1.5',
   stores: 'M4.5 12.5h7a3 3 0 0 0 .4-6 4 4 0 0 0-7.7-.9A3.5 3.5 0 0 0 4.5 12.5ZM6.5 9.5l1.2 1.2 2.3-2.4',
+  realestate: 'M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8 12.1 12.5 8 12.5 1.5 8 1.5 8ZM8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z',
 };
-const trades = (TRADES_PAGES.filter((x) => x !== 'realestate') as Home[]).map((id) => ({ id, color: PRODUCT[id].color, url: href(lang, id), demo: productLinks(id, lang).demo, ...H.trades[id] }));
+// each tab's own small mark: a dumbbell, a tooth, a bag, a house
+const TAB: Record<Trade, string> = {
+  gym: 'M2 8h12M4.2 5v6M11.8 5v6M2.4 6.6v2.8M13.6 6.6v2.8',
+  dental: 'M5.2 2.6c-1.6 0-2.6 1.3-2.6 3 0 1.9.9 3 1.3 5 .3 1.5.6 2.9 1.4 2.9.9 0 1-1.7 1.4-2.9.2-.6.6-.9 1.3-.9s1.1.3 1.3.9c.4 1.2.5 2.9 1.4 2.9.8 0 1.1-1.4 1.4-2.9.4-2 1.3-3.1 1.3-5 0-1.7-1-3-2.6-3-1.2 0-1.7.7-2.8.7s-1.6-.7-2.8-.7Z',
+  stores: 'M3.4 5.6h9.2l-.8 7.9H4.2zM6 5.6v-1a2 2 0 0 1 4 0v1',
+  realestate: 'M2.3 7.4 8 2.8l5.7 4.6M3.8 6.3v7.2h8.4V6.3M6.6 13.5V10h2.8v3.5',
+};
+const trades = ORDER.filter((x) => TRADES_PAGES.includes(x)).map((id) => ({ id, color: PRODUCT[id].color, url: href(lang, id), demo: productLinks(id, lang).demo, ...H.trades[id] }));
+const N = trades.length;
+// where each phone stands: 0 in front, 1 leaning out after it, 2 before it, 3 hidden behind
+const relOf = (i: number) => (i === 0 ? 0 : i === 1 ? 1 : i === N - 1 ? 2 : 3);
 const title = s.home.title.replace(/\.$/, '');
 ---
 <section class="hs" data-hs style={`--acc:${trades[0].color}`}>
@@ -27,10 +38,11 @@ const title = s.home.title.replace(/\.$/, '');
 
       <div class="hs-pick rise rise-4">
         <span class="hs-irun" id="hs-irun">{H.iRun}</span>
-        <div class="hs-pills" role="group" aria-labelledby="hs-irun">
+        <div class="hs-tabs" role="group" aria-labelledby="hs-irun">
+          <span class="hs-thumb" aria-hidden="true"><i></i></span>
           {trades.map((x, i) => (
-            <button type="button" class="hs-pill" data-i={i} data-url={x.url} data-demo={x.demo} data-color={x.color} aria-pressed={i === 0 ? 'true' : 'false'} style={`--c:${x.color}`}>
-              <span>{x.pick}</span><i aria-hidden="true"></i>
+            <button type="button" class="hs-tab" data-i={i} data-url={x.url} data-demo={x.demo} data-color={x.color} aria-pressed={i === 0 ? 'true' : 'false'} style={`--c:${x.color}`}>
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d={TAB[x.id]} /></svg><span>{x.pick}</span>
             </button>
           ))}
         </div>
@@ -41,7 +53,7 @@ const title = s.home.title.replace(/\.$/, '');
       <div class="hs-glow"></div>
       <span class="hs-mark"><Mark /></span>
       {trades.map((x, i) => (
-        <figure class="hs-phone" data-i={i} data-rel={i === 0 ? 0 : i === 1 ? 1 : 2} style={`--c:${x.color}`}>
+        <figure class="hs-phone" data-i={i} data-rel={relOf(i)} style={`--c:${x.color}`}>
           <img src={`/images/${SHOT[x.id]}-${lang}-420.webp`} srcset={`/images/${SHOT[x.id]}-${lang}-420.webp 420w, /images/${SHOT[x.id]}-${lang}-840.webp 840w`}
                sizes="(min-width: 1024px) 250px, 48vw" width="420" height="909" alt="" decoding="async" fetchpriority={i === 0 ? 'high' : undefined} />
         </figure>
@@ -82,7 +94,10 @@ const title = s.home.title.replace(/\.$/, '');
     const root = document.querySelector<HTMLElement>('[data-hs]');
     if (!root || root.dataset.ready) return;
     root.dataset.ready = '1';
-    const pills = [...root.querySelectorAll<HTMLButtonElement>('.hs-pill')];
+    const pills = [...root.querySelectorAll<HTMLButtonElement>('.hs-tab')];
+    const thumb = root.querySelector<HTMLElement>('.hs-thumb')!, bar = thumb.querySelector('i')!;
+    // the white thumb slides under the chosen tab (rows wrap on phones, so it moves in both directions)
+    const place = () => { const p = pills[cur]; thumb.style.cssText = `width:${p.offsetWidth}px;height:${p.offsetHeight}px;transform:translate(${p.offsetLeft}px,${p.offsetTop}px)`; };
     const phones = [...root.querySelectorAll<HTMLElement>('.hs-phone')];
     const toasts = [...root.querySelectorAll<HTMLElement>('.hs-toast')];
     const goT = [...root.querySelectorAll<HTMLElement>('.hs-go-t')];
@@ -95,7 +110,9 @@ const title = s.home.title.replace(/\.$/, '');
       cur = (i + pills.length) % pills.length;
       root.style.setProperty('--acc', data[cur].color);
       pills.forEach((p, k) => p.setAttribute('aria-pressed', String(k === cur)));
-      phones.forEach((p, k) => (p.dataset.rel = String((k - cur + 3) % 3)));
+      const n = phones.length;
+      phones.forEach((p, k) => { const d = (k - cur + n) % n; p.dataset.rel = String(d === 0 ? 0 : d === 1 ? 1 : d === n - 1 ? 2 : 3); });
+      place();
       toasts.forEach((x, k) => x.classList.toggle('on', k === cur));
       goT.forEach((x, k) => { x.classList.toggle('on', k === cur); x.toggleAttribute('aria-hidden', k !== cur); });
       go.href = data[cur].url; demo.href = data[cur].demo;
@@ -105,7 +122,7 @@ const title = s.home.title.replace(/\.$/, '');
       clearTimeout(timer);
       root.classList.toggle('auto', auto && seen);
       if (!auto || !seen) return;
-      pills[cur].querySelector('i')!.getAnimations().forEach((a) => (a.currentTime = 0));
+      bar.getAnimations().forEach((a) => (a.currentTime = 0));
       timer = window.setTimeout(() => { show(cur + 1); tick(); }, 5200);
     };
     const pick = (i: number) => { auto = false; tick(); show(i); };
@@ -124,7 +141,12 @@ const title = s.home.title.replace(/\.$/, '');
     io.observe(root);
     const vis = () => { seen = !document.hidden; tick(); };
     document.addEventListener('visibilitychange', vis);
-    document.addEventListener('astro:before-swap', () => { clearTimeout(timer); io.disconnect(); document.removeEventListener('visibilitychange', vis); }, { once: true });
+    const ro = new ResizeObserver(place);
+    ro.observe(thumb.parentElement!);
+    document.fonts?.ready.then(place);
+    document.addEventListener('astro:before-swap', () => { clearTimeout(timer); io.disconnect(); ro.disconnect(); document.removeEventListener('visibilitychange', vis); }, { once: true });
+    place();
+    requestAnimationFrame(() => thumb.classList.add('ready')); // slide from now on, not on first paint
     tick();
   }
   init();
@@ -150,21 +172,32 @@ const title = s.home.title.replace(/\.$/, '');
   .hs-sub { max-width: 34rem; margin: 1.1rem auto 0; font-size: clamp(1rem, 1.6vw, 1.25rem); line-height: 1.55; color: var(--fg-2); text-wrap: pretty; }
   @media (min-width: 1024px) { .hs-sub { margin-inline: 0; } }
 
-  /* "I run a  [gym] [dental clinic] [store]" */
+  /* "I run a  [gym] [dental clinic] [store] [real estate office]" */
   .hs-pick { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: .5rem .75rem; margin-top: 1.75rem; }
   @media (min-width: 1024px) { .hs-pick { justify-content: start; gap: 1rem; margin-top: 2rem; } }
   .hs-irun { font-weight: 500; color: var(--muted); white-space: nowrap; }
-  .hs-pills { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: .3rem; padding: .3rem; border-radius: 999px; background: var(--sunken); border: 1px solid var(--line); }
-  .hs-pill { position: relative; overflow: hidden; padding: .55rem .85rem; border-radius: 999px; font-size: .95rem; font-weight: 500; color: var(--fg-2); white-space: nowrap; transition: background-color .35s var(--ease-soft), color .25s, box-shadow .35s, transform .15s; }
-  @media (min-width: 400px) { .hs-pill { padding: .6rem 1rem; } }
-  .hs-pill:active { transform: scale(.96); }
-  @media (hover: hover) { .hs-pill:hover { color: var(--fg); } }
-  .hs-pill[aria-pressed="true"] { background: var(--c); color: #fff; box-shadow: 0 6px 18px -8px var(--c); }
-  /* the bar that fills while the hero turns on its own */
-  .hs-pill i { position: absolute; inset-inline: 1rem; bottom: .3rem; height: 2px; border-radius: 2px; background: rgb(255 255 255 / .9); transform: scaleX(0); transform-origin: left; opacity: 0; }
-  :global(html[dir="rtl"]) .hs-pill i { transform-origin: right; }
-  .hs.auto .hs-pill[aria-pressed="true"] i { opacity: .7; animation: hs-fill 5.2s linear both; }
+  /* a quiet tray of four tabs; a white thumb slides under the chosen one, its mark lights in that business's colour,
+     and a hairline fills along the thumb's foot while the hero turns on its own */
+  .hs-tabs { position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .2rem; width: min(100%, 24rem); padding: .3rem; border-radius: 1.15rem;
+    background: color-mix(in oklab, var(--sunken) 80%, transparent); border: 1px solid var(--line); box-shadow: inset 0 1px 2px rgb(14 20 32 / .04); }
+  @media (min-width: 640px) { .hs-tabs { display: inline-flex; width: auto; } }
+  .hs-thumb { position: absolute; z-index: 0; left: 0; top: 0; border-radius: .9rem; background: var(--surface); pointer-events: none; overflow: hidden;
+    border: 1px solid color-mix(in oklab, var(--acc) 22%, var(--line));
+    box-shadow: 0 1px 2px rgb(14 20 32 / .06), 0 10px 24px -14px color-mix(in oklab, var(--acc) 70%, rgb(14 20 32 / .5)); }
+  .hs-thumb.ready { transition: transform .5s var(--ease-soft), width .5s var(--ease-soft), height .5s var(--ease-soft), border-color .6s; }
+  .hs-thumb i { position: absolute; inset-inline: .9rem; bottom: 0; height: 2px; border-radius: 2px 2px 0 0; background: var(--acc); transform: scaleX(0); transform-origin: left; opacity: 0; }
+  :global(html[dir="rtl"]) .hs-thumb i { transform-origin: right; }
+  .hs.auto .hs-thumb i { opacity: .85; animation: hs-fill 5.2s linear both; }
   @keyframes hs-fill { to { transform: scaleX(1); } }
+  .hs-tab { position: relative; z-index: 1; display: inline-flex; align-items: center; justify-content: center; gap: .5rem; padding: .62rem .95rem; border-radius: .9rem;
+    font-size: .94rem; font-weight: 500; color: var(--fg-2); white-space: nowrap; transition: color .3s, transform .15s; }
+  .hs-tab svg { width: 1.05rem; height: 1.05rem; flex: none; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; color: var(--muted); transition: color .3s, transform .4s var(--ease-soft); }
+  .hs-tab:active { transform: scale(.97); }
+  @media (hover: hover) { .hs-tab:hover { color: var(--fg); } .hs-tab:hover svg { color: var(--c); } }
+  .hs-tab[aria-pressed="true"] { color: var(--fg); font-weight: 600; }
+  .hs-tab[aria-pressed="true"] svg { color: var(--c); transform: scale(1.08); }
+  .hs-tab:focus-visible { outline: 2px solid var(--c); outline-offset: 1px; }
+  @media (prefers-color-scheme: dark) { .hs-thumb { background: color-mix(in oklab, var(--surface) 80%, #fff 6%); } }
 
   .hs-cta { display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem; }
   @media (min-width: 1024px) { .hs-cta { margin-top: 1.75rem; } }
@@ -201,6 +234,7 @@ const title = s.home.title.replace(/\.$/, '');
   .hs-phone[data-rel="0"] { z-index: 3; cursor: default; }
   .hs-phone[data-rel="1"] { --x: 1; --k: .82; z-index: 2; filter: saturate(.7) brightness(.92); }
   .hs-phone[data-rel="2"] { --x: -1; --k: .82; z-index: 1; filter: saturate(.7) brightness(.92); }
+  .hs-phone[data-rel="3"] { --k: .66; z-index: 0; opacity: 0; pointer-events: none; }
   @media (prefers-color-scheme: dark) { .hs-phone[data-rel="1"], .hs-phone[data-rel="2"] { filter: saturate(.6) brightness(.6); } }
   @media (hover: hover) { .hs-phone:not([data-rel="0"]):hover { filter: none; } }
 
@@ -223,6 +257,6 @@ const title = s.home.title.replace(/\.$/, '');
   .hs-else a:hover { text-decoration-color: currentColor; }
 
   @media (prefers-reduced-motion: reduce) {
-    .hs, .hs-phone, .hs-toast, .hs-go-t, .hs-pill { transition: none !important; }
+    .hs, .hs-phone, .hs-toast, .hs-go-t, .hs-tab, .hs-thumb { transition: none !important; }
   }
 </style>

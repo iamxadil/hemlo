@@ -72,6 +72,12 @@ const TRADES = [
       { title: L2('شاشة الباب ترحّب', 'The door says hello'), line: L2('تلفزيون عند المدخل يرحّب بكل مشترك باسمه، ويعرض كلاسات اليوم.', 'A TV at the entrance greets every member by name and shows today’s classes.') },
     ] as Scene[] },
 ];
+TRADES.push({ kind: 'realestate', color: '#1F6F5C', title: L2('مكتب عقارات', 'Real estate office'), need: L2('أبيع وأؤجّر العقارات لزبائني', 'I sell and rent property for clients'), demo: SYS.realestate.demo!, page: SYS.realestate.page!,
+  scenes: [
+    { title: L2('أرسل العقار على واتساب', 'Send the property on WhatsApp'), line: L2('صفحة أنيقة باسم مكتبك، وتعرف متى فتحها الزبون.', 'A beautiful page in your agency’s name, and you see when the customer opens it.') },
+    { title: L2('من يريده، ولماذا', 'Who wants it, and why'), line: L2('هيملو يطابق زبائنك مع العقار ويشرح السبب: السعر، المنطقة، الغرف.', 'Hemlo matches your leads to the property and explains why: price, area, bedrooms.') },
+    { title: L2('من العرض إلى العمولة', 'From the offer to the commission'), line: L2('العروض والردود على خط واحد. أغلق الصفقة، فتُحسب العمولة وحدها.', 'Offers and counters on one line. Close the deal and the commission counts itself.') },
+  ] as Scene[] });
 const SC = {
   inv: L2([['بيبسي 330 مل · كارتون', '×3', '30,000'], ['ماء 500 مل · كارتون', '×5', '12,000'], ['سكر 1 كغ', '×20', '23,000'], ['شيبس ليز · كارتون', '×2', '19,200']], [['Pepsi 330ml · carton', '×3', '30,000'], ['Water 500ml · carton', '×5', '12,000'], ['Sugar 1kg', '×20', '23,000'], ['Lay’s chips · carton', '×2', '19,200']]),
   invSupplier: L2('جملة بغداد', 'Baghdad Wholesale'), invRead: L2('قرأها هيملو في 7 ثوانٍ', 'Read by Hemlo in 7 s'), total: L2('المجموع', 'Total'),
@@ -85,6 +91,11 @@ const SC = {
   gName: L2('زينب علي', 'Zainab Ali'), gMs: L2('ثلاثة أشهر', 'Three months'), gDays: L2('يوم متبقٍّ', 'days left'), gIn: L2('أهلاً بك', 'Welcome in'), gNo: L2('رقم 3', 'No. 3'),
   gRenew: L2([['مصطفى جاسم', 'ينتهي اليوم'], ['فاطمة كاظم', 'بعد 3 أيام'], ['كرار حميد', 'بعد 5 أيام']], [['Mustafa Jasim', 'ends today'], ['Fatima Kadhim', 'in 3 days'], ['Karrar Hameed', 'in 5 days']]), gRemind: L2('تذكير', 'Remind'),
   gDoor: L2('أهلاً زينب ع.', 'Welcome, Zainab A.'), gDoorDays: L2('13 يوماً متبقياً', '13 days left'),
+  rTitle: L2('فيلا بحديقة في دريم ستي', 'Villa with a garden in Dream City'), rArea: L2('دريم ستي · أربيل', 'Dream City · Erbil'), rOpened: L2('أحمد فتح الصفحة · 3 مرات', 'Ahmed opened it · 3 times'),
+  rLeads: L2([['أحمد صالح', 100, 'السعر · المنطقة · الغرف'], ['ريم سعد', 89, 'السعر · النوع · المساحة'], ['عمر الجبوري', 74, 'المنطقة · الغرف']], [['Ahmed Saleh', 100, 'Price · area · bedrooms'], ['Reem Saad', 89, 'Price · type · size'], ['Omar Al-Jubouri', 74, 'Area · bedrooms']]) as [string, number, string][],
+  rSend: L2('أرسل', 'Send'),
+  rDeal: L2([['سعر الطلب', '$345,000'], ['عرض المشتري', '$300,000'], ['ردّ المالك', '$335,000'], ['السعر المتفق عليه', '$318,000']], [['Asking', '$345,000'], ['Buyer’s offer', '$300,000'], ['Owner’s counter', '$335,000'], ['Agreed', '$318,000']]),
+  rClosed: L2('أُغلقت الصفقة · العمولة', 'Deal closed · commission'),
   tvName: L2('نور ا.', 'Noor A.'), tvGo: L2('يُرجى التوجّه إلى', 'Please go to'), tvChair: L2('كرسي 1', 'Chair 1'),
 };
 
@@ -122,7 +133,7 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
             <span class="hx-hl" aria-hidden="true"></span>
             {TRADES.map((x, i) => (
               <button type="button" role="tab" aria-selected={i === 0 ? 'true' : 'false'} data-pick={x.kind} style={`--k:${x.color}`}>
-                <span class="hx-n" aria-hidden="true">{ar ? '١٢٣'[i] : `0${i + 1}`}</span>
+                <span class="hx-n" aria-hidden="true">{ar ? '١٢٣٤٥'[i] : `0${i + 1}`}</span>
                 <span class="hx-t"><b>{x.title}</b><span>{x.need}</span></span>
                 <svg class="hx-ch" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" /></svg>
               </button>
@@ -168,6 +179,28 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
                   <div class="sc sc-ask" data-scene="2">
                     <p class="bubble q">{SC.q}</p>
                     <div class="bubble a"><p>{SC.a[0]} <b dir="ltr">{SC.a[1]}</b> {SC.a[2]} <b dir="ltr">{SC.a[3]}</b> {SC.a[4]}</p></div>
+                  </div>
+                </> : x.kind === 'realestate' ? <>
+                  <!-- 1 · the property, sent on WhatsApp, and opened -->
+                  <div class="sc sc-rwa" data-scene="0">
+                    <div class="rchat">
+                      <div class="rcard">
+                        <img src="/images/realestate/villa-1-sm.webp" width="700" height="467" alt="" loading="lazy" decoding="async" />
+                        <div class="rcard-t"><b>{SC.rTitle}</b><small>{SC.rArea}</small><em dir="ltr">$185,000</em><span dir="ltr">hemlohq.com/p/villa-…</span></div>
+                      </div>
+                      <p class="rseen"><span aria-hidden="true">✓✓</span> {SC.rOpened}</p>
+                    </div>
+                  </div>
+                  <!-- 2 · who wants it, and why -->
+                  <div class="sc sc-rmatch" data-scene="1">
+                    <div class="till"><ul>{SC.rLeads.map(([n, p, why], i) => <li style={`--i:${i}`}><span class="rring" style={`--p:${p}`}><b>{p}</b></span><span class="min-w-0 flex-1"><b class="block truncate">{n}</b><small class="rwhy">✓ {why}</small></span><b class="gwa rsend">{SC.rSend}</b></li>)}</ul></div>
+                  </div>
+                  <!-- 3 · the negotiation, closed -->
+                  <div class="sc sc-rdeal" data-scene="2">
+                    <div class="till">
+                      <ul>{SC.rDeal.map(([k, v], i) => <li style={`--i:${i}`}><span class:list={['rdot', `rd${i}`]} aria-hidden="true"></span><span class="flex-1">{k}</span><b dir="ltr">{v}</b></li>)}</ul>
+                      <p class="till-total rclosed"><span>{SC.rClosed}</span><b dir="ltr">$6,360</b></p>
+                    </div>
                   </div>
                 </> : x.kind === 'gym' ? <>
                   <!-- 1 · the desk: a scan, and the pass -->
@@ -511,6 +544,35 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
 
   /* clinic 3 · the TV */
   .sc-tv { padding: 1.4rem; }
+  /* the real estate office's scenes */
+  .rchat { width: min(21rem, 100%); display: grid; gap: .45rem; padding: .9rem; border-radius: 1.1rem; background: #E6EFE8; }
+  .rcard { justify-self: end; width: 86%; overflow: hidden; border-radius: .9rem .9rem .25rem .9rem; background: #fff; color: #0E1420; box-shadow: 0 10px 24px -14px rgb(14 20 32 / .35); }
+  :global(html[dir="rtl"]) .rcard { justify-self: start; border-radius: .9rem .9rem .9rem .25rem; }
+  .rcard img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+  .rcard-t { display: grid; gap: .1rem; padding: .55rem .7rem .65rem; }
+  .rcard-t b { font-size: .86rem; font-weight: 600; }
+  .rcard-t small { font-size: .72rem; color: #5B6472; }
+  .rcard-t em { font-style: normal; font-size: .95rem; font-weight: 700; }
+  .rcard-t span { font-size: .68rem; color: #1F6F5C; }
+  .on .rcard { animation: pop .45s var(--out) both .25s; }
+  .rseen { justify-self: end; font-size: .74rem; font-weight: 600; color: #1F6F5C; }
+  .rseen span { color: #34B7F1; letter-spacing: -.15em; margin-inline-end: .2rem; }
+  :global(html[dir="rtl"]) .rseen { justify-self: start; }
+  .on .rseen { animation: pop .4s var(--out) both 1.8s; }
+  .sc-rmatch .till li, .sc-rdeal .till li { align-items: center; }
+  .rring { display: grid; place-items: center; flex: none; width: 2.3rem; height: 2.3rem; border-radius: 999px; background: conic-gradient(var(--k) calc(var(--p) * 1%), var(--line) 0); }
+  .rring b { display: grid; place-items: center; width: 1.8rem; height: 1.8rem; border-radius: 999px; background: var(--surface); font-size: .68rem; font-weight: 700; }
+  .rwhy { display: block; font-size: .72rem; color: var(--k); }
+  .rsend { background: #1E8E50; }
+  .rdot { flex: none; width: .6rem; height: .6rem; border-radius: 999px; border: 2px solid var(--muted); }
+  .rd1 { border-color: #2F6FB0; } .rd2 { border-color: #C77D16; } .rd3 { border-color: var(--k); background: var(--k); }
+  .rclosed { color: var(--k); }
+  .on .rclosed { animation: pop .45s var(--out) both 2.6s; }
+  @media (prefers-color-scheme: dark) {
+    [data-stage="realestate"], [data-pick="realestate"] { --k: #5CC4A2 !important; }
+    [data-stage="realestate"] .btn-k { color: #08130F; }
+    .rchat { background: #1B2A24; }
+  }
   /* the gym's scenes */
   .gp { display: flex; align-items: center; gap: .8rem; padding: .7rem; border-radius: .9rem; background: color-mix(in oklab, #1E8E50 8%, var(--surface)); border-inline-start: 4px solid #1E8E50; }
   .on .gp { animation: pop .45s var(--out) both .7s; }
