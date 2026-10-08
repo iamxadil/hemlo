@@ -3,16 +3,15 @@
 // by it), health notes; the year's tuition is applied by the server.
 import { useEffect, useState } from 'react';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
-import { motion } from 'motion/react';
 import { toast } from 'sonner';
+import { ChevronLeft, ChevronRight, Plus, Search, Users } from 'lucide-react';
 import { api, ApiError } from '../lib/api';
 import { go } from '../lib/app';
-import { rtl } from '../lib/i18n';
 import { useS } from './i18n';
-import { SIcon, Avatar, Page, Skel, Empty, Sheet, Select, Segmented, useStagger } from './ui';
+import { Avatar, Badge, Button, Card, CardAction, CardHeader, CardTitle, Empty, Field, Input, Page, Row, Sheet, SimpleSelect, Skeleton, ToggleGroup, ToggleGroupItem, cn, useStagger } from './ui';
 import { classLabel, classOptions, clearParam, fill, useHashQuery, useSetup } from './data';
 
-type Row = { id: string; number: number; name: string; classId: string | null; className: string | null; gradeName: string | null; balance: number; overdue: number; guardianName: string | null; guardianPhone: string | null };
+type StudentRow = { id: string; number: number; name: string; classId: string | null; className: string | null; gradeName: string | null; balance: number; overdue: number; guardianName: string | null; guardianPhone: string | null };
 
 export function Students() {
   const { s, num, money, can } = useS();
@@ -22,7 +21,7 @@ export function Students() {
   const [klass, setKlass] = useState(hq.get('class') ?? ''), [owing, setOwing] = useState(hq.get('owing') === '1');
   useEffect(() => { const t = setTimeout(() => setDebounced(q.trim()), 200); return () => clearTimeout(t); }, [q]);
   const adding = hq.get('add') === '1';
-  const list = useInfiniteQuery<{ total: number; students: Row[] }>({
+  const list = useInfiniteQuery<{ total: number; students: StudentRow[] }>({
     queryKey: ['sch-students', debounced, klass, owing],
     queryFn: ({ pageParam }) => api(`/v1/sch/students?limit=60&offset=${pageParam}&q=${encodeURIComponent(debounced)}&classId=${klass}${owing ? '&owing=1' : ''}`),
     initialPageParam: 0, getNextPageParam: (last, all) => { const n = all.reduce((t, p) => t + p.students.length, 0); return n < last.total ? n : undefined; },
@@ -32,44 +31,47 @@ export function Students() {
   const total = list.data?.pages[0]?.total ?? 0;
   const stagger = useStagger();
   const filtered = !!(debounced || klass || owing);
+  const Chevron = document.documentElement.dir === 'rtl' ? ChevronLeft : ChevronRight;
+  const chip = (on: boolean) => cn('h-8.5 shrink-0 rounded-full border px-3.5 text-[13.5px] transition-colors', on ? 'border-foreground bg-foreground text-background' : 'border-border bg-card text-foreground/80 hover:bg-accent');
 
   return (
     <Page>
       <div className="grid grid-cols-[minmax(0,1fr)] gap-3">
-        <label className="relative block">
-          <SIcon n="search" className="pointer-events-none absolute top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[var(--s-muted)] start-4" />
-          <input className="sc-input ps-11" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={s.students.search} aria-label={s.students.search} />
-        </label>
+        <div className="relative">
+          <Search className="text-muted-foreground pointer-events-none absolute start-3.5 top-1/2 size-[18px] -translate-y-1/2" />
+          <Input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={s.students.search} aria-label={s.students.search} className="ps-10" />
+        </div>
         <div className="flex flex-wrap items-center gap-3">
-          <div className="sc-chips min-w-0 flex-[1_1_16rem]">
-            <button className="sc-chip" data-on={!klass} onClick={() => setKlass('')}>{s.students.all}</button>
-            {(setup.data?.classes ?? []).map((c) => <button key={c.id} className="sc-chip" data-on={klass === c.id} onClick={() => setKlass(klass === c.id ? '' : c.id)}>{classLabel(setup.data, c.id)}</button>)}
+          <div className="flex min-w-0 flex-[1_1_16rem] gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+            <button className={chip(!klass)} onClick={() => setKlass('')}>{s.students.all}</button>
+            {(setup.data?.classes ?? []).map((c) => <button key={c.id} className={chip(klass === c.id)} onClick={() => setKlass(klass === c.id ? '' : c.id)}>{classLabel(setup.data, c.id)}</button>)}
           </div>
-          {can('fees.read') && <Segmented label={s.students.owing} value={owing ? 'owing' : 'all'} onChange={(v) => setOwing(v === 'owing')} options={[{ value: 'all', label: s.students.all }, { value: 'owing', label: s.students.owing }]} />}
+          {can('fees.read') && <ToggleGroup value={owing ? 'owing' : 'all'} onValueChange={(v) => setOwing(v === 'owing')} aria-label={s.students.owing}>
+            <ToggleGroupItem value="all">{s.students.all}</ToggleGroupItem><ToggleGroupItem value="owing">{s.students.owing}</ToggleGroupItem></ToggleGroup>}
         </div>
       </div>
 
-      <section className="sc-card overflow-hidden">
-        <div className="sc-card-h"><h2 className="sc-num">{fill(s.students.count, { n: num(total) })}</h2>
-          {can('students.create') && <a className="sc-btn sc-btn-soft sc-btn-sm" href="#/students?add=1"><SIcon n="plus" />{s.students.add}</a>}</div>
-        {list.isLoading ? <div className="grid gap-2 p-4">{[0, 1, 2, 3].map((i) => <Skel key={i} h={52} />)}</div>
+      <Card className="overflow-hidden">
+        <CardHeader><CardTitle className="tabular-nums">{fill(s.students.count, { n: num(total) })}</CardTitle>
+          {can('students.create') && <CardAction><Button asChild variant="secondary" size="sm"><a href="#/students?add=1"><Plus />{s.students.add}</a></Button></CardAction>}</CardHeader>
+        {list.isLoading ? <div className="grid gap-2 p-4">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-13" />)}</div>
           : rows.length ? (
-            <div className="sc-list">
+            <div>
               {rows.map((x, i) => (
-                <motion.a key={x.id} href={`#/student?id=${x.id}`} className="sc-row" {...stagger(i)}>
+                <Row key={x.id} href={`#/student?id=${x.id}`} {...stagger(i)}>
                   <Avatar name={x.name} />
-                  <span className="min-w-0 flex-1"><b className="block truncate">{x.name}</b>
-                    <span className="sc-sub">#{x.number} · {x.gradeName ? `${x.gradeName} · ${x.className}` : s.students.noClass}</span></span>
-                  {can('fees.read') && (x.overdue > 0 ? <span className="sc-pill bad sc-num">{fill(s.students.overdue, { v: money(x.overdue) })}</span>
-                    : x.balance > 0 ? <span className="sc-pill sc-num hidden sm:inline-flex">{fill(s.students.balance, { v: money(x.balance) })}</span> : <span className="sc-pill ok">{s.students.paid}</span>)}
-                  <SIcon n={document.documentElement.dir === 'rtl' ? 'prev' : 'next'} className="h-4 w-4 text-[var(--s-muted)]" />
-                </motion.a>
+                  <span className="min-w-0 flex-1"><b className="block truncate font-medium">{x.name}</b>
+                    <span className="text-muted-foreground text-[13px]">#{x.number} · {x.gradeName ? `${x.gradeName} · ${x.className}` : s.students.noClass}</span></span>
+                  {can('fees.read') && (x.overdue > 0 ? <Badge variant="destructive" className="tabular-nums">{fill(s.students.overdue, { v: money(x.overdue) })}</Badge>
+                    : x.balance > 0 ? <Badge variant="secondary" className="tabular-nums max-sm:hidden">{fill(s.students.balance, { v: money(x.balance) })}</Badge> : <Badge variant="success">{s.students.paid}</Badge>)}
+                  <Chevron className="text-muted-foreground size-4 shrink-0" />
+                </Row>
               ))}
-              {list.hasNextPage && <button className="sc-row justify-center text-[14px] font-medium text-[var(--s-accent)]" onClick={() => list.fetchNextPage()} disabled={list.isFetchingNextPage}>{s.students.more}</button>}
+              {list.hasNextPage && <Row onClick={() => list.fetchNextPage()} className="text-primary justify-center text-[14px] font-medium">{s.students.more}</Row>}
             </div>
-          ) : filtered ? <Empty icon="search" title={s.students.noMatch} />
-            : <Empty title={s.students.empty} body={s.students.emptyBody} action={can('students.create') ? <a className="sc-btn sc-btn-primary" href="#/students?add=1"><SIcon n="plus" />{s.students.add}</a> : undefined} />}
-      </section>
+          ) : filtered ? <Empty icon={Search} title={s.students.noMatch} />
+            : <Empty icon={Users} title={s.students.empty} body={s.students.emptyBody} action={can('students.create') ? <Button asChild><a href="#/students?add=1"><Plus />{s.students.add}</a></Button> : undefined} />}
+      </Card>
       <AddStudent open={adding} onClose={() => clearParam('add')} defaultClass={klass} />
     </Page>
   );
@@ -77,7 +79,7 @@ export function Students() {
 
 /** Admit a student: one sheet, the essentials only. */
 export function AddStudent({ open, onClose, defaultClass }: { open: boolean; onClose(): void; defaultClass?: string }) {
-  const { s, lang, num } = useS();
+  const { s, num } = useS();
   const setup = useSetup();
   const qc = useQueryClient();
   const blank = { name: '', gender: 'm', classId: defaultClass ?? '', birthDate: '', gName: '', relation: 'father', phone: '', health: '' };
@@ -101,24 +103,24 @@ export function AddStudent({ open, onClose, defaultClass }: { open: boolean; onC
   };
   const rels = Object.entries(s.relations).map(([value, label]) => ({ value, label }));
   return (
-    <Sheet open={open} onClose={onClose} title={s.students.addTitle} sub={s.students.addSub} rtl={rtl(lang)}
-      footer={<><button className="sc-btn sc-btn-primary sc-btn-block" onClick={() => save()} disabled={busy}>{s.students.save}</button>{err && <p className="text-center text-[13.5px] text-[var(--s-absent)]" role="alert">{err}</p>}</>}>
+    <Sheet open={open} onClose={onClose} title={s.students.addTitle} description={s.students.addSub}
+      footer={<><Button size="lg" onClick={() => save()} disabled={busy}>{s.students.save}</Button>{err && <p className="text-destructive text-center text-[13.5px]" role="alert">{err}</p>}</>}>
       <form onSubmit={save} className="grid gap-4">
-        <label className="sc-field"><span>{s.students.name}</span><input id="st-name" className="sc-input" value={f.name} onChange={(e) => set('name')(e.target.value)} autoComplete="off" autoFocus /></label>
+        <Field label={s.students.name} htmlFor="st-name"><Input id="st-name" value={f.name} onChange={(e) => set('name')(e.target.value)} autoComplete="off" autoFocus /></Field>
         <div className="grid grid-cols-[auto_1fr] items-end gap-3">
-          <div className="sc-field"><span>{s.students.gender}</span><Segmented label={s.students.gender} value={f.gender} onChange={set('gender')} options={[{ value: 'm', label: s.gender.m }, { value: 'f', label: s.gender.f }]} /></div>
-          <div className="sc-field"><span>{s.students.klass}</span><Select id="st-class" value={f.classId} onChange={set('classId')} options={classOptions(setup.data)} label={s.students.klass} /></div>
+          <Field label={s.students.gender}><ToggleGroup value={f.gender} onValueChange={set('gender')} aria-label={s.students.gender} className="h-11"><ToggleGroupItem value="m" className="h-9.5">{s.gender.m}</ToggleGroupItem><ToggleGroupItem value="f" className="h-9.5">{s.gender.f}</ToggleGroupItem></ToggleGroup></Field>
+          <Field label={s.students.klass} htmlFor="st-class"><SimpleSelect id="st-class" value={f.classId} onChange={set('classId')} options={classOptions(setup.data)} label={s.students.klass} /></Field>
         </div>
-        <label className="sc-field"><span>{s.students.birth}</span><input id="st-birth" className="sc-input" type="date" value={f.birthDate} onChange={(e) => set('birthDate')(e.target.value)} /></label>
-        <fieldset className="grid gap-3 rounded-2xl border border-[var(--s-line)] p-4">
-          <legend className="px-1 text-[13px] font-medium text-[var(--s-ink-2)]">{s.students.guardian}</legend>
-          <div className="grid grid-cols-[1fr_auto] gap-3">
-            <label className="sc-field"><span>{s.students.guardianName}</span><input id="st-gname" className="sc-input" value={f.gName} onChange={(e) => set('gName')(e.target.value)} autoComplete="off" /></label>
-            <div className="sc-field w-36"><span>{s.students.relation}</span><Select id="st-rel" value={f.relation} onChange={set('relation')} options={rels} label={s.students.relation} /></div>
+        <Field label={s.students.birth} htmlFor="st-birth"><Input id="st-birth" type="date" value={f.birthDate} onChange={(e) => set('birthDate')(e.target.value)} /></Field>
+        <fieldset className="grid gap-3 rounded-2xl border border-border p-4">
+          <legend className="text-foreground/80 px-1 text-[13px] font-medium">{s.students.guardian}</legend>
+          <div className="grid grid-cols-[1fr_9rem] gap-3">
+            <Field label={s.students.guardianName} htmlFor="st-gname"><Input id="st-gname" value={f.gName} onChange={(e) => set('gName')(e.target.value)} autoComplete="off" /></Field>
+            <Field label={s.students.relation} htmlFor="st-rel"><SimpleSelect id="st-rel" value={f.relation} onChange={set('relation')} options={rels} label={s.students.relation} /></Field>
           </div>
-          <label className="sc-field"><span>{s.students.phone}</span><input id="st-phone" className="sc-input" type="tel" inputMode="tel" dir="ltr" placeholder="07XX XXX XXXX" value={f.phone} onChange={(e) => set('phone')(e.target.value)} /><small>{s.students.phoneHint}</small></label>
+          <Field label={s.students.phone} htmlFor="st-phone" hint={s.students.phoneHint}><Input id="st-phone" type="tel" inputMode="tel" dir="ltr" placeholder="07XX XXX XXXX" value={f.phone} onChange={(e) => set('phone')(e.target.value)} /></Field>
         </fieldset>
-        <label className="sc-field"><span>{s.students.health}</span><input id="st-health" className="sc-input" value={f.health} onChange={(e) => set('health')(e.target.value)} /><small>{s.students.healthHint}</small></label>
+        <Field label={s.students.health} htmlFor="st-health" hint={s.students.healthHint}><Input id="st-health" value={f.health} onChange={(e) => set('health')(e.target.value)} /></Field>
         <button type="submit" hidden />
       </form>
     </Sheet>

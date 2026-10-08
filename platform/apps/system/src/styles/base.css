@@ -18,6 +18,13 @@
   --color-canvas:var(--canvas); --color-surface:var(--surface); --color-sunken:var(--sunken);
   --color-fg:var(--fg); --color-fg-2:var(--fg-2); --color-muted:var(--muted); --color-line:var(--line); --color-line-strong:var(--line-strong);
   --color-brass:var(--brass); --color-invert:var(--invert); --color-on-invert:var(--on-invert);
+  /* shadcn/ui names for Hemlo School (values set under html.sc in school/school.css; "muted" stays the app's own, so shadcn's muted background is "secondary") */
+  --color-background:var(--s-bg); --color-foreground:var(--s-ink); --color-card:var(--s-surface); --color-card-foreground:var(--s-ink);
+  --color-popover:var(--s-raise); --color-popover-foreground:var(--s-ink); --color-primary:var(--s-accent); --color-primary-foreground:var(--s-accent-ink);
+  --color-secondary:var(--s-sunken); --color-secondary-foreground:var(--s-ink); --color-muted-foreground:var(--s-muted); --color-accent:var(--s-sunken); --color-accent-foreground:var(--s-ink);
+  --color-destructive:var(--s-absent); --color-border:var(--s-line); --color-input:var(--s-line); --color-ring:var(--s-accent);
+  --color-success:var(--s-present); --color-success-soft:var(--s-present-soft); --color-warning:var(--s-late); --color-warning-soft:var(--s-late-soft);
+  --color-info:var(--s-excused); --color-info-soft:var(--s-excused-soft); --color-danger-soft:var(--s-absent-soft); --color-primary-soft:var(--s-accent-soft);
 }
 @theme{
   --font-sans:"Readex Pro","Vazirmatn",ui-sans-serif,system-ui,sans-serif;

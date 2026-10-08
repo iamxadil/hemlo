@@ -3,10 +3,11 @@
 // call or message the school. Read-only; the school can replace the link at any time.
 import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
+import { MessageCircle, Phone } from 'lucide-react';
 import { api } from '../lib/api';
 import { readLang } from '../lib/i18n';
 import { sOf } from './i18n';
-import { SIcon, Avatar, Skel } from './ui';
+import { Avatar, Badge, Button, Card, Skeleton } from './ui';
 import { fill, waLink } from './data';
 import './school.css';
 
@@ -24,38 +25,40 @@ export function Family() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const iqd = (n: number) => `${new Intl.NumberFormat(en ? 'en-US' : 'ar-IQ-u-nu-latn').format(n)} ${en ? 'IQD' : 'د.ع'}`;
   const day = (d: string) => new Intl.DateTimeFormat(en ? 'en-GB' : 'ar-IQ-u-nu-latn', { day: 'numeric', month: 'long' }).format(new Date(`${d}T12:00:00Z`));
-  if (gone) return <main className="sc-family"><section className="sc-card grid gap-2 p-6 text-center"><h1 className="text-[20px] font-semibold">{s.family.notFound}</h1><p className="sc-sub">{s.family.notFoundBody}</p></section></main>;
-  if (!data) return <main className="sc-family"><Skel h={90} /><Skel h={260} /></main>;
+  if (gone) return <main className="sc-family"><Card className="grid gap-2 p-6 text-center"><h1 className="text-[20px] font-semibold">{s.family.notFound}</h1><p className="text-muted-foreground">{s.family.notFoundBody}</p></Card></main>;
+  if (!data) return <main className="sc-family"><Skeleton className="h-22" /><Skeleton className="h-65" /></main>;
   const contact = data.school.whatsapp ?? data.school.phone;
   return (
     <main className="sc-family">
       <motion.header initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="grid gap-1 pt-2">
-        <span className="sc-eyebrow">{data.school.name}</span>
+        <span className="text-muted-foreground text-[13px] font-medium">{data.school.name}</span>
         <h1 className="text-[26px] font-semibold tracking-tight">{fill(s.family.hello, { name: data.guardian.split(/\s+/)[0] })}</h1>
-        <p className="sc-sub">{fill(s.family.sub, { school: data.school.name })}</p>
+        <p className="text-muted-foreground text-[14px]">{fill(s.family.sub, { school: data.school.name })}</p>
       </motion.header>
       {data.children.map((c, i) => (
-        <motion.section key={c.name} className="sc-card grid gap-4 p-5" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 * (i + 1) }}>
-          <div className="flex items-center gap-3"><Avatar name={c.name} /><div className="min-w-0"><b className="block truncate text-[17px]">{c.name}</b><span className="sc-sub">{c.gradeName} · {c.className}</span></div></div>
-          <div className="grid gap-2">
-            <span className="sc-eyebrow">{s.family.attendance}</span>
-            <div className="flex gap-2"><span className="sc-pill ok">{s.family.present} {c.attendance.present}</span>{c.attendance.absent > 0 && <span className="sc-pill bad">{s.family.absent} {c.attendance.absent}</span>}{c.attendance.late > 0 && <span className="sc-pill warn">{s.family.late} {c.attendance.late}</span>}</div>
-            <div className="flex flex-wrap gap-1" dir="ltr">{[...c.attendance.days].reverse().map((d) => <i key={d.day} title={day(d.day)} className="h-3.5 w-3.5 rounded" style={{ background: `var(--s-${d.status === 'present' ? 'present-soft' : d.status})` }} />)}</div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-2xl bg-[var(--s-sunken)] p-3"><span className="sc-sub">{s.family.owed}</span><b className="sc-num block text-[18px]">{iqd(c.money.balance)}</b>
-              {c.money.overdue > 0 ? <span className="sc-pill bad mt-1">{s.family.overdue} {iqd(c.money.overdue)}</span> : <span className="sc-pill ok mt-1">{s.family.allPaid}</span>}</div>
-            <div className="rounded-2xl bg-[var(--s-sunken)] p-3"><span className="sc-sub">{s.family.next}</span>
-              {c.money.next ? <><b className="sc-num block text-[18px]">{iqd(c.money.next.amount)}</b><span className="sc-sub">{day(c.money.next.dueOn)}</span></> : <b className="block">—</b>}</div>
-          </div>
-          {c.money.last && <p className="sc-sub">{s.family.last}: {iqd(c.money.last.amount)} · {fill(s.family.receipt, { n: c.money.last.number })} · {day(c.money.last.at.slice(0, 10))}</p>}
-        </motion.section>
+        <motion.div key={c.name} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 * (i + 1) }}>
+          <Card className="grid gap-4 p-5">
+            <div className="flex items-center gap-3"><Avatar name={c.name} /><div className="min-w-0"><b className="block truncate text-[17px]">{c.name}</b><span className="text-muted-foreground text-[13px]">{c.gradeName} · {c.className}</span></div></div>
+            <div className="grid gap-2">
+              <span className="text-muted-foreground text-[13px] font-medium">{s.family.attendance}</span>
+              <div className="flex gap-2"><Badge variant="success">{s.family.present} {c.attendance.present}</Badge>{c.attendance.absent > 0 && <Badge variant="destructive">{s.family.absent} {c.attendance.absent}</Badge>}{c.attendance.late > 0 && <Badge variant="warning">{s.family.late} {c.attendance.late}</Badge>}</div>
+              <div className="flex flex-wrap gap-1" dir="ltr">{[...c.attendance.days].reverse().map((d) => <i key={d.day} title={day(d.day)} className="size-3.5 rounded" style={{ background: `var(--s-${d.status === 'present' ? 'present-soft' : d.status})` }} />)}</div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-secondary rounded-2xl p-3"><span className="text-muted-foreground text-[13px]">{s.family.owed}</span><b className="block text-[18px] tabular-nums">{iqd(c.money.balance)}</b>
+                {c.money.overdue > 0 ? <Badge variant="destructive" className="mt-1">{s.family.overdue} {iqd(c.money.overdue)}</Badge> : <Badge variant="success" className="mt-1">{s.family.allPaid}</Badge>}</div>
+              <div className="bg-secondary rounded-2xl p-3"><span className="text-muted-foreground text-[13px]">{s.family.next}</span>
+                {c.money.next ? <><b className="block text-[18px] tabular-nums">{iqd(c.money.next.amount)}</b><span className="text-muted-foreground text-[13px]">{day(c.money.next.dueOn)}</span></> : <b className="block">—</b>}</div>
+            </div>
+            {c.money.last && <p className="text-muted-foreground text-[13px]">{s.family.last}: {iqd(c.money.last.amount)} · {fill(s.family.receipt, { n: c.money.last.number })} · {day(c.money.last.at.slice(0, 10))}</p>}
+          </Card>
+        </motion.div>
       ))}
       {contact && <div className="grid grid-cols-2 gap-2">
-        {data.school.phone && <a className="sc-btn sc-btn-line" href={`tel:${data.school.phone}`}><SIcon n="phone" />{s.family.call}</a>}
-        <a className="sc-btn sc-btn-wa" href={waLink(contact, '')} target="_blank" rel="noopener"><SIcon n="wa" />{s.family.message}</a>
+        {data.school.phone && <Button asChild variant="outline"><a href={`tel:${data.school.phone}`}><Phone />{s.family.call}</a></Button>}
+        <Button asChild variant="whatsapp"><a href={waLink(contact, '')} target="_blank" rel="noopener"><MessageCircle />{s.family.message}</a></Button>
       </div>}
-      <p className="sc-sub text-center">{s.family.powered}</p>
+      <p className="text-muted-foreground text-center text-[13px]">{s.family.powered}</p>
     </main>
   );
 }
