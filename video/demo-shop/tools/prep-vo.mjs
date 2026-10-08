@@ -1,12 +1,12 @@
 // The ad's voiceover, line by line: trims each recorded line to its speech (with a few milliseconds of air either
-// side and soft edges), evens out the loudness between lines, and writes public/ad2/vo/NN.wav plus lines.json (each
+// side and soft edges), evens out the loudness between lines, and writes public/ad2/vo/{lang}/NN.wav plus lines.json (each
 // line's length in seconds and where its phrases start), which the timeline reads to place the picture on the words.
-// Run: node tools/prep-vo.mjs <folder with line00.wav … line11.wav (mono, 16-bit, 48 kHz)>
+// Run: node tools/prep-vo.mjs <folder with line00.wav … line11.wav (mono, 16-bit, 48 kHz)> <en|ar>
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-const SRC = process.argv[2], SR = 48000;
-const OUT = new URL('../public/ad2/vo/', import.meta.url);
+const SRC = process.argv[2], LANG = process.argv[3] ?? 'en', SR = 48000;
+const OUT = new URL(`../public/ad2/vo/${LANG}/`, import.meta.url);
 mkdirSync(OUT, { recursive: true });
 const read = (p) => { const b = readFileSync(p), di = b.indexOf('data') + 8, n = Math.floor((b.length - di) / 2), x = new Float32Array(n); for (let i = 0; i < n; i++) x[i] = b.readInt16LE(di + i * 2) / 32768; return x; };
 const write = (url, x) => {

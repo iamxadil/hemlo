@@ -1,19 +1,59 @@
 // The Hemlo film's soundtrack: the voiceover placed on the beat, a modern piano score that drops in on "Meet Hemlo",
-// and the music ducking under every spoken line. Also writes the schedule the picture follows (public/ad2/schedule.json):
-// when each line is cut to, when its words begin, where its phrases fall, and the film's length.
+// and the music ducking under every spoken line. Also writes the schedule the picture follows (public/ad2/schedules.json,
+// one entry a language): when each line is cut to, when each of its words is said, and the film's length.
 //   intro   the problem: a soft piano ostinato, Bm · G · D · A
 //   break   "There's a better way": the music thins to a held chord and a rising breath
 //   drop    "Meet Hemlo": a soft hit and a bright D major; then a light groove (D · A · Bm · G) under the trades
 //   lift    "In Arabic…": a melody on top
 //   outro   the call: the groove eases, and the last D major rings out
-// Run after tools/prep-vo.mjs: node tools/make-ad2-audio.mjs
+// Run after tools/prep-vo.mjs: node tools/make-ad2-audio.mjs <en|ar>
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { SR, mtof, buf, add, noise, clap, hat, reverb, writeWav, piano, strings, hit, swell } from './synth.mjs';
+import { SCRIPT } from './film-script.mjs';
 
 const BPM = 104, BEAT = 60 / BPM, BAR = BEAT * 4, FPS = 60;
 const AUD = new URL('../public/ad2/', import.meta.url);
 mkdirSync(new URL('audio/', AUD), { recursive: true });
-const lines = JSON.parse(readFileSync(new URL('vo/lines.json', AUD), 'utf8'));
+const LANG = process.argv[2] ?? 'en';
+const lines = JSON.parse(readFileSync(new URL(`vo/${LANG}/lines.json`, AUD), 'utf8'));
+
+// ---------- when each word is said ----------
+// Every word gets a share of its line by its length (syllables in English, letters in Arabic), with room for the
+// pauses its punctuation asks for; then the clause starts are pinned to the pauses actually heard in the recording.
+const ARABIC = /[؀-ۿ]/;
+const bare = (w) => w.replace(/[ً-ْٰ]/g, '').replace(/[^\p{L}\p{N}']/gu, '');
+const weight = (w) => { const b = bare(w); if (!b) return 0.5; if (ARABIC.test(b)) return Math.max(1, b.length / 2.2); return Math.max(1, (b.toLowerCase().match(/[aeiouy]+/g) ?? []).length - (/[^aeiou]e$/i.test(b) ? 1 : 0)); };
+function wordTimes(text, dur, phrases) {
+  const words = text.split(/\s+/).filter(Boolean);
+  const raw = []; let t = 0;
+  words.forEach((w) => { raw.push(t); t += weight(w); if (/[,،:;]$/.test(w)) t += 1.4; else if (/[.!?…]$/.test(w)) t += 2.4; });
+  const speak = dur - 0.14, k = speak / t;
+  let times = raw.map((x) => x * k);
+  // the clause starts (after punctuation) we can pin to a heard pause
+  const starts = [0, ...words.map((w, i) => (/[,،:;.!?…]$/.test(w) && i + 1 < words.length ? i + 1 : -1)).filter((i) => i > 0)];
+  const pins = new Map([[0, phrases[0] ?? 0]]);
+  const rest = starts.slice(1), heard = phrases.slice(1);
+  if (rest.length === heard.length && rest.every((i, k) => Math.abs(times[i] - heard[k]) < 1)) rest.forEach((i, k) => pins.set(i, heard[k])); // one pause per clause
+  else {
+    let after = 0; // otherwise, in order: each pause to the nearest clause start after the last one pinned
+    for (const p of heard) {
+      let best = -1, err = 0.7;
+      for (const i of rest) if (i > after && Math.abs(times[i] - p) < err) { best = i; err = Math.abs(times[i] - p); }
+      if (best > 0) { pins.set(best, p); after = best; }
+    }
+  }
+  const keys = [...pins.keys()].sort((a, b) => a - b);
+  times = times.map((x, i) => {
+    let a = keys[0]; for (const kk of keys) if (kk <= i) a = kk;
+    const nb = keys.find((kk) => kk > i);
+    const ta = pins.get(a), xa = times[a];
+    if (nb === undefined) return ta + (x - xa);
+    const tb = pins.get(nb), xb = times[nb];
+    return ta + (x - xa) * ((tb - ta) / Math.max(1e-6, xb - xa));
+  });
+  return words.map((w, i) => ({ w, t: Math.max(0, times[i]) }));
+}
 
 // ---------- the schedule: each line is cut to on a beat, and its words begin a moment after ----------
 const GAP = [0, 0.55, 0.95, 1.15, 0.75, 0.8, 0.6, 0.6, 0.6, 0.8, 0.7, 0.85]; // the pause before each line (seconds)
@@ -22,12 +62,16 @@ const sched = [];
 lines.forEach((l, i) => {
   const cut = i === 0 ? 0 : BEAT * Math.ceil((sched[i - 1].end + GAP[i] - LEAD) / BEAT);
   const start = i === 0 ? BEAT : cut + LEAD;
-  sched.push({ cut, start, end: start + l.d, phrases: l.p.map((p) => +(start + p).toFixed(3)) });
+  sched.push({ cut, start, end: start + l.d, phrases: l.p.map((p) => +(start + p).toFixed(3)), words: wordTimes(SCRIPT[LANG][i], l.d, l.p).map((x) => ({ w: x.w, t: start + x.t })) });
 });
 const LEN = BEAT * Math.ceil((sched[11].end + 2.8) / BEAT), TAIL = 2.5;
 const C = sched.map((s) => s.cut);
-writeFileSync(new URL('schedule.json', AUD), JSON.stringify({ fps: FPS, beat: BEAT, frames: Math.round(LEN * FPS),
-  lines: sched.map((s) => ({ cut: Math.round(s.cut * FPS), start: Math.round(s.start * FPS), end: Math.round(s.end * FPS), phrases: s.phrases.map((p) => Math.round(p * FPS)) })) }, null, 1));
+const SCHED = new URL('schedules.json', AUD);
+const all = existsSync(SCHED) ? JSON.parse(readFileSync(SCHED, 'utf8')) : {};
+all[LANG] = { fps: FPS, beat: BEAT, frames: Math.round(LEN * FPS),
+  lines: sched.map((s) => ({ cut: Math.round(s.cut * FPS), start: Math.round(s.start * FPS), end: Math.round(s.end * FPS), phrases: s.phrases.map((p) => Math.round(p * FPS)),
+    words: s.words.map((x) => [x.w, Math.round(x.t * FPS)]) })) };
+writeFileSync(SCHED, JSON.stringify(all));
 sched.forEach((s, i) => console.log(i, `cut ${s.cut.toFixed(2)}`, `words ${s.start.toFixed(2)}–${s.end.toFixed(2)}`));
 console.log('length', LEN.toFixed(2) + 's');
 
@@ -103,7 +147,7 @@ reverb(hall, 0.85, 0.9, 0.3);
 // ---------- the voice, and the music bowing under it ----------
 const voice = buf(LEN + TAIL);
 sched.forEach((s, i) => {
-  const b = readFileSync(new URL(`vo/${String(i).padStart(2, '0')}.wav`, AUD)), di = b.indexOf('data') + 8, n = Math.floor((b.length - di) / 2), x = new Float32Array(n);
+  const b = readFileSync(new URL(`vo/${LANG}/${String(i).padStart(2, '0')}.wav`, AUD)), di = b.indexOf('data') + 8, n = Math.floor((b.length - di) / 2), x = new Float32Array(n);
   for (let k = 0; k < n; k++) x[k] = b.readInt16LE(di + k * 2) / 32768;
   add(voice, x, s.start, 1.0, 0);
 });
@@ -122,4 +166,4 @@ for (let i = 0; i < mix[0].length; i++) {
   const t = i / SR, fade = t > LEN + TAIL - 2 ? Math.max(0, (LEN + TAIL - t) / 2) : 1, d = 1 - 0.55 * duck[i];
   for (const c of [0, 1]) mix[c][i] = Math.tanh(((music[c][i] + hall[c][i]) * mg * d * fade + voice[c][i] * vg) * 1.05) * 0.96;
 }
-writeWav(new URL('audio/film.wav', AUD), mix);
+writeWav(new URL(`audio/film-${LANG}.wav`, AUD), mix);
