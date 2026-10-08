@@ -315,3 +315,46 @@ body { font-feature-settings: "tnum" 1; }
 .chip { display: inline-flex; align-items: center; padding: .2rem .6rem; border-radius: 999px; background: var(--sunken); font-size: .78rem; }
 .chip.bad { color: var(--bad); background: color-mix(in oklab, var(--bad) 10%, transparent); }
 .pill.plan-grace { color: var(--warn, #B8520A); background: color-mix(in oklab, #B8520A 12%, transparent); }
+
+/* ---------- AI: providers, each system's jobs, the model picker ---------- */
+@layer components {
+  .ai-provs { display: grid; grid-template-columns: repeat(auto-fill, minmax(17.5rem, 1fr)); gap: .6rem; padding: .7rem 1.25rem 1.25rem; }
+  .ai-prov { display: flex; align-items: center; gap: .75rem; padding: .8rem .9rem; border: 1px solid var(--line); border-radius: .85rem; transition: border-color .15s, background-color .15s; }
+  .ai-prov:hover { border-color: var(--line-strong); background: var(--sunken); }
+  .ai-dot { width: .55rem; height: .55rem; border-radius: 999px; flex: none; background: var(--muted); }
+  .ai-dot.ready { background: var(--ok); box-shadow: 0 0 0 3px color-mix(in oklab, var(--ok) 18%, transparent); }
+  .ai-dot.nokey { background: transparent; box-shadow: inset 0 0 0 1.5px var(--muted); }
+  .pill.ai-ready { color: var(--ok); background: color-mix(in oklab, var(--ok) 13%, transparent); }
+  .pill.ai-nokey, .pill.ai-off, .pill.ai-na { color: var(--muted); background: var(--sunken); }
+  .ai-dot.na { background: transparent; box-shadow: inset 0 0 0 1.5px var(--line-strong); }
+  .ai-jobs { table-layout: fixed; }
+  .ai-jobs th:nth-child(1) { width: 46%; } .ai-jobs th:nth-child(2) { width: 30%; } .ai-jobs th:nth-child(4) { width: 3rem; }
+  @media (max-width: 760px) { .ai-jobs th:nth-child(1) { width: 52%; } .ai-jobs th:nth-child(2) { width: auto; } }
+  .ai-tag { display: inline-flex; margin-top: .3rem; font-size: .72rem; padding: .08rem .5rem; border-radius: 999px; background: var(--sunken); color: var(--fg-2); white-space: nowrap; }
+  .ai-tag.free { color: var(--ok); background: color-mix(in oklab, var(--ok) 12%, transparent); }
+  .ai-id, .ai-mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; direction: ltr; unicode-bidi: plaintext; }
+  .ai-id { font-size: .74rem; color: var(--muted); overflow-wrap: anywhere; text-align: start; }
+  .ai-mono { font-size: .85rem; }
+  html[dir="rtl"] .ai-chev svg { transform: scaleX(-1); }
+  .ai-models { max-height: 19rem; overflow-y: auto; overscroll-behavior: contain; border: 1px solid var(--line); border-radius: .85rem; }
+  .ai-model { display: flex; align-items: center; gap: .75rem; width: 100%; text-align: start; padding: .6rem .8rem; border-bottom: 1px solid var(--line); }
+  .ai-model:last-child { border-bottom: 0; }
+  .ai-model:hover { background: var(--sunken); }
+  .ai-model[aria-selected="true"] { background: color-mix(in oklab, var(--info) 10%, transparent); box-shadow: inset 3px 0 0 var(--info); }
+  html[dir="rtl"] .ai-model[aria-selected="true"] { box-shadow: inset -3px 0 0 var(--info); }
+  .ai-model .ai-tag { margin-top: 0; }
+  .ai-note { font-size: .84rem; padding: .6rem .8rem; border-radius: .7rem; }
+  .ai-note.paid { color: var(--warn); background: color-mix(in oklab, var(--warn) 9%, transparent); }
+  .ai-note.free { color: var(--ok); background: color-mix(in oklab, var(--ok) 9%, transparent); }
+  .ai-result { display: grid; gap: .25rem; border-radius: .85rem; padding: .8rem 1rem; border: 1px solid var(--line); background: var(--sunken); font-size: .88rem; }
+  .ai-result.good { border-color: color-mix(in oklab, var(--ok) 35%, transparent); background: color-mix(in oklab, var(--ok) 7%, transparent); }
+  .ai-result.good > p:first-child { color: var(--ok); }
+  .ai-result.bad { border-color: color-mix(in oklab, var(--bad) 35%, transparent); background: color-mix(in oklab, var(--bad) 6%, transparent); }
+  .ai-result.bad > p:first-child { color: var(--bad); }
+  .ai-result pre { margin-top: .4rem; font-size: .76rem; white-space: pre-wrap; max-height: 11rem; overflow: auto; unicode-bidi: plaintext; }
+  .ai-spin { display: inline-block; width: .9rem; height: .9rem; margin-inline-end: .5rem; vertical-align: -2px; border-radius: 999px; border: 2px solid var(--line-strong); border-top-color: var(--fg-2); animation: ai-spin .8s linear infinite; }
+  @keyframes ai-spin { to { transform: rotate(360deg); } }
+  .ai-hist td { padding-block: .55rem; }
+}
+/* a button reset outside the layers would otherwise clear the chosen chip’s fill */
+button.chip.on { background: var(--invert); color: var(--on-invert); border-color: var(--invert); }

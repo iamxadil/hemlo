@@ -1,6 +1,6 @@
 // Tables Hemlo adds next to Better Auth's own (auth-schema.ts, generated).
 // Every table that belongs to a business has organization_id and row-level security (see migrations/rls.sql).
-import { pgTable, text, timestamp, integer, boolean, jsonb, primaryKey, uniqueIndex, index } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, integer, boolean, jsonb, primaryKey, uniqueIndex, index, doublePrecision } from 'drizzle-orm/pg-core';
 
 /** Append-only log of security events: sign-ins, new devices, role changes, counter lockouts… */
 export const authEvent = pgTable('auth_event', {
@@ -202,3 +202,34 @@ export const hemloPlanRequest = pgTable('hemlo_plan_request', {
   handledAt: timestamp('handled_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [index('hemlo_plan_request_org').on(t.organizationId, t.status)]);
+
+/** An AI provider Hemlo can use: Cloudflare Workers AI (free, built in), Anthropic, or any OpenAI-compatible service
+ *  (OpenAI, OpenRouter, Google Gemini, Groq, or one added by the team). Its API key is kept encrypted (AES-GCM, with a key
+ *  from a Worker secret) and is never sent back to anyone; only its last four characters are shown. System-only table. */
+export const hemloAiProvider = pgTable('hemlo_ai_provider', {
+  id: text('id').primaryKey(),                         // 'openrouter', 'openai', 'gemini', 'groq', 'anthropic', or 'custom-…'
+  kind: text('kind').notNull(),                        // workers-ai | anthropic | openai (OpenAI-compatible)
+  label: text('label').notNull(),
+  baseUrl: text('base_url'),                           // OpenAI-compatible: the API's base (…/v1)
+  keyEnc: text('key_enc'),                             // the API key, encrypted
+  keyHint: text('key_hint'),                           // its last four characters
+  enabled: boolean('enabled').notNull().default(true),
+  updatedBy: text('updated_by'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Which model does one AI job in one system ('gym:members', 'store:invoice'…), and what to fall back on if it fails.
+ *  No row: the default engine. Prices (US$ per million tokens) only where the provider doesn't report the cost itself. */
+export const hemloAiRoute = pgTable('hemlo_ai_route', {
+  id: text('id').primaryKey(),                         // '{edition}:{feature}'
+  edition: text('edition').notNull(),
+  feature: text('feature').notNull(),
+  provider: text('provider').notNull(),
+  model: text('model').notNull(),
+  fallbackProvider: text('fallback_provider'),
+  fallbackModel: text('fallback_model'),
+  priceIn: doublePrecision('price_in'),
+  priceOut: doublePrecision('price_out'),
+  updatedBy: text('updated_by'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});

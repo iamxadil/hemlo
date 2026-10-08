@@ -12,6 +12,8 @@ export type Env = AuthEnv & NotifyEnv & { ALLOWED_RETURN_HOSTS?: string; EARLY_A
   LIMIT_DB_MB?: string; LIMIT_CU_HOURS?: string; LIMIT_REQUESTS_DAY?: string;
   // Hemlo AI: the paid engine (when set), Hemlo's monthly budget for it, and an off switch for every AI feature
   ANTHROPIC_API_KEY?: string; AI_BUDGET_USD?: string; AI_OFF?: string;
+  // other AI providers (or set their keys in the admin dashboard, kept encrypted with AI_KEYS_SECRET, else AUTH_SECRET)
+  OPENAI_API_KEY?: string; OPENROUTER_API_KEY?: string; GEMINI_API_KEY?: string; GROQ_API_KEY?: string; AI_KEYS_SECRET?: string;
   // where the system app lives (the demo agency's photographs are its static files), and the public pages' site
   SYSTEM_URL?: string; PUBLIC_SITE_URL?: string };
 

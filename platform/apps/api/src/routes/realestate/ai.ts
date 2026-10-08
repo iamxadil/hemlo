@@ -12,6 +12,7 @@ import { actor, bad, type Actor } from '../sys-common';
 import { subscriptionOf } from '../../subscription';
 import { AiError, type Engine, type JsonSchema } from '../../ai/engine';
 import { allowanceOf, snapshot, overBudget, record, DAILY_CAP, DEFAULT_BUDGET_USD } from '../../ai/meter';
+import { engineFor, editionOf } from '../../ai/router';
 import { inRe, str, oneOf, typeName, featureName, leadScope, memberOf, dayStart, like, settingsOf, RE_TYPES } from './common';
 import { cardCols, withCovers, leadsFor } from './properties';
 import { matchesFor } from './leads';
@@ -19,24 +20,26 @@ import type { AppEnv, Deps } from '../../types';
 
 /** One AI action, metered like the rest of Hemlo AI. */
 export function aiGuard(d: Deps) {
-  const status = async (a: Actor) => {
+  const look = async (a: Actor, feature: string) => {
     const [snap, sub] = await Promise.all([snapshot(d.db, a.organizationId), subscriptionOf(d.db, a.organizationId)]);
-    return { demo: snap.demo, off: snap.off, used: snap.month, today: snap.day, allowance: allowanceOf(sub, snap.demo), available: d.ai?.name ?? null };
+    const engine = await engineFor(d, editionOf(sub, snap.kind), feature);
+    return { engine, s: { demo: snap.demo, off: snap.off, used: snap.month, today: snap.day, allowance: allowanceOf(sub, snap.demo), available: engine?.name ?? null } };
   };
+  const status = async (a: Actor, feature = 're_describe') => (await look(a, feature)).s;
   const run = async <T,>(a: Actor, feature: string, fn: (e: Engine) => Promise<{ data: T; model: string; inputTokens: number; outputTokens: number; costMicros: number }>) => {
-    const s = await status(a);
+    const { s, engine } = await look(a, feature);
     if (s.off) throw new HttpError(403, 'AI_OFF');
-    if (!d.ai) throw new HttpError(503, 'AI_UNAVAILABLE');
+    if (!engine) throw new HttpError(503, 'AI_UNAVAILABLE');
     if (s.used >= s.allowance) throw new HttpError(429, 'AI_LIMIT');
     if (s.today >= DAILY_CAP) throw new HttpError(429, 'AI_DAILY_LIMIT');
-    if (d.ai.name === 'claude' && await overBudget(d.db, Number(d.env.AI_BUDGET_USD) || DEFAULT_BUDGET_USD)) throw new HttpError(503, 'AI_BUSY');
+    if (engine.paid && await overBudget(d.db, Number(d.env.AI_BUDGET_USD) || DEFAULT_BUDGET_USD)) throw new HttpError(503, 'AI_BUSY');
     const t0 = Date.now();
     try {
-      const out = await fn(d.ai);
-      await record(d.db, a.organizationId, { userId: a.userId, feature, engine: d.ai.name, model: out.model, inputTokens: out.inputTokens, outputTokens: out.outputTokens, costMicros: out.costMicros, ms: Date.now() - t0, ok: true });
+      const out = await fn(engine);
+      await record(d.db, a.organizationId, { userId: a.userId, feature, engine: engine.name, model: out.model, inputTokens: out.inputTokens, outputTokens: out.outputTokens, costMicros: out.costMicros, ms: Date.now() - t0, ok: true });
       return { data: out.data, used: s.used + 1, allowance: s.allowance };
     } catch (err) {
-      await record(d.db, a.organizationId, { userId: a.userId, feature, engine: d.ai.name, ms: Date.now() - t0, ok: false }).catch(() => {});
+      await record(d.db, a.organizationId, { userId: a.userId, feature, engine: engine.name, ms: Date.now() - t0, ok: false }).catch(() => {});
       console.error('[ai]', feature, err instanceof Error ? err.message : err);
       throw new HttpError(503, err instanceof AiError && err.message === 'REFUSED' ? 'AI_REFUSED' : 'AI_FAILED');
     }
@@ -45,9 +48,9 @@ export function aiGuard(d: Deps) {
 }
 
 // ---------- descriptions ----------
-const TEXT_SCHEMA: JsonSchema = { type: 'object', additionalProperties: false, required: ['text'], properties: { text: { type: 'string' } } };
+export const TEXT_SCHEMA: JsonSchema = { type: 'object', additionalProperties: false, required: ['text'], properties: { text: { type: 'string' } } };
 const MODES = ['write', 'shorten', 'expand', 'polish', 'translate'] as const;
-const DESCRIBE = `You write property listings for an Iraqi real-estate agency's public page.
+export const DESCRIBE = `You write property listings for an Iraqi real-estate agency's public page.
 Rules that never bend:
 - Use ONLY the facts given. Never invent a number, a size, a price, a distance, a feature, a neighbourhood landmark or a promise.
 - If a fact is missing, leave it out. Do not guess.
@@ -71,10 +74,10 @@ export function strayNumbers(text: string, allowed: Set<string>) {
 
 // ---------- questions ----------
 const TOOLS = ['viewings_today', 'followups_due', 'find_properties', 'top_interest', 'not_converting', 'lead_summary', 'leads_for_property', 'negotiations', 'quiet_leads', 'unknown'] as const;
-const ASK_SCHEMA: JsonSchema = { type: 'object', additionalProperties: false, required: ['tool', 'type', 'area', 'max', 'min', 'bedrooms', 'purpose', 'name', 'ref'],
+export const ASK_SCHEMA: JsonSchema = { type: 'object', additionalProperties: false, required: ['tool', 'type', 'area', 'max', 'min', 'bedrooms', 'purpose', 'name', 'ref'],
   properties: { tool: { type: 'string', enum: [...TOOLS] }, type: { type: 'string', enum: ['', ...RE_TYPES] }, area: { type: 'string' }, max: { type: 'number' }, min: { type: 'number' }, bedrooms: { type: 'number' },
     purpose: { type: 'string', enum: ['', 'sale', 'rent'] }, name: { type: 'string' }, ref: { type: 'number' } } };
-const ROUTER = `You route a real-estate agent's question (Iraqi Arabic, Arabic, English or Kurdish) to ONE tool. Reply with JSON only.
+export const ROUTER = `You route a real-estate agent's question (Iraqi Arabic, Arabic, English or Kurdish) to ONE tool. Reply with JSON only.
 Tools:
 - viewings_today: today's viewings ("شنو معاينات اليوم؟", "show me today's viewings")
 - followups_due: leads that need a follow-up now ("منو لازم أتابع؟", "which leads need follow-up?")

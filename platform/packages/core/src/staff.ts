@@ -14,6 +14,7 @@ export const STAFF_PERMISSIONS = [
   'activity.view',     // what the team did, and when
   'team.view',         // who is on the team
   'team.manage',       // invite, change, suspend, remove teammates
+  'ai.manage',         // which AI model does each job in each system, and the providers' keys
 ] as const;
 export type StaffPermission = (typeof STAFF_PERMISSIONS)[number];
 

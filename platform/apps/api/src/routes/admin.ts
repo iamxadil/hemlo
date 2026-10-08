@@ -12,6 +12,7 @@ import { HttpError, requireUser } from '../principal';
 import { loadStaff, fromRow, type Staff } from '../staff';
 import { collectUsage } from './admin-usage';
 import { adminPricingRoutes } from './pricing';
+import { adminAiRoutes } from './admin-ai';
 import { plansOf } from '../subscription';
 import type { AppEnv, Deps } from '../types';
 
@@ -210,6 +211,7 @@ export function adminRoutes(d: Deps) {
 
   // ---- pricing: plans, payments, plan requests, the money ----
   r.route('/', adminPricingRoutes(d));
+  r.route('/', adminAiRoutes(d));
 
   // ---- activity: what the team did ----
   r.get('/activity', async (c) => {

@@ -14,6 +14,7 @@ const I = {
   activity: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>',
   usage: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.9 19a9 9 0 1 1 14.2 0"/><path d="m12 13 3.5-4.5"/><circle cx="12" cy="13" r="1.3"/></svg>',
   billing: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19M6.5 15h4"/></svg>',
+  ai: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3.5 11.6 8a2 2 0 0 0 1.3 1.3l4.6 1.6-4.6 1.6a2 2 0 0 0-1.3 1.3L10 18.5l-1.6-4.6a2 2 0 0 0-1.3-1.3L2.5 11l4.6-1.6A2 2 0 0 0 8.4 8Z"/><path d="M18.5 3v4M16.5 5h4M19 15.5v3M17.5 17h3"/></svg>',
   businesses: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M9 10h.01M15 10h.01"/></svg>',
 };
 ---
@@ -52,6 +53,7 @@ const I = {
         <a class="nav-item" href="#/businesses" data-nav="businesses" data-perm="businesses.view"><Fragment set:html={I.businesses} />{s.nav.businesses}</a>
         <a class="nav-item" href="#/usage" data-nav="usage" data-perm="usage.view"><Fragment set:html={I.usage} />{s.nav.usage}</a>
         <a class="nav-item" href="#/billing" data-nav="billing" data-perm="usage.view"><Fragment set:html={I.billing} />{s.nav.billing}<span class="nav-count" id="bill-count" hidden></span></a>
+        <a class="nav-item" href="#/ai" data-nav="ai" data-perm="ai.manage"><Fragment set:html={I.ai} />{s.nav.ai}</a>
         <hr class="nav-div" data-perm-any="team.view activity.view" />
         <a class="nav-item" href="#/team" data-nav="team" data-perm="team.view"><Fragment set:html={I.team} />{s.nav.team}</a>
         <a class="nav-item" href="#/activity" data-nav="activity" data-perm="activity.view"><Fragment set:html={I.activity} />{s.nav.activity}</a>
@@ -233,7 +235,7 @@ const I = {
     const view = () => $('#view');
     function setNewCount(n: number) { const b = $('#new-count'); b.textContent = String(n); b.hidden = !n; }
     function stamp() { $('#updated').textContent = fill(t.updated, { t: new Intl.DateTimeFormat(locale, { timeStyle: 'short' }).format(new Date()) }); }
-    const PAGES: [string, string][] = [['overview', 'overview.view'], ['requests', 'requests.view'], ['users', 'users.view'], ['businesses', 'businesses.view'], ['usage', 'usage.view'], ['billing', 'usage.view'], ['team', 'team.view'], ['activity', 'activity.view']];
+    const PAGES: [string, string][] = [['overview', 'overview.view'], ['requests', 'requests.view'], ['users', 'users.view'], ['businesses', 'businesses.view'], ['usage', 'usage.view'], ['billing', 'usage.view'], ['ai', 'ai.manage'], ['team', 'team.view'], ['activity', 'activity.view']];
     function route() {
       let [path, query] = (location.hash.slice(2) || 'overview').split('?');
       const allowed = PAGES.filter(([, p]) => can(p)).map(([name]) => name);
@@ -249,6 +251,7 @@ const I = {
       else if (path === 'businesses') showBusinesses();
       else if (path === 'usage') { usageStatus = params.get('s') ?? 'all'; showUsage(params.get('id')); }
       else if (path === 'billing') showBilling();
+      else if (path === 'ai') showAi(params.get('job'), params.get('provider'));
       else if (path === 'team') showTeam(params.get('id'));
       else if (path === 'activity') showActivity();
       else showOverview();
@@ -616,7 +619,7 @@ const I = {
       const by = (e: string) => plans.filter((p: any) => p.edition === e);
       return h('section', { class: 'mt-4 grid gap-4' }, h('div', { class: 'flex items-end justify-between gap-3' }, h('div', {}, h('h2', { class: 'text-lg font-semibold', text: t.billing.plans }), h('p', { class: 'sub', text: t.billing.plansHint })),
         can('billing.manage') ? (() => { const add = h('button', { type: 'button', class: 'btn btn-primary btn-sm', text: t.billing.addPlan }) as HTMLButtonElement; add.addEventListener('click', () => planDrawer(null)); return add; })() : null),
-        ...['store', 'dental', 'gym'].map((e) => h('div', { class: 'panel overflow-clip' }, h('div', { class: 'panel-h' }, h('h2', { text: t.kinds[e] ?? e })),
+        ...['store', 'dental', 'gym', 'realestate'].map((e) => h('div', { class: 'panel overflow-clip' }, h('div', { class: 'panel-h' }, h('h2', { text: t.kinds[e] ?? e })),
           h('table', { class: 'tbl' }, h('thead', {}, h('tr', {}, ...[t.billing.plan, t.billing.perMonth, t.billing.perYear, t.billing.limitsT, t.billing.subscribers, ''].map((x) => h('th', { text: x })))),
             h('tbody', {}, ...by(e).map((p: any) => {
               const tr = h('tr', { class: can('billing.manage') ? 'click' : '' },
@@ -633,7 +636,7 @@ const I = {
     function planDrawer(p: any) {
       const field = (label: string, el: Node, hint = '') => h('label', { class: 'grid gap-1 text-sm' }, h('span', { class: 'text-muted text-xs', text: label }), el, hint ? h('span', { class: 'sub', text: hint }) : null);
       const inp = (v: any, attrs: Record<string, any> = {}) => h('input', { class: 'input', value: v ?? '', ...attrs }) as HTMLInputElement;
-      const edition = h('select', { class: 'input', disabled: !!p }, ...['store', 'dental', 'gym'].map((e) => h('option', { value: e, selected: p?.edition === e, text: t.kinds[e] ?? e }))) as HTMLSelectElement;
+      const edition = h('select', { class: 'input', disabled: !!p }, ...['store', 'dental', 'gym', 'realestate'].map((e) => h('option', { value: e, selected: p?.edition === e, text: t.kinds[e] ?? e }))) as HTMLSelectElement;
       const code = inp(p?.code, { disabled: !!p, placeholder: 'starter', dir: 'ltr' });
       const nameAr = inp(p?.name?.ar), nameEn = inp(p?.name?.en, { dir: 'ltr' }), nameCkb = inp(p?.name?.ckb);
       const tagAr = inp(p?.tagline?.ar), tagEn = inp(p?.tagline?.en, { dir: 'ltr' }), tagCkb = inp(p?.tagline?.ckb);
@@ -667,6 +670,250 @@ const I = {
           h('div', { class: 'flex flex-wrap gap-4' }, popular.el, pub.el, active.el), field(t.billing.sort, sort), err),
         h('div', { class: 'drawer-f' }, save));
       openDrawer();
+    }
+
+    // ---------- AI: which model does each job in each system, and the providers' keys ----------
+    let ai: any = null;
+    const modelLists = new Map<string, Promise<{ list: any[]; live: boolean }>>();
+    const AI_SYSTEMS = ['store', 'gym', 'realestate', 'dental'];
+    const usd = (micros: number) => `$${micros >= 1e7 ? num(Math.round(micros / 1e6)) : (micros / 1e6).toFixed(micros && micros < 1e4 ? 4 : 2)}`;
+    const provLabel = (id: string) => ai?.providers.find((p: any) => p.id === id)?.label ?? id;
+    const aiState = (p: any) => (!p.enabled ? 'off' : p.ready ? 'ready' : p.kind === 'workers-ai' ? 'na' : 'nokey');
+    const modelsOf = (prov: string) => {
+      let m = modelLists.get(prov);
+      if (!m) { m = api(`/v1/admin/ai/models?provider=${encodeURIComponent(prov)}`).catch(() => ({ list: [], live: false })); modelLists.set(prov, m); }
+      return m;
+    };
+    const jobName = (f: string) => (t.ai.jobs as any)[f]?.[0] ?? f;
+
+    async function showAi(openJob: string | null, openProv: string | null, fresh = false) {
+      drawerBack = '#/ai';
+      const A = t.ai;
+      const sub = header(A.title, A.sub);
+      if (fresh || !ai) { loading(); ai = await api('/v1/admin/ai'); }
+      stamp();
+      const provCard = (p: any) => {
+        const st = aiState(p);
+        const line = p.kind === 'workers-ai' ? (p.ready ? A.builtIn : A.notHere) : p.hint ? fill(p.source === 'env' ? A.keyEnv : A.keyHere, { hint: p.hint }) : p.custom ? p.baseUrl : A.noKey;
+        return h('li', {}, h('a', { class: 'ai-prov', href: `#/ai?provider=${p.id}` },
+          h('span', { class: `ai-dot ${st}` }),
+          h('div', { class: 'min-w-0 flex-1' }, h('p', { class: 'font-medium truncate', text: p.label }), h('p', { class: 'sub truncate', dir: p.hint ? 'auto' : null, text: line })),
+          h('span', { class: `pill ai-${st}`, text: (A.state as any)[st] })));
+      };
+      const jobRow = (job: any) => {
+        const id = `${job.edition}:${job.feature}`, r = ai.routes.find((x: any) => x.id === id);
+        const us = ai.usage.filter((u: any) => u.edition === job.edition && u.feature === job.feature);
+        const calls = us.reduce((s: number, u: any) => s + u.calls, 0), failed = us.reduce((s: number, u: any) => s + u.failed, 0), cost = us.reduce((s: number, u: any) => s + u.costMicros, 0);
+        const okCalls = calls - failed, ms = okCalls ? us.reduce((s: number, u: any) => s + u.ms * (u.calls - u.failed), 0) / okCalls : 0;
+        const tr = h('tr', { class: 'click', onclick: () => (location.hash = `#/ai?job=${id}`) },
+          h('td', {}, h('b', { text: jobName(job.feature) }), h('p', { class: 'sub', text: (A.jobs as any)[job.feature]?.[1] ?? '' }), job.vision ? h('span', { class: 'ai-tag', text: A.readsPhotos }) : null),
+          h('td', {}, r
+            ? h('div', {}, h('p', { class: 'font-medium', text: provLabel(r.provider) }), h('p', { class: 'ai-id', text: r.model }),
+                r.fallbackProvider ? h('p', { class: 'sub mt-1', text: fill(A.thenFallback, { m: `${provLabel(r.fallbackProvider)} · ${r.fallbackModel}` }) }) : null)
+            : h('div', {}, h('p', { class: 'text-muted', text: ai.default ? fill(A.defaultIs, { m: provLabel(ai.default.provider) }) : A.none }), ai.default?.model ? h('p', { class: 'ai-id', text: ai.default.model }) : null)),
+          h('td', { class: 'sub', 'data-hide-sm': true }, calls ? fill(A.used, { n: num(calls), s: (ms / 1000).toFixed(1), cost: usd(cost) }) : A.unused,
+            failed ? h('span', { class: 'text-bad', text: ` · ${fill(A.failedN, { n: num(failed) })}` }) : null),
+          h('td', { class: 'w-8' }, SVG('<path d="m9 6 6 6-6 6"/>', 'ai-chev')));
+        return tr;
+      };
+      const add = h('a', { class: 'btn btn-secondary btn-sm', href: '#/ai?provider=new' }, SVG(ICON.plus), A.addService);
+      put(sub,
+        h('section', { class: 'panel' },
+          h('div', { class: 'panel-h' }, h('div', {}, h('h2', { text: A.providers }), h('p', { text: A.providersSub })), add),
+          h('ul', { class: 'ai-provs' }, ...ai.providers.map(provCard))),
+        ...AI_SYSTEMS.map((e) => {
+          const jobs = ai.jobs.filter((j: any) => j.edition === e);
+          return h('section', { class: 'panel mt-4 overflow-clip' }, h('div', { class: 'panel-h' }, h('h2', { text: t.kinds[e] ?? e })),
+            jobs.length ? h('table', { class: 'tbl ai-jobs' }, h('thead', {}, h('tr', {}, ...[A.job, A.model, A.last30, ''].map((x, i) => h('th', { 'data-hide-sm': i === 2 ? true : null, text: x })))),
+              h('tbody', {}, ...jobs.map(jobRow))) : h('p', { class: 'sub px-5 pb-5', text: A.noJobs }));
+        }),
+        h('p', { class: 'sub mt-4', text: A.footnote }));
+      if (openJob) jobDrawer(openJob); else if (openProv) provDrawer(openProv); else closeDrawer();
+    }
+
+    const aiField = (label: string, el: Node, hint: string | Node = '') => h('label', { class: 'grid gap-1 text-sm' }, h('span', { class: 'text-muted text-xs', text: label }), el, hint ? h('span', { class: 'sub' }, hint) : null);
+    const drawerHead = (title: string, sub: string) => h('div', { class: 'drawer-h' }, h('div', { class: 'min-w-0 flex-1' }, h('p', { class: 'text-lg font-semibold', text: title }), h('p', { class: 'sub', text: sub })),
+      h('a', { class: 'icon-btn', href: '#/ai', 'aria-label': t.close }, SVG(ICON.close)));
+    const aiErr = (el: HTMLElement) => (e: any) => { el.textContent = (t.ai.errors as any)[e?.code] ?? t.errors.generic; throw e; };
+    const aiDone = (msg: string) => { toast(msg); ai = null; modelLists.clear(); location.hash = '#/ai'; };
+
+    /** A provider: its key (set, replace, remove), on or off; one the team added: removed. */
+    function provDrawer(id: string) {
+      const A = t.ai;
+      if (id === 'new') return newProvDrawer();
+      const p = ai.providers.find((x: any) => x.id === id);
+      if (!p) return closeDrawer();
+      const err = h('p', { class: 'text-sm text-bad' });
+      const on = h('input', { type: 'checkbox', checked: p.enabled }) as HTMLInputElement;
+      on.addEventListener('change', () => act(null, async () => { await api(`/v1/admin/ai/providers/${id}`, { method: 'PUT', body: { enabled: on.checked } }); toast(A.saved); ai = null; showAi(null, id, true); }));
+      const parts: Node[] = [h('p', { class: 'text-sm text-fg-2', text: (A.notes as any)[id] ?? p.baseUrl ?? '' })];
+      let foot: Node | null = null;
+      if (p.kind === 'workers-ai') parts.push(h('p', { class: 'ai-result', text: p.ready ? A.workersNote : A.notHere }));
+      else if (p.source === 'env') parts.push(h('p', { class: 'ai-result', text: fill(A.envNote, { env: p.envKey ?? '' }) }));
+      else {
+        const key = h('input', { class: 'input', type: 'password', autocomplete: 'off', spellcheck: 'false', dir: 'ltr', placeholder: p.hint ? `•••• ${p.hint}` : A.pasteKey }) as HTMLInputElement;
+        parts.push(aiField(A.key, key, p.keyUrl ? h('a', { class: 'link-arrow', href: p.keyUrl, target: '_blank', rel: 'noopener' }, A.getKey, ' ', h('span', { class: 'arr', text: '↗' })) : ''));
+        const save = h('button', { type: 'button', class: 'btn btn-primary w-full justify-center', text: A.saveKey }) as HTMLButtonElement;
+        save.addEventListener('click', () => act(save, async () => {
+          if (key.value.trim().length < 8) { err.textContent = A.errors.BAD_KEY; return; }
+          await api(`/v1/admin/ai/providers/${id}`, { method: 'PUT', body: { key: key.value.trim() } }).catch(aiErr(err));
+          key.value = ''; aiDone(A.saved);
+        }));
+        const rm = p.hint ? h('button', { type: 'button', class: 'btn btn-secondary w-full justify-center', text: A.removeKey }) as HTMLButtonElement : null;
+        rm?.addEventListener('click', () => act(rm, async () => { await api(`/v1/admin/ai/providers/${id}`, { method: 'PUT', body: { key: null } }); aiDone(A.keyRemoved); }));
+        const del = p.custom ? h('button', { type: 'button', class: 'btn btn-secondary w-full justify-center text-bad', text: A.removeProv }) as HTMLButtonElement : null;
+        del?.addEventListener('click', () => act(del, async () => { await api(`/v1/admin/ai/providers/${id}`, { method: 'DELETE' }).catch(aiErr(err)); aiDone(A.saved); }));
+        foot = h('div', { class: 'drawer-f grid gap-2' }, save, rm || del ? h('div', { class: `grid gap-2${rm && del ? ' grid-cols-2' : ''}` }, rm, del) : null);
+      }
+      parts.push(h('label', { class: 'flex items-center gap-2 text-sm' }, on, A.enabled), err);
+      const using = ai.routes.filter((r: any) => r.provider === id || r.fallbackProvider === id);
+      if (using.length) parts.push(h('div', {}, h('p', { class: 'sec-t', text: A.usedBy }), h('ul', { class: 'grid gap-1 text-sm' }, ...using.map((r: any) => h('li', {}, h('a', { class: 'hover:underline', href: `#/ai?job=${r.id}`, text: `${jobName(r.feature)} · ${t.kinds[r.edition] ?? r.edition}` }))))));
+      drawer().replaceChildren(drawerHead(p.label, (A.state as any)[aiState(p)]), h('div', { class: 'drawer-b grid gap-4' }, ...parts), foot ?? '');
+      openDrawer();
+    }
+
+    function newProvDrawer() {
+      const A = t.ai;
+      const err = h('p', { class: 'text-sm text-bad' });
+      const name = h('input', { class: 'input', placeholder: 'DeepSeek', dir: 'ltr' }) as HTMLInputElement;
+      const base = h('input', { class: 'input', placeholder: 'https://api.deepseek.com/v1', dir: 'ltr', inputmode: 'url' }) as HTMLInputElement;
+      const key = h('input', { class: 'input', type: 'password', autocomplete: 'off', dir: 'ltr', placeholder: A.pasteKey }) as HTMLInputElement;
+      const save = h('button', { type: 'button', class: 'btn btn-primary w-full justify-center', text: A.add }) as HTMLButtonElement;
+      save.addEventListener('click', () => act(save, async () => {
+        const r = await api('/v1/admin/ai/providers', { body: { label: name.value, baseUrl: base.value, key: key.value || undefined } }).catch(aiErr(err));
+        toast(A.saved); ai = null; location.hash = `#/ai?provider=${r.id}`;
+      }));
+      drawer().replaceChildren(drawerHead(A.newTitle, A.newSub),
+        h('div', { class: 'drawer-b grid gap-4' }, aiField(A.name, name), aiField(A.baseUrl, base, A.baseHint), aiField(A.key, key), err),
+        h('div', { class: 'drawer-f' }, save));
+      openDrawer();
+    }
+
+    /** One job in one system: the provider and model, a model list to choose from, the fallback, a test, and what it cost. */
+    function jobDrawer(id: string) {
+      const A = t.ai;
+      const [edition, feature] = id.split(':');
+      const job = ai.jobs.find((j: any) => j.edition === edition && j.feature === feature);
+      if (!job) return closeDrawer();
+      const r = ai.routes.find((x: any) => x.id === id);
+      const ready = ai.providers.filter((p: any) => p.ready);
+      let prov: string = r?.provider ?? (ready.find((p: any) => p.id === 'openrouter') ?? ready.find((p: any) => p.id !== 'workers-ai') ?? ready[0])?.id ?? 'workers-ai';
+      let chosen: any = null;
+      const err = h('p', { class: 'text-sm text-bad' });
+      const provSel = h('select', { class: 'input' }, ...ai.providers.map((p: any) =>
+        h('option', { value: p.id, selected: p.id === prov, disabled: !p.ready && p.id !== r?.provider, text: p.ready ? p.label : `${p.label} · ${(A.state as any)[aiState(p)]}` }))) as HTMLSelectElement;
+      const modelIn = h('input', { class: 'input ai-mono', dir: 'ltr', spellcheck: 'false', value: r?.model ?? '', placeholder: 'google/gemini-2.5-flash' }) as HTMLInputElement;
+      const search = h('input', { class: 'input', type: 'search', dir: 'auto', placeholder: A.searchModels }) as HTMLInputElement;
+      const flags = { free: false, vision: !!job.vision };
+      const chip = (label: string, k: 'free' | 'vision') => {
+        const b = h('button', { type: 'button', class: `chip${flags[k] ? ' on' : ''}`, 'aria-pressed': String(flags[k]), text: label }) as HTMLButtonElement;
+        b.addEventListener('click', () => { flags[k] = !flags[k]; b.classList.toggle('on', flags[k]); b.setAttribute('aria-pressed', String(flags[k])); paintList(); });
+        return b;
+      };
+      const list = h('div', { class: 'ai-models', role: 'listbox' });
+      const count = h('span', { class: 'sub' });
+      const priceIn = h('input', { class: 'input', type: 'number', min: '0', step: '0.01', dir: 'ltr', value: r?.priceIn ?? '' }) as HTMLInputElement;
+      const priceOut = h('input', { class: 'input', type: 'number', min: '0', step: '0.01', dir: 'ltr', value: r?.priceOut ?? '' }) as HTMLInputElement;
+      const prices = h('div', {}, h('p', { class: 'sec-t', text: A.prices }), h('div', { class: 'grid grid-cols-2 gap-3' }, aiField(A.priceIn, priceIn), aiField(A.priceOut, priceOut)), h('p', { class: 'sub mt-1', text: A.pricesHint }));
+      const note = h('p', { class: 'ai-note' });
+      let models: any[] = [];
+
+      const isFree = (m: any, p = prov) => p === 'workers-ai' || !!m?.free || /:free$/.test(modelIn.value);
+      function paintNote() {
+        const m = models.find((x) => x.id === modelIn.value.trim()) ?? null;
+        chosen = m;
+        const free = isFree(m);
+        note.className = `ai-note ${free ? 'free' : 'paid'}`;
+        note.textContent = !modelIn.value.trim() ? '' : free ? A.freeNote : A.paidWarn + (m?.priceIn != null ? ' ' + fill(A.perM, { in: m.priceIn, out: m.priceOut }) : '');
+        note.hidden = !modelIn.value.trim();
+        prices.hidden = prov === 'workers-ai' || prov === 'openrouter';
+        if (m?.priceIn != null && !priceIn.value) { priceIn.value = String(m.priceIn); priceOut.value = String(m.priceOut); }
+        list.querySelectorAll('[role="option"]').forEach((el) => el.setAttribute('aria-selected', String((el as HTMLElement).dataset.id === modelIn.value.trim())));
+      }
+      function paintList() {
+        const q = search.value.trim().toLowerCase();
+        const shown = models.filter((m) => (!q || m.id.toLowerCase().includes(q) || String(m.name).toLowerCase().includes(q))
+          && (!flags.free || m.free || prov === 'workers-ai') && (!flags.vision || m.vision !== false));
+        count.textContent = fill(A.nModels, { n: num(shown.length) });
+        list.replaceChildren(...(shown.length ? shown.slice(0, 80).map((m) => {
+          const o = h('button', { type: 'button', role: 'option', class: 'ai-model', 'data-id': m.id, 'aria-selected': String(m.id === modelIn.value.trim()) },
+            h('div', { class: 'min-w-0 flex-1' }, h('p', { class: 'truncate text-sm font-medium', dir: 'ltr', text: m.name }), h('p', { class: 'ai-id truncate', text: m.id })),
+            h('div', { class: 'flex flex-none flex-wrap justify-end gap-1' },
+              m.vision ? h('span', { class: 'ai-tag', text: A.photos }) : null,
+              isFree(m) ? h('span', { class: 'ai-tag free', text: A.free }) : m.priceIn != null ? h('span', { class: 'ai-tag', dir: 'ltr', text: `$${m.priceIn} · $${m.priceOut}` }) : null));
+          o.addEventListener('click', () => { modelIn.value = m.id; priceIn.value = m.priceIn != null && !isFree(m) ? String(m.priceIn) : ''; priceOut.value = m.priceOut != null && !isFree(m) ? String(m.priceOut) : ''; paintNote(); });
+          return o;
+        }) : [h('p', { class: 'sub p-4', text: A.noModels })]));
+      }
+      async function loadModels() {
+        list.replaceChildren(h('p', { class: 'sub p-4', text: A.loadingModels }));
+        const got = await modelsOf(prov);
+        models = got.list;
+        if (!got.live && !models.length) { list.replaceChildren(h('p', { class: 'sub p-4', text: A.listOffline })); count.textContent = ''; }
+        else paintList();
+        paintNote();
+      }
+      provSel.addEventListener('change', () => { prov = provSel.value; modelIn.value = ''; priceIn.value = ''; priceOut.value = ''; search.value = ''; loadModels(); });
+      search.addEventListener('input', paintList);
+      modelIn.addEventListener('input', paintNote);
+
+      // the fallback
+      const fbSel = h('select', { class: 'input' }, h('option', { value: '', text: A.noFallback }),
+        ...ai.providers.map((p: any) => h('option', { value: p.id, selected: p.id === r?.fallbackProvider, disabled: !p.ready && p.id !== r?.fallbackProvider, text: p.ready ? p.label : `${p.label} · ${(A.state as any)[aiState(p)]}` }))) as HTMLSelectElement;
+      const fbModel = h('input', { class: 'input ai-mono', dir: 'ltr', spellcheck: 'false', value: r?.fallbackModel ?? '', placeholder: 'google/gemini-2.5-flash' }) as HTMLInputElement;
+      const SCOUT = '@cf/meta/llama-4-scout-17b-16e-instruct';
+      const useWorkers = h('button', { type: 'button', class: 'chip', text: A.useWorkers }) as HTMLButtonElement;
+      useWorkers.addEventListener('click', () => { fbSel.value = 'workers-ai'; fbModel.value = SCOUT; });
+      const syncFb = () => { fbModel.disabled = !fbSel.value; if (!fbSel.value) fbModel.value = ''; else if (fbSel.value === 'workers-ai' && !fbModel.value) fbModel.value = SCOUT; };
+      fbSel.addEventListener('change', syncFb); syncFb();
+
+      // the test
+      const result = h('div', { class: 'grid gap-2' });
+      const test = h('button', { type: 'button', class: 'btn btn-secondary w-full justify-center' }, SVG('<path d="M9 3h6M10 3v6L4.5 18.5A1.7 1.7 0 0 0 6 21h12a1.7 1.7 0 0 0 1.5-2.5L14 9V3"/>'), A.test) as HTMLButtonElement;
+      test.addEventListener('click', () => act(test, async () => {
+        if (!modelIn.value.trim()) { err.textContent = A.errors.BAD_MODEL; return; }
+        err.textContent = '';
+        result.replaceChildren(h('div', { class: 'ai-result' }, h('span', { class: 'ai-spin' }), A.testing));
+        const x = await api('/v1/admin/ai/test', { body: { provider: prov, model: modelIn.value.trim(), feature } }).catch((e: any) => ({ ok: false, error: (A.errors as any)[e?.code] ?? e?.code ?? 'ERROR' }));
+        const facts = x.ok ? [fill(A.took, { s: (x.ms / 1000).toFixed(1) }), fill(A.tokens, { in: num(x.inputTokens), out: num(x.outputTokens) }), x.costMicros ? usd(x.costMicros) : A.free].join(' · ') : x.ms ? fill(A.took, { s: (x.ms / 1000).toFixed(1) }) : '';
+        const preview = x.sample == null ? '' : typeof x.sample === 'string' ? x.sample : Array.isArray(x.sample) && x.sample.every((s: any) => typeof s === 'string') ? x.sample.join('\n') : JSON.stringify(x.sample, null, 2);
+        result.replaceChildren(h('div', { class: `ai-result ${x.ok ? (x.good ? 'good' : 'bad') : 'bad'}` },
+          h('p', { class: 'font-semibold' }, x.ok ? (x.good ? `✓ ${A.good}` : `△ ${A.weak}`) : `✕ ${A.failed}`),
+          h('p', { class: 'text-sm', dir: 'auto', text: x.ok ? x.score : String(x.error ?? '') }),
+          facts ? h('p', { class: 'sub', text: facts }) : null,
+          preview ? h('details', {}, h('summary', { class: 'cursor-pointer text-sm text-muted', text: A.whatItRead }), h('pre', { dir: 'auto', text: preview })) : null));
+      }));
+
+      // what this job used in the last 30 days, by model
+      const us = ai.usage.filter((u: any) => u.edition === edition && u.feature === feature);
+      const history = us.length ? h('div', {}, h('p', { class: 'sec-t', text: A.history }), h('table', { class: 'tbl ai-hist' },
+        h('tbody', {}, ...us.map((u: any) => h('tr', {}, h('td', {}, h('p', { class: 'text-sm', text: provLabel(u.engine === 'claude' ? 'anthropic' : u.engine) }), h('p', { class: 'ai-id', text: u.model ?? '—' })),
+          h('td', { class: 'sub whitespace-nowrap' }, fill(A.used, { n: num(u.calls), s: (u.ms / 1000).toFixed(1), cost: usd(u.costMicros) }), u.failed ? h('span', { class: 'text-bad', text: ` · ${fill(A.failedN, { n: num(u.failed) })}` }) : null)))))) : null;
+
+      const save = h('button', { type: 'button', class: 'btn btn-primary w-full justify-center', text: A.save }) as HTMLButtonElement;
+      save.addEventListener('click', () => act(save, async () => {
+        if (!modelIn.value.trim()) { err.textContent = A.errors.BAD_MODEL; return; }
+        const paid = prov !== 'workers-ai' && prov !== 'openrouter' && !isFree(chosen);
+        await api(`/v1/admin/ai/routes/${edition}/${feature}`, { method: 'PUT', body: { provider: prov, model: modelIn.value.trim(), fallbackProvider: fbSel.value || null, fallbackModel: fbSel.value ? fbModel.value.trim() : null,
+          priceIn: paid && priceIn.value !== '' ? Number(priceIn.value) : null, priceOut: paid && priceOut.value !== '' ? Number(priceOut.value) : null } }).catch(aiErr(err));
+        aiDone(A.saved);
+      }));
+      const reset = r ? h('button', { type: 'button', class: 'btn btn-secondary w-full justify-center', text: A.useDefault }) as HTMLButtonElement : null;
+      reset?.addEventListener('click', () => act(reset, async () => { await api(`/v1/admin/ai/routes/${edition}/${feature}`, { method: 'DELETE' }); aiDone(A.saved); }));
+
+      drawer().replaceChildren(
+        drawerHead(jobName(feature), `${t.kinds[edition] ?? edition}${job.vision ? ` · ${A.readsPhotos}` : ''}`),
+        h('div', { class: 'drawer-b grid gap-5' },
+          h('p', { class: 'text-sm text-fg-2', text: (A.jobs as any)[feature]?.[1] ?? '' }),
+          aiField(A.provider, provSel),
+          h('div', { class: 'grid gap-2' }, h('div', { class: 'flex items-center gap-2' }, search), h('div', { class: 'flex flex-wrap items-center gap-2' }, chip(A.free, 'free'), chip(A.readsPhotos, 'vision'), h('span', { class: 'ms-auto' }, count)), list),
+          aiField(A.modelId, modelIn), note, prices,
+          h('div', {}, h('p', { class: 'sec-t', text: A.fallback }), h('div', { class: 'grid grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] gap-2' }, fbSel, fbModel), h('div', { class: 'mt-2 flex flex-wrap items-center gap-2' }, useWorkers, h('span', { class: 'sub', text: A.fallbackHint }))),
+          h('div', { class: 'grid gap-2' }, test, h('p', { class: 'sub', text: A.testNote }), result),
+          history, err),
+        h('div', { class: 'drawer-f grid gap-2' }, save, reset, !r && ai.default ? h('p', { class: 'sub text-center', text: fill(A.defaultIs, { m: `${provLabel(ai.default.provider)}${ai.default.model ? ` · ${ai.default.model}` : ''}` }) }) : null));
+      openDrawer();
+      loadModels();
     }
 
     async function showUsage(openId: string | null, fresh = false) {
@@ -982,6 +1229,13 @@ const I = {
           if (d.change === 'access') return ['team', fill(A.accessChanged, { who, name })];
           return ['team', fill(A.titleChanged, { who, name })];
         }
+        case 'admin.ai_route_changed': {
+          const [ed, f] = String(d.job ?? '').split(':'), job = `${jobName(f)} · ${t.kinds[ed] ?? ed}`;
+          return ['work', d.provider === 'default' ? fill(A.aiDefault, { who, job }) : fill(A.aiRoute, { who, job, model: `${d.provider} · ${d.model}` })];
+        }
+        case 'admin.ai_provider_changed': return ['work', fill(d.key === 'set' ? A.aiKeySet : d.key === 'removed' ? A.aiKeyRemoved : d.enabled === false ? A.aiOff : A.aiOn, { who, provider: d.provider ?? '' })];
+        case 'admin.ai_provider_added': return ['work', fill(A.aiAdded, { who, provider: d.label ?? d.provider ?? '' })];
+        case 'admin.ai_provider_removed': return ['stop', fill(A.aiRemoved, { who, provider: d.provider ?? '' })];
       }
       return ['work', e.kind];
     }

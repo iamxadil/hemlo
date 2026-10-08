@@ -34,11 +34,13 @@ const rowsOf = (r: any): any[] => (Array.isArray(r) ? r : r?.rows ?? []);
  *  month and today. (Asked on every AI screen and call, so it stays one round trip.) */
 export async function snapshot(db: Database, org: string) {
   const { month, day } = baghdadStarts();
-  const [r] = rowsOf(await withOrg(db, org, (tx) => tx.execute(sql`select coalesce(o.metadata, '') like '%"demo":true%' as demo, coalesce(s.ai_off, false) as off,
+  const [r] = rowsOf(await withOrg(db, org, (tx) => tx.execute(sql`select coalesce(o.metadata, '') like '%"demo":true%' as demo, coalesce(s.ai_off, false) as off, o.metadata as meta,
       (select count(*) filter (where counted and ok) from ai_usage u where u.organization_id = o.id and u.created_at >= ${month.toISOString()})::int as month,
       (select count(*) filter (where counted and created_at >= ${day.toISOString()}) from ai_usage u where u.organization_id = o.id and u.created_at >= ${month.toISOString()})::int as day
     from organization o left join sys_settings s on s.organization_id = o.id where o.id = ${org}`)));
-  return { demo: !!r?.demo, off: !!r?.off, month: Number(r?.month ?? 0), day: Number(r?.day ?? 0) };
+  let kind: string | null = null;
+  try { kind = JSON.parse(String(r?.meta ?? '{}'))?.kind ?? null; } catch { kind = null; }
+  return { demo: !!r?.demo, off: !!r?.off, month: Number(r?.month ?? 0), day: Number(r?.day ?? 0), kind };
 }
 
 /** Has Hemlo spent its monthly budget on the paid engine? (only asked when the paid engine is in use) */
