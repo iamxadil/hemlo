@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { useApp, fill } from '../lib/app';
 import { Icon, Money, Sheet } from '../components/ui';
+import { ImpactCard } from '../components/Impact';
 
 type Words = { ar: string; en: string; ckb?: string };
 type Plan = { id: string; code: string; name: Words; tagline: Words | null; priceMonth: number; priceYear: number; limits: Record<string, number | undefined>; popular: boolean };
@@ -64,6 +65,7 @@ export function PlanPage() {
         )}
         {over.length > 0 && <p className="note warn mt-3"><Icon n="info" />{p.overNote}</p>}
       </section>
+      {(sys.business.kind === 'gym' || !sys.business.kind || sys.business.kind === 'store') && <ImpactCard kind={sys.business.kind === 'gym' ? 'gym' : 'store'} />}
 
       <section className="grid gap-3">
         <div className="flex flex-wrap items-end justify-between gap-3">

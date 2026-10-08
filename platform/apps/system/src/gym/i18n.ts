@@ -60,6 +60,16 @@ const ar = {
     kg: 'كغ', cm: 'سم', pct: '٪', empty: 'لا قياسات بعد. قِس في اليوم الأول: رؤية التقدّم هي ما يُبقي الناس.', since: 'منذ {date}', bmi: 'مؤشر الكتلة', date: 'التاريخ', saved: 'حُفظت القياسات', history: 'السجل',
   },
   card: { title: 'بطاقة المشترك', share: 'إرسال', download: 'حفظ الصورة', print: 'طباعة', hint: 'تُمسح عند الاستقبال أو على الباب.', no: 'رقم المشترك', kicker: 'بطاقة عضوية', until: 'حتى {date}', visits: 'متبقٍّ {n} زيارة', starts: 'تبدأ {date}', making: 'نجهّز البطاقة…', printHint: 'تُطبع بحجم البطاقة الحقيقي، مع خط للقص.' },
+  register: {
+    open: 'صوّر سجلّ المشتركين', title: 'صوّر سجلّ المشتركين', lead: 'صفحة واحدة في كل مرة. يقرأ هيملو الأسماء والأرقام والاشتراكات والديون، وأنت تراجع قبل أن يُحفظ أي شيء.',
+    steps: ['صوّر صفحة', 'راجع ما قرأناه', 'أضفهم'], camera: 'التقط صورة', gallery: 'اختر صورة', sample: 'جرّب صفحة نموذجية',
+    reading: 'نقرأ الصفحة…', readingSub: 'الأسماء، الأرقام، الاشتراكات، والديون', found: 'وجدنا {n} مشتركاً', check: '{n} تحتاج نظرة',
+    allGood: 'كل شيء واضح', hint: 'صحّح ما تحتاجه. الحقول المعلّمة لم نتأكد منها.', none: 'لم نجد أسماء في هذه الصفحة. صوّرها بإضاءة أفضل ومن الأعلى.',
+    name: 'الاسم', phone: 'الهاتف', plan: 'الاشتراك', asWritten: 'كما كُتب: {p}', noPlan: 'بدون اشتراك', ends: 'ينتهي', owes: 'عليه',
+    remove: 'احذف', another: 'صوّر صفحة أخرى', add: 'أضف {n} مشتركاً', adding: 'نضيفهم…', done: 'أُضيف {n} مشتركاً', doneSub: '{m} اشتراك سُجّل، والديون في الدفتر.',
+    view: 'افتح المشتركين', sampleNote: 'صفحة نموذجية: نتيجتها مجهّزة مسبقاً، ولا تُحسب من رصيدك.', pageTitle: 'سجل المشتركين',
+    cols: ['الاسم', 'الهاتف', 'الاشتراك', 'من', 'الباقي'], skipped: 'لم نضف {n}: {why}', fix: 'صحّحها',
+  },
   renewals: {
     ending: 'تنتهي هذا الأسبوع', lapsed: 'انتهت مؤخراً ولم تُجدَّد', remind: 'تذكير', reminded: 'أُرسل', renew: 'تجديد', none: 'لا شيء مستحق. الجميع مجدِّد.',
     birthdays: 'أعياد ميلاد هذا الأسبوع', greet: 'هنّئه', today: 'اليوم', inDays: 'بعد {n} يوم', agoDays: 'قبل {n} يوم',
@@ -167,6 +177,16 @@ const en: typeof ar = {
     kg: 'kg', cm: 'cm', pct: '%', empty: 'No measurements yet. Measure on day one: seeing progress is what keeps people coming.', since: 'since {date}', bmi: 'BMI', date: 'Date', saved: 'Measurements saved', history: 'History',
   },
   card: { title: 'Member card', share: 'Send', download: 'Save image', print: 'Print', hint: 'Scanned at the desk or the door.', no: 'Member No.', kicker: 'Membership card', until: 'until {date}', visits: '{n} visits left', starts: 'starts {date}', making: 'Making the card…', printHint: 'Prints at real card size, with a line to cut along.' },
+  register: {
+    open: 'Photograph your register', title: 'Photograph your register', lead: 'One page at a time. Hemlo reads names, phones, memberships and debts, and you check before anything is saved.',
+    steps: ['Photograph a page', 'Check what we read', 'Add them'], camera: 'Take a photo', gallery: 'Choose a photo', sample: 'Try a sample page',
+    reading: 'Reading the page…', readingSub: 'Names, phones, memberships and debts', found: '{n} members found', check: '{n} need a look',
+    allGood: 'All clear', hint: 'Fix anything you need to. Marked fields are ones we weren’t sure of.', none: 'We didn’t find names on this page. Try again from above, in better light.',
+    name: 'Name', phone: 'Phone', plan: 'Membership', asWritten: 'As written: {p}', noPlan: 'No membership', ends: 'Ends', owes: 'Owes',
+    remove: 'Remove', another: 'Photograph another page', add: 'Add {n} members', adding: 'Adding them…', done: '{n} members added', doneSub: '{m} memberships recorded, and debts are in the debt book.',
+    view: 'Open members', sampleNote: 'A sample page: its result is prepared, and it doesn’t count against your allowance.', pageTitle: 'سجل المشتركين',
+    cols: ['الاسم', 'الهاتف', 'الاشتراك', 'من', 'الباقي'], skipped: '{n} not added: {why}', fix: 'Fix them',
+  },
   renewals: {
     ending: 'Ending this week', lapsed: 'Ended lately, not renewed', remind: 'Remind', reminded: 'Sent', renew: 'Renew', none: 'Nothing due. Everyone’s renewed.',
     birthdays: 'Birthdays this week', greet: 'Wish them', today: 'Today', inDays: 'in {n} days', agoDays: '{n} days ago',

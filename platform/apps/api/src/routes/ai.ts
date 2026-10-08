@@ -1,9 +1,9 @@
 // /v1/sys/ai: Hemlo's AI features for a business. Every call is checked against the business's monthly allowance, a
 // daily cap, the owner's on/off switch, and (on the paid engine) Hemlo's monthly budget; every call is recorded.
 import { Hono } from 'hono';
-import { isNull } from 'drizzle-orm';
+import { eq, isNull } from 'drizzle-orm';
 import { withOrg } from '@hemlo/db';
-import { sysProduct, sysSettings, sysSupplier } from '@hemlo/db/schema';
+import { sysProduct, sysSettings, sysSupplier, gymPlan } from '@hemlo/db/schema';
 import { HttpError } from '../principal';
 import { actor, type Actor } from './sys-common';
 import { subscriptionOf } from '../subscription';
@@ -12,6 +12,7 @@ import { AiError, type Engine } from '../ai/engine';
 import { allowanceOf, snapshot, overBudget, record, DAILY_CAP, DEFAULT_BUDGET_USD } from '../ai/meter';
 import { readInvoice, sampleRead, toDraft, type Catalogue } from '../ai/invoice';
 import { planQuestion, answer, TOOLS, PERIODS, type Plan } from '../ai/ask';
+import { readRegister, sampleRows, samplePage, toRows, type GymPlanLite } from '../ai/register';
 import type { AppEnv, Deps } from '../types';
 
 const MAX_IMAGE = 2_500_000; // characters of data URL (~1.8 MB of photo; the app sends ~200 KB)
@@ -81,6 +82,26 @@ export function aiRoutes(d: Deps) {
     const out = await run(a, 'invoice', (e) => readInvoice(e, b.image!, catalogue, suppliers));
     await audit(d.db, { kind: 'ai.invoice_read', organizationId: a.organizationId, userId: a.userId, detail: { lines: out.data.lines?.length ?? 0, engine: d.ai!.name } });
     return c.json({ draft: toDraft(out.data, catalogue, suppliers), engine: d.ai!.name, ...st, used: st.used + 1, today: st.today + 1 }); // no second status query
+  });
+
+  /** Read a page of a gym's register from a photo → member rows to check (nothing is saved). { image } or { sample: true }. */
+  r.post('/members', async (c) => {
+    const a = actor(c, 'members', 'create');
+    const b = await c.req.json<{ image?: string; sample?: boolean }>().catch(() => ({} as { image?: string; sample?: boolean }));
+    const day = new Date(Date.now() + 3 * 3600_000).toISOString().slice(0, 10); // Baghdad
+    const plans = (await withOrg(d.db, a.organizationId, (tx) => tx.select({ id: gymPlan.id, name: gymPlan.name, duration: gymPlan.duration, unit: gymPlan.unit })
+      .from(gymPlan).where(eq(gymPlan.active, true)).orderBy(gymPlan.sort))) as GymPlanLite[];
+    if (b.sample) {
+      await record(d.db, a.organizationId, { userId: a.userId, feature: 'members', engine: 'sample', ms: 0, ok: true, counted: false });
+      return c.json({ rows: sampleRows(plans, day), page: samplePage(day), engine: 'sample', ...(await status(a)) });
+    }
+    if (typeof b.image !== 'string' || !/^data:image\/(jpeg|png|webp);base64,/.test(b.image)) throw new HttpError(400, 'BAD_IMAGE');
+    if (b.image.length > MAX_IMAGE) throw new HttpError(413, 'IMAGE_TOO_BIG');
+    const st = await gate(a);
+    const out = await run(a, 'members', (e) => readRegister(e, b.image!, plans, day));
+    const rows = toRows(out.data, plans, day);
+    await audit(d.db, { kind: 'ai.register_read', organizationId: a.organizationId, userId: a.userId, detail: { rows: rows.length, engine: d.ai!.name } });
+    return c.json({ rows, engine: d.ai!.name, ...st, used: st.used + 1, today: st.today + 1 });
   });
 
   /** Ask the shop a question. { question } (AI picks the report, one action) or { plan } (a preset question: free). */

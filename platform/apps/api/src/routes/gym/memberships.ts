@@ -176,14 +176,15 @@ export function gymMembershipRoutes(d: Deps) {
   r.get('/renewals', async (c) => {
     const a = actor(c, 'members', 'read');
     const day = today();
-    const rows = await inGym(d, a, async (tx) => rowsOf(await tx.execute(sql`select ms.id, ms.member_id, ms.name, ms.ends_on, ms.visits, ms.visits_used, cu.name as member, cu.phone, cu.balance, m.member_no, m.gender
+    const rows = await inGym(d, a, async (tx) => rowsOf(await tx.execute(sql`select ms.id, ms.member_id, ms.name, ms.ends_on, ms.visits, ms.visits_used, cu.name as member, cu.phone, cu.balance, m.member_no, m.gender,
+        (select max(sr.sent_on) from sys_reminder sr where sr.customer_id = ms.member_id and sr.kind in ('renewal', 'lapsed') and sr.sent_on >= ${addDays(day, -21)}) as reminded_on
       from gym_membership ms join sys_customer cu on cu.id = ms.member_id join gym_member m on m.customer_id = ms.member_id
       where ms.status = 'active' and ms.category in ('gym', 'class', 'pt') and cu.archived_at is null
         and ms.ends_on between ${addDays(day, -14)} and ${addDays(day, 7)}
         and not exists (select 1 from gym_membership n where n.member_id = ms.member_id and n.category = ms.category and n.status <> 'canceled' and n.ends_on > ms.ends_on)
       order by ms.ends_on limit 200`)));
     const list = rows.map((x) => ({ id: x.id, memberId: x.member_id, name: x.name, endsOn: ymd(x.ends_on), visits: x.visits, visitsUsed: x.visits_used,
-      member: x.member, phone: x.phone, balance: x.balance, memberNo: x.member_no, gender: x.gender }));
+      member: x.member, phone: x.phone, balance: x.balance, memberNo: x.member_no, gender: x.gender, remindedOn: x.reminded_on ?? null }));
     return c.json({ renewals: list });
   });
 

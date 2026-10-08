@@ -18,6 +18,7 @@ import { sysFileRoutes, publicFileRoutes } from './routes/files';
 import type { FileStore } from './files';
 import { subscriptionGuard } from './subscription';
 import { aiRoutes } from './routes/ai';
+import { impactRoutes } from './routes/impact';
 import { storeStartRoutes } from './routes/store-start';
 import { sysImportRoutes } from './routes/sys-import';
 import { publicPlanRoutes, billingRoutes } from './routes/pricing';
@@ -112,6 +113,7 @@ export function createApp(opts: { db: Database; env: Env; waitUntil?: (p: Promis
   v1.use('/re/*', async (c, next) => (/\/re\/(start$|pub\/)/.test(c.req.path) ? next() : subscriptionGuard(c, next)));
   v1.route('/re', reRoutes(deps));
   v1.route('/sys/ai', aiRoutes(deps));
+  v1.route('/sys', impactRoutes(deps));      // reminders sent, and what came back after them
   v1.route('/sys/files', sysFileRoutes(deps));
   v1.route('/files', publicFileRoutes(deps));
   v1.route('/sys', systemsRoutes(deps));

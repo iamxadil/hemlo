@@ -7,6 +7,7 @@ import { go, useRoute } from '../lib/app';
 import { prepareImage } from '../lib/images';
 import { Empty, Icon, Money, Sheet, toLatin } from '../components/ui';
 import { Importer } from '../components/Importer';
+import { RegisterScan, useCanReadRegister } from './Register';
 import { useG } from './i18n';
 import { Face, StatePill } from './ui';
 import { useSetup, fmt, type MemberRow } from './data';
@@ -16,7 +17,8 @@ const FILTERS = ['active', 'ending', 'expired', 'frozen', 'owing', 'all'] as con
 export function Members() {
   const { g, t, can, num, date } = useG();
   const { params } = useRoute();
-  const [importing, setImporting] = useState(false);
+  const [importing, setImporting] = useState(false), [scanning, setScanning] = useState(false);
+  const canScan = useCanReadRegister();
   const [q, setQ] = useState('');
   const [d, setD] = useState('');
   const [status, setStatus] = useState<string>(() => (FILTERS as readonly string[]).includes(params.get('status') ?? '') ? params.get('status')! : 'active');
@@ -37,9 +39,10 @@ export function Members() {
   const counts = list.data?.counts ?? {};
   const rows = list.data?.members ?? [];
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-4">
       <div className="flex flex-wrap items-center gap-3">
         <div className="search min-w-0 flex-1"><Icon n="search" /><input className="input" placeholder={g.members.search} value={q} onChange={(e) => setQ(e.target.value)} /></div>
+        {canScan && <button className="btn btn-secondary btn-sm" onClick={() => setScanning(true)}><Icon n="camera" className="h-4 w-4" />{g.register.open}</button>}
         {can('members.create') && <button className="btn btn-secondary btn-sm" onClick={() => setImporting(true)}><Icon n="upload" className="h-4 w-4" />{t.importer.choice}</button>}
         {can('members.create') && <button className="btn btn-accent btn-sm" onClick={() => setAdding(true)}><Icon n="plus" className="h-4 w-4" />{g.members.new}</button>}
       </div>
@@ -54,7 +57,7 @@ export function Members() {
       )}
       <div className="gy-card rows overflow-clip">
         {list.isLoading && !rows.length ? <div className="skeleton m-4 h-48" />
-          : !rows.length ? <Empty icon="customers" text={d ? g.members.none : g.members.empty} action={!d && can('members.create') && <div className="flex flex-wrap justify-center gap-2"><button className="btn btn-accent btn-sm" onClick={() => setAdding(true)}>{g.members.new}</button><button className="btn btn-secondary btn-sm" onClick={() => setImporting(true)}><Icon n="upload" className="h-4 w-4" />{t.importer.choice}</button></div>} />
+          : !rows.length ? <Empty icon="customers" text={d ? g.members.none : g.members.empty} action={!d && can('members.create') && <div className="flex flex-wrap justify-center gap-2">{canScan && <button className="btn btn-accent btn-sm" onClick={() => setScanning(true)}><Icon n="camera" className="h-4 w-4" />{g.register.open}</button>}<button className="btn btn-accent btn-sm" onClick={() => setAdding(true)}>{g.members.new}</button><button className="btn btn-secondary btn-sm" onClick={() => setImporting(true)}><Icon n="upload" className="h-4 w-4" />{t.importer.choice}</button></div>} />
           : rows.map((m) => (
             <a key={m.id} className="row gy-mrow" href={`#/member?id=${m.id}`}>
               <Face name={m.name} url={m.photoUrl} state={m.state} />
@@ -72,6 +75,7 @@ export function Members() {
         {list.data?.more && <button className="row justify-center text-[var(--accent)]" onClick={() => setPages((p) => p + 1)}>{g.members.more}</button>}
       </div>
       {adding && <MemberForm onClose={() => setAdding(false)} onSaved={(m, sell) => go(`#/member?id=${m.id}${sell ? '&sell=1' : ''}`)} />}
+      {scanning && <RegisterScan onClose={() => setScanning(false)} />}
       {importing && <Importer kind="members" extra={{ planName: g.importPlan }} onClose={() => setImporting(false)} />}
     </div>
   );

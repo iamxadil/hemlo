@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, type Customer } from '../lib/api';
 import { useApp, useRoute, go, fill, localPhone, initials } from '../lib/app';
 import { DinarInput, Empty, Icon, Money, Sheet } from '../components/ui';
+import { logReminder } from '../components/Impact';
 import { Importer } from '../components/Importer';
 
 export function Customers() {
@@ -93,7 +94,7 @@ function CustomerSheet({ id, onClose }: { id: string; onClose(): void }) {
     <Sheet title={c.name} sub={<span dir="ltr">{localPhone(c.phone)}</span>} onClose={onClose} icon={<span className="avatar !h-11 !w-11">{initials(c.name)}</span>}>
       <div className="flex items-center justify-between rounded-2xl bg-[var(--sunken)] p-4"><span className="muted">{t.sell.balance}</span><Balance v={c.balance} big /></div>
       {digits && <div className="grid grid-cols-2 gap-2">
-        <a className={`btn btn-secondary justify-center${c.balance > 0 ? '' : ' pointer-events-none opacity-50'}`} href={`https://wa.me/${digits}?text=${encodeURIComponent(reminder)}`} target="_blank" rel="noopener"><Icon n="wa" className="h-5 w-5" />{t.customers.remind}</a>
+        <a className={`btn btn-secondary justify-center${c.balance > 0 ? '' : ' pointer-events-none opacity-50'}`} href={`https://wa.me/${digits}?text=${encodeURIComponent(reminder)}`} target="_blank" rel="noopener" onClick={() => logReminder({ customerId: c.id, kind: 'debt', amount: c.balance })}><Icon n="wa" className="h-5 w-5" />{t.customers.remind}</a>
         <a className="btn btn-secondary justify-center" href={`tel:${c.phone}`}><Icon n="phone" className="h-5 w-5" />{t.customers.call}</a>
       </div>}
       {can('sales.create') && <section>

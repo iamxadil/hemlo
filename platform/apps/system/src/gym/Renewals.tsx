@@ -2,7 +2,8 @@
 // renewed, each with a WhatsApp reminder written for them (the owner's own words, from the set-up) and a "renew" that
 // sells the next one in place. Birthdays this week too: a message on the day keeps people coming.
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { logReminder } from '../components/Impact';
 import { api } from '../lib/api';
 import { Empty, Icon } from '../components/ui';
 import { useG } from './i18n';
@@ -10,7 +11,6 @@ import { Face } from './ui';
 import { SellSheet } from './Sell';
 import { useSetup, todayISO, daysBetween, waLink, fmt } from './data';
 
-const sent = { get: (id: string) => { try { return localStorage.getItem(`hemlo.gym.reminded.${id}`) === todayISO(); } catch { return false; } }, set: (id: string) => { try { localStorage.setItem(`hemlo.gym.reminded.${id}`, todayISO()); } catch {} } };
 
 export function Renewals() {
   const { g, can, num, date, money, sys } = useG();
@@ -18,14 +18,20 @@ export function Renewals() {
   const list = useQuery({ queryKey: ['gym-renewals'], queryFn: async () => (await api('/v1/gym/renewals')).renewals as any[] });
   const bdays = useQuery({ queryKey: ['gym-birthdays'], queryFn: async () => (await api('/v1/gym/birthdays')).birthdays as any[] });
   const [selling, setSelling] = useState<{ id: string; name: string } | null>(null);
-  const [, bump] = useState(0);
+  const qc = useQueryClient();
+  /** A reminder goes out: logged (for "what Hemlo brought back"), and marked on this list straight away. */
+  const reminded = (x: any, gone: boolean) => {
+    logReminder({ customerId: x.memberId, kind: gone ? 'lapsed' : 'renewal', refId: x.id });
+    qc.setQueryData(['gym-renewals'], (xs: any[] | undefined) => xs?.map((y) => (y.id === x.id ? { ...y, remindedOn: day } : y)));
+    qc.invalidateQueries({ queryKey: ['impact'] });
+  };
   const day = todayISO();
   const ending = (list.data ?? []).filter((x) => x.endsOn >= day), lapsed = (list.data ?? []).filter((x) => x.endsOn < day).reverse();
   const first = (n: string) => n.split(/\s+/)[0];
   const message = (x: any, gone: boolean) => fmt(gone ? g.renewals.lapsedMsg : setup.data?.settings.reminderText || g.renewals.msg, { name: first(x.member), plan: x.name, date: date(x.endsOn), gym: sys.business.name });
   const when = (end: string) => { const n = daysBetween(day, end); return n === 0 ? g.renewals.today : n > 0 ? fmt(g.renewals.inDays, { n: num(n) }) : fmt(g.renewals.agoDays, { n: num(-n) }); };
   const row = (x: any, gone: boolean) => {
-    const wa = waLink(x.phone, message(x, gone)), done = sent.get(x.id);
+    const wa = waLink(x.phone, message(x, gone)), done = x.remindedOn === day;
     return (
       <div key={x.id} className="row gy-rrow">
         <Face name={x.member} state={gone ? 'expired' : 'ending'} />
@@ -33,7 +39,7 @@ export function Renewals() {
           <b className="block truncate font-medium">{x.member}</b>
           <span className="sub block truncate">{x.name} · {date(x.endsOn)} · <span className={gone ? 'text-[var(--bad)]' : 'text-[var(--warn)]'}>{when(x.endsOn)}</span>{x.balance > 0 ? ` · ${money(x.balance)}` : ''}</span>
         </a>
-        {wa && <a className={`btn btn-sm ${done ? 'btn-ghost' : 'btn-secondary'}`} href={wa} target="_blank" rel="noopener" onClick={() => { sent.set(x.id); bump((n) => n + 1); }}><Icon n={done ? 'check' : 'wa'} className="h-4 w-4" />{done ? g.renewals.reminded : g.renewals.remind}</a>}
+        {wa && <a className={`btn btn-sm ${done ? 'btn-ghost' : 'btn-secondary'}`} href={wa} target="_blank" rel="noopener" onClick={() => reminded(x, gone)}><Icon n={done ? 'check' : 'wa'} className="h-4 w-4" />{done ? g.renewals.reminded : g.renewals.remind}</a>}
         {can('memberships.sell') && <button className="btn btn-accent btn-sm" onClick={() => setSelling({ id: x.memberId, name: x.member })}>{g.renewals.renew}</button>}
       </div>
     );

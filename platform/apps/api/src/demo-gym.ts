@@ -5,7 +5,7 @@
 import { newId } from '@hemlo/core';
 import type { Database } from '@hemlo/db';
 import {
-  sysCustomer, sysSale, sysSaleLine, sysLedger, sysSequence, sysShift, sysProduct, sysExpense, sysSettings,
+  sysCustomer, sysSale, sysSaleLine, sysLedger, sysSequence, sysShift, sysProduct, sysExpense, sysSettings, sysReminder,
   gymSettings, gymPlan, gymTrainer, gymMember, gymMembership, gymCheckin, gymClass, gymBooking, gymMeasure, type GymHours,
 } from '@hemlo/db/schema';
 import { insertAll, rng, type Batch } from './demo-data';
@@ -238,6 +238,28 @@ export async function seedDemoGym(tx: Database, org: string, userId: string, mem
   // a debt paid off partly
   money.push({ customerId: ids[24], at: at(2, 20), amount: -10000, kind: 'payment' });
 
+  // ---- WhatsApp reminders: most renewals this month came a day or three after one (what "Hemlo brought back" counts) ----
+  const reminders: any[] = [];
+  const remind = (customerId: string, kind: string, when: number, refId: string | null, amount: number | null = null) => {
+    const sentOn = new Date(when + 3 * HOUR).toISOString().slice(0, 10);
+    if (when > now || reminders.some((x) => x.customerId === customerId && x.kind === kind && x.sentOn === sentOn)) return;
+    reminders.push({ id: newId(), organizationId: org, customerId, kind, refId, amount, sentOn, at: new Date(when), userId });
+  };
+  for (const ms of memberships) {
+    const sold = +ms.createdAt;
+    if (sold < now - 27 * DAY || ms.category === 'other') continue;
+    const prev = memberships.find((p) => p !== ms && p.memberId === ms.memberId && p.category === ms.category && p.endsOn < ms.startsOn);
+    if (!prev || r() > 0.8) continue;
+    remind(ms.memberId, 'renewal', sold - (1 + Math.floor(r() * 3)) * DAY - 5 * HOUR, prev.id);
+  }
+  // ending in the next few days, and already reminded yesterday (the renewals list shows it)
+  for (const ms of memberships) {
+    const latest = !memberships.some((n) => n.memberId === ms.memberId && n.category === ms.category && n.endsOn > ms.endsOn);
+    if (latest && ms.category !== 'other' && ms.endsOn >= day && ms.endsOn <= addDays(day, 4) && r() < 0.5) remind(ms.memberId, 'renewal', at(1, 12), ms.id);
+  }
+  // the debt paid two days ago came the day after a reminder
+  remind(ids[24], 'debt', at(3, 13), null, 30000);
+
   const expenses = [
     { id: newId(), organizationId: org, at: new Date(at(26, 11)), category: 'rent', amount: 3500000, note: L('إيجار القاعة', 'Hall rent'), userId },
     { id: newId(), organizationId: org, at: new Date(at(20, 12)), category: 'generator', amount: 420000, note: L('اشتراك المولدة', 'Generator subscription'), userId },
@@ -262,7 +284,7 @@ export async function seedDemoGym(tx: Database, org: string, userId: string, mem
     [sysCustomer, customers], [gymMember, members],
     [sysShift, [{ id: shiftId, organizationId: org, openedAt: new Date(shiftOpen), openedBy: userId, openingCash: 100000 }]],
     [sysProduct, products], [sysSale, sales], [sysSaleLine, lines], [sysLedger, ledger],
-    [gymMembership, memberships], [gymCheckin, checkins], [gymBooking, bookings], [gymMeasure, measures], [sysExpense, expenses],
+    [gymMembership, memberships], [sysReminder, reminders], [gymCheckin, checkins], [gymBooking, bookings], [gymMeasure, measures], [sysExpense, expenses],
     [sysSequence, [{ organizationId: org, name: 'sale', value: saleNo }, { organizationId: org, name: 'member', value: customers.length }]],
   ]);
   return { members: customers.length, checkins: checkins.length };

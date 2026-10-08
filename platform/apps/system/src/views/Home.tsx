@@ -6,6 +6,7 @@ import { useApp, fill, dayRange } from '../lib/app';
 import { Empty, Icon, Money } from '../components/ui';
 import { useShift } from '../components/Drawer';
 import { AskShop } from '../components/Ai';
+import { ImpactCard } from '../components/Impact';
 
 const PERIODS = { today: [0, 1], yesterday: [1, 1], week: [0, 7], month: [0, 30] } as const;
 
@@ -31,6 +32,7 @@ export function Home() {
         <div className="chips">{(Object.keys(PERIODS) as (keyof typeof PERIODS)[]).map((p) => <button key={p} className="chip" aria-pressed={period === p} onClick={() => setPeriod(p)}>{t.home.periods[p]}</button>)}</div>
       </div>
       <AskShop />
+      <ImpactCard kind="store" quiet />
       {sys.business.demo && <section className="try">
         <p className="text-sm font-semibold">{t.demo.tipsTitle}</p>
         <ol className="grid gap-1.5 sm:grid-cols-2">{t.demo.tips.map((tip, i) => (

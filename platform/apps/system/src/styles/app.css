@@ -380,3 +380,48 @@ body { font-feature-settings: "tnum" 1; }
 .plan-limits { display: grid; gap: .4rem; margin: .5rem 0 .6rem; font-size: .88rem; color: var(--fg-2); align-content: start; }
 .plan-limits li { display: flex; gap: .45rem; align-items: flex-start; }
 .plan-limits svg { color: var(--ok); margin-top: .15rem; }
+
+/* ---------- what Hemlo brought back: the money after the reminders, against what Hemlo costs ---------- */
+.impact { position: relative; display: grid; gap: 1rem; padding: 1.2rem 1.3rem 1.05rem; border-radius: 1.25rem; overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--accent) 24%, var(--line));
+  background: radial-gradient(120% 90% at 100% 0%, color-mix(in oklab, var(--accent) 12%, transparent), transparent 62%), var(--surface); }
+html[dir="rtl"] .impact { background: radial-gradient(120% 90% at 0% 0%, color-mix(in oklab, var(--accent) 12%, transparent), transparent 62%), var(--surface); }
+.impact-h { display: flex; align-items: center; gap: .75rem; }
+.impact-h b { display: block; font-weight: 600; }
+.impact-h small { display: block; margin-top: .1rem; font-size: .8rem; color: var(--muted); }
+.impact-ic { display: grid; place-items: center; flex: none; width: 2.4rem; height: 2.4rem; border-radius: .8rem; color: var(--accent); background: color-mix(in oklab, var(--accent) 13%, transparent); }
+.impact-ic svg { width: 1.2rem; height: 1.2rem; }
+.impact-ic.sm { width: 1.9rem; height: 1.9rem; border-radius: .6rem; } .impact-ic.sm svg { width: 1rem; height: 1rem; }
+.impact-big { display: grid; gap: .15rem; }
+.impact-big b { font-size: clamp(2rem, 5vw, 2.75rem); font-weight: 700; letter-spacing: -.03em; line-height: 1.05; font-variant-numeric: tabular-nums; }
+html[lang="ar"] .impact-big b, html[lang="ckb"] .impact-big b { letter-spacing: 0; }
+.impact-big span { color: var(--fg-2); font-size: .92rem; }
+.impact-rows { display: grid; }
+.impact-rows li { display: flex; align-items: center; gap: .6rem; padding: .55rem 0; border-top: 1px solid var(--line); font-size: .92rem; }
+.impact-rows .dot { width: .5rem; height: .5rem; flex: none; border-radius: 99px; background: var(--accent); }
+.impact-rows small { color: var(--muted); }
+.impact-rows b, .impact-vs b { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+.impact-vs { display: grid; gap: .5rem; padding: .8rem .9rem; border-radius: .9rem; background: var(--sunken); }
+.impact-vs .bar { display: grid; grid-template-columns: minmax(5.5rem, auto) minmax(0, 1fr) auto; align-items: center; gap: .7rem; font-size: .82rem; }
+.impact-vs .bar > span { color: var(--fg-2); }
+.impact-vs i { display: block; width: var(--w); height: .55rem; border-radius: 99px; background: var(--accent); transform-origin: left; animation: impact-grow 1s cubic-bezier(.22, 1, .36, 1) both; }
+html[dir="rtl"] .impact-vs i { transform-origin: right; }
+.impact-vs .hemlo i { background: var(--line-strong); animation-delay: .15s; }
+.impact-vs small { font-weight: 400; color: var(--muted); }
+.impact-x { flex: none; padding: .25rem .7rem; border-radius: 99px; font-size: .78rem; font-weight: 700; color: var(--ok); background: color-mix(in oklab, var(--ok) 14%, transparent); white-space: nowrap; }
+.impact-how { font-size: .75rem; line-height: 1.55; color: var(--muted); }
+.impact-wait { font-size: .9rem; color: var(--fg-2); }
+.impact.is-empty { grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: .9rem; }
+.impact.is-empty b { font-weight: 600; }
+.impact.is-empty p { margin-top: .2rem; font-size: .88rem; line-height: 1.5; color: var(--fg-2); }
+.impact.is-empty .btn { grid-column: 1 / -1; justify-self: start; }
+@media (min-width: 640px) { .impact.is-empty { grid-template-columns: auto minmax(0, 1fr) auto; } .impact.is-empty .btn { grid-column: auto; } }
+@keyframes impact-grow { from { transform: scaleX(0); } }
+.impact-banner { display: flex; align-items: center; gap: .65rem; padding: .6rem .75rem; border-radius: 1rem; font-size: .88rem; font-weight: 600; line-height: 1.35;
+  border: 1px solid color-mix(in oklab, var(--accent) 26%, var(--line)); background: linear-gradient(120deg, color-mix(in oklab, var(--accent) 10%, var(--surface)), var(--surface));
+  transition: border-color .2s, transform .15s; }
+.impact-banner:hover { border-color: color-mix(in oklab, var(--accent) 45%, var(--line)); }
+.impact-banner:active { transform: scale(.99); }
+.impact-banner .go { display: inline-flex; align-items: center; gap: .25rem; font-size: .8rem; color: var(--accent); white-space: nowrap; }
+.impact-banner .go svg { width: .9rem; height: .9rem; }
+@media (prefers-reduced-motion: reduce) { .impact-vs i { animation: none; } }

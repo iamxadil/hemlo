@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { dayRange } from '../lib/app';
 import { Empty } from '../components/ui';
+import { ImpactCard } from '../components/Impact';
 import { useG } from './i18n';
 import { SlideSeg } from './ui';
 import { fmt } from './data';
@@ -18,6 +19,7 @@ export function Reports() {
   return (
     <div className="grid gap-5">
       <SlideSeg value={span} onChange={(v) => setSpan(v as typeof span)} options={(['7', '30', '90'] as const).map((k) => [k, g.reports.period[k]])} className="justify-self-start" />
+      <ImpactCard days={Math.max(7, Number(span))} kind="gym" />
       {!r ? <div className="grid gap-4"><div className="skeleton h-28" /><div className="skeleton h-72" /></div> : <>
         <div className="gy-kpi-row">
           <Kpi label={g.reports.memberships} v={money(r.money.memberships)} hero />

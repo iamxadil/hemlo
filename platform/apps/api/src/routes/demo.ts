@@ -34,7 +34,7 @@ export async function isDemoOrg(d: Deps, orgId: string | null | undefined) {
 const ORG_TABLES = ['re_report', 're_notice', 're_stat', 're_activity', 're_payment', 're_offer', 're_deal', 're_followup', 're_viewing', 're_collection_item', 're_collection',
   're_contract', 're_lead_property', 're_lead', 're_document', 're_media', 're_property', 're_owner', 're_agent', 're_branch', 're_settings', 'gym_measure', 'gym_booking', 'gym_class', 'gym_checkin', 'gym_membership', 'gym_member', 'gym_plan', 'gym_trainer', 'gym_settings', 'dent_access_log', 'dent_image', 'dent_consent', 'dent_installment', 'dent_perio', 'dent_lab_order', 'dent_rx', 'dent_visit_item', 'dent_visit', 'dent_plan_item', 'dent_plan',
   'dent_finding', 'dent_appointment', 'dent_patient', 'dent_procedure', 'dent_dentist', 'dent_chair', 'dent_settings', 'hemlo_subscription',
-  'sys_return_line', 'sys_return', 'sys_sale_line', 'sys_sale', 'sys_ledger', 'sys_stock_move', 'sys_purchase_line', 'sys_purchase', 'sys_supplier_ledger', 'sys_supplier',
+  'sys_reminder', 'sys_return_line', 'sys_return', 'sys_sale_line', 'sys_sale', 'sys_ledger', 'sys_stock_move', 'sys_purchase_line', 'sys_purchase', 'sys_supplier_ledger', 'sys_supplier',
   'ai_usage', 'sys_expense', 'sys_file', 'sys_shift', 'sys_sequence', 'sys_customer', 'sys_product', 'sys_settings', 'sys_fib_payment', 'counter_lock', 'counter_pin', 'counter_device', 'staff_invite', 'auth_event',
   'invitation', 'member'];
 const USER_TABLES = ['session', 'account', 'passkey', 'known_device', 'auth_event', 'member'];

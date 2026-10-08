@@ -528,3 +528,55 @@ html[dir="rtl"] .gy-tt-k { box-shadow: var(--lift), inset -3px 0 0 var(--k); }
 .gy-pass-wait { display: grid; place-items: center; gap: .75rem; width: min(100%, 21.5rem); aspect-ratio: 1080 / 1680; max-height: min(58vh, 34rem); border-radius: 1.4rem; background: linear-gradient(150deg, #1A1D24, #0B0C0F); color: #9AA0AA; font-size: .9rem; align-content: center; }
 @keyframes gy-pass-in { from { opacity: 0; transform: translateY(8px) scale(.98); } }
 @media (prefers-reduced-motion: reduce) { .gy-pass img { animation: none; } }
+
+/* ---------- photograph the register: the start, reading, checking each row ---------- */
+.gy-reg-hero { display: flex; align-items: center; justify-content: center; gap: 1.1rem; padding: 1.4rem 0 .6rem; }
+.gy-reg-paper { position: relative; display: grid; align-content: start; gap: .55rem; width: 5.6rem; height: 7rem; padding: 1rem .7rem; border-radius: .5rem; overflow: hidden;
+  background: #F7F2E4; box-shadow: 0 14px 28px -14px rgb(0 0 0 / .45), 0 0 0 1px rgb(0 0 0 / .05); transform: rotate(-4deg); }
+.gy-reg-paper i { display: block; height: .32rem; border-radius: 99px; background: #2B3A6E; opacity: .55; }
+.gy-reg-paper i:nth-child(odd) { width: 80%; margin-inline-start: auto; } .gy-reg-paper i:nth-child(even) { width: 62%; margin-inline-start: auto; }
+.gy-reg-beam { position: absolute; inset-inline: 0; top: 0; height: 32%; pointer-events: none;
+  background: linear-gradient(180deg, transparent, color-mix(in oklab, var(--accent) 50%, transparent), transparent); animation: gy-reg-beam 1.6s cubic-bezier(.45, 0, .55, 1) infinite alternate; }
+@keyframes gy-reg-beam { from { transform: translateY(-40%); } to { transform: translateY(240%); } }
+.gy-reg-arrow { color: var(--muted); } .gy-reg-arrow svg { width: 1.3rem; height: 1.3rem; }
+.gy-reg-cards { display: grid; gap: .4rem; }
+.gy-reg-cards i { display: block; width: 6.5rem; height: 1.6rem; border-radius: .55rem; background: var(--surface); box-shadow: var(--lift); position: relative; animation: gy-reg-in 2.4s var(--ease) infinite; }
+.gy-reg-cards i::before { content: ""; position: absolute; inset-inline-start: .35rem; top: .35rem; width: .9rem; height: .9rem; border-radius: 99px; background: color-mix(in oklab, var(--accent) 35%, var(--sunken)); }
+.gy-reg-cards i::after { content: ""; position: absolute; inset-inline-start: 1.5rem; top: .65rem; width: 3.4rem; height: .3rem; border-radius: 99px; background: var(--line-strong); }
+.gy-reg-cards i:nth-child(2) { animation-delay: .25s; } .gy-reg-cards i:nth-child(3) { animation-delay: .5s; }
+@keyframes gy-reg-in { 0%, 12% { opacity: 0; transform: translateX(-10px); } 30%, 85% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+.gy-reg-lead { text-align: center; color: var(--fg-2); line-height: 1.6; max-width: 30rem; margin: 0 auto; }
+.gy-reg-steps { display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem .9rem; font-size: .84rem; color: var(--fg-2); }
+.gy-reg-steps li { display: inline-flex; align-items: center; gap: .4rem; }
+.gy-reg-steps span { display: grid; place-items: center; width: 1.35rem; height: 1.35rem; border-radius: 99px; font-size: .72rem; font-weight: 700; color: var(--accent); background: color-mix(in oklab, var(--accent) 13%, transparent); }
+.gy-reg-reading { display: grid; justify-items: center; gap: .35rem; padding: 1rem 0 1.5rem; text-align: center; }
+.gy-reg-shot { position: relative; width: min(15rem, 70%); aspect-ratio: 3 / 4; margin-bottom: .8rem; border-radius: .9rem; overflow: hidden; background: var(--sunken); box-shadow: var(--lift-hi); }
+.gy-reg-shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gy-reg-chip { display: inline-flex; align-items: center; gap: .25rem; padding: .15rem .6rem; border-radius: 99px; font-size: .74rem; font-weight: 600; }
+.gy-reg-chip.warn { color: var(--warn); background: color-mix(in oklab, var(--warn) 14%, transparent); }
+.gy-reg-chip.ok { color: var(--ok); background: color-mix(in oklab, var(--ok) 14%, transparent); }
+.gy-reg-list { display: grid; gap: .6rem; }
+.gy-reg-row { display: grid; gap: .55rem; padding: .7rem; border-radius: 1rem; background: var(--surface); border: 1px solid var(--line); animation: gy-reg-row .35s var(--ease) both; }
+.gy-reg-row.flagged { border-color: color-mix(in oklab, var(--warn) 40%, var(--line)); }
+@keyframes gy-reg-row { from { opacity: 0; transform: translateY(6px); } }
+.gy-reg-top { display: flex; align-items: center; gap: .55rem; }
+.gy-reg-av { display: grid; place-items: center; flex: none; width: 2.1rem; height: 2.1rem; border-radius: 99px; font-weight: 700; color: var(--accent); background: color-mix(in oklab, var(--accent) 12%, var(--sunken)); }
+.gy-reg-name { flex: 1; min-width: 0; font-weight: 600; }
+.gy-reg-x { display: grid; place-items: center; flex: none; width: 2rem; height: 2rem; border-radius: 99px; color: var(--muted); }
+.gy-reg-x:hover { background: var(--sunken); color: var(--bad); } .gy-reg-x svg { width: 1rem; height: 1rem; }
+.gy-reg-grid { display: grid; gap: .45rem .55rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.gy-reg-f { display: grid; gap: .2rem; min-width: 0; }
+.gy-reg-f > span { font-size: .72rem; font-weight: 600; color: var(--muted); }
+.gy-reg-f .input { min-width: 0; height: 2.4rem; padding-block: 0; font-size: .9rem; }
+.gy-reg-f.need > span { color: var(--warn); }
+.gy-reg-f.need > span::after { content: " •"; }
+.gy-reg-f.need .input, .gy-reg-name.need { border-color: color-mix(in oklab, var(--warn) 60%, var(--line)); background: color-mix(in oklab, var(--warn) 6%, var(--surface)); }
+.gy-reg-note { font-size: .8rem; color: var(--muted); padding-inline-start: 2.65rem; }
+.gy-reg-done { display: grid; justify-items: center; gap: .35rem; padding: 1.2rem 0; text-align: center; }
+.gy-reg-done b { font-size: 1.25rem; }
+.gy-reg-done-ic { display: grid; place-items: center; width: 3.6rem; height: 3.6rem; margin-bottom: .4rem; border-radius: 99px; color: #fff; background: var(--ok); animation: gy-reg-pop .45s var(--ease) both; }
+.gy-reg-done-ic svg { width: 1.8rem; height: 1.8rem; }
+@keyframes gy-reg-pop { from { transform: scale(.6); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .gy-reg-beam, .gy-reg-cards i, .gy-reg-row, .gy-reg-done-ic { animation: none; } }
+.gy-reg-left { display: flex; align-items: center; gap: .6rem; width: 100%; margin-top: .8rem; padding: .7rem .8rem; border-radius: .9rem; text-align: start; font-size: .86rem;
+  color: var(--warn); background: color-mix(in oklab, var(--warn) 10%, var(--surface)); border: 1px solid color-mix(in oklab, var(--warn) 30%, var(--line)); }

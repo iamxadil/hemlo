@@ -303,3 +303,18 @@ export const aiUsage = pgTable('ai_usage', {
   counted: boolean('counted').notNull().default(true),     // counts toward the monthly allowance (samples don't)
   createdAt: at('created_at').notNull().defaultNow(),
 }, (t) => [index('ai_usage_org_month').on(t.organizationId, t.createdAt)]);
+
+/** A reminder a business sent a customer on WhatsApp: a membership about to end (renewal), one that ended (lapsed), or a
+ *  debt. Kept so Hemlo can show what the reminders brought back (a renewal or a payment soon after). One a person per kind
+ *  per day: tapping "remind" twice doesn't count twice. */
+export const sysReminder = pgTable('sys_reminder', {
+  id: text('id').primaryKey(),
+  organizationId: text('organization_id').notNull(),
+  customerId: text('customer_id').notNull(),
+  kind: text('kind').notNull(),            // renewal | lapsed | debt
+  refId: text('ref_id'),                   // the membership reminded about
+  amount: integer('amount'),               // debt: what they owed when reminded
+  sentOn: text('sent_on').notNull(),       // 'YYYY-MM-DD', Baghdad
+  at: at('at').notNull().defaultNow(),
+  userId: text('user_id'),
+}, (t) => [uniqueIndex('sys_reminder_once').on(t.customerId, t.kind, t.sentOn), index('sys_reminder_org_at').on(t.organizationId, t.at)]);

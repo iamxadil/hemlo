@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { go } from '../lib/app';
 import { Empty, Icon, toLatin } from '../components/ui';
+import { ImpactBanner } from '../components/Impact';
 import { useG } from './i18n';
 import { Face, LeftArc, StatePill, CameraScan, canScan, beep, useCountUp } from './ui';
 import { SellSheet } from './Sell';
@@ -134,6 +135,7 @@ export function Desk() {
       </div>
 
       <aside className="gy-desk-side">
+        <ImpactBanner />
         <InNow n={t?.inNow} />
         <div className="gy-tiles">
           <Tile label={g.desk.visits} value={t?.visits} sub={t ? fmt(g.desk.lastWeek, { n: num(t.visitsLastWeek) }) : ''} trend={t ? t.visits - t.visitsLastWeek : 0} />
