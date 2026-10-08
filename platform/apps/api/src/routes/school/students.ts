@@ -83,26 +83,34 @@ export function schStudentRoutes(d: Deps) {
     const owing = c.req.query('owing') === '1';
     const limit = Math.min(Number(c.req.query('limit')) || 60, 200), offset = Math.max(Number(c.req.query('offset')) || 0, 0);
     const out = await inSch(d, a, async (tx) => {
-      const year = await currentYear(tx, a.organizationId), day = today(), org = a.organizationId;
+      // one statement: the year from the settings, the page first (counted with a window), then money for that page
+      // only (index lookups per student); "late on fees" needs everyone's money first, so it sums then sorts
+      const day = today(), org = a.organizationId;
       const digits = q.replace(/\D/g, '');
       const like = `%${q.toLowerCase()}%`;
-      const rows = rowsOf(await tx.execute(sql`with base as (
-          select s.id, s.number, s.name, s.gender, s.status, s.photo_id as "photoId", e.class_id as "classId", c.name as "className", g.name as "gradeName", g.sort as gsort
-          from sch_student s
-          left join sch_enrollment e on e.student_id = s.id and e.year_id = ${year.id}
-          left join sch_class c on c.id = e.class_id left join sch_grade g on g.id = c.grade_id
-          where s.organization_id = ${org} ${status === 'all' ? sql`` : sql`and s.status = ${status}`}
+      const year = sql`(select current_year_id from sch_settings where organization_id = ${org})`;
+      const filters = sql`${status === 'all' ? sql`` : sql`and s.status = ${status}`}
             ${classId ? sql`and e.class_id = ${classId}` : sql``}
-            ${q ? sql`and (lower(s.name) like ${like} or s.number::text = ${q} ${digits.length >= 4 ? sql`or exists (select 1 from sch_student_guardian sg join sch_guardian gu on gu.id = sg.guardian_id where sg.student_id = s.id and gu.phone like ${'%' + digits.slice(-9) + '%'})` : sql``})` : sql``}),
-        money as (${moneyOf(org, day, null)}),
-        listed as (select b.*, m.balance, m.overdue, m.next_due as "nextDue" from base b left join money m on m.student_id = b.id
-          ${owing ? sql`where m.overdue > 0` : sql``}
-          order by ${owing ? sql`m.overdue desc,` : sql``} b.gsort nulls last, b."className", b.name limit ${limit} offset ${offset})
-        select l.*, gu.name as "guardianName", gu.phone as "guardianPhone", gu.relation as "guardianRelation",
-          (select count(*)::int from base) as total
-        from listed l
-        left join lateral (select gu.* from sch_student_guardian sg join sch_guardian gu on gu.id = sg.guardian_id where sg.student_id = l.id order by sg.primary desc limit 1) gu on true`));
-      return { total: rows[0]?.total ?? 0, students: rows.map(({ total, gsort, ...x }) => ({ ...x, balance: Number(x.balance ?? 0), overdue: Number(x.overdue ?? 0) })) };
+            ${q ? sql`and (lower(s.name) like ${like} or s.number::text = ${q} ${digits.length >= 4 ? sql`or exists (select 1 from sch_student_guardian sg join sch_guardian gu on gu.id = sg.guardian_id where sg.student_id = s.id and gu.phone like ${'%' + digits.slice(-9) + '%'})` : sql``})` : sql``}`;
+      const joins = sql`left join sch_enrollment e on e.student_id = s.id and e.year_id = ${year}
+              left join sch_class c on c.id = e.class_id left join sch_grade g on g.id = c.grade_id`;
+      const guardian = sql`left join lateral (select gu.* from sch_student_guardian sg join sch_guardian gu on gu.id = sg.guardian_id where sg.student_id = b.id order by sg.primary desc limit 1) gu on true`;
+      const rows = rowsOf(await tx.execute(owing
+        ? sql`with m as (${moneyOf(org, day, null)}),
+            base as (select s.id, s.number, s.name, s.gender, s.status, s.photo_id as "photoId", e.class_id as "classId", c.name as "className", g.name as "gradeName", m.balance, m.overdue, count(*) over () as total
+              from sch_student s join m on m.student_id = s.id and m.overdue > 0 ${joins}
+              where s.organization_id = ${org} ${filters} order by m.overdue desc, s.name limit ${limit} offset ${offset})
+          select b.*, gu.name as "guardianName", gu.phone as "guardianPhone" from base b ${guardian}`
+        : sql`with base as (select s.id, s.number, s.name, s.gender, s.status, s.photo_id as "photoId", e.class_id as "classId", c.name as "className", g.name as "gradeName", count(*) over () as total
+              from sch_student s ${joins}
+              where s.organization_id = ${org} ${filters} order by g.sort nulls last, c.name, s.name limit ${limit} offset ${offset})
+          select b.*, mm.charged - mm.paid as balance, greatest(mm.due - mm.paid, 0) as overdue, gu.name as "guardianName", gu.phone as "guardianPhone" from base b
+          cross join lateral (select
+            (select coalesce(sum(amount), 0) from sch_charge where organization_id = ${org} and student_id = b.id) as charged,
+            (select coalesce(sum(amount), 0) from sch_charge where organization_id = ${org} and student_id = b.id and due_on <= ${day}) as due,
+            (select coalesce(sum(amount), 0) from sch_payment where organization_id = ${org} and student_id = b.id and not void) as paid) mm
+          ${guardian}`));
+      return { total: Number(rows[0]?.total ?? 0), students: rows.map(({ total, ...x }) => ({ ...x, balance: Number(x.balance ?? 0), overdue: Number(x.overdue ?? 0) })) };
     });
     return c.json(out);
   });

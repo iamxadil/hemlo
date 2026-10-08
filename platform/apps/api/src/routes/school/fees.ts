@@ -142,33 +142,35 @@ export function schFeeRoutes(d: Deps) {
   r.get('/fees/overview', async (c) => {
     const a = actor(c, 'fees', 'read');
     const out = await inSch(d, a, async (tx) => {
-      const year = await currentYear(tx, a.organizationId), day = today(), org = a.organizationId;
+      // ONE statement: the totals, who is late, what falls due (each round trip to the database costs more than the sums)
+      const day = today(), org = a.organizationId;
       const soon = new Date(Date.parse(`${day}T12:00:00Z`) + 14 * 86400_000).toISOString().slice(0, 10);
-      const month = `${day.slice(0, 7)}-01`;
-      const dayStart = new Date(Date.parse(`${day}T00:00:00Z`) - 3 * 3600_000).toISOString(), monthStart = new Date(Date.parse(`${month}T00:00:00Z`) - 3 * 3600_000).toISOString();
-      const [[tot], late, due] = await Promise.all([
-        tx.execute(sql`select
-            (select coalesce(sum(amount), 0) from sch_charge where organization_id = ${org} and year_id = ${year.id})::bigint as expected,
-            (select coalesce(sum(amount), 0) from sch_charge where organization_id = ${org} and year_id = ${year.id} and due_on <= ${day})::bigint as due,
-            (select coalesce(sum(amount), 0) from sch_payment where organization_id = ${org} and not void and at >= ${year.startsOn})::bigint as collected,
-            (select coalesce(sum(amount), 0) from sch_payment where organization_id = ${org} and not void and at >= ${monthStart})::bigint as month,
-            (select coalesce(sum(amount), 0) from sch_payment where organization_id = ${org} and not void and at >= ${dayStart})::bigint as today,
-            (select count(*)::int from sch_payment where organization_id = ${org} and not void and at >= ${dayStart}) as today_n`).then(rowsOf),
-        tx.execute(sql`with m as (${moneyOf(org, day, null)})
-          select s.id, s.name, s.number, m.overdue, m.balance, c.name as "className", g.name as "gradeName", gu.name as "guardianName", gu.phone as "guardianPhone",
-            (select max(at) from sch_payment p where p.student_id = s.id and not p.void) as "lastPaid"
-          from m join sch_student s on s.id = m.student_id and s.status = 'active'
-          left join sch_enrollment e on e.student_id = s.id and e.year_id = ${year.id} left join sch_class c on c.id = e.class_id left join sch_grade g on g.id = c.grade_id
-          left join lateral (select gu.* from sch_student_guardian sg join sch_guardian gu on gu.id = sg.guardian_id where sg.student_id = s.id order by sg.primary desc limit 1) gu on true
-          where m.overdue > 0 order by m.overdue desc limit 200`).then(rowsOf),
-        tx.execute(sql`with m as (${moneyOf(org, day, null)}),
-            upcoming as (select student_id, min(due_on) as due_on, sum(amount) as amount from sch_charge where organization_id = ${org} and due_on > ${day} and due_on <= ${soon} and amount > 0 group by student_id)
-          select s.id, s.name, s.number, u.due_on as "dueOn", least(u.amount, m.balance)::bigint as amount, c.name as "className", gu.phone as "guardianPhone", gu.name as "guardianName"
-          from upcoming u join m on m.student_id = u.student_id join sch_student s on s.id = u.student_id and s.status = 'active'
-          left join sch_enrollment e on e.student_id = s.id and e.year_id = ${year.id} left join sch_class c on c.id = e.class_id
-          left join lateral (select gu.* from sch_student_guardian sg join sch_guardian gu on gu.id = sg.guardian_id where sg.student_id = s.id order by sg.primary desc limit 1) gu on true
-          where m.balance > 0 order by u.due_on, s.name limit 200`).then(rowsOf),
-      ]);
+      const dayStart = new Date(Date.parse(`${day}T00:00:00Z`) - 3 * 3600_000).toISOString(), monthStart = new Date(Date.parse(`${day.slice(0, 7)}-01T00:00:00Z`) - 3 * 3600_000).toISOString();
+      const guardian = sql`left join lateral (select gu.* from sch_student_guardian sg join sch_guardian gu on gu.id = sg.guardian_id where sg.student_id = s.id order by sg.primary desc limit 1) gu on true`;
+      const [row] = rowsOf(await tx.execute(sql`with y as (select y.id, y.starts_on from sch_settings s join sch_year y on y.id = s.current_year_id where s.organization_id = ${org}),
+          m as (${moneyOf(org, day, null)}),
+          lt as (select s.id, s.name, s.number, m.overdue, m.balance, c.name as "className", g.name as "gradeName", gu.name as "guardianName", gu.phone as "guardianPhone",
+              (select max(at) from sch_payment p where p.student_id = s.id and not p.void) as "lastPaid"
+            from m join sch_student s on s.id = m.student_id and s.status = 'active'
+            left join sch_enrollment e on e.student_id = s.id and e.year_id = (select id from y) left join sch_class c on c.id = e.class_id left join sch_grade g on g.id = c.grade_id
+            ${guardian} where m.overdue > 0 order by m.overdue desc limit 200),
+          upcoming as (select student_id, min(due_on) as due_on, sum(amount) as amount from sch_charge where organization_id = ${org} and due_on > ${day} and due_on <= ${soon} and amount > 0 group by student_id),
+          up as (select s.id, s.name, s.number, u.due_on as "dueOn", least(u.amount, m.balance)::bigint as amount, c.name as "className", gu.phone as "guardianPhone", gu.name as "guardianName"
+            from upcoming u join m on m.student_id = u.student_id join sch_student s on s.id = u.student_id and s.status = 'active'
+            left join sch_enrollment e on e.student_id = s.id and e.year_id = (select id from y) left join sch_class c on c.id = e.class_id
+            ${guardian} where m.balance > 0 order by u.due_on, s.name limit 200)
+        select (select id from y) as year_id,
+          (select coalesce(sum(amount), 0) from sch_charge where organization_id = ${org} and year_id = (select id from y))::bigint as expected,
+          (select coalesce(sum(amount), 0) from sch_charge where organization_id = ${org} and year_id = (select id from y) and due_on <= ${day})::bigint as due,
+          (select coalesce(sum(amount), 0) from sch_payment where organization_id = ${org} and not void and at >= (select starts_on from y))::bigint as collected,
+          (select coalesce(sum(amount), 0) from sch_payment where organization_id = ${org} and not void and at >= ${monthStart})::bigint as month,
+          (select coalesce(sum(amount), 0) from sch_payment where organization_id = ${org} and not void and at >= ${dayStart})::bigint as today,
+          (select count(*)::int from sch_payment where organization_id = ${org} and not void and at >= ${dayStart}) as today_n,
+          (select coalesce(json_agg(lt order by overdue desc), '[]'::json) from lt) as late,
+          (select coalesce(json_agg(up order by "dueOn", name), '[]'::json) from up) as upcoming`));
+      if (!row?.year_id) throw new HttpError(409, 'NO_YEAR');
+      const parse = (v: unknown) => (typeof v === 'string' ? JSON.parse(v) : v) as any[];
+      const tot = row, late = parse(row.late), due = parse(row.upcoming);
       const n = (x: unknown) => Number(x ?? 0);
       return {
         totals: { expected: n(tot.expected), due: n(tot.due), collected: n(tot.collected), month: n(tot.month), today: n(tot.today), todayCount: n(tot.today_n),

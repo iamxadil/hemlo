@@ -60,38 +60,45 @@ export function schAttendanceRoutes(d: Deps) {
     const a = actor(c, 'students', 'read');
     const seeMoney = may(a.principal, 'fees', 'read');
     const out = await inSch(d, a, async (tx) => {
-      const school = await schoolOf(tx, a.organizationId);
-      if (!school.year) throw new HttpError(409, 'NO_YEAR');
-      const year = school.year, day = today(), org = a.organizationId;
+      const day = today(), org = a.organizationId;
       const week = new Date(Date.parse(`${day}T12:00:00Z`) + 7 * 86400_000).toISOString().slice(0, 10);
       const dayStart = new Date(Date.parse(`${day}T00:00:00Z`) - 3 * 3600_000).toISOString(), monthStart = new Date(Date.parse(`${day.slice(0, 7)}-01T00:00:00Z`) - 3 * 3600_000).toISOString();
-      const [classes, absent, [money]] = await Promise.all([
-        tx.execute(sql`select c.id, c.name, g.name as "gradeName", c.teacher_member_id as "teacherMemberId", u.name as "teacherName",
-            count(s.id)::int as students,
-            count(at.student_id)::int as marked,
-            count(at.student_id) filter (where at.status = 'absent')::int as absent,
-            count(at.student_id) filter (where at.status = 'late')::int as late
-          from sch_class c join sch_grade g on g.id = c.grade_id
-          left join member m on m.id = c.teacher_member_id left join "user" u on u.id = m.user_id
-          left join sch_enrollment e on e.class_id = c.id and e.status = 'enrolled'
-          left join sch_student s on s.id = e.student_id and s.status = 'active'
-          left join sch_attendance at on at.student_id = s.id and at.day = ${day}
-          where c.organization_id = ${org} and c.year_id = ${year.id}
-          group by c.id, g.sort, g.name, u.name order by g.sort, c.name`).then(rowsOf),
-        tx.execute(sql`select s.id, s.name, s.number, at.status, at.note, c.name as "className", g.name as "gradeName", gu.name as "guardianName", gu.phone as "guardianPhone",
-            (select count(*)::int from sch_attendance x where x.student_id = s.id and x.status = 'absent' and x.day > ${day}::date - 30) as "absent30"
-          from sch_attendance at join sch_student s on s.id = at.student_id
-          join sch_class c on c.id = at.class_id join sch_grade g on g.id = c.grade_id
-          left join lateral (select gu.* from sch_student_guardian sg join sch_guardian gu on gu.id = sg.guardian_id where sg.student_id = s.id order by sg.primary desc limit 1) gu on true
-          where at.organization_id = ${org} and at.day = ${day} and at.status in ('absent', 'late') order by at.status, g.sort, c.name, s.name limit 200`).then(rowsOf),
-        seeMoney ? tx.execute(sql`with m as (${moneyOf(org, day, null)})
-          select
-            (select coalesce(sum(amount), 0) from sch_payment where organization_id = ${org} and not void and at >= ${dayStart})::bigint as today,
-            (select coalesce(sum(amount), 0) from sch_payment where organization_id = ${org} and not void and at >= ${monthStart})::bigint as month,
-            (select coalesce(sum(overdue), 0) from m join sch_student s on s.id = m.student_id and s.status = 'active')::bigint as late,
-            (select count(*)::int from m join sch_student s on s.id = m.student_id and s.status = 'active' where m.overdue > 0) as late_n,
-            (select coalesce(sum(amount), 0) from sch_charge where organization_id = ${org} and due_on > ${day} and due_on <= ${week} and amount > 0)::bigint as week_due`).then(rowsOf) : Promise.resolve([null]),
-      ]);
+      // ONE statement (each round trip to the database costs more than the work): the year, classes, absentees, money
+      const [row] = rowsOf(await tx.execute(sql`with st as (select s.kind, y.id, y.name, y.starts_on as "startsOn", y.ends_on as "endsOn"
+            from sch_settings s left join sch_year y on y.id = s.current_year_id where s.organization_id = ${org}),
+          cls as (select c.id, c.name, g.name as "gradeName", c.teacher_member_id as "teacherMemberId", u.name as "teacherName",
+              count(s.id)::int as students, count(at.student_id)::int as marked,
+              count(at.student_id) filter (where at.status = 'absent')::int as absent, count(at.student_id) filter (where at.status = 'late')::int as late, g.sort as gsort
+            from sch_class c join sch_grade g on g.id = c.grade_id
+            left join member m on m.id = c.teacher_member_id left join "user" u on u.id = m.user_id
+            left join sch_enrollment e on e.class_id = c.id and e.status = 'enrolled'
+            left join sch_student s on s.id = e.student_id and s.status = 'active'
+            left join sch_attendance at on at.student_id = s.id and at.day = ${day}
+            where c.organization_id = ${org} and c.year_id = (select id from st)
+            group by c.id, g.sort, g.name, u.name),
+          ab as (select s.id, s.name, s.number, at.status, at.note, c.name as "className", g.name as "gradeName", gu.name as "guardianName", gu.phone as "guardianPhone",
+              (select count(*)::int from sch_attendance x where x.student_id = s.id and x.status = 'absent' and x.day > ${day}::date - 30) as "absent30", g.sort as gsort
+            from sch_attendance at join sch_student s on s.id = at.student_id
+            join sch_class c on c.id = at.class_id join sch_grade g on g.id = c.grade_id
+            left join lateral (select gu.* from sch_student_guardian sg join sch_guardian gu on gu.id = sg.guardian_id where sg.student_id = s.id order by sg.primary desc limit 1) gu on true
+            where at.organization_id = ${org} and at.day = ${day} and at.status in ('absent', 'late') limit 200)
+          ${seeMoney ? sql`, m as (${moneyOf(org, day, null)})` : sql``}
+        select (select row_to_json(st) from st) as school,
+          (select coalesce(json_agg(cls order by gsort, name), '[]'::json) from cls) as classes,
+          (select coalesce(json_agg(ab order by status, gsort, "className", name), '[]'::json) from ab) as absent
+          ${seeMoney ? sql`,
+          (select coalesce(sum(amount), 0) from sch_payment where organization_id = ${org} and not void and at >= ${dayStart})::bigint as m_today,
+          (select coalesce(sum(amount), 0) from sch_payment where organization_id = ${org} and not void and at >= ${monthStart})::bigint as m_month,
+          (select coalesce(sum(overdue), 0) from m join sch_student s on s.id = m.student_id and s.status = 'active')::bigint as m_late,
+          (select count(*)::int from m join sch_student s on s.id = m.student_id and s.status = 'active' where m.overdue > 0) as m_late_n,
+          (select coalesce(sum(amount), 0) from sch_charge where organization_id = ${org} and due_on > ${day} and due_on <= ${week} and amount > 0)::bigint as m_week` : sql``}`));
+      const parse = (v: unknown) => (typeof v === 'string' ? JSON.parse(v) : v);
+      const st = parse(row?.school) as any;
+      if (!st) throw new HttpError(404, 'NOT_A_SCHOOL');
+      if (!st.id) throw new HttpError(409, 'NO_YEAR');
+      const school = { kind: st.kind as string }, year = { id: st.id, name: st.name, startsOn: String(st.startsOn).slice(0, 10), endsOn: String(st.endsOn).slice(0, 10) };
+      const classes = (parse(row.classes) as any[]).map(({ gsort, ...x }) => x), absent = (parse(row.absent) as any[]).map(({ gsort, ...x }) => x);
+      const money = seeMoney ? { today: row.m_today, month: row.m_month, late: row.m_late, late_n: row.m_late_n, week_due: row.m_week } : null;
       const students = classes.reduce((s, x) => s + x.students, 0), marked = classes.reduce((s, x) => s + x.marked, 0);
       const n = (x: unknown) => Number(x ?? 0);
       return {
