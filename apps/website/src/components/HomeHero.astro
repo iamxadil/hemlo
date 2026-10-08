@@ -1,7 +1,9 @@
 ---
 // The home hero: one line, one question ("I run a … gym / clinic / store / real estate office"), and the answer on real phones.
-// Picking a business brings its phone forward, tints the page in its colour and points both buttons at its product.
-// Until someone picks, it turns slowly through them on its own (not with reduced motion, not off-screen).
+// The blank is a wheel: a little 3D drum of the trades, the chosen one in front in its colour, the others curving away
+// above and below. Turning it (a tap on a word, a drag, the arrow keys, a swipe over the phones) brings that business's
+// phone forward, tints the page in its colour and points both buttons at its product. Until someone turns it, it turns
+// slowly on its own (not with reduced motion, not off-screen), and the phones turn with it.
 import Mark from './Mark.astro';
 import { t, href, TOOLS_URL, studioUrl, PRODUCT, TRADES_PAGES, productLinks, type Lang, type Trade } from '../i18n/strings';
 interface Props { lang: Lang }
@@ -16,17 +18,17 @@ const ICON: Record<Trade, string> = {
   stores: 'M4.5 12.5h7a3 3 0 0 0 .4-6 4 4 0 0 0-7.7-.9A3.5 3.5 0 0 0 4.5 12.5ZM6.5 9.5l1.2 1.2 2.3-2.4',
   realestate: 'M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8 12.1 12.5 8 12.5 1.5 8 1.5 8ZM8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z',
 };
-// each tab's own small mark: a dumbbell, a tooth, a bag, a house
-const TAB: Record<Trade, string> = {
-  gym: 'M2 8h12M4.2 5v6M11.8 5v6M2.4 6.6v2.8M13.6 6.6v2.8',
-  dental: 'M5.2 2.6c-1.6 0-2.6 1.3-2.6 3 0 1.9.9 3 1.3 5 .3 1.5.6 2.9 1.4 2.9.9 0 1-1.7 1.4-2.9.2-.6.6-.9 1.3-.9s1.1.3 1.3.9c.4 1.2.5 2.9 1.4 2.9.8 0 1.1-1.4 1.4-2.9.4-2 1.3-3.1 1.3-5 0-1.7-1-3-2.6-3-1.2 0-1.7.7-2.8.7s-1.6-.7-2.8-.7Z',
-  stores: 'M3.4 5.6h9.2l-.8 7.9H4.2zM6 5.6v-1a2 2 0 0 1 4 0v1',
-  realestate: 'M2.3 7.4 8 2.8l5.7 4.6M3.8 6.3v7.2h8.4V6.3M6.6 13.5V10h2.8v3.5',
-};
 const trades = ORDER.filter((x) => TRADES_PAGES.includes(x)).map((id) => ({ id, color: PRODUCT[id].color, url: href(lang, id), demo: productLinks(id, lang).demo, ...H.trades[id] }));
 const N = trades.length;
 // where each phone stands: 0 in front, 1 leaning out after it, 2 before it, 3 hidden behind
 const relOf = (i: number) => (i === 0 ? 0 : i === 1 ? 1 : i === N - 1 ? 2 : 3);
+// the drum: each word STEP degrees round from the next; the first paint already shows the first business in front
+const STEP = 40;
+const around = (i: number) => (i >= N / 2 ? i - N : i);
+const wordStyle = (i: number, color: string) => {
+  const d = around(i), a = Math.abs(d);
+  return `--c:${color};--w:${Math.round(100 * Math.max(0, 1 - a * 1.4))}%;transform:rotateX(${-d * STEP}deg) translateZ(var(--r));opacity:${Math.max(0, 1 - a * 0.62).toFixed(2)};${a > 1.7 ? 'visibility:hidden;' : ''}`;
+};
 const title = s.home.title.replace(/\.$/, '');
 ---
 <section class="hs" data-hs style={`--acc:${trades[0].color}`}>
@@ -38,13 +40,14 @@ const title = s.home.title.replace(/\.$/, '');
 
       <div class="hs-pick rise rise-4">
         <span class="hs-irun" id="hs-irun">{H.iRun}</span>
-        <div class="hs-tabs" role="group" aria-labelledby="hs-irun">
-          <span class="hs-thumb" aria-hidden="true"><i></i></span>
-          {trades.map((x, i) => (
-            <button type="button" class="hs-tab" data-i={i} data-url={x.url} data-demo={x.demo} data-color={x.color} aria-pressed={i === 0 ? 'true' : 'false'} style={`--c:${x.color}`}>
-              <svg viewBox="0 0 16 16" aria-hidden="true"><path d={TAB[x.id]} /></svg><span>{x.pick}</span>
-            </button>
-          ))}
+        <div class="hs-wheel" role="radiogroup" aria-labelledby="hs-irun" data-wheel style={`--step:${STEP}`}>
+          <div class="hs-drum">
+            {trades.map((x, i) => (
+              <button type="button" role="radio" class="hs-word" data-i={i} data-url={x.url} data-demo={x.demo} data-color={x.color}
+                aria-checked={i === 0 ? 'true' : 'false'} tabindex={i === 0 ? 0 : -1} style={wordStyle(i, x.color)}><span class="t">{x.pick}</span></button>
+            ))}
+          </div>
+          <span class="hs-line" aria-hidden="true"><i></i></span>
         </div>
       </div>
     </div>
@@ -94,40 +97,104 @@ const title = s.home.title.replace(/\.$/, '');
     const root = document.querySelector<HTMLElement>('[data-hs]');
     if (!root || root.dataset.ready) return;
     root.dataset.ready = '1';
-    const pills = [...root.querySelectorAll<HTMLButtonElement>('.hs-tab')];
-    const thumb = root.querySelector<HTMLElement>('.hs-thumb')!, bar = thumb.querySelector('i')!;
-    // the white thumb slides under the chosen tab (rows wrap on phones, so it moves in both directions)
-    const place = () => { const p = pills[cur]; thumb.style.cssText = `width:${p.offsetWidth}px;height:${p.offsetHeight}px;transform:translate(${p.offsetLeft}px,${p.offsetTop}px)`; };
+    const words = [...root.querySelectorAll<HTMLButtonElement>('.hs-word')];
+    const wheel = root.querySelector<HTMLElement>('[data-wheel]')!, line = wheel.querySelector<HTMLElement>('.hs-line')!, bar = line.querySelector('i')!;
+    const N = words.length, STEP = Number(wheel.style.getPropertyValue('--step')) || 40;
+    const wrap = (x: number) => { let d = ((x % N) + N) % N; if (d >= N / 2) d -= N; return d; };
+    const mod = (x: number) => ((x % N) + N) % N;
     const phones = [...root.querySelectorAll<HTMLElement>('.hs-phone')];
     const toasts = [...root.querySelectorAll<HTMLElement>('.hs-toast')];
     const goT = [...root.querySelectorAll<HTMLElement>('.hs-go-t')];
     const go = root.querySelector<HTMLAnchorElement>('[data-go]')!, demo = root.querySelector<HTMLAnchorElement>("[data-try]")!;
-    const data = pills.map((p) => ({ url: p.dataset.url!, demo: p.dataset.demo!, color: p.dataset.color! }));
+    const data = words.map((p) => ({ url: p.dataset.url!, demo: p.dataset.demo!, color: p.dataset.color! }));
     const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
     let cur = 0, auto = !still, timer = 0, seen = true;
 
+    // ---- the drum: `p` is where it stands (a float, any number of turns), `target` where it is going ----
+    let p = 0, target = 0, v = 0, raf = 0, last = 0;
+    const paint = () => {
+      const blur = Math.min(2.2, Math.abs(v) * 0.7);
+      words.forEach((w, k) => {
+        const d = wrap(k - p), a = Math.abs(d);
+        w.style.transform = `rotateX(${-d * STEP}deg) translateZ(var(--r))`;
+        w.style.opacity = String(Math.max(0, 1 - a * 0.62));
+        w.style.setProperty('--w', `${Math.round(100 * Math.max(0, 1 - a * 1.4))}%`);
+        w.style.visibility = a > 1.7 ? 'hidden' : '';
+        w.style.filter = blur > 0.15 && a < 1.7 ? `blur(${blur.toFixed(2)}px)` : '';
+      });
+    };
+    // a critically damped spring: it glides to the word and stops, no bounce
+    const frame = (now: number) => {
+      const dt = Math.min(0.05, (now - last) / 1000 || 1 / 60); last = now;
+      const k = 75, c = 2 * Math.sqrt(k);
+      v += ((target - p) * k - v * c) * dt; p += v * dt;
+      if (Math.abs(target - p) < 0.0008 && Math.abs(v) < 0.003) { p = target; v = 0; paint(); raf = 0; return; }
+      paint(); raf = requestAnimationFrame(frame);
+    };
+    const run = () => { if (still) { p = target; v = 0; paint(); return; } if (!raf) { last = performance.now(); raf = requestAnimationFrame(frame); } };
+    // the hairline under the front word: as wide as the word, filling while the hero turns on its own
+    const measure = () => {
+      const widths = words.map((w) => (w.firstElementChild as HTMLElement).offsetWidth);
+      wheel.style.setProperty('--ww', `${Math.ceil(Math.max(...widths)) + 6}px`);
+      line.style.setProperty('--lw', `${widths[cur]}px`);
+    };
+
     const show = (i: number) => {
-      cur = (i + pills.length) % pills.length;
+      cur = mod(i);
       root.style.setProperty('--acc', data[cur].color);
-      pills.forEach((p, k) => p.setAttribute('aria-pressed', String(k === cur)));
+      words.forEach((w, k) => { w.setAttribute('aria-checked', String(k === cur)); w.tabIndex = k === cur ? 0 : -1; });
       const n = phones.length;
       phones.forEach((p, k) => { const d = (k - cur + n) % n; p.dataset.rel = String(d === 0 ? 0 : d === 1 ? 1 : d === n - 1 ? 2 : 3); });
-      place();
+      measure();
       toasts.forEach((x, k) => x.classList.toggle('on', k === cur));
       goT.forEach((x, k) => { x.classList.toggle('on', k === cur); x.toggleAttribute('aria-hidden', k !== cur); });
       go.href = data[cur].url; demo.href = data[cur].demo;
     };
-    // turning on its own: one business every few seconds, with a bar filling under the chosen pill
+    /** Turn the drum to an absolute position (any number of turns), and show that business. */
+    const turnTo = (to: number) => { target = to; show(to); run(); };
+    /** Turn to business i the short way round. */
+    const turnToIndex = (i: number) => turnTo(target + Math.round(wrap(i - target)));
+    // turning on its own: one business every few seconds, the hairline filling under the word
     const tick = () => {
       clearTimeout(timer);
       root.classList.toggle('auto', auto && seen);
       if (!auto || !seen) return;
       bar.getAnimations().forEach((a) => (a.currentTime = 0));
-      timer = window.setTimeout(() => { show(cur + 1); tick(); }, 5200);
+      timer = window.setTimeout(() => { turnTo(target + 1); tick(); }, 5200);
     };
-    const pick = (i: number) => { auto = false; tick(); show(i); };
+    const pick = (i: number) => { auto = false; tick(); turnToIndex(i); };
+    const nudge = (by: number) => { auto = false; tick(); turnTo(target + by); };
 
-    pills.forEach((p, i) => p.addEventListener('click', () => pick(i)));
+    let dragged = false;
+    words.forEach((w, i) => w.addEventListener('click', () => { if (!dragged) pick(i); }));
+    // the keyboard: a radio group, so the arrows turn it (and the focus follows the word in front)
+    wheel.addEventListener('keydown', (e) => {
+      const by = e.key === 'ArrowDown' || e.key === 'ArrowRight' ? 1 : e.key === 'ArrowUp' || e.key === 'ArrowLeft' ? -1 : 0;
+      if (!by) return;
+      e.preventDefault(); nudge(by); words[cur].focus({ preventScroll: true });
+    });
+    // a mouse can drag the drum up and down (fingers scroll the page; they tap a word or swipe the phones)
+    let y0w = 0, p0 = 0, vy = 0, ly = 0, lt = 0, held = false;
+    wheel.addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'mouse' || e.button !== 0) return;
+      held = true; dragged = false; y0w = ly = e.clientY; lt = performance.now(); p0 = p; vy = 0;
+    });
+    wheel.addEventListener('pointermove', (e) => {
+      if (!held) return;
+      const row = parseFloat(getComputedStyle(wheel).fontSize) * 1.3;
+      if (!dragged && Math.abs(e.clientY - y0w) > 4) { dragged = true; wheel.setPointerCapture(e.pointerId); wheel.classList.add('grab'); cancelAnimationFrame(raf); raf = 0; auto = false; tick(); }
+      if (!dragged) return;
+      const now = performance.now();
+      vy = (ly - e.clientY) / row / Math.max(0.008, (now - lt) / 1000); ly = e.clientY; lt = now;
+      p = p0 - (e.clientY - y0w) / row; v = vy; paint();
+    });
+    const release = () => {
+      if (!held) return;
+      held = false; wheel.classList.remove('grab');
+      if (dragged) { v = vy; turnTo(Math.round(p + vy * 0.12)); setTimeout(() => (dragged = false), 0); }
+    };
+    wheel.addEventListener('pointerup', release);
+    wheel.addEventListener('pointercancel', release);
     phones.forEach((p) => p.addEventListener('click', () => pick(Number(p.dataset.i))));
     // a sideways swipe over the phones moves to the next business
     let x0 = 0, y0 = 0;
@@ -141,12 +208,12 @@ const title = s.home.title.replace(/\.$/, '');
     io.observe(root);
     const vis = () => { seen = !document.hidden; tick(); };
     document.addEventListener('visibilitychange', vis);
-    const ro = new ResizeObserver(place);
-    ro.observe(thumb.parentElement!);
-    document.fonts?.ready.then(place);
-    document.addEventListener('astro:before-swap', () => { clearTimeout(timer); io.disconnect(); ro.disconnect(); document.removeEventListener('visibilitychange', vis); }, { once: true });
-    place();
-    requestAnimationFrame(() => thumb.classList.add('ready')); // slide from now on, not on first paint
+    const ro = new ResizeObserver(measure);
+    ro.observe(wheel);
+    document.fonts?.ready.then(measure);
+    document.addEventListener('astro:before-swap', () => { clearTimeout(timer); cancelAnimationFrame(raf); io.disconnect(); ro.disconnect(); document.removeEventListener('visibilitychange', vis); }, { once: true });
+    measure();
+    requestAnimationFrame(() => line.classList.add('ready')); // the hairline glides from now on, not on first paint
     tick();
   }
   init();
@@ -172,32 +239,33 @@ const title = s.home.title.replace(/\.$/, '');
   .hs-sub { max-width: 34rem; margin: 1.1rem auto 0; font-size: clamp(1rem, 1.6vw, 1.25rem); line-height: 1.55; color: var(--fg-2); text-wrap: pretty; }
   @media (min-width: 1024px) { .hs-sub { margin-inline: 0; } }
 
-  /* "I run a  [gym] [dental clinic] [store] [real estate office]" */
-  .hs-pick { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: .5rem .75rem; margin-top: 1.75rem; }
-  @media (min-width: 1024px) { .hs-pick { justify-content: start; gap: 1rem; margin-top: 2rem; } }
-  .hs-irun { font-weight: 500; color: var(--muted); white-space: nowrap; }
-  /* a quiet tray of four tabs; a white thumb slides under the chosen one, its mark lights in that business's colour,
-     and a hairline fills along the thumb's foot while the hero turns on its own */
-  .hs-tabs { position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .2rem; width: min(100%, 24rem); padding: .3rem; border-radius: 1.15rem;
-    background: color-mix(in oklab, var(--sunken) 80%, transparent); border: 1px solid var(--line); box-shadow: inset 0 1px 2px rgb(14 20 32 / .04); }
-  @media (min-width: 640px) { .hs-tabs { display: inline-flex; width: auto; } }
-  .hs-thumb { position: absolute; z-index: 0; left: 0; top: 0; border-radius: .9rem; background: var(--surface); pointer-events: none; overflow: hidden;
-    border: 1px solid color-mix(in oklab, var(--acc) 22%, var(--line));
-    box-shadow: 0 1px 2px rgb(14 20 32 / .06), 0 10px 24px -14px color-mix(in oklab, var(--acc) 70%, rgb(14 20 32 / .5)); }
-  .hs-thumb.ready { transition: transform .5s var(--ease-soft), width .5s var(--ease-soft), height .5s var(--ease-soft), border-color .6s; }
-  .hs-thumb i { position: absolute; inset-inline: .9rem; bottom: 0; height: 2px; border-radius: 2px 2px 0 0; background: var(--acc); transform: scaleX(0); transform-origin: left; opacity: 0; }
-  :global(html[dir="rtl"]) .hs-thumb i { transform-origin: right; }
-  .hs.auto .hs-thumb i { opacity: .85; animation: hs-fill 5.2s linear both; }
+  /* "I run a ___": the sentence, and the blank is a wheel. A small 3D drum (the words stand on a cylinder STEP degrees
+     apart, pushed out by --r), seen through a soft fade at the top and bottom; the word in front in its business's colour */
+  .hs-pick { display: flex; flex-direction: column; align-items: center; gap: 0; margin-top: 1.6rem; font-size: clamp(1.7rem, 7vw, 2.3rem); }
+  @media (min-width: 1024px) { .hs-pick { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: start; column-gap: .42em; margin-top: 1.9rem; font-size: clamp(1.7rem, 2.5vw, 2.3rem); } }
+  .hs-irun { font-weight: 500; color: var(--fg-2); white-space: nowrap; letter-spacing: -.02em; line-height: 1.3; }
+  :global(html[lang="ar"]) .hs-irun { letter-spacing: 0; }
+  .hs-wheel { --r: 1.79em; position: relative; width: 100%; height: 3.5em; perspective: 9em; touch-action: pan-y; user-select: none; -webkit-user-select: none;
+    -webkit-mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent); mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent); }
+  @media (min-width: 1024px) { .hs-wheel { width: var(--ww, 9em); cursor: grab; } .hs-wheel.grab { cursor: grabbing; } }
+  .hs-drum { position: absolute; inset: 0; transform-style: preserve-3d; transform: translateZ(calc(var(--r) * -1)); }
+  .hs-word { position: absolute; inset-inline: 0; top: 50%; height: 1.3em; margin-top: -.65em; padding: 0; line-height: 1.3em; text-align: center; white-space: nowrap;
+    font-weight: 600; letter-spacing: -.03em; backface-visibility: hidden; color: color-mix(in oklab, var(--c) var(--w, 0%), var(--muted)); cursor: pointer; will-change: transform, opacity; }
+  :global(html[lang="ar"]) .hs-word { letter-spacing: 0; font-weight: 700; }
+  @media (min-width: 1024px) { .hs-word { text-align: start; } }
+  .hs-word .t { display: inline-block; }
+  .hs-word[aria-checked="true"] { cursor: default; }
+  .hs-word:focus-visible { outline: none; }
+  .hs-word:focus-visible .t { outline: 2px solid var(--c); outline-offset: 6px; border-radius: 6px; }
+  /* the hairline under the word in front: as wide as the word, and it fills while the hero turns on its own */
+  .hs-line { position: absolute; top: calc(50% + .68em); left: 50%; width: var(--lw, 3em); height: 2px; border-radius: 2px; overflow: hidden; translate: -50% 0;
+    background: color-mix(in oklab, var(--acc) 20%, transparent); pointer-events: none; }
+  @media (min-width: 1024px) { .hs-line { left: auto; inset-inline-start: 0; translate: none; } }
+  .hs-line.ready { transition: width .55s var(--ease-soft); }
+  .hs-line i { position: absolute; inset: 0; background: var(--acc); transform: scaleX(0); transform-origin: left; }
+  :global(html[dir="rtl"]) .hs-line i { transform-origin: right; }
+  .hs.auto .hs-line i { animation: hs-fill 5.2s linear both; }
   @keyframes hs-fill { to { transform: scaleX(1); } }
-  .hs-tab { position: relative; z-index: 1; display: inline-flex; align-items: center; justify-content: center; gap: .5rem; padding: .62rem .95rem; border-radius: .9rem;
-    font-size: .94rem; font-weight: 500; color: var(--fg-2); white-space: nowrap; transition: color .3s, transform .15s; }
-  .hs-tab svg { width: 1.05rem; height: 1.05rem; flex: none; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; color: var(--muted); transition: color .3s, transform .4s var(--ease-soft); }
-  .hs-tab:active { transform: scale(.97); }
-  @media (hover: hover) { .hs-tab:hover { color: var(--fg); } .hs-tab:hover svg { color: var(--c); } }
-  .hs-tab[aria-pressed="true"] { color: var(--fg); font-weight: 600; }
-  .hs-tab[aria-pressed="true"] svg { color: var(--c); transform: scale(1.08); }
-  .hs-tab:focus-visible { outline: 2px solid var(--c); outline-offset: 1px; }
-  @media (prefers-color-scheme: dark) { .hs-thumb { background: color-mix(in oklab, var(--surface) 80%, #fff 6%); } }
 
   .hs-cta { display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem; }
   @media (min-width: 1024px) { .hs-cta { margin-top: 1.75rem; } }
@@ -257,6 +325,6 @@ const title = s.home.title.replace(/\.$/, '');
   .hs-else a:hover { text-decoration-color: currentColor; }
 
   @media (prefers-reduced-motion: reduce) {
-    .hs, .hs-phone, .hs-toast, .hs-go-t, .hs-tab, .hs-thumb { transition: none !important; }
+    .hs, .hs-phone, .hs-toast, .hs-go-t, .hs-line { transition: none !important; }
   }
 </style>
