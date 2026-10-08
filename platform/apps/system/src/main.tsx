@@ -7,6 +7,7 @@ import { Display } from './views/Display';
 
 const Waiting = lazy(() => import('./dental/Waiting').then((x) => ({ default: x.Waiting })));
 const Door = lazy(() => import('./gym/Door').then((x) => ({ default: x.Door })));
+const Family = lazy(() => import('./school/Family').then((x) => ({ default: x.Family })));
 
 // networkMode 'always': never pause while offline. A sale must reach our own offline queue (lib/api outbox), and
 // lists fall back to what the device already has.
@@ -17,6 +18,6 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) navigator.serviceWorke
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    {location.hash.startsWith('#/display') ? <Display /> : location.hash.startsWith('#/waiting') ? <Suspense fallback={null}><Waiting /></Suspense> : location.hash.startsWith('#/door') ? <Suspense fallback={null}><Door /></Suspense> : <QueryClientProvider client={queries}><App /></QueryClientProvider>}
+    {location.hash.startsWith('#/display') ? <Display /> : location.hash.startsWith('#/waiting') ? <Suspense fallback={null}><Waiting /></Suspense> : location.hash.startsWith('#/family/') ? <Suspense fallback={null}><Family /></Suspense> : location.hash.startsWith('#/door') ? <Suspense fallback={null}><Door /></Suspense> : <QueryClientProvider client={queries}><App /></QueryClientProvider>}
   </StrictMode>,
 );

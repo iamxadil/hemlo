@@ -30,11 +30,11 @@ export const AI_JOBS: { edition: string; feature: string; vision: boolean }[] = 
   { edition: 'realestate', feature: 're_describe', vision: false },
   { edition: 'realestate', feature: 're_ask', vision: false },
 ];
-export const EDITIONS_WITH_AI = ['store', 'dental', 'gym', 'realestate'] as const;
+export const EDITIONS_WITH_AI = ['store', 'dental', 'gym', 'realestate', 'school'] as const;
 
 /** A business's edition from its subscription, or (a demo, no subscription yet) from the kind of business it is. */
 export const editionOf = (sub: { status: string; edition: string }, kind: string | null | undefined) =>
-  sub.status === 'free' && kind ? (['gym', 'dental', 'realestate'].includes(kind) ? kind : 'store') : sub.edition;
+  sub.status === 'free' && kind ? (['gym', 'dental', 'realestate', 'school'].includes(kind) ? kind : 'store') : sub.edition;
 
 export type Provider = { def: ProviderDef; enabled: boolean; key: string | null; hint: string | null; source: 'env' | 'dashboard' | 'built-in' | null };
 export type Route = typeof hemloAiRoute.$inferSelect;

@@ -81,6 +81,21 @@ export const RE_PAGES: Page[] = [
   { path: 'settings', icon: 'gear', need: null, label: (t) => t.settings.title, view: Settings },
 ];
 
+// ---- School: its own chunk ----
+const school = () => import('./school');
+const SC = (name: string) => lazy(() => school().then((m: any) => ({ default: m[name] })));
+const sl = (k: string) => (t: any) => t.snav[k] as string;
+export const SCHOOL_PAGES: Page[] = [
+  { path: 'today', icon: 'home', need: 'students.read', tab: true, view: SC('Today'), label: sl('today') },
+  { path: 'students', icon: 'customers', need: 'students.read', tab: true, view: SC('Students'), label: sl('students') },
+  { path: 'student', icon: 'user', need: 'students.read', hidden: true, view: SC('StudentFile'), label: sl('student') },
+  { path: 'attendance', icon: 'calendar', need: 'attendance.read', tab: true, view: SC('Attendance'), label: sl('attendance') },
+  { path: 'fees', icon: 'wallet', need: 'fees.read', tab: true, view: SC('Fees'), label: sl('fees') },
+  { path: 'school', icon: 'gear', need: 'students.read', view: SC('Setup'), label: sl('school') },
+  PLAN,
+  { path: 'settings', icon: 'gear', need: null, label: (t) => t.settings.title, view: Settings },
+];
+
 // ---- Dental: its own chunk ----
 const dental = () => import('./dental');
 const D = (name: string) => lazy(() => dental().then((m: any) => ({ default: m[name] })));

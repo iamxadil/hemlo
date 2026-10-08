@@ -51,8 +51,8 @@ export function systemsRoutes(d: Deps) {
 
   /** The business this screen works for, and what this person may do in it. */
   r.get('/me', async (c) => {
-    // any member of the business: a shop's staff read stock, an estate agent reads listings
-    let a: Actor; try { a = actor(c, 'stock', 'read'); } catch (e) { try { a = actor(c, 'listings', 'read'); } catch { throw e; } }
+    // any member of the business: a shop's staff read stock, an estate agent reads listings, a teacher reads students
+    let a: Actor; try { a = actor(c, 'stock', 'read'); } catch (e) { try { a = actor(c, 'listings', 'read'); } catch { try { a = actor(c, 'students', 'read'); } catch { throw e; } } }
     const ctx = await d.auth.$context;
     const org = await ctx.adapter.findOne<any>({ model: 'organization', where: [{ field: 'id', value: a.organizationId }] });
     let meta: any = {}; try { meta = typeof org?.metadata === 'string' ? JSON.parse(org.metadata) : org?.metadata ?? {}; } catch {}
@@ -70,6 +70,8 @@ export function systemsRoutes(d: Deps) {
       ['leads.create', 'leads', 'create'], ['leads.read', 'leads', 'read'], ['leads.read-all', 'leads', 'read-all'], ['leads.update', 'leads', 'update'], ['leads.assign', 'leads', 'assign'],
       ['viewings.read', 'viewings', 'read'], ['viewings.manage', 'viewings', 'manage'], ['deals.read', 'deals', 'read'], ['deals.manage', 'deals', 'manage'],
       ['commission.read', 'commission', 'read'], ['commission.manage', 'commission', 'manage'], ['agency.configure', 'agency', 'configure'],
+      ['students.read', 'students', 'read'], ['students.create', 'students', 'create'], ['students.update', 'students', 'update'], ['attendance.take', 'attendance', 'take'], ['attendance.read', 'attendance', 'read'],
+      ['fees.read', 'fees', 'read'], ['fees.collect', 'fees', 'collect'], ['fees.manage', 'fees', 'manage'], ['school.configure', 'school', 'configure'],
     ] as const).map(([k, res, act]) => [k, may(p, res, act)]));
     const member = a.userId ? await findMember(d, a.organizationId, { userId: a.userId }) : null;
     const logo = await inOrg(a, (tx) => logoUrl(d, tx, a.organizationId));
