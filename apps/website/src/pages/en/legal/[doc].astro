@@ -1,0 +1,7 @@
+---
+import View from '../../../views/Legal.astro';
+import { LEGAL_SLUGS } from '../../../i18n/legal';
+export const getStaticPaths = () => LEGAL_SLUGS.map((doc) => ({ params: { doc } }));
+const { doc } = Astro.params;
+---
+<View lang="en" slug={doc} />

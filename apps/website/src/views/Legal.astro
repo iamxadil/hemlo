@@ -1,0 +1,125 @@
+---
+// hemlohq.com/legal/: the list of documents, and each document (numbered sections, contents on the side).
+import Base from '../layouts/Base.astro';
+import { t, EMAIL, type Lang } from '../i18n/strings';
+import { LEGAL, legalPath, rich, type Block } from '../i18n/legal';
+interface Props { lang: Lang; slug?: string }
+const { lang, slug } = Astro.props;
+const L = LEGAL[lang];
+const doc = slug ? L.docs.find((d) => d.slug === slug)! : null;
+const paths = { ar: legalPath('ar', slug), en: legalPath('en', slug) };
+const num = (n: number) => (lang === 'ar' ? n.toLocaleString('ar-IQ') : String(n));
+const isList = (b: Block): b is string[] => Array.isArray(b);
+const arrow = lang === 'ar' ? 'M12.5 4.5 7 10l5.5 5.5' : 'M7.5 4.5 13 10l-5.5 5.5';
+---
+<Base lang={lang} page="legal" paths={paths} title={doc ? doc.title : L.hubTitle} description={doc ? doc.summary : L.hubIntro}>
+  {doc ? (
+    <>
+      <section class="wrap pt-14 sm:pt-20 pb-10 border-b border-line">
+        <a class="eyebrow inline-flex items-center gap-1.5 hover:opacity-75" href={legalPath(lang)}>{L.eyebrow}</a>
+        <h1 class="mt-3 max-w-3xl text-[clamp(2.25rem,5.5vw,4rem)] leading-[1.05] font-semibold tracking-tight">{doc.title}</h1>
+        <p class="mt-4 max-w-2xl text-lead text-fg-2">{doc.summary}</p>
+        <p class="mt-5 text-sm text-muted">{L.updated}</p>
+      </section>
+      <div class="wrap grid gap-10 py-12 md:grid-cols-[15rem_minmax(0,1fr)] md:gap-16">
+        <aside class="md:sticky md:top-20 md:self-start">
+          <details class="legal-toc" data-toc>
+            <summary class="text-sm font-medium text-muted">{L.contents}</summary>
+            <ol class="mt-3 space-y-1.5 text-[14px]">
+              {doc.sections.map(([h], i) => <li><a class="legal-toc-link" href={`#s${i + 1}`}><span class="tabular-nums text-muted">{num(i + 1)}</span>{h}</a></li>)}
+            </ol>
+          </details>
+        </aside>
+        <article class="legal-body max-w-2xl">
+          {doc.sections.map(([h, blocks], i) => (
+            <section id={`s${i + 1}`} class="legal-sec">
+              <h2><span class="legal-n">{num(i + 1)}</span>{h}</h2>
+              {blocks.map((b) => isList(b)
+                ? <ul>{b.map((x) => <li set:html={rich(x, lang)} />)}</ul>
+                : <p set:html={rich(b, lang)} />)}
+            </section>
+          ))}
+          <div class="mt-14 rounded-2xl bg-sunken p-6 sm:p-7">
+            <p class="font-medium">{L.questions}</p>
+            <p class="mt-1 text-fg-2" set:html={rich(L.questionsBody, lang)} />
+          </div>
+          <nav class="mt-12" aria-label={L.others}>
+            <h2 class="text-sm font-medium text-muted">{L.others}</h2>
+            <ul class="mt-3 flex flex-wrap gap-2">
+              {L.docs.filter((d) => d.slug !== doc.slug).map((d) => <li><a class="chip-link" href={legalPath(lang, d.slug)}>{d.short}</a></li>)}
+            </ul>
+          </nav>
+        </article>
+      </div>
+    </>
+  ) : (
+    <>
+      <section class="wrap pt-16 sm:pt-24 pb-12">
+        <p class="eyebrow rise">{L.eyebrow}</p>
+        <h1 class="mt-4 max-w-4xl text-hero font-semibold tracking-tight rise rise-2">{L.hubTitle}</h1>
+        <p class="mt-5 max-w-2xl text-lead text-fg-2 rise rise-3">{L.hubIntro}</p>
+        <p class="mt-4 text-sm text-muted rise rise-3">{L.updated}</p>
+      </section>
+      <section class="wrap pb-16">
+        <ol class="legal-list border-t border-line">
+          {L.docs.map((d, i) => (
+            <li class="reveal">
+              <a href={legalPath(lang, d.slug)} class="legal-row">
+                <span class="legal-row-n tabular-nums">{num(i + 1).padStart(lang === 'ar' ? 1 : 2, '0')}</span>
+                <span class="min-w-0 flex-1">
+                  <span class="block text-[clamp(1.15rem,2vw,1.4rem)] font-medium tracking-tight">{d.title}</span>
+                  <span class="mt-1 block text-fg-2">{d.summary}</span>
+                </span>
+                <svg class="legal-row-arrow" viewBox="0 0 20 20" aria-hidden="true"><path d={arrow} fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              </a>
+            </li>
+          ))}
+        </ol>
+      </section>
+      <section class="wrap pb-24 grid gap-10 md:grid-cols-2">
+        <dl class="reveal grid grid-cols-[auto_1fr] gap-x-8 gap-y-3 text-[15px]">
+          {L.company.map(([k, v]) => <><dt class="text-muted">{k}</dt><dd>{/^[\w.@-]+$/.test(v) ? <span dir="ltr">{v}</span> : v}</dd></>)}
+        </dl>
+        <div class="reveal rounded-2xl bg-sunken p-6 sm:p-7 md:self-start">
+          <p class="font-medium">{L.questions}</p>
+          <p class="mt-1 text-fg-2" set:html={rich(L.questionsBody, lang)} />
+          <a class="mt-4 inline-block text-sm text-muted hover:text-fg" href={`mailto:${EMAIL}`} dir="ltr">{EMAIL}</a>
+        </div>
+      </section>
+    </>
+  )}
+</Base>
+
+<script>
+  // contents open beside the text on wide screens, folded above it on phones
+  const fold = () => document.querySelectorAll<HTMLDetailsElement>("[data-toc]").forEach((d) => { d.open = matchMedia("(min-width: 768px)").matches; });
+  fold(); document.addEventListener("astro:page-load", fold);
+</script>
+
+<style>
+  .legal-row { display: flex; align-items: center; gap: clamp(1rem, 3vw, 2.25rem); padding-block: 1.6rem; border-bottom: 1px solid var(--line); transition: background-color .2s; }
+  .legal-row-n { width: 2.25rem; flex: none; color: var(--brass); font-weight: 500; }
+  .legal-row-arrow { width: 1.25rem; height: 1.25rem; flex: none; color: var(--muted); transition: transform .25s cubic-bezier(.2,.7,.2,1), color .2s; }
+  @media (hover: hover) {
+    .legal-row:hover .legal-row-arrow { color: var(--fg); transform: translateX(4px); }
+    :global([dir="rtl"]) .legal-row:hover .legal-row-arrow { transform: translateX(-4px); }
+  }
+  .legal-toc summary { cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; padding: .85rem 1rem; border: 1px solid var(--line); border-radius: .9rem; }
+  .legal-toc summary::after { content: "+"; font-size: 1.1rem; color: var(--muted); }
+  .legal-toc[open] summary::after { content: "−"; }
+  @media (min-width: 768px) { .legal-toc summary { padding: 0; border: 0; } .legal-toc summary::after { display: none; } }
+  .legal-toc summary::-webkit-details-marker { display: none; }
+  @media (min-width: 768px) { .legal-toc summary { cursor: default; pointer-events: none; } }
+  .legal-toc-link { display: flex; gap: .65rem; padding: .3rem 0; color: var(--fg-2); transition: color .15s; }
+  .legal-toc-link:hover { color: var(--fg); }
+  .legal-sec { scroll-margin-top: 5rem; padding-bottom: 2.25rem; }
+  .legal-sec + .legal-sec { padding-top: 2.25rem; border-top: 1px solid var(--line); }
+  .legal-sec h2 { display: flex; align-items: baseline; gap: .75rem; font-size: clamp(1.2rem, 2vw, 1.45rem); font-weight: 600; letter-spacing: -.01em; }
+  .legal-n { color: var(--brass); font-size: .85em; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .legal-body p, .legal-body ul { margin-top: 1rem; color: var(--fg-2); line-height: 1.75; font-size: 1.0625rem; }
+  .legal-body ul { display: grid; gap: .55rem; padding-inline-start: 1.25rem; list-style: disc; }
+  .legal-body li::marker { color: var(--brass); }
+  .legal-body :global(a), .legal-row ~ * :global(a), .rounded-2xl :global(a) { color: var(--fg); text-decoration: underline; text-decoration-color: var(--brass); text-underline-offset: 3px; }
+  .chip-link { display: inline-block; padding: .45rem .9rem; border: 1px solid var(--line); border-radius: 999px; font-size: 14px; color: var(--fg-2); transition: border-color .15s, color .15s; }
+  .chip-link:hover { border-color: var(--fg-2); color: var(--fg); }
+</style>

@@ -9,7 +9,7 @@ export const accountUrl = (lang: Lang, page: 'sign-in' | 'sign-up' | 'business' 
 export const studioUrl = (lang: Lang) => 'https://studio.hemlohq.com/' + (lang === 'ar' ? '' : 'en/');
 
 // page paths without language prefix
-export const PATHS = { home: '/', earlyAccess: '/early-access/', systems: '/systems/', dental: '/dental/', stores: '/store/', gym: '/gym/', realestate: '/realestate/', school: '/school/', about: '/about/', contact: '/contact/' } as const;
+export const PATHS = { home: '/', earlyAccess: '/early-access/', systems: '/systems/', dental: '/dental/', stores: '/store/', gym: '/gym/', realestate: '/realestate/', school: '/school/', about: '/about/', contact: '/contact/', legal: '/legal/' } as const;
 export type PageKey = keyof typeof PATHS;
 
 // Each business is its own product with its own page and short link (hemlohq.com/gym): a gym owner sees a gym product
@@ -204,7 +204,7 @@ const ar = {
     doneTitle: 'وصل طلبك.', doneBody: 'شكراً {name}. سنتواصل معك على واتساب خلال أيام قليلة.', haveAccount: 'لديك حساب بالفعل؟',
     errPhone: 'أدخل رقم هاتف عراقي صحيح، مثل 0770 123 4567.', errMissing: 'املأ الحقول المطلوبة.', errMany: 'طلبات كثيرة من هذا الاتصال. حاول لاحقاً.', errGeneric: 'حدث خطأ. حاول مرة أخرى أو راسلنا على hello@hemlohq.com.',
   },
-  footer: { branches: 'الفروع', company: 'الشركة', rights: 'جميع الحقوق محفوظة.', made: 'صُنع في بغداد.', founder: 'أسّسها', founderName: 'عادل تحسين' },
+  footer: { branches: 'الفروع', company: 'الشركة', rights: 'جميع الحقوق محفوظة.', made: 'صُنع في بغداد.', founder: 'أسّسها', founderName: 'عادل تحسين', legal: 'الشروط والسياسات', terms: 'الشروط', privacy: 'الخصوصية' },
   notFound: { title: 'هذه الصفحة غير موجودة.', back: 'العودة للرئيسية' },
 };
 
@@ -381,7 +381,7 @@ const en: typeof ar = {
     doneTitle: 'Request received.', doneBody: 'Thank you, {name}. We’ll reach you on WhatsApp within a few days.', haveAccount: 'Already have an account?',
     errPhone: 'Enter a valid Iraqi number, like 0770 123 4567.', errMissing: 'Please fill in the required fields.', errMany: 'Too many requests from this connection. Try again later.', errGeneric: 'Something went wrong. Try again, or write to hello@hemlohq.com.',
   },
-  footer: { branches: 'Branches', company: 'Company', rights: 'All rights reserved.', made: 'Made in Baghdad.', founder: 'Founded by', founderName: 'Adil Tahseen' },
+  footer: { branches: 'Branches', company: 'Company', rights: 'All rights reserved.', made: 'Made in Baghdad.', founder: 'Founded by', founderName: 'Adil Tahseen', legal: 'Terms & policies', terms: 'Terms', privacy: 'Privacy' },
   notFound: { title: 'This page doesn’t exist.', back: 'Back to home' },
 };
 

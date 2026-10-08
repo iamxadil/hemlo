@@ -150,6 +150,8 @@ html:not(.signed-in) .auth-in { display: none !important; }
   /* founder credit in the footer */
   .founder{display:inline-flex;align-items:center;gap:.2rem;color:var(--fg-2);text-decoration:underline;text-decoration-color:var(--line-strong);text-underline-offset:3px;transition:color .2s,text-decoration-color .2s}
   .founder svg{width:.7rem;height:.7rem;opacity:.7}
+  .legal-link{color:var(--muted);text-decoration:underline;text-decoration-color:var(--line-strong);text-underline-offset:3px;transition:color .2s}
+  .legal-link:hover{color:var(--fg)}
   html[dir="rtl"] .founder svg{transform:scaleX(-1)}
   @media (hover:hover) and (pointer:fine){.founder:hover{color:var(--fg);text-decoration-color:currentColor}}
 }

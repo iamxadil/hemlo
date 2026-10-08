@@ -3,15 +3,18 @@ import '../styles/global.css';
 import { ClientRouter } from 'astro:transitions';
 import Lockup from '../components/Lockup.astro';
 import AccountArea from '../components/AccountArea.astro';
+import { legalPath } from '../i18n/legal';
 import { t, href, EMAIL, TOOLS_URL, studioUrl, accountUrl, SYSTEM_URL, PRODUCT, TRADES_PAGES, productLinks, type Lang, type PageKey, type Trade } from '../i18n/strings';
 
-interface Props { lang: Lang; page: PageKey | '404'; title?: string; description?: string; image?: string; }
-const { lang, page, title, description, image = '/og.png' } = Astro.props;
+interface Props { lang: Lang; page: PageKey | '404'; title?: string; description?: string; image?: string; paths?: Record<Lang, string>; }
+const { lang, page, title, description, image = '/og.png', paths } = Astro.props;
 const s = t(lang);
 const site = 'https://hemlohq.com';
 const other: Lang = lang === 'ar' ? 'en' : 'ar';
 const pageKey: PageKey = page === '404' ? 'home' : page;
-const canonical = site + href(lang, pageKey);
+// this page in each language (a page under a section, like one legal document, passes its own)
+const here = (l: Lang) => paths?.[l] ?? href(l, pageKey);
+const canonical = site + here(lang);
 const fullTitle = title ? `${title} · ${s.meta.siteName}` : s.meta.homeTitle;
 const desc = description ?? s.meta.homeDesc;
 const links: [string, string, boolean?][] = [
@@ -33,9 +36,9 @@ const isCurrent = (u: string) => u === href(lang, pageKey) || ((pageKey === 'den
   <title>{fullTitle}</title>
   <meta name="description" content={desc} />
   {page !== '404' && <link rel="canonical" href={canonical} />}
-  {page !== '404' && <link rel="alternate" hreflang="ar" href={site + href('ar', pageKey)} />}
-  {page !== '404' && <link rel="alternate" hreflang="en" href={site + href('en', pageKey)} />}
-  {page !== '404' && <link rel="alternate" hreflang="x-default" href={site + href('ar', pageKey)} />}
+  {page !== '404' && <link rel="alternate" hreflang="ar" href={site + here('ar')} />}
+  {page !== '404' && <link rel="alternate" hreflang="en" href={site + here('en')} />}
+  {page !== '404' && <link rel="alternate" hreflang="x-default" href={site + here('ar')} />}
   <meta name="theme-color" content="#FAFAF7" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0B0F16" media="(prefers-color-scheme: dark)" />
   <link rel="icon" href="/favicon.ico" sizes="32x32" />
@@ -74,7 +77,7 @@ const isCurrent = (u: string) => u === href(lang, pageKey) || ((pageKey === 'den
         {links.map(([u, label, ext]) => <li><a href={u} class:list={['transition-colors hover:text-fg', isCurrent(u) && 'text-fg font-medium']} aria-current={isCurrent(u) ? 'page' : undefined} rel={ext ? 'noopener' : undefined}>{label}</a></li>)}
       </ul>}
       <div class="ms-auto flex items-center gap-2">
-        <AccountArea lang={lang} pageKey={pageKey} product={product} />
+        <AccountArea lang={lang} pageKey={pageKey} product={product} switchHref={here(other)} />
         <button type="button" id="menu-btn" class="mnav-btn md:hidden" aria-expanded="false" aria-controls="menu-panel" aria-label={s.nav.menu} data-open={s.nav.menu} data-close={s.nav.close}><span></span><span></span></button>
       </div>
     </nav>
@@ -91,7 +94,7 @@ const isCurrent = (u: string) => u === href(lang, pageKey) || ((pageKey === 'den
       <div class="wrap mnav-foot" style={`--i:${pages.length + 1}`}>
         <div class="auth-out flex gap-3"><a href={P?.signIn ?? `${accountUrl(lang, 'sign-in')}?return_to=${encodeURIComponent(SYSTEM_URL)}`} class="btn btn-secondary flex-1 justify-center">{s.nav.signIn}</a><a href={P?.start ?? href(lang, 'earlyAccess')} class="btn btn-primary flex-1 justify-center">{P ? s.product.start : s.nav.earlyAccess}</a></div>
         <div class="auth-in"><a href={P?.open ?? `${SYSTEM_URL}?lang=${lang}`} class="btn btn-primary w-full justify-center">{P ? s.product.open : s.nav.open}</a></div>
-        <div class="mnav-meta">{product && <a href={href(lang, 'home')} dir="ltr">hemlohq.com</a>}<a href={`mailto:${EMAIL}`} dir="ltr">{EMAIL}</a><a href={href(other, pageKey)} hreflang={other} lang={other} data-astro-reload>{s.nav.switchTo}</a></div>
+        <div class="mnav-meta">{product && <a href={href(lang, 'home')} dir="ltr">hemlohq.com</a>}<a href={`mailto:${EMAIL}`} dir="ltr">{EMAIL}</a><a href={here(other)} hreflang={other} lang={other} data-astro-reload>{s.nav.switchTo}</a></div>
       </div>
     </div>
   </div>
@@ -110,7 +113,7 @@ const isCurrent = (u: string) => u === href(lang, pageKey) || ((pageKey === 'den
       </div>
       <ul class="space-y-2.5 text-fg-2 sm:justify-self-end">
         {productNav.map(([u, label, ext]) => <li><a class="hover:text-fg" href={u} rel={ext ? 'noopener' : undefined}>{label}</a></li>)}
-        <li><a class="hover:text-fg" href={href(other, pageKey)} hreflang={other} lang={other} data-astro-reload>{s.nav.switchTo}</a></li>
+        <li><a class="hover:text-fg" href={here(other)} hreflang={other} lang={other} data-astro-reload>{s.nav.switchTo}</a></li>
         <li><a class="hover:text-fg" href={href(lang, 'home')}>hemlohq.com</a></li>
       </ul>
     </div>
@@ -135,13 +138,14 @@ const isCurrent = (u: string) => u === href(lang, pageKey) || ((pageKey === 'den
         <ul class="mt-4 space-y-2.5 text-fg-2">
           <li><a class="hover:text-fg" href={href(lang, 'about')}>{s.nav.about}</a></li>
           <li><a class="hover:text-fg" href={href(lang, 'contact')}>{s.nav.contact}</a></li>
-          <li><a class="hover:text-fg" href={href(other, pageKey)} hreflang={other} lang={other} data-astro-reload>{s.nav.switchTo}</a></li>
+          <li><a class="hover:text-fg" href={href(lang, 'legal')}>{s.footer.legal}</a></li>
+          <li><a class="hover:text-fg" href={here(other)} hreflang={other} lang={other} data-astro-reload>{s.nav.switchTo}</a></li>
         </ul>
       </div>
     </div>
     )}
     <div class="wrap flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-between border-t border-line py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-[13px] text-muted">
-      <span>© {new Date().getFullYear()} Hemlo. {s.footer.rights}</span>
+      <span>© {new Date().getFullYear()} Hemlo. {s.footer.rights} <a class="legal-link" href={legalPath(lang, 'terms')}>{s.footer.terms}</a> · <a class="legal-link" href={legalPath(lang, 'privacy')}>{s.footer.privacy}</a></span>
       <span class="">{s.footer.founder} <a href="https://xadil.is-a.dev" target="_blank" rel="noopener" class="founder">{s.footer.founderName}<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 8.5l5-5M4.5 3.5h4v4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a></span>
       <span>{s.footer.made}</span>
     </div>

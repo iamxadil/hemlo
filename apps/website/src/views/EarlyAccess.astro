@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import Mark from '../components/Mark.astro';
 import { t, accountUrl, studioUrl, SYSTEM_URL, type Lang } from '../i18n/strings';
+import { legalPath } from '../i18n/legal';
 interface Props { lang: Lang; }
 const { lang } = Astro.props;
 const s = t(lang).earlyAccess;
@@ -86,7 +87,7 @@ const C = ar ? {
           <div class="hidden" aria-hidden="true"><label>Website<input name="website" tabindex="-1" autocomplete="off" /></label></div>
           <p id="ea-error" class="text-[15px] text-[#B42331]" role="alert" hidden></p>
           <button class="btn btn-primary w-full justify-center !py-3.5" id="ea-submit">{s.submit}</button>
-          <p class="text-center text-[13px] text-muted">{s.privacy}</p>
+          <p class="text-center text-[13px] text-muted">{s.privacy} <a class="legal-link" href={legalPath(lang, 'privacy')}>{t(lang).footer.privacy}</a></p>
         </form>
         <div id="ea-done" class="py-10 text-center" hidden>
           <Mark class="mx-auto h-12 w-auto text-brass" />
