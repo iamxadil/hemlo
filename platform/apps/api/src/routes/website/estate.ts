@@ -9,7 +9,7 @@ import type { WebsiteListing, WebsiteProperty } from './adapters';
 import { W, pick, esc, attr, icon, fill, waHref, telHref, sectionHeading, type Lang } from './theme';
 import { initials, paras, field, STATUS, LINE, langQ, pageHref, propHref, listQ, type Ctx, type Two } from './context';
 import { typeName, featureName } from '../realestate/common';
-import { hwBadge, hwEmblem, HW_BADGE_CSS } from './badge';
+import { hwBadge, hwPill, HW_BADGE_CSS } from './badge';
 
 // ---------- words ----------
 const E = {
@@ -205,7 +205,7 @@ function langSwitch(ctx: Ctx, altHref: string) {
 export function estateHeader(ctx: Ctx, current: string, altHref: string) {
   const e = E[ctx.lang], wa = waFor(ctx, ctx.name);
   const links = navItems(ctx).map((p) => `<a href="${attr(pageHref(ctx, p.slug))}"${p.slug === current ? ' aria-current="page"' : ''}>${esc(p.label)}</a>`).join('');
-  const sample = ctx.sample ? `<div class="esample">${hwEmblem(18)}<span><b>${esc(e.sample)}</b> · ${esc(e.sampleLine)}</span><a href="https://hemlohq.com/${ctx.lang === 'en' ? 'en/' : ''}systems/#addons">${esc(e.sampleGet)}${ic('arrow', 'i dir')}</a></div>` : '';
+  const sample = ctx.sample ? `<div class="esample">${hwPill('ink')}<span><b>${esc(e.sample)}</b> · ${esc(e.sampleLine)}</span><a href="https://hemlohq.com/${ctx.lang === 'en' ? 'en/' : ''}systems/#addons">${esc(e.sampleGet)}${ic('arrow', 'i dir')}</a></div>` : '';
   return `${sample}<div id="etop" aria-hidden="true"></div><header class="enav" data-enav><div class="enav-in">
 <a class="ebrand" href="${attr(pageHref(ctx, ''))}">${brandMark(ctx)}<span>${esc(ctx.name)}</span></a>
 <nav class="elinks" aria-label="${attr(e.menu)}"><span class="epill" aria-hidden="true"></span>${links}</nav>
@@ -342,7 +342,7 @@ html[lang=ar] .eh1,html[lang=ar] .eh2{font-weight:700;letter-spacing:0;line-heig
 .elink.sm{font-size:13px;color:var(--muted)}
 .esec{padding:64px 0}@media (max-width:640px){.esec{padding:48px 0}}
 /* the header: a glass capsule that floats over the page */
-.esample{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 12px;padding:9px 16px;background:#0E1420;color:#E9E2D1;font-size:13px;text-align:center}.esample b{color:#F1DCA7;font-weight:600}.esample a{display:inline-flex;align-items:center;gap:4px;color:#fff;font-weight:600;text-decoration:underline;text-underline-offset:3px}.esample .i{width:14px;height:14px}
+.esample{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 12px;padding:8px 16px;background:#0E1420;color:#E9E2D1;font-size:13px;text-align:center}.esample b{color:#fff;font-weight:600}.esample .hw.ink{height:26px;padding:0 11px;background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}.esample .hw .hw-lock{height:10px}.esample .hw i{height:12px}.esample .hw{font-size:11.5px;gap:8px}.esample a{display:inline-flex;align-items:center;gap:4px;color:#fff;font-weight:600;text-decoration:underline;text-underline-offset:3px}.esample .i{width:14px;height:14px}
 #etop{height:1px}
 .enav{position:sticky;top:10px;z-index:40;width:var(--wrap);margin:10px auto 0;border-radius:999px;background:color-mix(in oklab,var(--bg) 74%,transparent);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);box-shadow:inset 0 0 0 1px color-mix(in oklab,var(--ink) 9%,transparent),0 10px 30px -20px rgba(12,10,9,.35);transition:box-shadow .35s var(--e)}
 .enav.is-stuck{box-shadow:inset 0 0 0 1px color-mix(in oklab,var(--ink) 11%,transparent),0 18px 44px -20px rgba(12,10,9,.45)}

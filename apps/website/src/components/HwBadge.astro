@@ -1,26 +1,15 @@
 ---
-// Hemlo Website's own mark: the founder's H in brass on an ink tile, the same badge that signs every customer site.
-import { MARK_PATH, MARK_VIEWBOX } from '../brand/brand';
-interface Props { size?: 'sm' | 'lg'; class?: string; }
-const { size = 'sm', class: cls = '' } = Astro.props;
-const px = size === 'lg' ? 26 : 20;
+// Hemlo Website's badge: the Hemlo lockup, a hairline, and "Website", centred in a pill. The same badge signs every customer site.
+import { LOCKUP_PATHS, LOCKUP_VIEWBOX } from '../brand/brand';
+interface Props { size?: 'sm' | 'lg'; tone?: 'light' | 'ink'; class?: string; }
+const { size = 'sm', tone = 'light', class: cls = '' } = Astro.props;
 ---
-<span class:list={['hw', `hw-${size}`, cls]}>
-  <svg width={px} height={px} viewBox="0 0 24 24" aria-hidden="true">
-    <defs>
-      <linearGradient id="hwm-b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F1DCA7" /><stop offset="1" stop-color="#B38B3A" /></linearGradient>
-      <linearGradient id="hwm-i" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#26303F" /><stop offset="1" stop-color="#0E1420" /></linearGradient>
-    </defs>
-    <rect width="24" height="24" rx="6.5" fill="url(#hwm-i)" /><rect x=".5" y=".5" width="23" height="23" rx="6" fill="none" stroke="rgba(241,220,167,.35)" />
-    <svg x="6" y="4.5" width="12" height="15" viewBox={MARK_VIEWBOX}><path d={MARK_PATH} fill="url(#hwm-b)" /></svg>
-  </svg>
-  <b>Hemlo Website</b>
+<span class:list={['hw', size === 'lg' && 'lg', tone === 'ink' && 'ink', cls]} aria-label="Hemlo Website">
+  <svg class="hw-lock" viewBox={LOCKUP_VIEWBOX} aria-hidden="true">{LOCKUP_PATHS.map((d) => <path d={d} fill="currentColor" />)}</svg><i></i><span>Website</span>
 </span>
-<style>
-  .hw { display: inline-flex; align-items: center; gap: .5rem; width: fit-content; padding: .25rem .8rem .25rem .3rem; border-radius: 999px; background: linear-gradient(180deg, #1A2230, #0E1420);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / .08), 0 0 0 1px rgb(179 139 58 / .4), 0 10px 24px -14px rgb(14 20 32 / .7); }
-  .hw svg { flex: none; display: block; }
-  .hw b { font-size: .8rem; font-weight: 600; letter-spacing: .01em; background: linear-gradient(180deg, #F6E7C1, #D2AE66); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .hw-lg { gap: .6rem; padding: .3rem 1rem .3rem .35rem; }
-  .hw-lg b { font-size: .95rem; }
+<style is:global>
+.hw{display:inline-flex;align-items:center;gap:9px;height:32px;padding:0 14px;border-radius:999px;background:#fff;color:#0E1420;box-shadow:inset 0 0 0 1px rgba(14,20,32,.12),0 1px 2px rgba(14,20,32,.06);font-family:"Poppins","Vazirmatn",ui-sans-serif,system-ui,sans-serif;font-size:13px;font-weight:500;letter-spacing:-.01em;line-height:1;white-space:nowrap;direction:ltr}
+.hw .hw-lock{display:block;height:12px;width:auto;transform:translateY(.5px)}.hw i{width:1px;height:14px;background:currentColor;opacity:.22}
+.hw.ink{background:#0E1420;color:#F4F1EA;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 6px 16px -8px rgba(14,20,32,.5)}
+.hw.lg{height:40px;padding:0 18px;gap:11px;font-size:15px}.hw.lg .hw-lock{height:15px}.hw.lg i{height:17px}
 </style>

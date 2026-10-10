@@ -210,7 +210,7 @@ describe('the public website', () => {
     expect(home).toContain('name="where"');
     expect(home).toContain('class="ebar"'); // WhatsApp stays one thumb away on a phone
     expect(home).toContain('/_hemlo/fonts/poppins-600.woff2'); // its typefaces come from its own address
-    expect(home).toContain('class="hw-badge"'); // signed: Made with Hemlo Website
+    expect(home).toContain('class="hw-made"'); // signed: Made with Hemlo Website
     await withOrg(t.db, orgId, (tx) => tx.insert(reProperty).values({ id: newId(), organizationId: orgId, ref: 2, slug: 'flat-ankawa', title: 'Flat in Ankawa', city: 'Erbil', area: 'Ankawa', type: 'apartment', purpose: 'rent', status: 'available', publishedAt: new Date(), price: 900, currency: 'USD' }));
     const byCity = String((await pub.get('/v1/web/pub/properties?lang=en&where=erbil', siteHeaders)).json);
     expect(byCity).toContain('Flat in Ankawa');
