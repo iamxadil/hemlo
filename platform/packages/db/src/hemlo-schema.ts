@@ -203,6 +203,68 @@ export const hemloPlanRequest = pgTable('hemlo_plan_request', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [index('hemlo_plan_request_org').on(t.organizationId, t.status)]);
 
+/** Optional capability sold alongside a core System plan. A nullable price means the offer is not configured yet. */
+export const hemloAddon = pgTable('hemlo_addon', {
+  id: text('id').primaryKey(),
+  code: text('code').notNull().unique(),
+  name: jsonb('name').$type<Words>().notNull(),
+  description: jsonb('description').$type<Words>().notNull().default({ ar: '', en: '' }),
+  compatibleEditions: jsonb('compatible_editions').$type<string[]>().notNull().default([]),
+  priceMonth: integer('price_month'),
+  priceYear: integer('price_year'),
+  public: boolean('public').notNull().default(true),
+  active: boolean('active').notNull().default(true),
+  updatedBy: text('updated_by'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** A workspace's request to add/renew/cancel a capability. A request never grants paid access by itself. */
+export const hemloAddonRequest = pgTable('hemlo_addon_request', {
+  id: text('id').primaryKey(),
+  organizationId: text('organization_id').notNull(),
+  addonId: text('addon_id').notNull(),
+  edition: text('edition').notNull(),
+  action: text('action').notNull().default('activate'), // activate | cancel
+  billing: text('billing').notNull().default('month'),
+  price: integer('price'),                         // trusted catalog snapshot; null only for cancel requests
+  message: text('message'),
+  userId: text('user_id'),
+  status: text('status').notNull().default('new'), // new | done | dismissed
+  handledBy: text('handled_by'),
+  handledAt: timestamp('handled_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [index('hemlo_addon_request_org').on(t.organizationId, t.status), index('hemlo_addon_request_addon').on(t.addonId, t.status)]);
+
+/** Confirmed access to an add-on, owned by the existing business workspace. */
+export const hemloAddonEntitlement = pgTable('hemlo_addon_entitlement', {
+  id: text('id').primaryKey(),
+  organizationId: text('organization_id').notNull(),
+  addonId: text('addon_id').notNull(),
+  edition: text('edition').notNull(),
+  status: text('status').notNull().default('active'), // active | canceled
+  billing: text('billing').notNull().default('month'),
+  price: integer('price').notNull(),                // agreed recurring price per billing period, in IQD
+  startsAt: timestamp('starts_at', { withTimezone: true }).notNull().defaultNow(),
+  paidUntil: timestamp('paid_until', { withTimezone: true }),
+  updatedBy: text('updated_by'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [uniqueIndex('hemlo_addon_entitlement_org').on(t.organizationId, t.addonId), index('hemlo_addon_entitlement_status').on(t.status, t.paidUntil)]);
+
+/** Manual payments recorded by Hemlo; each receipt advances the add-on's paid-through date. */
+export const hemloAddonPayment = pgTable('hemlo_addon_payment', {
+  id: text('id').primaryKey(),
+  organizationId: text('organization_id').notNull(),
+  addonId: text('addon_id').notNull(),
+  amount: integer('amount').notNull(),
+  periods: integer('periods').notNull().default(1),
+  method: text('method').notNull(),
+  reference: text('reference'),
+  paidUntil: timestamp('paid_until', { withTimezone: true }).notNull(),
+  createdBy: text('created_by'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [index('hemlo_addon_payment_org').on(t.organizationId, t.createdAt)]);
+
 /** An AI provider Hemlo can use: Cloudflare Workers AI (free, built in), Anthropic, or any OpenAI-compatible service
  *  (OpenAI, OpenRouter, Google Gemini, Groq, or one added by the team). Its API key is kept encrypted (AES-GCM, with a key
  *  from a Worker secret) and is never sent back to anyone; only its last four characters are shown. System-only table. */

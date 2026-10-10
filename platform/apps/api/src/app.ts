@@ -27,6 +27,8 @@ import { dentalRoutes } from './routes/dental';
 import { gymRoutes } from './routes/gym';
 import { reRoutes } from './routes/realestate';
 import { schoolRoutes } from './routes/school';
+import { webRoutes } from './routes/website';
+import { webPublicRoutes } from './routes/website/public';
 import type { AppEnv, Deps, Env } from './types';
 
 const originAllowed = (origin: string, patterns: string[]) =>
@@ -116,6 +118,8 @@ export function createApp(opts: { db: Database; env: Env; waitUntil?: (p: Promis
   // the school: starting one and the guardian's page aren't a staff member's changes
   v1.use('/sch/*', async (c, next) => (/\/sch\/(start$|pub\/)/.test(c.req.path) ? next() : subscriptionGuard(c, next)));
   v1.route('/sch', schoolRoutes(deps));
+  v1.route('/web/pub', webPublicRoutes(deps)); // the public site (business.hemlo.site): no sign-in, read-only + inquiries
+  v1.route('/web', webRoutes(deps));           // the Website add-on: one public site per business
   v1.route('/sys/ai', aiRoutes(deps));
   v1.route('/sys', impactRoutes(deps));      // reminders sent, and what came back after them
   v1.route('/sys/files', sysFileRoutes(deps));

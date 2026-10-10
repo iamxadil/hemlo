@@ -72,6 +72,7 @@ export function systemsRoutes(d: Deps) {
       ['commission.read', 'commission', 'read'], ['commission.manage', 'commission', 'manage'], ['agency.configure', 'agency', 'configure'],
       ['students.read', 'students', 'read'], ['students.create', 'students', 'create'], ['students.update', 'students', 'update'], ['attendance.take', 'attendance', 'take'], ['attendance.read', 'attendance', 'read'],
       ['fees.read', 'fees', 'read'], ['fees.collect', 'fees', 'collect'], ['fees.manage', 'fees', 'manage'], ['school.configure', 'school', 'configure'],
+      ['website.manage', 'website', 'manage'],
     ] as const).map(([k, res, act]) => [k, may(p, res, act)]));
     const member = a.userId ? await findMember(d, a.organizationId, { userId: a.userId }) : null;
     const logo = await inOrg(a, (tx) => logoUrl(d, tx, a.organizationId));

@@ -4,7 +4,7 @@ import { useApp } from '../lib/app';
 
 const ar = {
   nav: { today: 'اليوم', students: 'الطلاب', student: 'ملف الطالب', attendance: 'الحضور', fees: 'الأقساط', school: 'المدرسة', plan: 'الاشتراك', settings: 'الإعدادات', more: 'المزيد' },
-  shell: { search: 'ابحث عن طالب أو وليّ أمر…', searchHint: 'الاسم، رقم الطالب، أو هاتف وليّ الأمر', addStudent: 'طالب جديد', takeRoll: 'تسجيل الحضور', collect: 'استلام قسط', go: 'انتقل', students: 'الطلاب', actions: 'إجراءات', none: 'لا نتائج لـ «{q}»', keys: '↑↓ للتنقل · Enter للفتح · Esc للإغلاق', year: 'العام الدراسي {y}', signOut: 'تسجيل الخروج', morning: 'صباح الخير', evening: 'مساء الخير' },
+  shell: { ask: 'اسأل أو انتقل إلى أي مكان…', search: 'ابحث عن طالب أو وليّ أمر…', searchHint: 'الاسم، رقم الطالب، أو هاتف وليّ الأمر', addStudent: 'طالب جديد', takeRoll: 'تسجيل الحضور', collect: 'استلام قسط', go: 'انتقل', students: 'الطلاب', actions: 'إجراءات', none: 'لا نتائج لـ «{q}»', keys: '↑↓ للتنقل · Enter للفتح · Esc للإغلاق', year: 'العام الدراسي {y}', signOut: 'تسجيل الخروج', morning: 'صباح الخير', evening: 'مساء الخير' },
   roles: { owner: 'المالك', admin: 'المدير', manager: 'الإدارة', teacher: 'معلم', receptionist: 'شؤون الطلاب', accountant: 'المحاسب', viewer: 'اطّلاع' } as Record<string, string>,
   kinds: { school: 'مدرسة أهلية', institute: 'معهد تقوية', kindergarten: 'روضة' } as Record<string, string>,
   marks: { present: 'حاضر', absent: 'غائب', late: 'متأخر', excused: 'مُجاز' } as Record<string, string>,
@@ -77,7 +77,7 @@ const ar = {
 
 const en: typeof ar = {
   nav: { today: 'Today', students: 'Students', student: 'Student', attendance: 'Attendance', fees: 'Fees', school: 'School', plan: 'Plan', settings: 'Settings', more: 'More' },
-  shell: { search: 'Search a student or parent…', searchHint: 'Name, student number, or a parent’s phone', addStudent: 'New student', takeRoll: 'Take attendance', collect: 'Take a payment', go: 'Go to', students: 'Students', actions: 'Actions', none: 'Nothing for “{q}”', keys: '↑↓ to move · Enter to open · Esc to close', year: 'School year {y}', signOut: 'Sign out', morning: 'Good morning', evening: 'Good evening' },
+  shell: { ask: 'Ask or go anywhere…', search: 'Search a student or parent…', searchHint: 'Name, student number, or a parent’s phone', addStudent: 'New student', takeRoll: 'Take attendance', collect: 'Take a payment', go: 'Go to', students: 'Students', actions: 'Actions', none: 'Nothing for “{q}”', keys: '↑↓ to move · Enter to open · Esc to close', year: 'School year {y}', signOut: 'Sign out', morning: 'Good morning', evening: 'Good evening' },
   roles: { owner: 'Owner', admin: 'Admin', manager: 'Management', teacher: 'Teacher', receptionist: 'Registrar', accountant: 'Accountant', viewer: 'View only' },
   kinds: { school: 'Private school', institute: 'Tutoring institute', kindergarten: 'Kindergarten' },
   marks: { present: 'Present', absent: 'Absent', late: 'Late', excused: 'Excused' },

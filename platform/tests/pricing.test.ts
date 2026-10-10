@@ -2,7 +2,7 @@
 // a business asking for a plan from the app, Hemlo recording the payment in the admin dashboard, the money overview,
 // a week of grace after a payment is due, and then read-only until the next payment.
 import { describe, it, expect, beforeAll } from 'vitest';
-import { setup, Browser, signInEmail } from './helpers';
+import { setup, Browser, signInEmail, createOrg } from './helpers';
 import { forgetSubscription, forgetPlans } from '../apps/api/src/subscription';
 
 let t: Awaited<ReturnType<typeof setup>>;
@@ -102,6 +102,46 @@ describe('asking for a plan, paying, and the admin side', () => {
     forgetPlans();
     expect((await new Browser(t.app).get('/v1/plans?edition=gym')).json.plans).toHaveLength(3);
     expect((await shop.req('PATCH', `/v1/admin/plans/${growth.id}`, { priceMonth: 1 })).status).toBe(403); // not Hemlo's team
+  });
+});
+
+describe('optional add-ons', () => {
+  it('keeps an unconfigured price non-purchasable, then activates only after staff confirms the catalog amount', async () => {
+    const offers = (await new Browser(t.app).get('/v1/plans/addons?edition=realestate')).json.addons;
+    expect(offers).toHaveLength(1);
+    expect(offers[0]).toMatchObject({ code: 'website', configured: false, priceMonth: null, priceYear: null });
+    expect((await new Browser(t.app).get('/v1/plans/addons?edition=store')).json.addons).toEqual([]);
+    expect((await shop.post('/v1/billing/addons/website/request')).status).toBe(403);
+
+    const owner = new Browser(t.app);
+    await signInEmail(owner, 'website-buyer@example.com');
+    const org = await createOrg(owner, 'Al-Nakheel Realty');
+    await owner.post('/v1/auth/organization/set-active', { organizationId: org.id });
+    await sys(`insert into hemlo_subscription (organization_id, edition, status, seats, trial_ends_at) values ($1, 'realestate', 'trial', 1, now() + interval '20 days')`, [org.id]);
+
+    expect((await owner.post('/v1/billing/addons/website/request')).status).toBe(409);
+    await founder.req('PATCH', '/v1/admin/addons/website', { priceMonth: 12000, priceYear: 120000 });
+    const requested = await owner.post('/v1/billing/addons/website/request', { billing: 'month' });
+    expect(requested.status).toBe(201);
+    expect(requested.json.status).toBe('pending');
+    expect((await owner.post('/v1/web/site/enable')).status).toBe(402);
+
+    const requestId = requested.json.request.id;
+    const denied = await founder.req('PATCH', `/v1/admin/addon-requests/${requestId}`, { action: 'activate', amount: 1, method: 'cash' });
+    expect(denied.status).toBe(400);
+    const activated = await founder.req('PATCH', `/v1/admin/addon-requests/${requestId}`, { action: 'activate', amount: 12000, method: 'cash', reference: 'RECEIPT-1' });
+    expect(activated.status).toBe(201);
+    expect(activated.json.entitlement).toMatchObject({ status: 'active', price: 12000, billing: 'month', edition: 'realestate' });
+    expect((await owner.get('/v1/billing/addons')).json.addons[0].entitlement.active).toBe(true);
+    expect((await owner.post('/v1/web/site/enable')).status).toBe(200);
+    await owner.put('/v1/web/site', { settings: { contact: { whatsapp: '07701234567' } } });
+    expect((await owner.post('/v1/web/site/publish')).status).toBe(200);
+    const cancel = await owner.post('/v1/billing/addons/website/cancel-request');
+    expect(cancel.status).toBe(201);
+    expect((await owner.get('/v1/billing/addons')).json.addons[0].entitlement.active).toBe(true);
+    const canceled = await founder.req('PATCH', `/v1/admin/addon-requests/${cancel.json.request.id}`, { action: 'cancel' });
+    expect(canceled.json.entitlement.status).toBe('canceled');
+    expect((await owner.post('/v1/web/site/publish')).status).toBe(402);
   });
 });
 

@@ -6,3 +6,4 @@ export * from './dental-schema';
 export * from './gym-schema';
 export * from './realestate-schema';
 export * from './school-schema';
+export * from './website-schema';

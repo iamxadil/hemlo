@@ -22,6 +22,11 @@ export type Page = {
 
 const PLAN: Page = { path: 'plan', icon: 'sparkle', need: null, label: (t) => t.planPage.nav, view: PlanPage };
 
+// ---- Website: the add-on every edition shares (its own chunk, loaded only when opened) ----
+const site = () => import('./website');
+const WebsitePage = lazy(() => site().then((m) => ({ default: m.Site })));
+const WEBSITE: Page = { path: 'website', icon: 'globe', need: 'website.manage', view: WebsitePage, gapBefore: true };
+
 export const STORE_PAGES: Page[] = [
   { path: 'home', icon: 'home', need: 'reports.read', tab: true, view: Home },
   { path: 'sell', icon: 'sell', need: 'sales.create', tab: true, view: Sell },
@@ -77,6 +82,7 @@ export const RE_PAGES: Page[] = [
   { path: 'map', icon: 'globe', need: 'listings.read', view: R('MapView'), label: rl('map') },
   { path: 'reports', icon: 'chart', need: 'reports.read', view: R('Reports'), label: rl('reports') },
   { path: 'agency', icon: 'gear', need: 'agency.configure', view: R('Setup'), label: rl('agency') },
+  WEBSITE,
   PLAN,
   { path: 'settings', icon: 'gear', need: null, label: (t) => t.settings.title, view: Settings },
 ];

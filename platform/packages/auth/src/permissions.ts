@@ -49,6 +49,8 @@ export const statements = {
   attendance: ['take', 'read'],
   fees: ['read', 'collect', 'manage'],
   school: ['configure'],
+  // Website add-on: set the site up, edit its pages and look, and publish it (one shared resource for every edition)
+  website: ['manage'],
 } as const;
 
 export type Resource = keyof typeof statements;
@@ -68,6 +70,7 @@ export const ROLE_PERMISSIONS = {
     members: ['create', 'read', 'update'], checkin: ['create'], memberships: ['sell', 'manage'], training: ['read', 'write'],
     listings: ['create', 'read', 'update', 'publish', 'archive'], leads: ['create', 'read', 'read-all', 'update', 'assign'], viewings: ['read', 'manage'], deals: ['read', 'manage'], commission: ['read', 'manage'],
     students: ['create', 'read', 'update'], attendance: ['take', 'read'], fees: ['read', 'collect', 'manage'],
+    website: ['manage'],
   },
   // the school's teachers: their classes' students and the roll call; no money
   teacher: { students: ['read'], attendance: ['take', 'read'] },

@@ -14,10 +14,15 @@ import { r2Store, type FileStore } from './files';
 import { engineFrom } from './ai/engine';
 import { screenOrg } from './routes/dental/screen';
 import { doorOrg } from './routes/gym/door';
+import { websitePathRoute } from './website-routing';
 export { ScreenHub } from './screen-hub';
 import type { Env } from './types';
 
-type WorkerEnv = Env & { HYPERDRIVE?: { connectionString: string }; DATABASE_URL?: string; UPLOADS?: unknown; AI?: unknown; SCREENS?: DurableObjectNamespace };
+type WorkerService = { fetch(request: Request): Promise<Response> };
+type WorkerEnv = Env & {
+  HYPERDRIVE?: { connectionString: string }; DATABASE_URL?: string; UPLOADS?: unknown; AI?: unknown; SCREENS?: DurableObjectNamespace;
+  SYSTEM_APP: WorkerService; ACCOUNT_APP: WorkerService; ADMIN_APP: WorkerService; STUDIO_APP: WorkerService; TOOLS_APP: WorkerService; DEMO_APP: WorkerService;
+};
 /** "this clinic's queue changed": its hub tells the open screens (after the response, never slowing it) */
 const screensOf = (env: WorkerEnv) => (env.SCREENS ? { changed(org: string) {
   const p = env.SCREENS!.get(env.SCREENS!.idFromName(org)).fetch('https://hub/changed', { method: 'POST' }).catch(() => {});
@@ -41,13 +46,53 @@ let app: ReturnType<typeof createApp>['app'] | null = (() => { try { return buil
 
 export default {
   async fetch(request: Request, env: WorkerEnv, ctx: ExecutionContext) {
+    const host = new URL(request.url).hostname.toLowerCase();
+    // The wildcard route also sees Hemlo's existing app hosts. Preserve their original Workers with service bindings.
+    const existingApps: Record<string, WorkerService> = {
+      'system.hemlohq.com': env.SYSTEM_APP,
+      'account.hemlohq.com': env.ACCOUNT_APP,
+      'admin.hemlohq.com': env.ADMIN_APP,
+      'studio.hemlohq.com': env.STUDIO_APP,
+      'tools.hemlohq.com': env.TOOLS_APP,
+      'demo.hemlohq.com': env.DEMO_APP,
+    };
+    if (host === 'www.hemlohq.com') {
+      const url = new URL(request.url);
+      url.hostname = 'hemlohq.com';
+      return Response.redirect(url, 301);
+    }
+    if (existingApps[host]) return existingApps[host].fetch(request);
     const url = env.HYPERDRIVE?.connectionString ?? env.DATABASE_URL;
     if (!url) return new Response('Database not configured', { status: 503 });
     app ??= build(env);
     const requestDb = createPostgresDb(url, 1);
     try {
-      // a waiting-room screen's live line: check its link once, then hand the connection to the clinic's hub
       const path = new URL(request.url).pathname;
+      // Legacy path URLs remain readable while customer websites use their own Hemlo subdomains.
+      const websitePath = websitePathRoute(host, path);
+      if (websitePath && 'invalid' in websitePath) return new Response('Not found', { status: 404 });
+      if (websitePath && 'siteSlug' in websitePath) {
+        const url = new URL(request.url);
+        url.pathname = websitePath.apiPath;
+        const headers = new Headers(request.headers);
+        headers.set('x-hemlo-site', websitePath.siteSlug);
+        headers.set('x-hemlo-site-base', websitePath.siteBase);
+        const rewritten = new Request(url.toString(), { method: request.method, headers, body: request.body, redirect: 'manual' });
+        return await scope.run({ db: requestDb, ctx }, () => app!.fetch(rewritten, env, ctx));
+      }
+      const INFRA = ['api', 'www', 'account', 'admin', 'system', 'studio', 'tools', 'demo'];
+      const bare = host.endsWith('.hemlo.site') ? host.slice(0, -'.hemlo.site'.length)
+        : host.endsWith('.hemlohq.com') ? host.slice(0, -'.hemlohq.com'.length) : null;
+      const sub = bare && !INFRA.includes(bare) ? bare : null;
+      if (sub) {
+        const inner = new URL(request.url);
+        inner.pathname = '/v1/web/pub' + (path === '/' ? '' : path);
+        const headers = new Headers(request.headers);
+        headers.set('x-hemlo-site', sub);
+        const rewritten = new Request(inner.toString(), { method: request.method, headers, body: request.body, redirect: 'manual' });
+        return await scope.run({ db: requestDb, ctx }, () => app!.fetch(rewritten, env, ctx));
+      }
+      // a waiting-room screen's live line: check its link once, then hand the connection to the clinic's hub
       // (a gym's door screen the same way: its hub is "gym:<org>")
       if ((path === '/v1/dent/screen/live' || path === '/v1/gym/door/live') && env.SCREENS) {
         if (request.headers.get('upgrade')?.toLowerCase() !== 'websocket') return new Response('expected a websocket', { status: 426 });

@@ -12,14 +12,14 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground shadow-xs hover:bg-primary/90',
+        default: 'bg-[linear-gradient(180deg,#E4E7FF,#AEB8FF)] text-primary-foreground shadow-[0_0_24px_rgba(174,184,255,.35),inset_0_1px_0_rgba(255,255,255,.7)] hover:shadow-[0_0_32px_rgba(174,184,255,.55),inset_0_1px_0_rgba(255,255,255,.7)]',
         destructive: 'bg-destructive text-white shadow-xs hover:bg-destructive/90',
-        outline: 'border border-border bg-card shadow-xs hover:bg-accent hover:text-accent-foreground',
-        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/70',
-        ghost: 'hover:bg-accent hover:text-accent-foreground',
+        outline: 'border border-border bg-white/[.05] backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,.1)] hover:bg-white/[.1]',
+        secondary: 'bg-white/[.08] text-secondary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,.1)] hover:bg-white/[.13]',
+        ghost: 'hover:bg-white/[.08]',
         link: 'text-primary underline-offset-4 hover:underline',
-        ink: 'bg-foreground text-background hover:bg-foreground/90',
-        whatsapp: 'bg-[#1FAF5A] text-white shadow-xs hover:bg-[#1FAF5A]/90',
+        ink: 'bg-white text-[#0A0B1A] hover:bg-white/90',
+        whatsapp: 'bg-[linear-gradient(180deg,#3BE07E,#18A957)] text-white shadow-[0_0_22px_rgba(37,211,102,.3),inset_0_1px_0_rgba(255,255,255,.35)] hover:brightness-110',
       },
       size: {
         default: 'h-10 px-4',
@@ -39,7 +39,7 @@ export function Button({ className, variant, size, asChild = false, ...props }: 
 
 // ---------- Card ----------
 export function Card({ className, ...props }: React.ComponentProps<'div'>) {
-  return <div data-slot="card" className={cn('bg-card text-card-foreground flex flex-col rounded-2xl border border-border shadow-[0_1px_2px_rgba(18,23,43,.05),0_4px_16px_-6px_rgba(18,23,43,.08)]', className)} {...props} />;
+  return <div data-slot="card" className={cn('sc-glass text-card-foreground flex flex-col rounded-[28px]', className)} {...props} />;
 }
 export function CardHeader({ className, ...props }: React.ComponentProps<'div'>) {
   return <div data-slot="card-header" className={cn('grid auto-rows-min grid-rows-[auto_auto] items-start gap-1 px-5 pt-5 pb-2 has-data-[slot=card-action]:grid-cols-[1fr_auto]', className)} {...props} />;
@@ -77,7 +77,7 @@ export function Badge({ className, variant, ...props }: React.ComponentProps<'sp
 }
 
 // ---------- Input, Textarea, Label ----------
-const field = 'w-full min-w-0 rounded-xl border border-input bg-card px-3.5 text-[15.5px] text-foreground shadow-xs transition-[color,box-shadow,border-color] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[4px] focus-visible:ring-ring/20 disabled:opacity-50 aria-invalid:border-destructive';
+const field = 'w-full min-w-0 rounded-2xl border border-input bg-white/[.05] backdrop-blur-xl px-4 text-[15.5px] text-foreground shadow-xs transition-[color,box-shadow,border-color] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[4px] focus-visible:ring-ring/20 disabled:opacity-50 aria-invalid:border-destructive';
 export function Input({ className, type, ...props }: React.ComponentProps<'input'>) {
   return <input type={type} data-slot="input" className={cn(field, 'h-11', className)} {...props} />;
 }

@@ -6,7 +6,20 @@
   "main": "src/worker.ts",
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat"],
-  "routes": [{ "pattern": "api.hemlohq.com", "custom_domain": true }],
+  "routes": [
+    { "pattern": "api.hemlohq.com", "custom_domain": true },
+    { "pattern": "business.hemlohq.com", "custom_domain": true },
+    { "pattern": "*.hemlohq.com/*", "zone_name": "hemlohq.com" }
+  ],
+  // The root wildcard also receives Hemlo's existing app hosts; dispatch those internally to their owning Workers.
+  "services": [
+    { "binding": "SYSTEM_APP", "service": "hemlo-system" },
+    { "binding": "ACCOUNT_APP", "service": "hemlo-account" },
+    { "binding": "ADMIN_APP", "service": "hemlo-admin" },
+    { "binding": "STUDIO_APP", "service": "hemlo-studio" },
+    { "binding": "TOOLS_APP", "service": "hemlo-tools" },
+    { "binding": "DEMO_APP", "service": "hemlo-demo-store" }
+  ],
   "workers_dev": false,
   "observability": { "enabled": true },
   // hourly: delete demo shops older than 24 hours (src/worker.ts scheduled)

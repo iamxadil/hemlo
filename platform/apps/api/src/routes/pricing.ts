@@ -5,13 +5,14 @@ import { Hono, type Context } from 'hono';
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import { newId } from '@hemlo/core';
 import { withOrg, withSystem, type Database } from '@hemlo/db';
-import { hemloPlan, hemloPayment, hemloPlanRequest, hemloSubscription, type PlanLimits } from '@hemlo/db/schema';
+import { hemloPlan, hemloPayment, hemloPlanRequest, hemloSubscription, hemloAddon, hemloAddonRequest, hemloAddonEntitlement, hemloAddonPayment, type PlanLimits } from '@hemlo/db/schema';
 import type { StaffPermission } from '@hemlo/core';
 import { audit } from '@hemlo/auth/audit';
 import { HttpError, requireOrgUser } from '../principal';
 import { actor, bad, text } from './sys-common';
 import { isDemoOrg } from './demo';
 import { plansOf, forgetPlans, stateOf, subscriptionOf, forgetSubscription, EDITIONS, GRACE_DAYS, type Plan } from '../subscription';
+import { addonEntitlement, addonOffer, requireAddonOffer } from '../addons';
 import type { AppEnv, Deps } from '../types';
 
 const rowsOf = (r: any): any[] => (Array.isArray(r) ? r : r?.rows ?? []);
@@ -40,6 +41,15 @@ export function publicPlanRoutes(d: Deps) {
     c.header('cache-control', 'public, max-age=300');
     return c.json({ plans: plans.map(publicPlan), trialDays: 30, graceDays: GRACE_DAYS });
   });
+  r.get('/addons', async (c) => {
+    const edition = c.req.query('edition');
+    const rows = await withSystem(d.db, (tx) => tx.select().from(hemloAddon).where(and(eq(hemloAddon.public, true), eq(hemloAddon.active, true))));
+    c.header('cache-control', 'public, max-age=300');
+    return c.json({ addons: rows.filter((x) => !edition || x.compatibleEditions.includes(edition)).map((x) => ({
+      id: x.id, code: x.code, name: x.name, description: x.description, compatibleEditions: x.compatibleEditions,
+      priceMonth: x.priceMonth, priceYear: x.priceYear, configured: x.priceMonth != null && x.priceYear != null,
+    })) });
+  });
   return r;
 }
 
@@ -60,6 +70,61 @@ export function billingRoutes(d: Deps) {
     const edition = sub.status === 'free' ? (c.req.query('edition') ?? 'store') : sub.edition;
     return c.json({ subscription: sub, owner, usage: out.usage, over: overOf(sub.limits, out.usage), payments: out.payments, request: out.request,
       plans: plans.filter((p) => p.edition === edition && p.public && p.active).map(publicPlan) });
+  });
+
+  /** Add-on offers and this workspace's pending requests/confirmed entitlements. */
+  r.get('/addons', async (c) => {
+    const a = actor(c, 'stock', 'read');
+    const sub = await subscriptionOf(d.db, a.organizationId);
+    const rows = await withSystem(d.db, (tx) => tx.select().from(hemloAddon).where(and(eq(hemloAddon.public, true), eq(hemloAddon.active, true))));
+    const compatible = rows.filter((x) => x.compatibleEditions.includes(sub.edition));
+    const [state, out] = await Promise.all([addonEntitlement(d.db, a.organizationId, 'website'), withOrg(d.db, a.organizationId, async (tx) => ({
+      requests: await tx.select().from(hemloAddonRequest).where(eq(hemloAddonRequest.organizationId, a.organizationId)).orderBy(desc(hemloAddonRequest.createdAt)).limit(12),
+      payments: await tx.select().from(hemloAddonPayment).where(eq(hemloAddonPayment.organizationId, a.organizationId)).orderBy(desc(hemloAddonPayment.createdAt)).limit(24),
+    }))]);
+    return c.json({ edition: sub.edition, coreStatus: sub.status, owner: (() => { try { actor(c, 'billing', 'manage'); return true; } catch { return false; } })(),
+      addons: compatible.map((x) => ({ id: x.id, code: x.code, name: x.name, description: x.description, priceMonth: x.priceMonth, priceYear: x.priceYear, configured: x.priceMonth != null && x.priceYear != null,
+        entitlement: state.entitlement?.addonId === x.id ? { ...state.entitlement, active: state.active } : null })), requests: out.requests, payments: out.payments });
+  });
+
+  /** Request manual activation; the catalog price is snapshotted server-side and the add-on remains inactive. */
+  r.post('/addons/:code/request', async (c) => {
+    const p = requireOrgUser(c);
+    const a = actor(c, 'billing', 'manage');
+    if (await isDemoOrg(d, a.organizationId)) throw new HttpError(403, 'NOT_IN_DEMO');
+    const { offer, subscription } = await requireAddonOffer(d.db, a.organizationId, c.req.param('code'));
+    const b = await c.req.json<{ billing?: string; message?: string }>().catch(() => ({} as any));
+    const billing = b.billing === 'year' ? 'year' : b.billing === undefined || b.billing === 'month' ? 'month' : bad('BAD_BILLING');
+    const price = billing === 'year' ? offer.priceYear : offer.priceMonth;
+    if (price == null) throw new HttpError(409, 'ADDON_PRICE_UNCONFIGURED');
+    const pending = await withOrg(d.db, a.organizationId, (tx) => tx.select({ id: hemloAddonRequest.id }).from(hemloAddonRequest)
+      .where(and(eq(hemloAddonRequest.organizationId, a.organizationId), eq(hemloAddonRequest.addonId, offer.id), eq(hemloAddonRequest.status, 'new'))).limit(1));
+    if (pending.length) throw new HttpError(409, 'ADDON_REQUEST_PENDING');
+    const current = await addonEntitlement(d.db, a.organizationId, offer.code);
+    if (current.active) throw new HttpError(409, 'ADDON_ALREADY_ACTIVE');
+    const [request] = await withOrg(d.db, a.organizationId, (tx) => tx.insert(hemloAddonRequest).values({ id: newId(), organizationId: a.organizationId, addonId: offer.id,
+      edition: subscription.edition, action: 'activate', billing, price, message: text(b.message, 500, 'BAD_TEXT'), userId: p.userId }).returning());
+    await audit(d.db, { kind: 'billing.addon_requested', userId: p.userId, organizationId: a.organizationId, detail: { addonId: offer.id, billing, price } });
+    return c.json({ request, entitlement: null, status: 'pending' }, 201);
+  });
+
+  /** Request cancellation through the existing manual support/billing process. */
+  r.post('/addons/:code/cancel-request', async (c) => {
+    const p = requireOrgUser(c), a = actor(c, 'billing', 'manage');
+    const offer = await addonOffer(d.db, c.req.param('code'));
+    if (!offer || !offer.active) throw new HttpError(403, 'ADDON_UNAVAILABLE');
+    const subscription = await subscriptionOf(d.db, a.organizationId);
+    if (!offer.compatibleEditions.includes(subscription.edition)) throw new HttpError(403, 'ADDON_UNAVAILABLE');
+    const [entitlement] = await withOrg(d.db, a.organizationId, (tx) => tx.select().from(hemloAddonEntitlement)
+      .where(and(eq(hemloAddonEntitlement.organizationId, a.organizationId), eq(hemloAddonEntitlement.addonId, offer.id))));
+    if (!entitlement || entitlement.status !== 'active' || (entitlement.paidUntil && entitlement.paidUntil <= new Date())) throw new HttpError(409, 'ADDON_NOT_ACTIVE');
+    const pending = await withOrg(d.db, a.organizationId, (tx) => tx.select({ id: hemloAddonRequest.id }).from(hemloAddonRequest)
+      .where(and(eq(hemloAddonRequest.organizationId, a.organizationId), eq(hemloAddonRequest.addonId, offer.id), eq(hemloAddonRequest.status, 'new'))).limit(1));
+    if (pending.length) throw new HttpError(409, 'ADDON_REQUEST_PENDING');
+    const [request] = await withOrg(d.db, a.organizationId, (tx) => tx.insert(hemloAddonRequest).values({ id: newId(), organizationId: a.organizationId,
+      addonId: offer.id, edition: subscription.edition, action: 'cancel', billing: entitlement.billing, price: null, userId: p.userId }).returning());
+    await audit(d.db, { kind: 'billing.addon_cancel_requested', userId: p.userId, organizationId: a.organizationId, detail: { addonId: offer.id } });
+    return c.json({ request, status: 'pending' }, 201);
   });
 
   /** Ask for a plan (or Enterprise: planId null). Hemlo's team calls back, takes the payment and activates it. */
@@ -120,6 +185,94 @@ const monthlyOf = (s: { billing: string; price: number | null }, plan: Plan | un
 
 export function adminPricingRoutes(d: Deps) {
   const r = new Hono<AppEnv>();
+
+  r.get('/addons', async (c) => {
+    need(c, 'usage.view');
+    const addons = await withSystem(d.db, (tx) => tx.select().from(hemloAddon));
+    return c.json({ addons });
+  });
+  r.patch('/addons/:code', async (c) => {
+    const s = need(c, 'billing.manage');
+    const b = await c.req.json<any>();
+    const money = (v: unknown) => v == null || v === '' ? null : Number.isInteger(Number(v)) && Number(v) > 0 && Number(v) <= 1_000_000_000 ? Number(v) : bad('BAD_PRICE');
+    const input: Partial<typeof hemloAddon.$inferInsert> = { updatedBy: s.userId, updatedAt: new Date() };
+    if (b.name !== undefined) input.name = words(b.name, 'BAD_NAME', true)!;
+    if (b.description !== undefined) input.description = words(b.description, 'BAD_TEXT') ?? { ar: '', en: '' };
+    if (b.compatibleEditions !== undefined) {
+      if (!Array.isArray(b.compatibleEditions) || b.compatibleEditions.some((e: unknown) => !(EDITIONS as readonly unknown[]).includes(e))) bad('BAD_EDITION');
+      input.compatibleEditions = [...new Set(b.compatibleEditions as string[])];
+    }
+    if (b.priceMonth !== undefined) input.priceMonth = money(b.priceMonth);
+    if (b.priceYear !== undefined) input.priceYear = money(b.priceYear);
+    if (b.public !== undefined) input.public = !!b.public;
+    if (b.active !== undefined) input.active = !!b.active;
+    const [row] = await withSystem(d.db, (tx) => tx.update(hemloAddon).set(input).where(eq(hemloAddon.code, c.req.param('code'))).returning());
+    if (!row) throw new HttpError(404, 'NOT_FOUND');
+    await audit(d.db, { kind: 'admin.addon_updated', userId: s.userId, detail: { code: row.code, ...input } });
+    return c.json({ addon: row });
+  });
+
+  r.get('/addon-requests', async (c) => {
+    need(c, 'usage.view');
+    const requests = await withSystem(d.db, (tx) => tx.execute(sql`select r.*, o.name as business, u.name as user_name, a.code as addon_code
+      from hemlo_addon_request r join organization o on o.id = r.organization_id join hemlo_addon a on a.id = r.addon_id
+      left join "user" u on u.id = r.user_id where r.status = 'new' order by r.created_at`)).then(rowsOf);
+    return c.json({ requests });
+  });
+  r.patch('/addon-requests/:id', async (c) => {
+    const s = need(c, 'billing.manage');
+    const b = await c.req.json<any>();
+    const request = await withSystem(d.db, async (tx) => (await tx.select().from(hemloAddonRequest).where(eq(hemloAddonRequest.id, c.req.param('id'))))[0] ?? null);
+    if (!request) throw new HttpError(404, 'NOT_FOUND');
+    if (request.status !== 'new') throw new HttpError(409, 'REQUEST_CLOSED');
+    const offer = await addonOffer(d.db, request.addonId);
+    if (!offer) throw new HttpError(409, 'ADDON_UNAVAILABLE');
+    if (b.action === 'dismiss') {
+      const [row] = await withSystem(d.db, (tx) => tx.update(hemloAddonRequest).set({ status: 'dismissed', handledBy: s.userId, handledAt: new Date() }).where(eq(hemloAddonRequest.id, request.id)).returning());
+      await audit(d.db, { kind: 'admin.addon_request_dismissed', userId: s.userId, organizationId: request.organizationId, detail: { addonId: offer.id } });
+      return c.json({ request: row, entitlement: null });
+    }
+    if (b.action === 'cancel') {
+      if (request.action !== 'cancel') bad('BAD_ACTION');
+      const [entitlement] = await withOrg(d.db, request.organizationId, (tx) => tx.update(hemloAddonEntitlement)
+        .set({ status: 'canceled', updatedAt: new Date(), updatedBy: s.userId }).where(and(eq(hemloAddonEntitlement.organizationId, request.organizationId), eq(hemloAddonEntitlement.addonId, request.addonId))).returning());
+      const [row] = await withOrg(d.db, request.organizationId, (tx) => tx.update(hemloAddonRequest).set({ status: 'done', handledBy: s.userId, handledAt: new Date() }).where(eq(hemloAddonRequest.id, request.id)).returning());
+      await audit(d.db, { kind: 'admin.addon_canceled', userId: s.userId, organizationId: request.organizationId, detail: { addonId: offer.id } });
+      return c.json({ request: row, entitlement });
+    }
+    if (b.action !== 'activate' || request.action !== 'activate') bad('BAD_ACTION');
+    const method = (METHODS as readonly string[]).includes(b.method) ? b.method : bad('BAD_METHOD');
+    const periods = Number(b.periods ?? 1);
+    if (!Number.isInteger(periods) || periods < 1 || periods > 36) bad('BAD_PERIODS');
+    const price = request.price;
+    if (price == null || !offer.active || !offer.compatibleEditions.includes(request.edition)) throw new HttpError(409, 'ADDON_UNAVAILABLE');
+    const amount = price * periods;
+    if (!Number.isSafeInteger(amount) || Number(b.amount) !== amount) throw new HttpError(400, 'PAYMENT_AMOUNT_MISMATCH');
+    const sub = await subscriptionOf(d.db, request.organizationId);
+    if (sub.edition !== request.edition || !['trial', 'active', 'grace'].includes(sub.status)) throw new HttpError(409, 'CORE_SUBSCRIPTION_REQUIRED');
+    const current = await withOrg(d.db, request.organizationId, async (tx) => (await tx.select().from(hemloAddonEntitlement)
+      .where(and(eq(hemloAddonEntitlement.organizationId, request.organizationId), eq(hemloAddonEntitlement.addonId, request.addonId))))[0] ?? null);
+    const now = new Date();
+    const from = current?.status === 'active' && current.paidUntil && current.paidUntil > now ? current.paidUntil : now;
+    const until = new Date(from);
+    until.setMonth(until.getMonth() + periods * (request.billing === 'year' ? 12 : 1));
+    const entitlementValues = { edition: request.edition, status: 'active', billing: request.billing, price, startsAt: current?.startsAt ?? now,
+      paidUntil: until, updatedBy: s.userId, updatedAt: now };
+    const [entitlement] = await withOrg(d.db, request.organizationId, async (tx) => {
+      const existing = await tx.select({ id: hemloAddonEntitlement.id }).from(hemloAddonEntitlement)
+        .where(and(eq(hemloAddonEntitlement.organizationId, request.organizationId), eq(hemloAddonEntitlement.addonId, request.addonId)));
+      return existing.length
+        ? tx.update(hemloAddonEntitlement).set(entitlementValues).where(and(eq(hemloAddonEntitlement.organizationId, request.organizationId), eq(hemloAddonEntitlement.addonId, request.addonId))).returning()
+        : tx.insert(hemloAddonEntitlement).values({ id: newId(), organizationId: request.organizationId, addonId: request.addonId, ...entitlementValues }).returning();
+    });
+    await withOrg(d.db, request.organizationId, async (tx) => {
+      await tx.insert(hemloAddonPayment).values({ id: newId(), organizationId: request.organizationId, addonId: request.addonId, amount, periods, method,
+        reference: text(b.reference, 120, 'BAD_TEXT'), paidUntil: until, createdBy: s.userId });
+      await tx.update(hemloAddonRequest).set({ status: 'done', handledBy: s.userId, handledAt: now }).where(eq(hemloAddonRequest.id, request.id));
+    });
+    await audit(d.db, { kind: 'admin.addon_activated', userId: s.userId, organizationId: request.organizationId, detail: { addonId: offer.id, amount, periods, method, paidUntil: until } });
+    return c.json({ request: { ...request, status: 'done' }, entitlement }, 201);
+  });
 
   r.get('/plans', async (c) => {
     need(c, 'usage.view');

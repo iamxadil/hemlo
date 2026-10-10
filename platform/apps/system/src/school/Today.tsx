@@ -6,7 +6,7 @@ import { motion } from 'motion/react';
 import { Check, MessageCircle, School } from 'lucide-react';
 import { api } from '../lib/api';
 import { useS } from './i18n';
-import { Avatar, Badge, Button, Card, CardAction, CardHeader, CardTitle, CountUp, Empty, Page, Progress, Ring, Row, Skeleton, useStagger } from './ui';
+import { Avatar, Badge, Button, Card, CardAction, CardHeader, CardTitle, CountUp, Empty, Page, Progress, Ring, Row, Skeleton, Tilt, useStagger } from './ui';
 import { fill, waLink, useSetup } from './data';
 
 type TodayData = {
@@ -27,7 +27,7 @@ export function Today() {
   return (
     <Page>
       <div className="sc-stats">
-        <Card className="flex-row flex-wrap items-center gap-5 p-5">
+        <Tilt><Card className="h-full flex-row flex-wrap items-center gap-6 p-6">
           <Ring value={a.marked} total={a.students} label={a.students ? `${Math.round((a.marked / a.students) * 100)}%` : '—'} sub={<span className="tabular-nums">{num(a.marked)}/{num(a.students)}</span>} />
           <div className="grid gap-1.5">
             <b className="text-[15px]">{s.today.attendance}</b>
@@ -35,14 +35,14 @@ export function Today() {
             <span className="text-[15px]"><b className="tabular-nums">{num(a.marked - a.absent)}</b> <span className="text-muted-foreground">{s.today.present}</span></span>
             <span className="flex flex-wrap gap-1.5">{a.absent > 0 && <Badge variant="destructive">{fill(s.today.absentN, { n: num(a.absent) })}</Badge>}{a.late > 0 && <Badge variant="warning">{fill(s.today.lateN, { n: num(a.late) })}</Badge>}</span>
           </div>
-        </Card>
+        </Card></Tilt>
         {d.money && <>
-          <Card className="sc-stat transition-colors hover:border-[var(--s-line-2)]"><a href="#/fees" className="grid gap-1.5">
+          <Tilt><Card className="sc-stat h-full"><a href="#/fees" className="grid gap-2">
             <span className="l">{s.today.collectedToday}</span><span className="v"><CountUp value={d.money.today} format={money} /></span>
-            <span className="text-muted-foreground text-[13px]">{fill(s.today.collectedMonth, { v: money(d.money.month) })}</span></a></Card>
-          <Card className={`sc-stat transition-colors hover:border-[var(--s-line-2)]${d.money.late ? ' bad' : ''}`}><a href="#/fees" className="grid gap-1.5">
+            <span className="text-muted-foreground text-[13px]">{fill(s.today.collectedMonth, { v: money(d.money.month) })}</span></a></Card></Tilt>
+          <Tilt><Card className={`sc-stat h-full${d.money.late ? ' bad' : ''}`}><a href="#/fees" className="grid gap-2">
             <span className="l">{s.today.late}</span><span className="v"><CountUp value={d.money.late} format={money} /></span>
-            <span className="text-muted-foreground text-[13px]">{fill(s.today.lateStudents, { n: num(d.money.lateCount) })} · {s.today.weekDue} {money(d.money.weekDue)}</span></a></Card>
+            <span className="text-muted-foreground text-[13px]">{fill(s.today.lateStudents, { n: num(d.money.lateCount) })} · {s.today.weekDue} {money(d.money.weekDue)}</span></a></Card></Tilt>
         </>}
       </div>
 
