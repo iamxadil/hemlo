@@ -14,7 +14,7 @@ import { r2Store, type FileStore } from './files';
 import { engineFrom } from './ai/engine';
 import { screenOrg } from './routes/dental/screen';
 import { doorOrg } from './routes/gym/door';
-import { websitePathRoute } from './website-routing';
+import { websitePathRoute, businessRootRedirect } from './website-routing';
 export { ScreenHub } from './screen-hub';
 import type { Env } from './types';
 
@@ -62,6 +62,8 @@ export default {
       return Response.redirect(url, 301);
     }
     if (existingApps[host]) return existingApps[host].fetch(request);
+    const root = businessRootRedirect(host, new URL(request.url).pathname, new URL(request.url).search);
+    if (root) return Response.redirect(root, 302);
     const url = env.HYPERDRIVE?.connectionString ?? env.DATABASE_URL;
     if (!url) return new Response('Database not configured', { status: 503 });
     app ??= build(env);
