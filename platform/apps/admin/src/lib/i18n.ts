@@ -64,6 +64,7 @@ const ar = {
   },
   overview: {
     title: 'نظرة عامة', sub: 'هذا ما يحدث في هيملو الآن.', morning: 'صباح الخير يا {name}.', evening: 'مساء الخير يا {name}.', ofUsers: '{p}% من المستخدمين',
+    waitingTitle: 'طلبات بانتظار موافقتك', waitingAddons: '{n} طلب إضافة (مثل Hemlo Website)', waitingPlans: '{n} طلب خطة', review: 'راجِع',
     kNew: 'طلبات جديدة', kNewHint: 'بانتظارك', kBusinesses: 'الأعمال', kUsers: 'المستخدمون', kActive: 'نشطون هذا الأسبوع', week: '+{n} هذا الأسبوع', none: 'لا جديد',
     chart: 'آخر 30 يوماً', chartSub: 'طلبات الوصول المبكر والحسابات الجديدة يومياً', sRequests: 'طلبات', sUsers: 'حسابات جديدة', table: 'عرض كجدول', day: 'اليوم',
     pipeline: 'مسار الطلبات', pipelineSub: 'من الطلب إلى عمل يعمل على هيملو', conversion: '{p}% من الطلبات أصبحت أعمالاً', declined: 'مرفوضة: {n}',
@@ -236,6 +237,7 @@ const en: typeof ar = {
   },
   overview: {
     title: 'Overview', sub: 'Here’s what’s happening at Hemlo.', morning: 'Good morning, {name}.', evening: 'Good evening, {name}.', ofUsers: '{p}% of all users',
+    waitingTitle: 'Requests waiting for your approval', waitingAddons: '{n} add-on request(s), such as Hemlo Website', waitingPlans: '{n} plan request(s)', review: 'Review',
     kNew: 'New requests', kNewHint: 'waiting for you', kBusinesses: 'Businesses', kUsers: 'Users', kActive: 'Active this week', week: '+{n} this week', none: 'nothing new',
     chart: 'Last 30 days', chartSub: 'Early-access requests and new accounts per day', sRequests: 'Requests', sUsers: 'New accounts', table: 'View as table', day: 'Day',
     pipeline: 'Request pipeline', pipelineSub: 'From request to a business running on Hemlo', conversion: '{p}% of requests became businesses', declined: 'Declined: {n}',

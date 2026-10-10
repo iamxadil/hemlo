@@ -234,6 +234,7 @@ const I = {
     let overview: any = null, requests: any[] = [], reqStatus = 'all', users: any[] = [], businesses: any[] = [];
     const view = () => $('#view');
     function setNewCount(n: number) { const b = $('#new-count'); b.textContent = String(n); b.hidden = !n; }
+    function setBillCount(n: number) { const b = $('#bill-count'); b.textContent = String(n); b.hidden = !n; }
     function stamp() { $('#updated').textContent = fill(t.updated, { t: new Intl.DateTimeFormat(locale, { timeStyle: 'short' }).format(new Date()) }); }
     const PAGES: [string, string][] = [['overview', 'overview.view'], ['requests', 'requests.view'], ['users', 'users.view'], ['businesses', 'businesses.view'], ['usage', 'usage.view'], ['billing', 'usage.view'], ['ai', 'ai.manage'], ['team', 'team.view'], ['activity', 'activity.view']];
     function route() {
@@ -265,7 +266,7 @@ const I = {
     async function showOverview(fresh = false) {
       const hour = new Date().getHours(), first = (me.user.name || '').split(/\s+/)[0];
       const sub = header(t.overview.title, `${fill(hour < 12 ? t.overview.morning : t.overview.evening, { name: first })} ${t.overview.sub}`);
-      if (fresh || !overview) { loading(); overview = await api('/v1/admin/overview'); if (can('requests.view')) setNewCount(overview.requests.new); }
+      if (fresh || !overview) { loading(); overview = await api('/v1/admin/overview'); if (can('requests.view')) setNewCount(overview.requests.new); if (overview.waiting) setBillCount(overview.waiting.plans + overview.waiting.addons); }
       stamp();
       const o = overview, week = (n: number) => (n ? fill(t.overview.week, { n }) : t.overview.none);
       const kpi = (label: string, value: number, delta: string, attention = false) =>
@@ -273,7 +274,11 @@ const I = {
       const funnel = [['new', o.requests.new], ['contacted', o.requests.contacted], ['approved', o.requests.approved], ['activated', o.requests.activated]] as const;
       const total = Math.max(1, o.requests.total);
       const conv = Math.round((o.requests.activated / total) * 100);
-      put(sub,
+      const w = o.waiting, waitingCard = w && (w.addons || w.plans) ? h('a', { class: 'panel waiting mb-4', href: '#/billing' },
+        h('div', { class: 'min-w-0 flex-1' }, h('p', { class: 'font-semibold', text: t.overview.waitingTitle }),
+          h('p', { class: 'sub', text: [w.addons ? fill(t.overview.waitingAddons, { n: num(w.addons) }) : '', w.plans ? fill(t.overview.waitingPlans, { n: num(w.plans) }) : ''].filter(Boolean).join(' · ') })),
+        h('span', { class: 'btn btn-primary btn-sm', text: t.overview.review })) : null;
+      put(sub, waitingCard,
         h('section', { class: 'kpis' },
           kpi(t.overview.kNew, o.requests.new, o.requests.new ? t.overview.kNewHint : t.overview.none, o.requests.new > 0),
           kpi(t.overview.kBusinesses, o.businesses.total, week(o.businesses.week)),
@@ -590,6 +595,7 @@ const I = {
       if (fresh || !billing) { loading(); billing = await api('/v1/admin/billing'); }
       stamp();
       const B = billing;
+      setBillCount(B.requests.length + (await api('/v1/admin/addon-requests')).requests.length);
       const kpi = (label: string, value: string, delta = '') => h('div', { class: 'panel kpi' }, h('p', { class: 'label', text: label }), h('p', { class: 'value', text: value }), delta ? h('p', { class: 'delta', text: delta }) : null);
       const bizLink = (id: string, name: string) => h('a', { class: 'font-medium hover:underline', href: `#/usage?id=${id}`, text: name });
       const list = (title: string, rows: Node[], empty: string) => h('section', { class: 'panel' }, h('div', { class: 'panel-h' }, h('h2', { text: title })),
@@ -599,6 +605,7 @@ const I = {
         h('section', { class: 'kpis' },
           kpi(t.billing.mrr, money(B.mrr), t.billing.mrrHint), kpi(t.billing.collected, money(B.collected30), t.billing.last30),
           kpi(t.billing.paying, num(B.counts.active + B.counts.grace), B.counts.grace ? fill(t.billing.inGrace, { n: num(B.counts.grace) }) : ''), kpi(t.billing.trials, num(B.counts.trial), fill(t.billing.endedN, { n: num(B.counts.ended) }))),
+        await addonsPanel(),
         h('section', { class: 'panel mt-4 overflow-clip' }, h('table', { class: 'tbl' },
           h('thead', {}, h('tr', {}, ...[t.billing.edition, t.billing.paying, t.billing.trials, t.billing.mrr].map((x) => h('th', { text: x })))),
           h('tbody', {}, ...B.byEdition.map((e: any) => h('tr', {}, h('td', { text: t.kinds[e.edition] ?? e.edition }), h('td', { text: num(e.paying) }), h('td', { text: num(e.trial) }), h('td', { text: money(e.mrr) })))))),
@@ -610,7 +617,7 @@ const I = {
           list(t.billing.trialsEnding, B.trialsEnding.map((s: any) => h('li', {}, h('div', { class: 'min-w-0 flex-1' }, bizLink(s.id, s.name), h('p', { class: 'sub', text: `${t.kinds[s.edition] ?? s.edition} · ${fill(t.plan.trialUntil, { date: date(s.trialEndsAt) })}` })), planPill(s))), t.billing.none),
           list(t.billing.dueSoon, B.dueSoon.map((s: any) => h('li', {}, h('div', { class: 'min-w-0 flex-1' }, bizLink(s.id, s.name), h('p', { class: 'sub', text: `${words(s.plan?.name)} · ${fill(t.plan.until, { date: date(s.paidUntil) })}` })), planPill(s))), t.billing.none),
           list(t.billing.recent, B.payments.map((p: any) => h('li', {}, h('div', { class: 'min-w-0 flex-1' }, bizLink(p.organizationId, p.business), h('p', { class: 'sub', text: `${date(p.createdAt)} · ${t.billing.methods[p.method] ?? p.method} · ${fill(t.billing.months, { n: num(p.months) })}` })), h('b', { text: money(p.amount) }))), t.billing.none)),
-        await addonsPanel(), await plansPanel());
+        await plansPanel());
     }
 
     /** Add-ons (Hemlo Website…): their open requests, each confirmed against a recorded payment, and their price. */

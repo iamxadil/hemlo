@@ -80,7 +80,7 @@ export default {
         const rewritten = new Request(url.toString(), { method: request.method, headers, body: request.body, redirect: 'manual' });
         return await scope.run({ db: requestDb, ctx }, () => app!.fetch(rewritten, env, ctx));
       }
-      const INFRA = ['api', 'www', 'account', 'admin', 'system', 'studio', 'tools', 'demo'];
+      const INFRA = ['api', 'www', 'account', 'admin', 'system', 'studio', 'tools', 'demo', 'business'];
       const bare = host.endsWith('.hemlo.site') ? host.slice(0, -'.hemlo.site'.length)
         : host.endsWith('.hemlohq.com') ? host.slice(0, -'.hemlohq.com'.length) : null;
       const sub = bare && !INFRA.includes(bare) ? bare : null;

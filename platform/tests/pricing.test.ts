@@ -127,6 +127,9 @@ describe('optional add-ons', () => {
     expect(requested.status).toBe(201);
     expect(requested.json.status).toBe('pending');
     expect((await owner.post('/v1/web/site/enable')).status).toBe(402);
+    // the request waits for a person at Hemlo: the admin overview says so until it is decided
+    const waitingBefore = (await founder.req('GET', '/v1/admin/overview')).json.waiting.addons;
+    expect(waitingBefore).toBeGreaterThan(0);
 
     const requestId = requested.json.request.id;
     const denied = await founder.req('PATCH', `/v1/admin/addon-requests/${requestId}`, { action: 'activate', amount: 1, method: 'cash' });
@@ -134,6 +137,7 @@ describe('optional add-ons', () => {
     const activated = await founder.req('PATCH', `/v1/admin/addon-requests/${requestId}`, { action: 'activate', amount: 12000, method: 'cash', reference: 'RECEIPT-1' });
     expect(activated.status).toBe(201);
     expect(activated.json.entitlement).toMatchObject({ status: 'active', price: 12000, billing: 'month', edition: 'realestate' });
+    expect((await founder.req('GET', '/v1/admin/overview')).json.waiting.addons).toBe(waitingBefore - 1);
     expect((await owner.get('/v1/billing/addons')).json.addons[0].entitlement.active).toBe(true);
     expect((await owner.post('/v1/web/site/enable')).status).toBe(200);
     await owner.put('/v1/web/site', { settings: { contact: { whatsapp: '07701234567' } } });

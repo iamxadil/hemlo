@@ -203,6 +203,23 @@ describe('the public website', () => {
     await owner.post('/v1/web/site/publish');
   });
 
+  it('stages an agency in its own design: the home search, and a place search across areas and cities', async () => {
+    const home = String((await pub.get('/v1/web/pub?lang=en', siteHeaders)).json);
+    expect(home).toContain('class="d-estate'); // real estate gets the estate design, not the shared baseline
+    expect(home).toContain('class="esearch');
+    expect(home).toContain('name="where"');
+    expect(home).toContain('class="mbar"'); // WhatsApp stays one thumb away on a phone
+    await withOrg(t.db, orgId, (tx) => tx.insert(reProperty).values({ id: newId(), organizationId: orgId, ref: 2, slug: 'flat-ankawa', title: 'Flat in Ankawa', city: 'Erbil', area: 'Ankawa', type: 'apartment', purpose: 'rent', status: 'available', publishedAt: new Date(), price: 900, currency: 'USD' }));
+    const byCity = String((await pub.get('/v1/web/pub/properties?lang=en&where=erbil', siteHeaders)).json);
+    expect(byCity).toContain('Flat in Ankawa');
+    expect(byCity).not.toContain('Mansour villa');
+    expect(String((await pub.get('/v1/web/pub/properties?lang=en&where=ankawa', siteHeaders)).json)).toContain('Flat in Ankawa');
+  });
+
+  it('keeps Hemlo’s own hosts out of customers’ hands', async () => {
+    expect((await owner.put('/v1/web/site', { subdomain: 'business' })).status).toBe(400);
+  });
+
   it('does not serve an unknown subdomain', async () => {
     expect((await pub.get('/v1/web/pub', { 'x-hemlo-site': 'nobody' })).status).toBe(404);
   });

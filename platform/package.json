@@ -9,6 +9,7 @@
   "scripts": {
     "test": "vitest run",
     "dev:api": "npm run dev -w @hemlo/api",
+    "preview:website": "tsx scripts/website-preview.ts",
     "dev:account": "npm run dev -w @hemlo/account",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p apps/system --noEmit",
     "test:ui": "tsx scripts/ui-e2e.ts",

@@ -3,6 +3,7 @@
 // Written straight into the HTML: no framework, no extra requests, so a page opens instantly on a weak phone signal.
 import { esc, attr, icon, fill } from '../realestate/page';
 import type { WebTheme } from '@hemlo/db/schema';
+import type { Design } from './designs';
 
 export type Lang = 'ar' | 'en';
 type Two = { ar?: string; en?: string };
@@ -237,7 +238,7 @@ lb.querySelector('.pv').addEventListener('click',function(){show(i-1)});lb.query
 lb.addEventListener('keydown',function(e){if(e.key==='ArrowRight')show(rtl?i-1:i+1);if(e.key==='ArrowLeft')show(rtl?i+1:i-1)})})();`;
 
 /** The page frame: head (title, description, canonical, alternates, Open Graph, JSON-LD), the stylesheet, the body. */
-export function webFrame(o: { lang: Lang; title: string; description: string; canonical?: string; alt?: string; image?: string | null; robots: 'index' | 'noindex'; theme: WebTheme; body: string; bodyClass?: string; script?: string; jsonld?: unknown }) {
+export function webFrame(o: { lang: Lang; title: string; description: string; canonical?: string; alt?: string; image?: string | null; robots: 'index' | 'noindex'; theme: WebTheme; body: string; bodyClass?: string; script?: string; jsonld?: unknown; design?: Design }) {
   const dir = o.lang === 'ar' ? 'rtl' : 'ltr';
   return `<!doctype html><html lang="${o.lang}" dir="${dir}"${o.theme.dark ? ' data-dark' : ''}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <script>document.documentElement.classList.add('js')</script>
@@ -247,8 +248,8 @@ ${o.canonical ? `<link rel="canonical" href="${attr(o.canonical)}">` : ''}${o.al
 <meta property="og:type" content="website"><meta property="og:title" content="${attr(o.title)}"><meta property="og:description" content="${attr(o.description)}">
 ${o.canonical ? `<meta property="og:url" content="${attr(o.canonical)}">` : ''}${o.image ? `<meta property="og:image" content="${attr(o.image)}"><meta name="twitter:card" content="summary_large_image">` : ''}
 <meta property="og:locale" content="${o.lang === 'ar' ? 'ar_IQ' : 'en_US'}">
-<style>${themeCss(o.theme)}</style>${o.jsonld ? `<script type="application/ld+json">${JSON.stringify(o.jsonld).replace(/</g, '\\u003c')}</script>` : ''}</head>
-<body${o.bodyClass ? ` class="${attr(o.bodyClass)}"` : ''}>${o.body}<script>${SITE_SCRIPT}</script>${o.script ? `<script>${o.script}</script>` : ''}</body></html>`;
+<style>${themeCss(o.theme)}${o.design?.css(o.theme) ?? ''}</style>${o.jsonld ? `<script type="application/ld+json">${JSON.stringify(o.jsonld).replace(/</g, '\\u003c')}</script>` : ''}</head>
+<body class="${attr([o.design ? `d-${o.design.id}` : '', o.bodyClass ?? ''].join(' ').trim())}">${o.body}<script>${SITE_SCRIPT}</script>${o.script ? `<script>${o.script}</script>` : ''}</body></html>`;
 }
 
 export const waHref = (num: string | null | undefined, text: string) => (num ? `https://wa.me/${num.replace(/\D/g, '')}?text=${encodeURIComponent(text)}` : null);

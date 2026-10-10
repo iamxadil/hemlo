@@ -15,7 +15,7 @@ export type WebsiteListing = {
   price: string; bedrooms: number | null; bathrooms: number | null; size: number | null; cover: string | null; href: string;
 };
 export type WebsiteInquiry = { organizationId: string; name: string; phone: string; email: string | null; message: string | null; lang: string; page?: string; propertySlug?: string };
-export type WebsiteListingFilter = { q?: string; purpose?: string; type?: string; city?: string; area?: string; currency?: string; min?: number; max?: number };
+export type WebsiteListingFilter = { q?: string; purpose?: string; type?: string; city?: string; area?: string; place?: string; currency?: string; min?: number; max?: number };
 export type WebsiteProperty = {
   slug: string; title: string; type: string; purpose: string; status: string; price: string; currency: string; negotiable: boolean;
   city: string | null; area: string | null; size: number | null; land: number | null; bedrooms: number | null; bathrooms: number | null;
@@ -48,6 +48,7 @@ export const realEstateWebsiteAdapter: WebsiteAdapter = {
     if (filter.type) where.push(eq(reProperty.type, filter.type));
     if (filter.city) where.push(ilike(reProperty.city, `%${filter.city}%`));
     if (filter.area) where.push(ilike(reProperty.area, `%${filter.area}%`));
+    if (filter.place) where.push(or(ilike(reProperty.area, `%${filter.place}%`), ilike(reProperty.city, `%${filter.place}%`))!);
     if (filter.q) {
       const term = `%${filter.q.replace(/[%_]/g, '')}%`;
       where.push(or(ilike(reProperty.title, term), ilike(reProperty.titleEn, term), ilike(reProperty.area, term), ilike(reProperty.city, term))!);
