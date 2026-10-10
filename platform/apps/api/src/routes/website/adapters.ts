@@ -1,6 +1,6 @@
 // The shared Website renderer depends on this narrow vertical boundary. Adapters return explicit public DTOs;
 // database rows, tenant IDs, internal notes and private relationships never cross into the renderer.
-import { and, desc, eq, gte, ilike, inArray, isNotNull, isNull, lte, or, type SQL } from 'drizzle-orm';
+import { and, desc, eq, gte, ilike, inArray, isNotNull, isNull, lte, or, sql, type SQL } from 'drizzle-orm';
 import { newId } from '@hemlo/core';
 import type { Database } from '@hemlo/db';
 import { reLead, reLeadProperty, reProperty } from '@hemlo/db/schema';
@@ -13,9 +13,11 @@ import type { Lang } from './theme';
 export type WebsiteListing = {
   slug: string; title: string; area: string | null; city: string | null; type: string; purpose: string; status: string;
   price: string; bedrooms: number | null; bathrooms: number | null; size: number | null; cover: string | null; href: string;
+  /** listed in the last two weeks */
+  fresh: boolean;
 };
 export type WebsiteInquiry = { organizationId: string; name: string; phone: string; email: string | null; message: string | null; lang: string; page?: string; propertySlug?: string };
-export type WebsiteListingFilter = { q?: string; purpose?: string; type?: string; city?: string; area?: string; place?: string; currency?: string; min?: number; max?: number };
+export type WebsiteListingFilter = { q?: string; purpose?: string; type?: string; city?: string; area?: string; place?: string; currency?: string; min?: number; max?: number; sort?: 'new' | 'price-asc' | 'price-desc'; limit?: number };
 export type WebsiteProperty = {
   slug: string; title: string; type: string; purpose: string; status: string; price: string; currency: string; negotiable: boolean;
   city: string | null; area: string | null; size: number | null; land: number | null; bedrooms: number | null; bathrooms: number | null;
@@ -61,12 +63,15 @@ export const realEstateWebsiteAdapter: WebsiteAdapter = {
       type: reProperty.type, purpose: reProperty.purpose, status: reProperty.status, publishedAt: reProperty.publishedAt, price: reProperty.price,
       currency: reProperty.currency, rentPeriod: reProperty.rentPeriod, bedrooms: reProperty.bedrooms, bathrooms: reProperty.bathrooms,
       size: reProperty.size, coverId: reProperty.coverId,
-    }).from(reProperty).where(and(...where)).orderBy(desc(reProperty.publishedAt)).limit(36);
+    }).from(reProperty).where(and(...where))
+      .orderBy(...(filter.sort === 'price-asc' ? [sql`${reProperty.price} asc nulls last`] : filter.sort === 'price-desc' ? [sql`${reProperty.price} desc nulls last`] : []), desc(reProperty.publishedAt))
+      .limit(Math.min(filter.limit ?? 36, 60));
     const cards = await withCovers(deps, tx, organizationId, rows);
     return { listings: cards.map((p) => ({
       slug: p.slug, title: lang === 'en' && p.titleEn ? p.titleEn : p.title, area: p.area, city: p.city, type: p.type, purpose: p.purpose, status: p.status,
       price: priceText(p.price == null ? null : Number(p.price), p.currency, lang, p.purpose === 'rent' ? p.rentPeriod : null),
       bedrooms: p.bedrooms, bathrooms: p.bathrooms, size: p.size, cover: p.cover ?? null, href: `${origin}/properties/${encodeURIComponent(p.slug)}`,
+      fresh: !!p.publishedAt && Date.now() - +p.publishedAt < 14 * 86400_000,
     })) };
   },
   async loadProperty(tx, deps, organizationId, lang, slug) {

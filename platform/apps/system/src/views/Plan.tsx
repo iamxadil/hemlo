@@ -7,6 +7,7 @@ import { api } from '../lib/api';
 import { useApp, fill } from '../lib/app';
 import { Icon, Money, Sheet } from '../components/ui';
 import { ImpactCard } from '../components/Impact';
+import { HwBadge } from '../components/HwBadge';
 
 type Words = { ar: string; en: string; ckb?: string };
 type Plan = { id: string; code: string; name: Words; tagline: Words | null; priceMonth: number; priceYear: number; limits: Record<string, number | undefined>; popular: boolean };
@@ -133,7 +134,7 @@ export function PlanPage() {
         {aq.isLoading ? <div className="skeleton h-36" /> : website && (
           <section className="panel grid gap-4 border border-[var(--line)] p-5 sm:p-6" aria-labelledby="website-addon-title">
             <div className="grid gap-1">
-              <p className="sec-t !mb-0">{websiteCopy.optional}</p>
+              <div className="flex flex-wrap items-center gap-2"><HwBadge /><span className="sec-t !mb-0">{websiteCopy.optional}</span></div>
               <h3 id="website-addon-title" className="text-lg font-semibold">{websiteCopy.title}</h3>
               <p className="sub max-w-2xl">{name(website.description) || websiteCopy.body}</p>
             </div>

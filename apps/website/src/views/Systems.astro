@@ -5,6 +5,7 @@
 import Base from '../layouts/Base.astro';
 import Mark from '../components/Mark.astro';
 import Compare from '../components/Compare.astro';
+import HwBadge from '../components/HwBadge.astro';
 import { BRANCH } from '../brand/brand';
 import { t, href, EMAIL, SYSTEM_URL, type Lang } from '../i18n/strings';
 interface Props { lang: Lang; }
@@ -120,7 +121,9 @@ const ADD = L2({
   sub: 'Hemlo Website يمنح مكتبك موقعاً خاصاً به. لا تبنيه ولا تحدّثه: كل عقار تضيفه في Hemlo يظهر فيه وحده، وكل من يسأل عنه يصلك.',
   addr: 'nakheel.hemlohq.com', synced: 'أُضيف في Hemlo · ظاهر في موقعك الآن', syncedSub: 'فيلا بحديقة · دريم ستي',
   how: 'كيف يعمل', steps: [['أضف العقار في Hemlo', 'كما تفعل الآن: الصور والسعر والتفاصيل.'], ['يظهر في موقعك', 'فوراً، وله صفحة خاصة ترسلها على واتساب.'], ['يسأل الزائر، وتتابع أنت', 'كل استفسار من الموقع يصل إلى قائمة زبائنك المحتملين.']],
-  name: 'Hemlo Website', price: '15,000', per: 'د.ع / شهرياً', onTop: 'يُضاف إلى خطة نظام Hemlo العقاري.', year: 'أو سنوياً بـ 150,000 د.ع، أي شهران مجاناً.',
+  name: 'Hemlo Website', price: '25,000', per: 'د.ع / شهرياً', onTop: 'يُضاف إلى خطة نظام Hemlo العقاري.', year: 'أو سنوياً بـ 250,000 د.ع، أي شهران مجاناً.',
+  trustTitle: 'موقع تثق به، ويثق به زبائنك',
+  trust: [['lock', 'عنوان خاص وآمن', 'باسم مكتبك على hemlohq.com، ومشفّر بـ HTTPS.'], ['globe', 'سريع من أي مكان', 'يُقدَّم من شبكة Cloudflare العالمية.'], ['spark', 'تبنيه Hemlo وتحدّثه', 'تصميم يتحسّن باستمرار، دون أي عمل منك.'], ['shield', 'بياناتك تبقى لك', 'لا نسخ ولا إدخال مرتين: كل شيء من نظامك.']],
   included: ['عنوان باسم مكتبك على hemlohq.com', 'بالعربي والإنجليزي', 'كل عقاراتك، محدّثة دائماً', 'الاستفسارات تصل إلى زبائنك', 'سريع على أي موبايل'],
   sample: 'شاهد موقعاً نموذجياً', turnOn: 'مشترك في Hemlo؟ فعّله من صفحة «الخطة» في نظامك.', more: 'للمتاجر والأندية والعيادات: قريباً.',
   plansTitle: 'وفي كل خطة نظام، كل الميزات.', plansSub: 'الخطط تختلف بالحجم فقط.',
@@ -131,13 +134,22 @@ const ADD = L2({
   sub: 'Hemlo Website gives your office a website of its own. You don’t build it or update it: every property you add in Hemlo appears on it by itself, and everyone who asks about one reaches you.',
   addr: 'nakheel.hemlohq.com', synced: 'Added in Hemlo · on your site now', syncedSub: 'Villa with a garden · Dream City',
   how: 'How it works', steps: [['Add a property in Hemlo', 'As you already do: photos, price, details.'], ['It’s on your website', 'Right away, with its own page to send on WhatsApp.'], ['Visitors ask, you follow up', 'Every inquiry from the site lands in your leads.']],
-  name: 'Hemlo Website', price: '15,000', per: 'IQD / month', onTop: 'Added to your Hemlo Real Estate plan.', year: 'Or 150,000 IQD a year: two months free.',
+  name: 'Hemlo Website', price: '25,000', per: 'IQD / month', onTop: 'Added to your Hemlo Real Estate plan.', year: 'Or 250,000 IQD a year: two months free.',
+  trustTitle: 'A website you can trust, and so can your clients',
+  trust: [['lock', 'Your own secure address', 'yourname.hemlohq.com, encrypted with HTTPS.'], ['globe', 'Fast from anywhere', 'Served from Cloudflare’s global network.'], ['spark', 'Built and kept up to date by Hemlo', 'The design keeps improving, with no work from you.'], ['shield', 'Your data stays yours', 'Nothing copied, nothing typed twice: it all comes from your system.']],
   included: ['Your own address: yourname.hemlohq.com', 'Arabic and English', 'Every property, always up to date', 'Inquiries straight to your leads', 'Fast on any phone'],
   sample: 'See a sample site', turnOn: 'Already on Hemlo? Switch it on from the Plan page in your system.', more: 'Shops, gyms and clinics: soon.',
   plansTitle: 'And every system plan has every feature.', plansSub: 'Plans differ by size only.',
   plans: ['Staff with their own access', 'Works offline', 'WhatsApp reminders', 'The AI helper', 'Arabic, English, Kurdish', 'Export your data'],
 });
-const sampleHref = ar ? '/hero-sample/' : '/en/hero-sample/';
+// The sample is the real renderer serving the demo agency (platform: routes/website/sample.ts), so it is what customers get.
+const sampleHref = ar ? 'https://business.hemlohq.com/s/sample' : 'https://business.hemlohq.com/s/sample?lang=en';
+const TRUST_ICON: Record<string, string> = {
+  lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+  spark: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/>',
+  shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/>',
+};
 const END = L2(
   { title: 'نظام لمهنتك، لا العكس.', sub: 'المتاجر والعيادات والأندية الرياضية ومكاتب العقارات متاحة الآن. ولكل مهنة أخرى، أخبرنا كيف يسير عملك ونبني إصدارها.' },
   { title: 'A system for your trade, not the other way round.', sub: 'Shops, clinics, gyms and real estate offices are live now. For any other trade, tell us how your work runs and we’ll build its edition.' });
@@ -296,17 +308,23 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
     <section class="wrap border-t border-line py-20 sm:py-28 web" id="addons">
       <!-- what it is, in one line -->
       <div class="web-head">
-        <p class="reveal web-eyebrow"><span class="web-tag">{ADD.eyebrow}</span><span class="web-live"><span class="dot" aria-hidden="true"></span>{ADD.live}</span></p>
+        <p class="reveal web-eyebrow"><HwBadge size="lg" /><span class="web-tag">{ADD.eyebrow}</span><span class="web-live"><span class="dot" aria-hidden="true"></span>{ADD.live}</span></p>
         <h2 class="reveal mt-5 text-[clamp(2rem,4.2vw,3.3rem)] font-semibold leading-[1.08] tracking-tight"><span class="block">{ADD.title[0]}</span><span class="block web-acc">{ADD.title[1]}</span></h2>
         <p class="reveal mt-5 text-lead text-fg-2">{ADD.sub}</p>
       </div>
 
       <!-- what it looks like: the sample site, in a browser, on its own address -->
-      <a class="reveal web-shot" href={sampleHref} aria-label={ADD.sample}>
+      <a class="reveal web-shot" href={sampleHref} aria-label={ADD.sample} target="_blank" rel="noopener">
         <span class="web-chrome" aria-hidden="true"><i></i><i></i><i></i><span class="web-url" dir="ltr"><svg viewBox="0 0 16 16"><path d="M4.5 7V5.5a3.5 3.5 0 0 1 7 0V7M3.5 7h9v6.5h-9z" /></svg>{ADD.addr}</span></span>
         <img src={`/images/realestate/sample/site-${lang}-1400.webp`} srcset={`/images/realestate/sample/site-${lang}-800.webp 800w, /images/realestate/sample/site-${lang}-1400.webp 1400w`} sizes="(min-width: 1200px) 1100px, 92vw" width="1400" height="809" alt="" loading="lazy" decoding="async" />
         <span class="web-sync" aria-hidden="true"><span class="ok">✓</span><span><b>{ADD.synced}</b><small>{ADD.syncedSub}</small></span></span>
       </a>
+
+      <!-- why it can be trusted: four plain facts -->
+      <div class="reveal web-trust">
+        <p class="text-sm font-semibold text-fg-2">{ADD.trustTitle}</p>
+        <ul>{ADD.trust.map(([i, h, p]) => <li><span class="ti" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" set:html={TRUST_ICON[i]} /></span><span><b>{h}</b><span>{p}</span></span></li>)}</ul>
+      </div>
 
       <!-- how it works, and the price -->
       <div class="web-grid">
@@ -316,13 +334,13 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
           <p class="mt-5 text-sm text-fg-2">{ADD.more}</p>
         </div>
         <article class="reveal web-price">
-          <p class="web-pname">{ADD.name}</p>
+          <HwBadge />
           <p class="web-amount"><b dir="ltr">{ADD.price}</b><span>{ADD.per}</span></p>
           <p class="web-ontop">{ADD.onTop}</p>
           <p class="web-year">{ADD.year}</p>
           <ul class="web-inc">{ADD.included.map((x) => <li>{x}</li>)}</ul>
           <div class="web-cta">
-            <a class="btn web-btn" href={sampleHref}>{ADD.sample}<span class="arr" aria-hidden="true">→</span></a>
+            <a class="btn web-btn" href={sampleHref} target="_blank" rel="noopener">{ADD.sample}<span class="arr" aria-hidden="true">→</span></a>
             <a class="btn btn-secondary" href={ask('realestate')}>{L.ask}</a>
           </div>
           <p class="web-note">{ADD.turnOn}</p>
@@ -725,6 +743,18 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
   .web-btn:hover { filter: brightness(1.07); }
   :global(html[dir="rtl"]) .web-btn .arr { transform: scaleX(-1); }
   .web-note { margin-top: 1rem; font-size: .85rem; color: var(--fg-2); line-height: 1.5; }
+
+  /* why it can be trusted */
+  .web-trust { margin-top: 3rem; }
+  .web-trust ul { display: grid; gap: 1px; margin-top: 1rem; border: 1px solid var(--line); border-radius: 1.2rem; overflow: hidden; background: var(--line); }
+  @media (min-width: 720px) { .web-trust ul { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1100px) { .web-trust ul { grid-template-columns: repeat(4, 1fr); } }
+  .web-trust li { display: flex; gap: .9rem; align-items: flex-start; padding: 1.2rem 1.25rem; background: var(--surface); }
+  .web-trust .ti { display: grid; place-items: center; flex: none; width: 2.4rem; height: 2.4rem; border-radius: .7rem; background: linear-gradient(180deg, #1A2230, #0E1420); color: #E3C88A; box-shadow: 0 0 0 1px rgb(179 139 58 / .35); }
+  .web-trust .ti svg { width: 1.15rem; height: 1.15rem; }
+  .web-trust li > span:last-child { display: grid; gap: .2rem; }
+  .web-trust b { font-weight: 600; font-size: .98rem; }
+  .web-trust li > span:last-child > span { color: var(--fg-2); font-size: .9rem; line-height: 1.5; }
 
   /* the core plans, one quiet line */
   .web-plans { margin-top: 4rem; padding-top: 1.6rem; border-top: 1px solid var(--line); }

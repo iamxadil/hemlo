@@ -208,7 +208,9 @@ describe('the public website', () => {
     expect(home).toContain('class="d-estate'); // real estate gets the estate design, not the shared baseline
     expect(home).toContain('class="esearch');
     expect(home).toContain('name="where"');
-    expect(home).toContain('class="mbar"'); // WhatsApp stays one thumb away on a phone
+    expect(home).toContain('class="ebar"'); // WhatsApp stays one thumb away on a phone
+    expect(home).toContain('/_hemlo/fonts/poppins-600.woff2'); // its typefaces come from its own address
+    expect(home).toContain('class="hw-badge"'); // signed: Made with Hemlo Website
     await withOrg(t.db, orgId, (tx) => tx.insert(reProperty).values({ id: newId(), organizationId: orgId, ref: 2, slug: 'flat-ankawa', title: 'Flat in Ankawa', city: 'Erbil', area: 'Ankawa', type: 'apartment', purpose: 'rent', status: 'available', publishedAt: new Date(), price: 900, currency: 'USD' }));
     const byCity = String((await pub.get('/v1/web/pub/properties?lang=en&where=erbil', siteHeaders)).json);
     expect(byCity).toContain('Flat in Ankawa');
@@ -216,8 +218,40 @@ describe('the public website', () => {
     expect(String((await pub.get('/v1/web/pub/properties?lang=en&where=ankawa', siteHeaders)).json)).toContain('Flat in Ankawa');
   });
 
+  it('sorts by price, and suggests similar homes on a property page', async () => {
+    const asc = String((await pub.get('/v1/web/pub/properties?lang=en&sort=price-asc', siteHeaders)).json);
+    expect(asc.indexOf('Flat in Ankawa')).toBeLessThan(asc.indexOf('Mansour villa'));
+    const desc = String((await pub.get('/v1/web/pub/properties?lang=en&sort=price-desc', siteHeaders)).json);
+    expect(desc.indexOf('Mansour villa')).toBeLessThan(desc.indexOf('Flat in Ankawa'));
+    const page = String((await pub.get('/v1/web/pub/properties/villa-mansour?lang=en', siteHeaders)).json);
+    expect(page).toContain('class="ebuy"');
+    expect(page).toContain('Flat in Ankawa'); // a similar home on the market
+  });
+
+  it('serves its fonts from its own address', async () => {
+    const r = await pub.get('/v1/web/pub/_hemlo/fonts/vazirmatn.woff2', siteHeaders);
+    expect(r.status).toBe(200);
+    expect(r.headers.get('content-type')).toBe('font/woff2');
+    expect((await pub.get('/v1/web/pub/_hemlo/fonts/nope.woff2', siteHeaders)).status).toBe(404);
+  });
+
   it('keeps Hemlo’s own hosts out of customers’ hands', async () => {
     expect((await owner.put('/v1/web/site', { subdomain: 'business' })).status).toBe(400);
+    expect((await owner.put('/v1/web/site', { subdomain: 'sample' })).status).toBe(400);
+  });
+
+  it('serves the public sample through the same renderer, without the database, and keeps it out of search', async () => {
+    const sample = { 'x-hemlo-site': 'sample', host: 'business.hemlohq.com', 'x-hemlo-site-base': '/s/sample' };
+    const home = String((await pub.get('/v1/web/pub?lang=en', sample)).json);
+    expect(home).toContain('Nakheel Real Estate');
+    expect(home).toContain('class="esample"');
+    expect(home).toContain('noindex');
+    expect(home).toContain('href="/s/sample/properties/villa-dream?lang=en"');
+    expect(String((await pub.get('/v1/web/pub/properties?lang=en&type=land', sample)).json)).toContain('Land in Kasnazan');
+    expect(String((await pub.get('/v1/web/pub/properties/villa-dream', sample)).json)).toContain('فيلا بحديقة في دريم ستي');
+    const before = await withSystem(t.db, (tx) => tx.select().from(reLead));
+    expect((await pub.post('/v1/web/pub/inquiry', { name: 'Ali', phone: '07709998855' }, sample)).status).toBe(201);
+    expect((await withSystem(t.db, (tx) => tx.select().from(reLead))).length).toBe(before.length); // nothing stored
   });
 
   it('does not serve an unknown subdomain', async () => {

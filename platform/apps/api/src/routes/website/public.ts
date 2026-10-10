@@ -10,33 +10,16 @@ import { withOrg, withSystem } from '@hemlo/db';
 import { webSite, webPage, organization, sysSettings, RE_TYPES, type WebSection } from '@hemlo/db/schema';
 import { fileUrl } from '../../files';
 import { featureName, settingsOf, typeName } from '../realestate/common';
-import { websiteAdapterFor, type WebsiteListing, type WebsiteListingFilter } from './adapters';
+import { websiteAdapterFor, type WebsiteListing, type WebsiteListingFilter, type WebsiteProperty } from './adapters';
 import { addonEntitlement } from '../../addons';
 import { W, pick, webFrame, waHref, telHref, moneyIqd, sectionHeading, inquiryDialog, INQUIRY_SCRIPT, esc, attr, icon, fill, type Lang } from './theme';
-import { designFor, type Design } from './designs';
+import { designFor } from './designs';
 import type { AppEnv, Deps } from '../../types';
 
 const RESERVED = new Set(['www', 'api', 'app', 'admin', 'account', 'studio', 'mail', 'ftp', 'cdn', 'static', 'assets', 'demo', 'test', 'systems', 'tools', 'business']);
-type Two = { ar?: string; en?: string };
-type Ctx = {
-  d: Deps; org: string; site: any; lang: Lang; origin: string; t: (typeof W)[Lang];
-  basePath: string;
-  pageSlug: string; filters: WebsiteListingFilter;
-  logo: string | null; name: string; tagline: string;
-  contact: { phone: string | null; whatsapp: string | null; email: string | null; address: string | null; mapUrl: string | null };
-  products: { id: string; name: string; category: string | null; price: number; image: string | null }[];
-  listings: WebsiteListing[];
-  /** the running section number (01, 02…) and whether the page opens on a photograph */
-  n: number; onPhoto: boolean;
-  /** the system's own design (designs.ts): which moments this trade's site stages */
-  design: Design;
-};
-
-const initials = (n: string) => { const w = (n || '·').trim().split(/\s+/); return /[\u0600-\u06ff]/.test(w[0]) ? (w[0].startsWith('ال') && w[0].length > 2 ? w[0][2] : w[0][0]) : w.slice(0, 2).map((x) => x[0]).join('').toUpperCase(); };
-const paras = (s: string) => s.split(/\n{2,}|\r\n\r\n/).map((p) => `<p>${esc(p.trim()).replace(/\n/g, '<br>')}</p>`).join('');
-const strOf = (v: any, lang: Lang): string => { if (v == null) return ''; if (typeof v === 'string') return v; return pick(v as Two, lang); };
-const itemsOf = (sec: WebSection): any[] => (Array.isArray((sec as any).items) ? (sec as any).items : []);
-const field = (sec: WebSection, key: string, lang: Lang) => strOf((sec as any)[key], lang);
+import { paras, strOf, itemsOf, field, initials, STATUS, LINE, propHref, factsOf, langQ, type Ctx, type Two } from './context';
+import { SAMPLE_SUB, sampleSite, sampleListings, sampleProperty } from './sample';
+import { WEB_FONTS } from './fonts.generated';
 
 /** The buttons a page offers, from the site's contact details and its CTA switches. */
 function ctaRow(ctx: Ctx, what: string, cls = 'wcta') {
@@ -50,25 +33,12 @@ function ctaRow(ctx: Ctx, what: string, cls = 'wcta') {
 }
 
 const two = (i: number) => String(i).padStart(2, '0');
-const STATUS: Record<Lang, Record<string, string>> = {
-  ar: { available: 'متاح', reserved: 'محجوز', negotiating: 'قيد التفاوض', sold: 'مباع', rented: 'مؤجّر' },
-  en: { available: 'Available', reserved: 'Reserved', negotiating: 'Negotiating', sold: 'Sold', rented: 'Rented' },
-};
-/** An editorial line for a section that has no title of its own. */
-const LINE: Record<Lang, Record<string, string>> = {
-  ar: { listings: 'بيوت اخترناها بعناية.', about: 'مكتب يعرف مدينته.', contact: W.ar.letsTalk },
-  en: { listings: 'Homes we chose with care.', about: 'An office that knows its city.', contact: W.en.letsTalk },
-};
 /** A section's head: its number and kind as a quiet label, and a serif line. */
 function sectionHead(ctx: Ctx, sec: WebSection, extra = '') {
   const label = sectionHeading(sec.type, undefined, ctx.lang), own = pick(sec.title as Two, ctx.lang);
   const line = own && own !== label ? own : LINE[ctx.lang][sec.type] ?? label;
   return `<div class="sh rv"><div><p class="eyebrow"><span class="idx num">${two(++ctx.n)}</span>${esc(label)}</p><h2 class="display">${esc(line)}</h2></div>${extra}</div>`;
 }
-const factsOf = (ctx: Ctx, l: { bedrooms: number | null; bathrooms: number | null; size: number | null }) => [
-  l.bedrooms ? fill(ctx.t.beds, { n: l.bedrooms }) : '', l.bathrooms ? fill(ctx.t.baths, { n: l.bathrooms }) : '', l.size ? fill(ctx.t.sqm, { n: l.size }) : '',
-].filter(Boolean).join(' · ');
-const propHref = (ctx: Ctx, slug: string) => `${ctx.basePath}/properties/${encodeURIComponent(slug)}${ctx.lang === (ctx.site.lang === 'en' ? 'en' : 'ar') ? '' : `?lang=${ctx.lang}`}`;
 /** One property: a tall photograph (it carries over into the property's own page), then the words. */
 function listingCard(ctx: Ctx, l: WebsiteListing, i: number) {
   const held = l.status === 'reserved' || l.status === 'negotiating';
@@ -80,62 +50,9 @@ function listingCard(ctx: Ctx, l: WebsiteListing, i: number) {
 <div class="row"><span class="facts">${esc(factsOf(ctx, l))}</span><span class="pr num" dir="ltr">${esc(l.price)}</span></div></a>`;
 }
 
-// ---------- real estate (the "estate" design) ----------
-const E = {
-  ar: { any: 'الكل', sale: 'للبيع', rent: 'للإيجار', type: 'النوع', anyType: 'كل الأنواع', where: 'أين', wherePh: 'المنطقة أو المدينة', search: 'ابحث',
-    homes: 'عقار متاح الآن', forSale: 'للبيع', forRent: 'للإيجار', areas: 'منطقة نغطيها', browseBy: 'تصفّح حسب النوع' },
-  en: { any: 'All', sale: 'Buy', rent: 'Rent', type: 'Type', anyType: 'Any type', where: 'Where', wherePh: 'Area or city', search: 'Search',
-    homes: 'homes available now', forSale: 'for sale', forRent: 'for rent', areas: 'areas we cover', browseBy: 'Browse by type' },
-};
-const listQ = (ctx: Ctx, extra: Record<string, string> = {}) => {
-  const q = new URLSearchParams(extra);
-  if (ctx.lang !== (ctx.site.lang === 'en' ? 'en' : 'ar')) q.set('lang', ctx.lang);
-  const s = q.toString();
-  return `${ctx.basePath}/properties${s ? `?${s}` : ''}`;
-};
-/** The home search: buy or rent, what kind, where. Only the kinds and places this office actually has. */
-function estateSearch(ctx: Ctx, onPage = false) {
-  const e = E[ctx.lang], ls = ctx.listings, f = ctx.filters;
-  const types = onPage ? ['apartment', 'house', 'villa', 'land', 'office', 'shop', 'commercial', 'building', 'warehouse', 'farm'] : [...new Set(ls.map((l) => l.type))];
-  const places = [...new Set(ls.flatMap((l) => [l.area, l.city]).filter(Boolean) as string[])].slice(0, 30);
-  const seg = ([['', e.any], ['sale', e.sale], ['rent', e.rent]] as const).filter(([k]) => onPage || !k || ls.some((l) => l.purpose === k))
-    .map(([k, label]) => `<label><input type="radio" name="purpose" value="${k}"${(f.purpose ?? '') === k ? ' checked' : ''}><span>${esc(label)}</span></label>`).join('');
-  const lang = ctx.lang !== (ctx.site.lang === 'en' ? 'en' : 'ar') ? `<input type="hidden" name="lang" value="${ctx.lang}">` : '';
-  const ar = ctx.lang === 'ar', opened = !!(f.currency || f.min != null || f.max != null || f.q);
-  const more = onPage ? `<details class="emore"${opened ? ' open' : ''}><summary>${ar ? 'خيارات أكثر' : 'More filters'}</summary><div class="emore-b">
-<label class="efield"><small>${ar ? 'كلمة' : 'Keyword'}</small><input name="q" value="${attr(f.q ?? '')}" maxlength="80"></label>
-<label class="efield"><small>${ar ? 'العملة' : 'Currency'}</small><select name="currency"><option value="">${ar ? 'الكل' : 'Any'}</option>${['USD', 'IQD'].map((c) => `<option${f.currency === c ? ' selected' : ''}>${c}</option>`).join('')}</select></label>
-<label class="efield"><small>${ar ? 'السعر من' : 'Min price'}</small><input name="min" type="number" inputmode="numeric" value="${attr(String(f.min ?? ''))}"></label>
-<label class="efield"><small>${ar ? 'السعر إلى' : 'Max price'}</small><input name="max" type="number" inputmode="numeric" value="${attr(String(f.max ?? ''))}"></label>
-<a class="link" href="${attr(listQ(ctx))}">${ar ? 'مسح كل شيء' : 'Clear all'}</a></div></details>` : '';
-  return `<form class="esearch${onPage ? ' on-page rv' : ' rise'}" style="--i:3" method="get" action="${attr(ctx.basePath)}/properties" role="search">${lang}
-<fieldset class="eseg">${seg}</fieldset>
-<div class="row2"><label class="efield"><small>${esc(e.type)}</small><select name="type"><option value="">${esc(e.anyType)}</option>${types.map((k) => `<option value="${attr(k)}"${f.type === k ? ' selected' : ''}>${esc(typeName(k, ctx.lang))}</option>`).join('')}</select></label>
-<label class="efield"><small>${esc(e.where)}</small><input name="where" list="eplaces" value="${attr(f.place ?? f.area ?? f.city ?? '')}" placeholder="${attr(e.wherePh)}" maxlength="80" autocomplete="off"><datalist id="eplaces">${places.map((x) => `<option value="${attr(x)}">`).join('')}</datalist></label></div>
-<button class="btn go" type="submit">${icon('search', 'ic')}${esc(e.search)}</button>${more}</form>`;
-}
-/** Ways in: one tap to "for rent" or "villas", with how many there are. */
-function estatePaths(ctx: Ctx) {
-  const ls = ctx.listings, t = ctx.t;
-  const by = (f: (l: WebsiteListing) => boolean) => ls.filter(f).length;
-  const chips: string[] = [];
-  const sale = by((l) => l.purpose === 'sale'), rent = by((l) => l.purpose === 'rent');
-  if (sale && rent) chips.push(`<a href="${attr(listQ(ctx, { purpose: 'sale' }))}">${esc(t.forSale)} <span class="n">${sale}</span></a>`, `<a href="${attr(listQ(ctx, { purpose: 'rent' }))}">${esc(t.forRent)} <span class="n">${rent}</span></a>`);
-  const types = [...new Set(ls.map((l) => l.type))].map((k) => [k, by((l) => l.type === k)] as const).sort((a, b) => b[1] - a[1]);
-  if (types.length > 1) for (const [k, n] of types) chips.push(`<a href="${attr(listQ(ctx, { type: k }))}">${esc(typeName(k, ctx.lang))} <span class="n">${n}</span></a>`);
-  return chips.length > 1 ? `<nav class="epaths rv" aria-label="${attr(E[ctx.lang].browseBy)}">${chips.join('')}</nav>` : '';
-}
-/** The office in four numbers, all read from its own live listings. */
-function estateStats(ctx: Ctx) {
-  const e = E[ctx.lang], ls = ctx.listings;
-  if (ls.length < 2) return '';
-  const areas = new Set(ls.map((l) => l.area || l.city).filter(Boolean)).size;
-  const cells = [[ls.length, e.homes], [ls.filter((l) => l.purpose === 'sale').length, e.forSale], [ls.filter((l) => l.purpose === 'rent').length, e.forRent], [areas, e.areas]]
-    .filter(([n]) => n).map(([n, label]) => `<div><b class="num">${n}</b><span>${esc(String(label))}</span></div>`).join('');
-  return `<div class="estats rv">${cells}</div>`;
-}
-
 function sectionHtml(ctx: Ctx, sec: WebSection, first: boolean): string {
+  const own = ctx.design.section?.(ctx, sec, first);
+  if (own != null) return own;
   const t = ctx.t, lang = ctx.lang;
   const block = (inner: string, extra = '') => (inner ? `<section class="wsec"><div class="wwrap">${sectionHead(ctx, sec, extra)}${inner}</div></section>` : '');
   switch (sec.type) {
@@ -154,16 +71,12 @@ function sectionHtml(ctx: Ctx, sec: WebSection, first: boolean): string {
       const count = ctx.listings.length === 1 ? t.availableOne : ctx.listings.length ? fill(t.available, { n: ctx.listings.length }) : '';
       return `<section class="hero${photo ? ' photo' : ''}">${photo ? `<img class="bgimg" src="${attr(img!)}" alt="" fetchpriority="high" decoding="async">` : ''}<div class="wwrap">
 ${cities ? `<p class="eyebrow rise" style="--i:0">${esc(cities)}</p>` : ''}<h1 class="display rise" style="--i:1;margin-top:18px">${esc(title)}</h1>${text ? `<p class="lead rise" style="--i:2">${esc(text)}</p>` : ''}
-${ctx.design.id === 'estate' && ctx.listings.length ? estateSearch(ctx) : `<div class="acts rise" style="--i:3">${acts}</div>`}${count || ctx.contact.phone ? `<div class="foot rise" style="--i:4"><span>${esc(count)}</span>${ctx.contact.phone ? `<span class="num" dir="ltr">${esc(ctx.contact.phone)}</span>` : ''}</div>` : ''}</div></section>`;
+<div class="acts rise" style="--i:3">${acts}</div>${count || ctx.contact.phone ? `<div class="foot rise" style="--i:4"><span>${esc(count)}</span>${ctx.contact.phone ? `<span class="num" dir="ltr">${esc(ctx.contact.phone)}</span>` : ''}</div>` : ''}</div></section>`;
     }
     case 'about': {
       const body = field(sec, 'text', lang) || field(sec, 'body', lang) || pick(ctx.site.about, lang);
       if (!body) return '';
       const label = sectionHeading('about', undefined, lang), own = pick(sec.title as Two, lang);
-      if (ctx.design.id === 'estate') {
-        const pic = ctx.listings.find((l, i) => i > 0 && l.cover)?.cover ?? ctx.listings[0]?.cover ?? null;
-        return `<section class="wsec"><div class="wwrap"><div class="eabout">${pic ? `<figure class="rv"><img src="${attr(pic)}" alt="" loading="lazy" decoding="async"></figure>` : ''}<div class="rv" style="--i:1"><p class="eyebrow"><span class="idx num">${two(++ctx.n)}</span>${esc(label)}</p><h2 class="display" style="font-size:clamp(30px,3.8vw,48px);margin-top:14px">${esc(own && own !== label && !['About us', 'من نحن'].includes(own) ? own : LINE[lang].about)}</h2><div class="body">${paras(body)}</div></div></div>${estateStats(ctx)}</div></section>`;
-      }
       return `<section class="wsec"><div class="wwrap about"><div class="rv"><p class="eyebrow"><span class="idx num">${two(++ctx.n)}</span>${esc(label)}</p><h2 class="display" style="font-size:clamp(28px,3.6vw,44px);margin-top:14px">${esc(own && own !== label ? own : ctx.tagline || LINE[lang].about)}</h2></div><div class="body rv" style="--i:1">${paras(body)}</div></div></section>`;
     }
     case 'products': {
@@ -174,16 +87,14 @@ ${ctx.design.id === 'estate' && ctx.listings.length ? estateSearch(ctx) : `<div 
     }
     case 'listings': {
       const all = ctx.pageSlug === 'properties';
-      const search = all ? (ctx.design.id === 'estate' ? estateSearch(ctx, true) : listingSearch(ctx)) : '';
+      const search = all ? listingSearch(ctx) : '';
       if (!ctx.listings.length) return all ? block(`${search}<p class="wempty">${lang === 'ar' ? 'لا توجد عقارات تطابق بحثك.' : 'No properties match your search.'}</p>`) : '';
-      const estate = ctx.design.id === 'estate';
       const shown = all ? ctx.listings : ctx.listings.slice(0, 6);
       const toAll = `${attr(ctx.basePath)}/properties${lang === (ctx.site.lang === 'en' ? 'en' : 'ar') ? '' : `?lang=${lang}`}`;
       const extra = !all && ctx.listings.length > shown.length ? `<a class="link" href="${toAll}">${t.allProperties}<span class="arrow" aria-hidden="true">→</span></a>` : '';
       const count = all ? `<p class="count num">${esc(fill(t.results, { n: ctx.listings.length }))}</p>` : '';
       const more = extra ? `<div class="more"><a class="btn" href="${toAll}">${t.allProperties} <span class="num">(${ctx.listings.length})</span><span class="arrow" aria-hidden="true">→</span></a></div>` : '';
-      const cards = shown.map((l, i) => { const card = listingCard(ctx, l, i); return estate && !all && i === 0 && shown.length >= 4 ? card.replace('<a class="lc rv"', '<a class="lc feat rv"') : card; }).join('');
-      return block(`${search}${estate && !all ? estatePaths(ctx) : ''}${count}<div class="lgrid">${cards}</div>${more}`, extra);
+      return block(`${search}${count}<div class="lgrid">${shown.map((l, i) => listingCard(ctx, l, i)).join('')}</div>${more}`, extra);
     }
     case 'services': {
       const items = itemsOf(sec).map((it, i) => `<article class="wcard rv" style="--i:${i % 3}"><div class="bd"><div class="tt">${esc(strOf(it.title ?? it.name, lang))}</div>${strOf(it.text ?? it.desc, lang) ? `<div class="mt">${esc(strOf(it.text ?? it.desc, lang))}</div>` : ''}</div></article>`).join('');
@@ -243,13 +154,44 @@ function headerHtml(ctx: Ctx, pages: { slug: string; title: any }[], current: st
   const nav = pages.slice(0, 5).map((p) => `<a href="${attr(ctx.basePath)}/${p.slug}${q}"${p.slug === current ? ' aria-current="page"' : ''}>${esc(pick(p.title, ctx.lang) || p.slug || t.hero)}</a>`).join('')
     + (pages.some((p) => p.slug === 'properties') ? '' : `<a href="${attr(ctx.basePath)}/properties${q}"${current === 'properties' ? ' aria-current="page"' : ''}>${t.listings}</a>`);
   return `<header class="wtop"><div class="wwrap"><a class="wbrand" href="${attr(ctx.basePath)}/${q}">${ctx.logo ? `<img src="${attr(ctx.logo)}" alt="">` : `<span class="mono">${esc(initials(ctx.name))}</span>`}<span>${esc(ctx.name)}</span></a>
-<nav class="wnav">${nav}</nav>${ctx.design.id === 'estate' && ctx.contact.whatsapp ? `<a class="btn sm wa wcall" href="${attr(waHref(ctx.contact.whatsapp, fill(t.waHello, { what: ctx.name, url: ctx.origin + '/' }))!)}" rel="noopener">${icon('wa', 'ic')}${t.whatsapp}</a>` : ''}<a class="wlang" href="${attr(altHref)}" hreflang="${other}" lang="${other}">${other === 'en' ? 'English' : 'العربية'}</a></div></header>`;
+<nav class="wnav">${nav}</nav><a class="wlang" href="${attr(altHref)}" hreflang="${other}" lang="${other}">${other === 'en' ? 'English' : 'العربية'}</a></div></header>`;
 }
 function footerHtml(ctx: Ctx) {
   const t = ctx.t, c = ctx.contact;
   const links = [c.phone ? `<a class="num" dir="ltr" href="${attr(telHref(c.phone)!)}">${esc(c.phone)}</a>` : '', c.email ? `<a href="mailto:${attr(c.email)}">${esc(c.email)}</a>` : ''].filter(Boolean).join('');
   return `<footer class="wfoot"><div class="wwrap"><div class="top"><div><p class="name" style="margin:0">${esc(ctx.name)}</p>${ctx.tagline ? `<p style="margin:10px 0 0;max-width:46ch">${esc(ctx.tagline)}</p>` : ''}</div><div style="display:grid;gap:6px">${links}${c.address ? `<span>${esc(c.address)}</span>` : ''}</div></div>
 <div class="bot"><span>© ${new Date().getFullYear()} ${esc(ctx.name)}</span><a href="https://hemlohq.com/${ctx.lang === 'en' ? 'en/' : ''}systems/" rel="noopener">${t.powered}</a></div></div></footer>`;
+}
+
+/** The shared property page: photographs, the facts, and a side card with the actions. */
+function sharedProperty(ctx: Ctx, p: WebsiteProperty, logo: string | null, basePath: string) {
+  const t = ctx.t, lang = ctx.lang, q = langQ(ctx);
+  const canonical = `${ctx.origin}/properties/${encodeURIComponent(p.slug)}`;
+  const photos = p.photos.slice(0, 5);
+  // the first photograph shares its name with the card it came from: the browser carries one into the other
+  const photoHtml = photos.length ? `<div class="wphotos n${Math.min(photos.length, 5)} rv">${photos.map((x, i) => `<button type="button" data-photo="${attr(x.url)}" aria-label="${attr(x.caption ?? p.title)}"><img src="${attr(x.url)}" alt="${attr(x.caption ?? p.title)}" ${i ? 'loading="lazy"' : `fetchpriority="high" style="view-transition-name:p-${attr(p.slug)}"`} decoding="async">${i === 0 && p.photos.length > 1 ? `<span class="btn sm light all">${icon('grid', 'ic')}${t.allPhotos} <span class="num">${p.photos.length}</span></span>` : ''}</button>`).join('')}</div>`
+    + p.photos.slice(5).map((x) => `<span hidden data-photo="${attr(x.url)}"></span>`).join('') : '';
+  const fact = (label: string, value: string | number | null) => value == null || value === '' ? '' : `<div><dt>${esc(label)}</dt><dd>${esc(String(value))}</dd></div>`;
+  const ar = lang === 'ar', unavailable = ['sold', 'rented'].includes(p.status), held = p.status === 'reserved' || p.status === 'negotiating';
+  const facts = [fact(ar ? 'النوع' : 'Type', typeName(p.type, lang)), fact(ar ? 'الغرض' : 'Purpose', p.purpose === 'rent' ? t.forRent : t.forSale), fact(ar ? 'المساحة' : 'Area', p.size ? fill(t.sqm, { n: p.size }) : null),
+    fact(ar ? 'الأرض' : 'Land', p.land ? fill(t.sqm, { n: p.land }) : null), fact(ar ? 'غرف النوم' : 'Bedrooms', p.bedrooms), fact(ar ? 'الحمامات' : 'Bathrooms', p.bathrooms), fact(ar ? 'الطوابق' : 'Floors', p.floors),
+    fact(ar ? 'موقف السيارات' : 'Parking', p.parking), fact(ar ? 'سنة البناء' : 'Year built', p.yearBuilt)].join('');
+  const links = [p.map ? `<a class="link" href="https://www.openstreetmap.org/?mlat=${p.map.lat}&mlon=${p.map.lng}#map=16/${p.map.lat}/${p.map.lng}" rel="noopener" target="_blank">${icon('pin', 'ic')}${t.map}</a>` : '',
+    p.video && /^https:\/\//.test(p.video) ? `<a class="link" href="${attr(p.video)}" rel="noopener" target="_blank">${t.video}<span class="arrow" aria-hidden="true">→</span></a>` : ''].filter(Boolean).join('');
+  const wa = ctx.contact.whatsapp ? waHref(ctx.contact.whatsapp, fill(t.waHello, { what: p.title, url: canonical })) : null;
+  const tel = telHref(ctx.contact.phone);
+  const aside = unavailable ? `<aside class="aside"><p class="wempty" style="margin:0">${t.unavailable}</p><a class="btn block" href="${attr(basePath)}/properties${q}">${t.allProperties}</a></aside>`
+    : `<aside class="aside"><div class="who">${logo ? `<img src="${attr(logo)}" alt="" width="40" height="40" style="border-radius:999px;object-fit:cover">` : ''}<div><b>${esc(ctx.name)}</b>${ctx.contact.address ? `<small>${esc(ctx.contact.address)}</small>` : ''}</div></div>
+${wa ? `<a class="btn wa block" href="${attr(wa)}" rel="noopener">${icon('wa', 'ic')}${t.whatsapp}</a>` : ''}${tel ? `<a class="btn block" href="${attr(tel)}">${icon('call', 'ic')}${t.call}</a>` : ''}<button class="btn primary block" type="button" data-inquire>${t.inquire}</button><p class="note">${t.replyNote}</p></aside>`;
+  const bar = unavailable ? '' : `<div class="mbar">${wa ? `<a class="btn wa" href="${attr(wa)}" rel="noopener">${icon('wa', 'ic')}${t.whatsapp}</a>` : ''}<button class="btn primary" type="button" data-inquire>${t.inquire}</button></div>`;
+  const main = `<main class="wdetail"><div class="wwrap"><a class="crumb" href="${attr(basePath)}/properties${q}"><span class="arrow" aria-hidden="true">→</span>${t.allProperties}</a>
+<div class="dhead rv"><div><p class="eyebrow">${esc([typeName(p.type, lang), p.purpose === 'rent' ? t.forRent : t.forSale].join(' · '))}</p><h1 class="display">${esc(p.title)}</h1><p class="where">${esc([p.area, p.city].filter(Boolean).join(' · '))}</p></div>
+<div class="dprice"><div class="v num" dir="ltr">${esc(p.price)}</div><div class="badges">${held || unavailable ? `<span class="badge warn"><i class="dot"></i>${esc(STATUS[lang][p.status] ?? p.status)}</span>` : ''}${p.negotiable && !unavailable ? `<span class="badge">${t.negotiable}</span>` : ''}</div></div></div>
+${photoHtml}<div class="dgrid"><div>${facts ? `<dl class="dfacts rv">${facts}</dl>` : ''}
+${p.description[lang] ? `<div class="dblock rv"><h2 class="display">${t.aboutProperty}</h2><div class="wmuted" style="font-size:17px">${paras(p.description[lang]!)}</div></div>` : ''}
+${p.features.length ? `<div class="dblock rv"><h2 class="display">${t.features}</h2><ul class="wfeatures">${p.features.map((f) => `<li>${esc(featureName(f, lang))}</li>`).join('')}</ul></div>` : ''}
+${links ? `<div class="dblock rv" style="display:flex;flex-wrap:wrap;gap:24px">${links}</div>` : ''}</div>${aside}</div></div></main>`;
+  return { main, bar };
 }
 
 export function webPublicRoutes(d: Deps) {
@@ -297,51 +239,69 @@ ${wa ? `<a class="btn wa" style="max-width:320px;margin:0 auto" href="${attr(waH
     const validMax = max == null || (Number.isSafeInteger(max) && max >= 0 && max <= 2_000_000_000);
     const priceRange = currency && (min != null || max != null) && validMin && validMax && (min == null || max == null || min <= max)
       ? { ...(min == null ? {} : { min }), ...(max == null ? {} : { max }) } : {};
-    return { ...(q ? { q } : {}), ...(city ? { city } : {}), ...(area ? { area } : {}), ...(place ? { place } : {}), ...(purpose ? { purpose } : {}), ...(type ? { type } : {}), ...(currency ? { currency } : {}), ...priceRange };
+    const sort = c.req.query('sort') === 'price-asc' ? 'price-asc' as const : c.req.query('sort') === 'price-desc' ? 'price-desc' as const : undefined;
+    return { ...(sort ? { sort } : {}), ...(q ? { q } : {}), ...(city ? { city } : {}), ...(area ? { area } : {}), ...(place ? { place } : {}), ...(purpose ? { purpose } : {}), ...(type ? { type } : {}), ...(currency ? { currency } : {}), ...priceRange };
   };
+
+  const photosAt = () => d.env.SYSTEM_URL ?? 'https://system.hemlohq.com';
+  const PROPERTIES_PAGE = { id: 'public-properties', slug: 'properties', kind: 'listings', title: { ar: 'عقاراتنا', en: 'Our properties' }, sections: [{ id: 'public-listings', type: 'listings', title: { ar: 'العقارات', en: 'Properties' } }], seo: {} };
+  const langOf = (c: Context, config: any): Lang => (c.req.query('lang') === 'en' ? 'en' : c.req.query('lang') === 'ar' ? 'ar' : config?.lang === 'en' ? 'en' : 'ar');
+  /** A business's own site (the database), or the public sample (sample.ts): both go through the same rendering. */
+  const siteFor = async (sub: string, lang: Lang) => (sub === SAMPLE_SUB ? sampleSite(lang) : await siteRow(sub));
+  const validSub = (sub: string) => !!sub && !RESERVED.has(sub) && /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/.test(sub);
 
   async function serve(c: Context, slug: string, filters: WebsiteListingFilter = {}) {
     const sub = subOf(c);
-    if (!sub || RESERVED.has(sub) || !/^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/.test(sub)) return html(messagePage('ar', null, 'notFound', null), 404, 'no-store');
-    const site = await siteRow(sub);
+    if (!validSub(sub)) return html(messagePage('ar', null, 'notFound', null), 404, 'no-store');
+    const sample = sub === SAMPLE_SUB;
+    const site: any = await siteFor(sub, c.req.query('lang') === 'en' ? 'en' : 'ar');
     const config = (site?.publishedSnapshot ?? site)!;
-    const lang: Lang = c.req.query('lang') === 'en' ? 'en' : c.req.query('lang') === 'ar' ? 'ar' : config?.lang === 'en' ? 'en' : 'ar';
+    const lang = langOf(c, config);
     if (!site) return html(messagePage(lang, null, 'notFound', null), 404, 'no-store');
     const adapter = websiteAdapterFor(site.vertical);
     if (!adapter) return html(messagePage(lang, null, 'notFound', null), 404, 'no-store');
-    if (!(await addonEntitlement(d.db, site.organizationId, 'website')).active) return html(messagePage(lang, null, 'notFound', null), 404, 'no-store');
+    if (!sample && !(await addonEntitlement(d.db, site.organizationId, 'website')).active) return html(messagePage(lang, null, 'notFound', null), 404, 'no-store');
     const origin = originOf(c, sub);
     if (site.status !== 'published') {
       const wa = site.settings?.contact?.whatsapp ?? site.settings?.contact?.phone ?? null;
       return html(messagePage(lang, site.theme, 'notReady', wa), 200, 'no-store');
     }
-    const t = W[lang];
-    const built = await withOrg(d.db, site.organizationId, async (tx) => {
+    const t = W[lang], design = designFor(site.vertical);
+    const pageOf = (pages: any[]) => (slug === '' ? pages.find((p) => p.slug === '') : pages.find((p) => p.slug === slug)) ?? (slug === 'properties' ? PROPERTIES_PAGE : null);
+    // which pages need the live listings: the ones that show them, and (for a design that stages them) the hero and the office
+    const needsListings = (page: any) => { const types = new Set((page.sections ?? []).map((s: any) => s.type)); return adapter.sections.some((x) => types.has(x)) || (design.id === 'estate' && (types.has('hero') || types.has('about'))); };
+    const built = sample ? (() => {
+      const page = pageOf(config.pages);
+      if (!page) return null;
+      const cs = config.settings.contact;
+      return { pages: config.pages, page, name: pick(config.name, lang), tagline: pick(config.tagline, lang), about: config.about, logo: null,
+        contact: { phone: cs.phone, whatsapp: cs.whatsapp, email: cs.email, address: cs.address, mapUrl: null }, products: [],
+        listings: needsListings(page) ? sampleListings(lang, photosAt(), origin, slug === 'properties' ? filters : {}) : [] };
+    })() : await withOrg(d.db, site.organizationId, async (tx) => {
       const pages = site.publishedSnapshot?.pages ?? await tx.select().from(webPage).where(and(eq(webPage.organizationId, site.organizationId), eq(webPage.websiteId, site.id))).orderBy(asc(webPage.sort), asc(webPage.createdAt));
-      let page: any = slug === '' ? pages.find((p) => p.slug === '') : pages.find((p) => p.slug === slug);
-      if (!page && slug === 'properties') page = { id: 'public-properties', slug, kind: 'listings', title: { ar: 'عقاراتنا', en: 'Our properties' }, sections: [{ id: 'public-listings', type: 'listings', title: { ar: 'العقارات', en: 'Properties' } }], seo: {} };
+      const page: any = pageOf(pages);
       if (!page) return null;
       const [o] = await tx.select({ name: organization.name }).from(organization).where(eq(organization.id, site.organizationId));
       const [ss] = await tx.select({ logoId: sysSettings.logoId }).from(sysSettings).where(eq(sysSettings.organizationId, site.organizationId));
-      let logo = (await fileUrl(d.env, site.organizationId, config.logoId)) ?? (ss?.logoId ? await fileUrl(d.env, site.organizationId, ss.logoId) : null);
+      const logo = (await fileUrl(d.env, site.organizationId, config.logoId)) ?? (ss?.logoId ? await fileUrl(d.env, site.organizationId, ss.logoId) : null);
       const cs = config.settings?.contact ?? {};
       const contact = { phone: cs.phone ?? null, whatsapp: cs.whatsapp ?? null, email: cs.email ?? null, address: cs.address ?? null, mapUrl: cs.mapUrl ?? null };
       if (site.vertical === 'realestate') { const s = await settingsOf(tx, site.organizationId); contact.phone ??= s.phone; contact.whatsapp ??= s.whatsapp ?? s.phone; contact.email ??= s.email; contact.address ??= s.address; }
-      const types = new Set((page.sections ?? []).map((s: any) => s.type));
-      const content = adapter.sections.some((section) => types.has(section)) ? await adapter.load(tx, d, site.organizationId, lang, origin, slug === 'properties' ? filters : {}) : { listings: [] };
+      const content = needsListings(page) ? await adapter.load(tx, d, site.organizationId, lang, origin, slug === 'properties' ? filters : {}) : { listings: [] };
       return { pages, page, name: pick(config.name, lang) || o?.name || 'Hemlo', tagline: pick(config.tagline, lang), about: config.about, logo, contact, products: [], listings: content.listings };
     });
     if (!built) return html(messagePage(lang, site.theme, 'notFound', site.settings?.contact?.whatsapp ?? null), 404, 'no-store');
 
     const publishedSite = { ...site, ...config };
     const basePath = new URL(origin).pathname.replace(/\/$/, '');
-    const ctx: Ctx = { d, org: site.organizationId, site: publishedSite, lang, origin, t, basePath, pageSlug: slug, filters, logo: built.logo, name: built.name, tagline: built.tagline, contact: built.contact, products: built.products, listings: built.listings, n: 0, onPhoto: false, design: designFor(site.vertical) };
+    const ctx: Ctx = { d, org: site.organizationId, site: publishedSite, lang, origin, t, basePath, pageSlug: slug, filters, logo: built.logo, name: built.name, tagline: built.tagline,
+      contact: built.contact, products: built.products, listings: built.listings, n: 0, onPhoto: false, design, pages: built.pages, sample };
     const other: Lang = lang === 'ar' ? 'en' : 'ar';
     const altHref = `${origin}/${slug}${other === (config.lang === 'en' ? 'en' : 'ar') ? '' : `?lang=${other}`}`;
     const content = (built.page.sections ?? []).filter((sec: any) => !sec.hidden).map((sec: any, i: number) => sectionHtml(ctx, sec, i === 0)).join('');
-    const waHome = ctx.contact.whatsapp ? waHref(ctx.contact.whatsapp, fill(t.waHello, { what: built.name, url: origin + '/' })) : null;
-    const bar = ctx.design.id === 'estate' ? `<div class="mbar">${waHome ? `<a class="btn wa" href="${attr(waHome)}" rel="noopener">${icon('wa', 'ic')}${t.whatsapp}</a>` : ''}<button class="btn primary" type="button" data-inquire>${t.inquire}</button></div>` : '';
-    const body = `${headerHtml(ctx, built.pages, slug, altHref)}<main>${content}</main>${footerHtml(ctx)}${bar}${inquiryDialog(lang, built.name)}`;
+    const header = design.header ? design.header(ctx, slug, altHref) : headerHtml(ctx, built.pages, slug, altHref);
+    const bar = design.bar?.(ctx) ?? '';
+    const body = `${header}<main>${content}</main>${design.footer ? design.footer(ctx) : footerHtml(ctx)}${bar}${design.chrome?.(ctx, altHref) ?? ''}${inquiryDialog(lang, built.name)}`;
     const script = INQUIRY_SCRIPT({ send: t.send, sending: t.sending, badPhone: t.badPhone, failed: t.failed, page: slug || 'home', endpoint: `${basePath}/inquiry` });
 
     const seo = built.page.seo ?? {};
@@ -352,73 +312,75 @@ ${wa ? `<a class="btn wa" style="max-width:320px;margin:0 auto" href="${attr(waH
     if (built.contact.phone) jsonld[0].telephone = built.contact.phone;
     if (built.logo) jsonld[0].logo = built.logo;
     if (built.contact.address) jsonld[0].address = { '@type': 'PostalAddress', streetAddress: built.contact.address, addressCountry: 'IQ' };
-    const robots = seo.noindex || (slug === 'properties' && Object.keys(filters).length > 0) ? 'noindex' : 'index';
-    return html(webFrame({ lang, title, description, canonical, alt: altHref, image: built.listings[0]?.cover ?? null, robots, theme: config.theme, body, bodyClass: [ctx.onPhoto ? 'on-photo' : '', bar ? 'has-bar' : ''].join(' ').trim() || undefined, script, jsonld, design: ctx.design }), 200);
+    const robots = sample || seo.noindex || (slug === 'properties' && Object.keys(filters).length > 0) ? 'noindex' : 'index';
+    return html(webFrame({ lang, title, description, canonical, alt: altHref, image: built.listings[0]?.cover ?? null, robots, theme: config.theme, body,
+      bodyClass: [ctx.onPhoto ? 'on-photo' : '', bar ? 'has-bar' : ''].join(' ').trim() || undefined, script, jsonld, design, fontBase: `${basePath}/_hemlo/fonts` }), 200);
   }
 
   async function serveProperty(c: Context, slug: string) {
     const sub = subOf(c);
-    if (!sub || RESERVED.has(sub) || !/^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/.test(sub)) return html(messagePage('ar', null, 'notFound', null), 404, 'no-store');
-    const site = await siteRow(sub);
+    if (!validSub(sub)) return html(messagePage('ar', null, 'notFound', null), 404, 'no-store');
+    const sample = sub === SAMPLE_SUB;
+    const site: any = await siteFor(sub, c.req.query('lang') === 'en' ? 'en' : 'ar');
     const config = (site?.publishedSnapshot ?? site)!;
-    const lang: Lang = c.req.query('lang') === 'en' ? 'en' : c.req.query('lang') === 'ar' ? 'ar' : config?.lang === 'en' ? 'en' : 'ar';
-    if (!site || site.status !== 'published' || !(await addonEntitlement(d.db, site.organizationId, 'website')).active) return html(messagePage(lang, site?.theme, 'notFound', null), 404, 'no-store');
+    const lang = langOf(c, config);
+    if (!site || site.status !== 'published' || (!sample && !(await addonEntitlement(d.db, site.organizationId, 'website')).active)) return html(messagePage(lang, site?.theme, 'notFound', null), 404, 'no-store');
     const adapter = websiteAdapterFor(site.vertical);
     if (!adapter) return html(messagePage(lang, site.theme, 'notFound', null), 404, 'no-store');
-    const data = await withOrg(d.db, site.organizationId, async (tx) => {
+    const origin = originOf(c, sub), design = designFor(site.vertical);
+    /** Homes like this one: the same kind first, then the same purpose, then anything else on the market. */
+    const similarOf = (list: WebsiteListing[], p: { slug: string; type: string; purpose: string }) =>
+      [...new Set([...list.filter((l) => l.type === p.type), ...list.filter((l) => l.purpose === p.purpose), ...list])].filter((l) => l.slug !== p.slug).slice(0, 4);
+    const data = sample ? (() => {
+      const property = sampleProperty(lang, photosAt(), origin, slug), cs = config.settings.contact;
+      return { property, name: pick(config.name, lang), logo: null, contact: { phone: cs.phone, whatsapp: cs.whatsapp, email: cs.email, address: cs.address, mapUrl: null },
+        similar: property && design.property ? similarOf(sampleListings(lang, photosAt(), origin), property) : [] };
+    })() : await withOrg(d.db, site.organizationId, async (tx) => {
       const property = await adapter.loadProperty(tx, d, site.organizationId, lang, slug);
       const [org] = await tx.select({ name: organization.name }).from(organization).where(eq(organization.id, site.organizationId));
       const [settings] = await tx.select({ logoId: sysSettings.logoId }).from(sysSettings).where(eq(sysSettings.organizationId, site.organizationId));
       const logo = (await fileUrl(d.env, site.organizationId, config.logoId)) ?? (settings?.logoId ? await fileUrl(d.env, site.organizationId, settings.logoId) : null);
       const cs = config.settings?.contact ?? {};
-      const contact = { phone: cs.phone ?? null, whatsapp: cs.whatsapp ?? null,
-        email: cs.email ?? null, address: cs.address ?? null, mapUrl: cs.mapUrl ?? null };
+      const contact = { phone: cs.phone ?? null, whatsapp: cs.whatsapp ?? null, email: cs.email ?? null, address: cs.address ?? null, mapUrl: cs.mapUrl ?? null };
       if (site.vertical === 'realestate') { const s = await settingsOf(tx, site.organizationId); contact.phone ??= s.phone; contact.whatsapp ??= s.whatsapp ?? s.phone; contact.email ??= s.email; contact.address ??= s.address; }
-      return { property, name: pick(config.name, lang) || org?.name || 'Hemlo', logo, contact };
+      const similar = property && design.property ? similarOf((await adapter.load(tx, d, site.organizationId, lang, origin, { limit: 24 })).listings, property) : [];
+      return { property, name: pick(config.name, lang) || org?.name || 'Hemlo', logo, contact, similar };
     });
     if (!data.property) return html(messagePage(lang, site.theme, 'notFound', null), 404, 'no-store');
-    const p = data.property, origin = originOf(c, sub), title = `${p.title} · ${data.name}`;
+    const p = data.property, title = `${p.title} · ${data.name}`;
     const canonical = `${origin}/properties/${encodeURIComponent(slug)}`;
     const description = [p.price, [p.area, p.city].filter(Boolean).join(' · '), p.size ? `${p.size} m²` : '', p.description[lang]?.slice(0, 120)].filter(Boolean).join(' · ').slice(0, 300);
     const publishedSite = { ...site, ...config };
     const basePath = new URL(origin).pathname.replace(/\/$/, '');
-    const t = W[lang], ctx: Ctx = { d, org: site.organizationId, site: publishedSite, lang, origin, t, basePath, pageSlug: `property:${slug}`, filters: {},
-      logo: data.logo, name: data.name, tagline: pick(config.tagline, lang), contact: data.contact, products: [], listings: [], n: 0, onPhoto: false, design: designFor(site.vertical) };
-    const other: Lang = lang === 'ar' ? 'en' : 'ar', altHref = `${canonical}${other === (config.lang === 'en' ? 'en' : 'ar') ? '' : `?lang=${other}`}`;
     const pages = site.publishedSnapshot?.pages ? site.publishedSnapshot.pages.slice(0, 5) : await withOrg(d.db, site.organizationId, (tx) => tx.select({ slug: webPage.slug, title: webPage.title }).from(webPage)
       .where(and(eq(webPage.organizationId, site.organizationId), eq(webPage.websiteId, site.id))).orderBy(asc(webPage.sort)).limit(5));
-    const q = lang === (config.lang === 'en' ? 'en' : 'ar') ? '' : `?lang=${lang}`;
+    const t = W[lang], ctx: Ctx = { d, org: site.organizationId, site: publishedSite, lang, origin, t, basePath, pageSlug: `property:${slug}`, filters: {},
+      logo: data.logo, name: data.name, tagline: pick(config.tagline, lang), contact: data.contact, products: [], listings: [], n: 0, onPhoto: false, design, pages, sample };
+    const other: Lang = lang === 'ar' ? 'en' : 'ar', altHref = `${canonical}${other === (config.lang === 'en' ? 'en' : 'ar') ? '' : `?lang=${other}`}`;
+    const unavailable = ['sold', 'rented'].includes(p.status);
+    let main: string, bar: string;
+    if (design.property) ({ main, bar } = design.property(ctx, p, data.similar, canonical));
+    else ({ main, bar } = sharedProperty(ctx, p, data.logo, basePath));
+    const header = design.header ? design.header(ctx, 'properties', altHref) : headerHtml(ctx, pages, 'properties', altHref);
     const photos = p.photos.slice(0, 5);
-    // the first photograph shares its name with the card it came from: the browser carries one into the other
-    const photoHtml = photos.length ? `<div class="wphotos n${Math.min(photos.length, 5)} rv">${photos.map((x, i) => `<button type="button" data-photo="${attr(x.url)}" aria-label="${attr(x.caption ?? p.title)}"><img src="${attr(x.url)}" alt="${attr(x.caption ?? p.title)}" ${i ? 'loading="lazy"' : `fetchpriority="high" style="view-transition-name:p-${attr(p.slug)}"`} decoding="async">${i === 0 && p.photos.length > 1 ? `<span class="btn sm light all">${icon('grid', 'ic')}${t.allPhotos} <span class="num">${p.photos.length}</span></span>` : ''}</button>`).join('')}</div>`
-      + p.photos.slice(5).map((x) => `<span hidden data-photo="${attr(x.url)}"></span>`).join('') : '';
-    const fact = (label: string, value: string | number | null) => value == null || value === '' ? '' : `<div><dt>${esc(label)}</dt><dd>${esc(String(value))}</dd></div>`;
-    const ar = lang === 'ar', unavailable = ['sold', 'rented'].includes(p.status), held = p.status === 'reserved' || p.status === 'negotiating';
-    const facts = [fact(ar ? 'النوع' : 'Type', typeName(p.type, lang)), fact(ar ? 'الغرض' : 'Purpose', p.purpose === 'rent' ? t.forRent : t.forSale), fact(ar ? 'المساحة' : 'Area', p.size ? fill(t.sqm, { n: p.size }) : null),
-      fact(ar ? 'الأرض' : 'Land', p.land ? fill(t.sqm, { n: p.land }) : null), fact(ar ? 'غرف النوم' : 'Bedrooms', p.bedrooms), fact(ar ? 'الحمامات' : 'Bathrooms', p.bathrooms), fact(ar ? 'الطوابق' : 'Floors', p.floors),
-      fact(ar ? 'موقف السيارات' : 'Parking', p.parking), fact(ar ? 'سنة البناء' : 'Year built', p.yearBuilt)].join('');
-    const links = [p.map ? `<a class="link" href="https://www.openstreetmap.org/?mlat=${p.map.lat}&mlon=${p.map.lng}#map=16/${p.map.lat}/${p.map.lng}" rel="noopener" target="_blank">${icon('pin', 'ic')}${t.map}</a>` : '',
-      p.video && /^https:\/\//.test(p.video) ? `<a class="link" href="${attr(p.video)}" rel="noopener" target="_blank">${t.video}<span class="arrow" aria-hidden="true">→</span></a>` : ''].filter(Boolean).join('');
-    const wa = ctx.contact.whatsapp ? waHref(ctx.contact.whatsapp, fill(t.waHello, { what: p.title, url: canonical })) : null;
-    const tel = telHref(ctx.contact.phone);
-    const aside = unavailable ? `<aside class="aside"><p class="wempty" style="margin:0">${t.unavailable}</p><a class="btn block" href="${attr(basePath)}/properties${q}">${t.allProperties}</a></aside>`
-      : `<aside class="aside"><div class="who">${data.logo ? `<img src="${attr(data.logo)}" alt="" width="40" height="40" style="border-radius:999px;object-fit:cover">` : ''}<div><b>${esc(data.name)}</b>${ctx.contact.address ? `<small>${esc(ctx.contact.address)}</small>` : ''}</div></div>
-${wa ? `<a class="btn wa block" href="${attr(wa)}" rel="noopener">${icon('wa', 'ic')}${t.whatsapp}</a>` : ''}${tel ? `<a class="btn block" href="${attr(tel)}">${icon('call', 'ic')}${t.call}</a>` : ''}<button class="btn primary block" type="button" data-inquire>${t.inquire}</button><p class="note">${t.replyNote}</p></aside>`;
-    const bar = unavailable ? '' : `<div class="mbar">${wa ? `<a class="btn wa" href="${attr(wa)}" rel="noopener">${icon('wa', 'ic')}${t.whatsapp}</a>` : ''}<button class="btn primary" type="button" data-inquire>${t.inquire}</button></div>`;
-    const details = `<main class="wdetail"><div class="wwrap"><a class="crumb" href="${attr(basePath)}/properties${q}"><span class="arrow" aria-hidden="true">→</span>${t.allProperties}</a>
-<div class="dhead rv"><div><p class="eyebrow">${esc([typeName(p.type, lang), p.purpose === 'rent' ? t.forRent : t.forSale].join(' · '))}</p><h1 class="display">${esc(p.title)}</h1><p class="where">${esc([p.area, p.city].filter(Boolean).join(' · '))}</p></div>
-<div class="dprice"><div class="v num" dir="ltr">${esc(p.price)}</div><div class="badges">${held || unavailable ? `<span class="badge warn"><i class="dot"></i>${esc(STATUS[lang][p.status] ?? p.status)}</span>` : ''}${p.negotiable && !unavailable ? `<span class="badge">${t.negotiable}</span>` : ''}</div></div></div>
-${photoHtml}<div class="dgrid"><div>${facts ? `<dl class="dfacts rv">${facts}</dl>` : ''}
-${p.description[lang] ? `<div class="dblock rv"><h2 class="display">${t.aboutProperty}</h2><div class="wmuted" style="font-size:17px">${paras(p.description[lang]!)}</div></div>` : ''}
-${p.features.length ? `<div class="dblock rv"><h2 class="display">${t.features}</h2><ul class="wfeatures">${p.features.map((f) => `<li>${esc(featureName(f, lang))}</li>`).join('')}</ul></div>` : ''}
-${links ? `<div class="dblock rv" style="display:flex;flex-wrap:wrap;gap:24px">${links}</div>` : ''}</div>${aside}</div></div></main>${bar}`;
     const lightbox = photos.length ? `<dialog id="lb" aria-label="${attr(t.allPhotos)}"><span class="n num"></span><button class="ctl x" type="button" aria-label="${attr(t.close)}">${icon('close', 'ic')}</button><button class="ctl pv" type="button" aria-label="${attr(t.prev)}">${icon('prev', 'ic')}</button><button class="ctl nx" type="button" aria-label="${attr(t.next)}">${icon('next', 'ic')}</button><div class="stage"><img alt=""></div></dialog>` : '';
-    const body = `${headerHtml(ctx, pages, 'properties', altHref)}${details}${footerHtml(ctx)}${unavailable ? '' : inquiryDialog(lang, data.name)}${lightbox}`;
+    const body = `${header}${main}${design.footer ? design.footer(ctx) : footerHtml(ctx)}${bar}${design.chrome?.(ctx, altHref) ?? ''}${unavailable ? '' : inquiryDialog(lang, data.name)}${lightbox}`;
     const script = unavailable ? undefined : INQUIRY_SCRIPT({ send: t.send, sending: t.sending, badPhone: t.badPhone, failed: t.failed, page: `property:${slug}`, propertySlug: slug, endpoint: `${basePath}/inquiry` });
     const jsonld = { '@context': 'https://schema.org', '@type': 'RealEstateListing', name: p.title, url: canonical, ...(p.photos[0] ? { image: p.photos.slice(0, 5).map((x) => x.url) } : {}),
       offeredBy: { '@type': 'RealEstateAgent', name: data.name, url: origin, ...(ctx.contact.phone ? { telephone: ctx.contact.phone } : {}) } };
-    return html(webFrame({ lang, title, description, canonical, alt: altHref, image: p.photos[0]?.url ?? null, robots: 'index', theme: config.theme, body, bodyClass: unavailable ? undefined : 'has-bar', script, jsonld, design: ctx.design }), 200);
+    return html(webFrame({ lang, title, description, canonical, alt: altHref, image: p.photos[0]?.url ?? null, robots: sample ? 'noindex' : 'index', theme: config.theme, body,
+      bodyClass: bar ? 'has-bar' : undefined, script, jsonld, design, fontBase: `${basePath}/_hemlo/fonts` }), 200);
   }
+
+  /** The site's typefaces, from its own address (fonts.generated.ts). */
+  const fontBytes = new Map<string, Uint8Array>();
+  r.get('/_hemlo/fonts/:file', (c) => {
+    const name = c.req.param('file'), b64 = WEB_FONTS[name];
+    if (!b64) return c.text('Not found', 404);
+    let bytes = fontBytes.get(name);
+    if (!bytes) { bytes = Uint8Array.from(atob(b64), (ch) => ch.charCodeAt(0)); fontBytes.set(name, bytes); }
+    return new Response(bytes as unknown as BodyInit, { headers: { 'content-type': 'font/woff2', 'cache-control': 'public, max-age=31536000, immutable', 'access-control-allow-origin': '*' } });
+  });
 
   r.get('/robots.txt', async (c) => {
     const sub = subOf(c), site = await siteRow(sub), origin = originOf(c, sub);
@@ -448,7 +410,9 @@ ${links ? `<div class="dblock rv" style="display:flex;flex-wrap:wrap;gap:24px">$
 
   /** A visitor's inquiry: name, phone, a note. Becomes (or updates) a lead in the business's own book. */
   r.post('/inquiry', async (c) => {
-    const sub = subOf(c), site = await siteRow(sub);
+    const sub = subOf(c);
+    if (sub === SAMPLE_SUB) return c.json({ ok: true }, 201); // the sample shows the flow; nothing is stored
+    const site = await siteRow(sub);
     if (!site || site.status !== 'published') return c.json({ error: 'NOT_FOUND' }, 404);
     if (!(await addonEntitlement(d.db, site.organizationId, 'website')).active) return c.json({ error: 'NOT_FOUND' }, 404);
     const b = await c.req.json<Record<string, any>>().catch(() => ({} as Record<string, any>));

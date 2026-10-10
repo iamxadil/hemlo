@@ -11,7 +11,8 @@ import { newId } from '@hemlo/core';
 import { setup, Browser, signInEmail, createOrg } from '../tests/helpers';
 import { seedDemoRealEstate } from '../apps/api/src/demo-realestate';
 
-const PORT = Number(process.env.PORT ?? 8799), ORIGIN = `http://localhost:${PORT}`, SUB = 'nakheel';
+// SITE=sample previews the public sample (no data needed) instead of the seeded agency.
+const PORT = Number(process.env.PORT ?? 8799), ORIGIN = `http://localhost:${PORT}`, SUB = process.env.SITE === 'sample' ? 'sample' : 'nakheel';
 const PUBLIC = new URL('../apps/system/public', import.meta.url).pathname;
 const TYPES: Record<string, string> = { '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.woff2': 'font/woff2' };
 
@@ -28,7 +29,7 @@ await withOrg(t.db, org.id, async (tx) => {
 });
 await owner.post('/v1/web/site/enable');
 const put = await owner.put('/v1/web/site', {
-  subdomain: SUB, name: { ar: 'دار النخيل للعقارات', en: 'Nakheel Real Estate' },
+  subdomain: 'nakheel', name: { ar: 'دار النخيل للعقارات', en: 'Nakheel Real Estate' },
   tagline: { ar: 'بيوت مختارة في أربيل وبغداد، بأسعار واضحة ومواعيد معاينة تناسبك.', en: 'Considered homes in Erbil and Baghdad, honestly priced, shown when it suits you.' },
   about: { ar: 'مكتب عائلي منذ 2009. لا نعرض إلا ما زرناه بأنفسنا، ونقول السعر كما هو، ونرتّب المعاينة حين تناسبك.', en: 'A family office since 2009. We only show homes we have walked through ourselves, we tell you the price as it is, and we arrange viewings when it suits you.' },
   settings: { contact: { phone: '07701234567', whatsapp: '07701234567', email: 'hello@nakheel.iq', address: '100 Street, Erbil' }, cta: { whatsapp: true, phone: true, inquiry: true } },

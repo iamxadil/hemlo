@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { Empty, Icon, Sheet } from '../components/ui';
 import { go } from '../lib/app';
+import { HwBadge, SAMPLE_SITE } from '../components/HwBadge';
 import { useW } from './i18n';
 import { useSite, type Site as SiteT, type Two, type WebPage, type WebSection, type WebSettings, type WebTheme } from './data';
 
@@ -35,7 +36,7 @@ export function Site() {
   if (!site && !entitlement?.active) return (
     <div className="web-wrap">
       <div className="panel web-off">
-        <span className="art"><Icon n="globe" /></span>
+        <HwBadge />
         <h2>{addCopy.intro}</h2>
         <p>{offer?.description?.[lang === 'en' ? 'en' : 'ar'] || addCopy.body}</p>
         <div className="grid max-w-md gap-2 rounded-xl bg-[var(--surface)] p-4 text-start">
@@ -44,7 +45,10 @@ export function Site() {
             : <span className="sub">{addCopy.unconfigured}</span>}
           {request && <span className="pill warn"><Icon n="clock" className="h-4 w-4" />{addCopy.pending}</span>}
         </div>
-        <button className="btn btn-accent" onClick={() => go('/plan')}><Icon n="sparkle" />{addCopy.plan}</button>
+        <div className="flex flex-wrap justify-center gap-2">
+          <button className="btn btn-accent" onClick={() => go('/plan')}><Icon n="sparkle" />{addCopy.plan}</button>
+          <a className="btn btn-secondary" href={SAMPLE_SITE(lang)} target="_blank" rel="noopener">{lang === 'en' ? 'See a sample site' : lang === 'ckb' ? 'ماڵپەڕێکی نموونە ببینە' : 'شاهد موقعاً نموذجياً'}</a>
+        </div>
       </div>
     </div>
   );

@@ -1,4 +1,7 @@
 ---
-import HeroSample from '../views/HeroSample.astro';
+// The sample is now the real thing: the Hemlo Website renderer itself serves it (business.hemlohq.com/s/sample).
+const to = 'https://business.hemlohq.com/s/sample';
 ---
-<HeroSample lang="ar" />
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="robots" content="noindex"><meta http-equiv="refresh" content={`0; url=${to}`}><link rel="canonical" href={to}><title>Hemlo Website · Sample</title></head>
+<body><a href={to}>{to}</a></body></html>
