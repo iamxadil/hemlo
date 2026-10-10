@@ -14,6 +14,7 @@ import { websiteAdapterFor, type WebsiteListing, type WebsiteListingFilter, type
 import { addonEntitlement } from '../../addons';
 import { W, pick, webFrame, waHref, telHref, moneyIqd, sectionHeading, inquiryDialog, INQUIRY_SCRIPT, esc, attr, icon, fill, type Lang } from './theme';
 import { designFor } from './designs';
+import { actor } from '../sys-common';
 import type { AppEnv, Deps } from '../../types';
 
 const RESERVED = new Set(['www', 'api', 'app', 'admin', 'account', 'studio', 'mail', 'ftp', 'cdn', 'static', 'assets', 'demo', 'test', 'systems', 'tools', 'business']);
@@ -250,19 +251,20 @@ ${wa ? `<a class="btn wa" style="max-width:320px;margin:0 auto" href="${attr(waH
   const siteFor = async (sub: string, lang: Lang) => (sub === SAMPLE_SUB ? sampleSite(lang) : await siteRow(sub));
   const validSub = (sub: string) => !!sub && !RESERVED.has(sub) && /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/.test(sub);
 
-  async function serve(c: Context, slug: string, filters: WebsiteListingFilter = {}) {
-    const sub = subOf(c);
-    if (!validSub(sub)) return html(messagePage('ar', null, 'notFound', null), 404, 'no-store');
-    const sample = sub === SAMPLE_SUB;
-    const site: any = await siteFor(sub, c.req.query('lang') === 'en' ? 'en' : 'ar');
+  /** `draft`: the owner's preview: the site as it is now (not as published), rendered the same way, never cached. */
+  async function serve(c: Context, slug: string, filters: WebsiteListingFilter = {}, draft?: any) {
+    const sub = draft ? (draft.subdomain ?? 'site') : subOf(c);
+    if (!draft && !validSub(sub)) return html(messagePage('ar', null, 'notFound', null), 404, 'no-store');
+    const sample = !draft && sub === SAMPLE_SUB;
+    const site: any = draft ?? await siteFor(sub, c.req.query('lang') === 'en' ? 'en' : 'ar');
     const config = (site?.publishedSnapshot ?? site)!;
     const lang = langOf(c, config);
     if (!site) return html(messagePage(lang, null, 'notFound', null), 404, 'no-store');
     const adapter = websiteAdapterFor(site.vertical);
     if (!adapter) return html(messagePage(lang, null, 'notFound', null), 404, 'no-store');
-    if (!sample && !(await addonEntitlement(d.db, site.organizationId, 'website')).active) return html(messagePage(lang, null, 'notFound', null), 404, 'no-store');
-    const origin = originOf(c, sub);
-    if (site.status !== 'published') {
+    if (!sample && !draft && !(await addonEntitlement(d.db, site.organizationId, 'website')).active) return html(messagePage(lang, null, 'notFound', null), 404, 'no-store');
+    const origin = draft ? `https://${sub}.hemlohq.com` : originOf(c, sub);
+    if (!draft && site.status !== 'published') {
       const wa = site.settings?.contact?.whatsapp ?? site.settings?.contact?.phone ?? null;
       return html(messagePage(lang, site.theme, 'notReady', wa), 200, 'no-store');
     }
@@ -312,9 +314,12 @@ ${wa ? `<a class="btn wa" style="max-width:320px;margin:0 auto" href="${attr(waH
     if (built.contact.phone) jsonld[0].telephone = built.contact.phone;
     if (built.logo) jsonld[0].logo = built.logo;
     if (built.contact.address) jsonld[0].address = { '@type': 'PostalAddress', streetAddress: built.contact.address, addressCountry: 'IQ' };
-    const robots = sample || seo.noindex || (slug === 'properties' && Object.keys(filters).length > 0) ? 'noindex' : 'index';
+    const robots = draft || sample || seo.noindex || (slug === 'properties' && Object.keys(filters).length > 0) ? 'noindex' : 'index';
+    // in the preview, links stay put (it is a picture of the site) and fonts come from the API's own address
+    const still = `document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a,form button[type=submit]');if(a){e.preventDefault()}},true);document.addEventListener('submit',function(e){e.preventDefault()},true);`;
     return html(webFrame({ lang, title, description, canonical, alt: altHref, image: built.listings[0]?.cover ?? null, robots, theme: config.theme, body,
-      bodyClass: [ctx.onPhoto ? 'on-photo' : '', bar ? 'has-bar' : ''].join(' ').trim() || undefined, script, jsonld, design, fontBase: `${basePath}/_hemlo/fonts` }), 200);
+      bodyClass: [ctx.onPhoto ? 'on-photo' : '', bar ? 'has-bar' : ''].join(' ').trim() || undefined, script: draft ? script + still : script, jsonld, design,
+      fontBase: draft ? `${d.env.API_URL ?? ''}/v1/web/pub/_hemlo/fonts` : `${basePath}/_hemlo/fonts` }), 200, draft ? 'no-store' : undefined);
   }
 
   async function serveProperty(c: Context, slug: string) {
@@ -371,6 +376,15 @@ ${wa ? `<a class="btn wa" style="max-width:320px;margin:0 auto" href="${attr(waH
     return html(webFrame({ lang, title, description, canonical, alt: altHref, image: p.photos[0]?.url ?? null, robots: sample ? 'noindex' : 'index', theme: config.theme, body,
       bodyClass: bar ? 'has-bar' : undefined, script, jsonld, design, fontBase: `${basePath}/_hemlo/fonts` }), 200);
   }
+
+  /** The owner's live preview of their site as it is now, published or not (the dashboard draws it in a frame). */
+  r.get('/_hemlo/preview', async (c) => {
+    const a = actor(c, 'website', 'manage');
+    const [row] = await withOrg(d.db, a.organizationId, (tx) => tx.select().from(webSite).where(eq(webSite.organizationId, a.organizationId)));
+    if (!row) return html(messagePage('ar', null, 'notFound', null), 404, 'no-store');
+    const page = String(c.req.query('page') ?? '').toLowerCase();
+    return serve(c, /^[a-z0-9-]{0,80}$/.test(page) ? page : '', {}, { ...row, publishedSnapshot: null });
+  });
 
   /** The site's typefaces, from its own address (fonts.generated.ts). */
   const fontBytes = new Map<string, Uint8Array>();

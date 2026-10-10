@@ -129,3 +129,11 @@ export const outbox = {
   },
 };
 export const newClientId = () => (crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+
+/** A page of HTML from the API (the website preview), signed in the same way as every other call. */
+export async function apiHtml(path: string, signal?: AbortSignal): Promise<string> {
+  const { headers, credentials } = whoHeaders();
+  const res = await fetch(API + path, { credentials, headers, signal });
+  if (!res.ok) throw new ApiError(res.status, 'PREVIEW');
+  return res.text();
+}

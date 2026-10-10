@@ -165,6 +165,19 @@ describe('the public website', () => {
     await owner.post('/v1/web/site/publish');
   });
 
+  it('previews the draft to its own manager only, before it is published, and keeps the preview out of search', async () => {
+    await owner.put('/v1/web/site', { name: { en: 'Preview Brand' } });
+    const r = await owner.get('/v1/web/pub/_hemlo/preview?lang=en');
+    expect(r.status).toBe(200);
+    expect(r.headers.get('cache-control')).toContain('no-store');
+    expect(String(r.json)).toContain('Preview Brand'); // the draft, not what is live
+    expect(String(r.json)).toContain('noindex');
+    expect(String((await pub.get('/v1/web/pub?lang=en', siteHeaders)).json)).not.toContain('Preview Brand');
+    expect(String((await owner.get('/v1/web/pub/_hemlo/preview?page=about&lang=en')).json)).toContain('About us');
+    expect((await pub.get('/v1/web/pub/_hemlo/preview')).status).toBe(401);
+    await owner.put('/v1/web/site', { name: { ar: 'أجهزة بغداد', en: 'Baghdad Gadgets' } });
+  });
+
   it('serves an inner page, robots.txt and sitemap.xml', async () => {
     expect(String((await pub.get('/v1/web/pub/about?lang=en', siteHeaders)).json)).toContain('About us');
     expect(String((await pub.get('/v1/web/pub/robots.txt', siteHeaders)).json)).toContain('Sitemap: https://baghdad-gadgets.hemlohq.com/sitemap.xml');
