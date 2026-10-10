@@ -12,7 +12,11 @@ import { HttpError, requireOrgUser } from '../principal';
 import { actor, bad, text } from './sys-common';
 import { isDemoOrg } from './demo';
 import { plansOf, forgetPlans, stateOf, subscriptionOf, forgetSubscription, EDITIONS, GRACE_DAYS, type Plan } from '../subscription';
-import { addonEntitlement, addonOffer, requireAddonOffer } from '../addons';
+import { addonEntitlement, addonOffer, addonsActive, requireAddonOffer } from '../addons';
+
+/** Tiers of one product: the higher one replaces the lower (asking for Starter while on Pro makes no sense). */
+const REPLACES: Record<string, string[]> = { 'connect-pro': ['connect'] };
+const higherOf = (code: string) => Object.keys(REPLACES).filter((k) => REPLACES[k].includes(code));
 import type { AppEnv, Deps } from '../types';
 
 const rowsOf = (r: any): any[] => (Array.isArray(r) ? r : r?.rows ?? []);
@@ -78,13 +82,13 @@ export function billingRoutes(d: Deps) {
     const sub = await subscriptionOf(d.db, a.organizationId);
     const rows = await withSystem(d.db, (tx) => tx.select().from(hemloAddon).where(and(eq(hemloAddon.public, true), eq(hemloAddon.active, true))));
     const compatible = rows.filter((x) => x.compatibleEditions.includes(sub.edition));
-    const [state, out] = await Promise.all([addonEntitlement(d.db, a.organizationId, 'website'), withOrg(d.db, a.organizationId, async (tx) => ({
+    const [states, out] = await Promise.all([addonsActive(d.db, a.organizationId, compatible.map((x) => x.code)), withOrg(d.db, a.organizationId, async (tx) => ({
       requests: await tx.select().from(hemloAddonRequest).where(eq(hemloAddonRequest.organizationId, a.organizationId)).orderBy(desc(hemloAddonRequest.createdAt)).limit(12),
       payments: await tx.select().from(hemloAddonPayment).where(eq(hemloAddonPayment.organizationId, a.organizationId)).orderBy(desc(hemloAddonPayment.createdAt)).limit(24),
     }))]);
     return c.json({ edition: sub.edition, coreStatus: sub.status, owner: (() => { try { actor(c, 'billing', 'manage'); return true; } catch { return false; } })(),
       addons: compatible.map((x) => ({ id: x.id, code: x.code, name: x.name, description: x.description, priceMonth: x.priceMonth, priceYear: x.priceYear, configured: x.priceMonth != null && x.priceYear != null,
-        entitlement: state.entitlement?.addonId === x.id ? { ...state.entitlement, active: state.active } : null })), requests: out.requests, payments: out.payments });
+        entitlement: states[x.code]?.entitlement ? { ...states[x.code].entitlement, active: states[x.code].active } : null })), requests: out.requests, payments: out.payments });
   });
 
   /** Request manual activation; the catalog price is snapshotted server-side and the add-on remains inactive. */
@@ -102,6 +106,7 @@ export function billingRoutes(d: Deps) {
     if (pending.length) throw new HttpError(409, 'ADDON_REQUEST_PENDING');
     const current = await addonEntitlement(d.db, a.organizationId, offer.code);
     if (current.active) throw new HttpError(409, 'ADDON_ALREADY_ACTIVE');
+    for (const up of higherOf(offer.code)) if ((await addonEntitlement(d.db, a.organizationId, up)).active) throw new HttpError(409, 'ADDON_ALREADY_ACTIVE');
     const [request] = await withOrg(d.db, a.organizationId, (tx) => tx.insert(hemloAddonRequest).values({ id: newId(), organizationId: a.organizationId, addonId: offer.id,
       edition: subscription.edition, action: 'activate', billing, price, message: text(b.message, 500, 'BAD_TEXT'), userId: p.userId }).returning());
     await audit(d.db, { kind: 'billing.addon_requested', userId: p.userId, organizationId: a.organizationId, detail: { addonId: offer.id, billing, price } });
@@ -270,6 +275,12 @@ export function adminPricingRoutes(d: Deps) {
         reference: text(b.reference, 120, 'BAD_TEXT'), paidUntil: until, createdBy: s.userId });
       await tx.update(hemloAddonRequest).set({ status: 'done', handledBy: s.userId, handledAt: now }).where(eq(hemloAddonRequest.id, request.id));
     });
+    // an upgrade (Connect → Connect Pro) ends the lower tier: one Connect at a time
+    for (const lower of REPLACES[offer.code] ?? []) {
+      const low = await addonOffer(d.db, lower);
+      if (low) await withOrg(d.db, request.organizationId, (tx) => tx.update(hemloAddonEntitlement).set({ status: 'canceled', updatedAt: now, updatedBy: s.userId })
+        .where(and(eq(hemloAddonEntitlement.organizationId, request.organizationId), eq(hemloAddonEntitlement.addonId, low.id))));
+    }
     await audit(d.db, { kind: 'admin.addon_activated', userId: s.userId, organizationId: request.organizationId, detail: { addonId: offer.id, amount, periods, method, paidUntil: until } });
     return c.json({ request: { ...request, status: 'done' }, entitlement }, 201);
   });

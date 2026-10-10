@@ -15,6 +15,7 @@ import { addonEntitlement } from '../../addons';
 import { W, pick, webFrame, waHref, telHref, moneyIqd, sectionHeading, inquiryDialog, INQUIRY_SCRIPT, esc, attr, icon, fill, type Lang } from './theme';
 import { designFor } from './designs';
 import { actor } from '../sys-common';
+import { onInquiry } from '../../connect/core';
 import type { AppEnv, Deps } from '../../types';
 
 const RESERVED = new Set(['www', 'api', 'app', 'admin', 'account', 'studio', 'mail', 'ftp', 'cdn', 'static', 'assets', 'demo', 'test', 'systems', 'tools', 'business']);
@@ -451,7 +452,10 @@ ${wa ? `<a class="btn wa" style="max-width:320px;margin:0 auto" href="${attr(waH
     const page = typeof b.page === 'string' && /^(?:property:)?[a-z0-9-]{1,80}$/.test(b.page) ? b.page : 'home';
     const propertySlug = b.propertySlug == null ? undefined : String(b.propertySlug).trim().toLowerCase();
     if (propertySlug && !/^[a-z0-9](?:[a-z0-9-]{0,80}[a-z0-9])?$/.test(propertySlug)) return c.json({ error: 'BAD_PROPERTY' }, 400);
-    await withOrg(d.db, site.organizationId, (tx) => adapter.createInquiry(tx, { organizationId: site.organizationId, name, phone, email, message, lang: site.lang, page, propertySlug }));
+    const filed = await withOrg(d.db, site.organizationId, (tx) => adapter.createInquiry(tx, { organizationId: site.organizationId, name, phone, email, message, lang: site.lang, page, propertySlug }));
+    // Hemlo Connect: the visitor hears back on WhatsApp within seconds (after this response, never slowing it)
+    const answer = () => onInquiry(d, site.organizationId, filed.leadId, filed.about).catch((e) => console.error('[connect inquiry]', e instanceof Error ? e.message : e));
+    if (d.later) d.later(answer); else await answer();
     return c.json({ ok: true }, 201);
   });
 

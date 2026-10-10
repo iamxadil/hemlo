@@ -53,6 +53,8 @@ export function PlanPage() {
   const current = plans.find((x) => x.id === s.planId || x.id === s.plan?.id);
   const addonData = aq.data as { addons?: Addon[]; requests?: any[] } | undefined;
   const website = addonData?.addons?.find((x) => x.code === 'website');
+  const connectOffer = addonData?.addons?.find((x) => x.code === 'connect-pro') ?? addonData?.addons?.find((x) => x.code === 'connect');
+  const connectOn = !!addonData?.addons?.some((x) => x.code.startsWith('connect') && x.entitlement?.active);
   const pendingAddon = addonData?.requests?.find((x) => x.addonId === website?.id && x.status === 'new');
   const websiteCopy = addonCopy(lang);
   const priceOf = (x: Plan) => (cycle === 'year' ? x.priceYear : x.priceMonth);
@@ -131,6 +133,16 @@ export function PlanPage() {
             <a className="link-arrow justify-self-center text-sm" href={`${STUDIO}${lang === 'en' ? '/en' : ''}/?from=systems&edition=${sys.business.kind ?? 'store'}`} target="_blank" rel="noopener">{p.studio} →</a>
           </article>
         </div>
+        {connectOffer && (
+          <section className="panel flex flex-wrap items-center justify-between gap-4 border border-[var(--line)] p-5 sm:p-6">
+            <div className="grid gap-2">
+              <div className="flex flex-wrap items-center gap-2"><HwBadge label="Connect" /><span className="sec-t !mb-0">{websiteCopy.optional}</span>
+                {connectOn && <span className="pill ok"><Icon n="check" className="h-4 w-4" />{websiteCopy.active}</span>}</div>
+              <p className="sub max-w-2xl">{name(connectOffer.description)}</p>
+            </div>
+            <a className="btn btn-secondary btn-sm" href="#/connect"><Icon n="wa" />{lang === 'en' ? (connectOn ? 'Open Connect' : 'See plans') : connectOn ? 'افتح Connect' : 'شاهد الخطط'}</a>
+          </section>
+        )}
         {aq.isLoading ? <div className="skeleton h-36" /> : website && (
           <section className="panel grid gap-4 border border-[var(--line)] p-5 sm:p-6" aria-labelledby="website-addon-title">
             <div className="grid gap-1">

@@ -36,7 +36,8 @@ export interface WebsiteAdapter {
   load(tx: Database, deps: Deps, organizationId: string, lang: Lang, origin: string, filter?: WebsiteListingFilter): Promise<{ listings: WebsiteListing[] }>;
   loadProperty(tx: Database, deps: Deps, organizationId: string, lang: Lang, slug: string): Promise<WebsiteProperty | null>;
   sitemapSlugs(tx: Database): Promise<string[]>;
-  createInquiry(tx: Database, input: WebsiteInquiry): Promise<void>;
+  /** Files the inquiry; says who it came from and what about, so Connect can answer on WhatsApp. */
+  createInquiry(tx: Database, input: WebsiteInquiry): Promise<{ leadId: string; about: string | null }>;
 }
 
 export const realEstateWebsiteAdapter: WebsiteAdapter = {
@@ -101,7 +102,7 @@ export const realEstateWebsiteAdapter: WebsiteAdapter = {
     return rows.map((x) => x.slug);
   },
   async createInquiry(tx, input) {
-    const [property] = input.propertySlug ? await tx.select({ id: reProperty.id, purpose: reProperty.purpose, type: reProperty.type, area: reProperty.area, city: reProperty.city })
+    const [property] = input.propertySlug ? await tx.select({ id: reProperty.id, title: reProperty.title, titleEn: reProperty.titleEn, purpose: reProperty.purpose, type: reProperty.type, area: reProperty.area, city: reProperty.city })
       .from(reProperty).where(and(eq(reProperty.organizationId, input.organizationId), eq(reProperty.slug, input.propertySlug), isNotNull(reProperty.publishedAt), inArray(reProperty.status, PUBLIC_STATUSES))).limit(1) : [];
     if (input.propertySlug && !property) throw new HttpError(404, 'PROPERTY_UNAVAILABLE');
     const [lead] = await tx.select({ id: reLead.id, notes: reLead.notes, status: reLead.status }).from(reLead)
@@ -123,6 +124,7 @@ export const realEstateWebsiteAdapter: WebsiteAdapter = {
       await tx.insert(reLeadProperty).values({ id: newId(), organizationId: input.organizationId, leadId, propertyId, status: 'opened', opens: 1, lastOpenAt: now }).onConflictDoNothing();
     }
     await activity(tx, input.organizationId, 'lead.inquiry', { leadId, ...(propertyId ? { propertyId } : {}) }, { source: 'website', page: input.page ?? 'home' });
+    return { leadId, about: property ? (input.lang === 'en' ? property.titleEn || property.title : property.title) : null };
   },
 };
 

@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { withOrg, withSystem, type Database } from '@hemlo/db';
 import { hemloAddon, hemloAddonEntitlement } from '@hemlo/db/schema';
 import { HttpError } from './principal';
@@ -34,3 +34,18 @@ export async function requireAddonOffer(db: Database, organizationId: string, co
   return { offer, subscription: sub };
 }
 
+
+/** Several add-ons at once (Connect's two plans): the catalog, the subscription and the entitlements in three queries. */
+export async function addonsActive(db: Database, organizationId: string, codes: readonly string[]) {
+  const [offers, sub, rows] = await Promise.all([
+    withSystem(db, (tx) => tx.select().from(hemloAddon).where(inArray(hemloAddon.code, [...codes]))), subscriptionOf(db, organizationId),
+    withOrg(db, organizationId, (tx) => tx.select().from(hemloAddonEntitlement).where(eq(hemloAddonEntitlement.organizationId, organizationId))),
+  ]);
+  const now = new Date(), core = sub.status === 'trial' || sub.status === 'active' || sub.status === 'grace';
+  return Object.fromEntries(codes.map((code) => {
+    const offer = offers.find((x) => x.code === code) ?? null, ent = offer ? rows.find((x) => x.addonId === offer.id) ?? null : null;
+    const active = !!offer && offer.active && !!ent && ent.status === 'active' && (!ent.paidUntil || ent.paidUntil > now) && core
+      && ent.edition === sub.edition && offer.compatibleEditions.includes(sub.edition);
+    return [code, { offer, entitlement: ent, active }];
+  })) as Record<string, { offer: typeof hemloAddon.$inferSelect | null; entitlement: typeof hemloAddonEntitlement.$inferSelect | null; active: boolean }>;
+}

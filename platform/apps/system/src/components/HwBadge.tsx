@@ -7,12 +7,13 @@ const CSS = `.hw{display:inline-flex;align-items:center;gap:9px;height:32px;padd
 .hw.ink{background:#0E1420;color:#F4F1EA;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 6px 16px -8px rgba(14,20,32,.5)}
 .hw.lg{height:40px;padding:0 18px;gap:11px;font-size:15px}.hw.lg .hw-lock{height:15px}.hw.lg i{height:17px}`;
 
-export function HwBadge({ tone = 'light', size = 'sm' }: { tone?: 'light' | 'ink'; size?: 'sm' | 'lg' }) {
+/** "Hemlo | Website" by default; the same mark signs Hemlo Connect (label="Connect"). */
+export function HwBadge({ tone = 'light', size = 'sm', label = 'Website' }: { tone?: 'light' | 'ink'; size?: 'sm' | 'lg'; label?: string }) {
   return (
     <>
       <style>{CSS}</style>
-      <span className={['hw', tone === 'ink' && 'ink', size === 'lg' && 'lg'].filter(Boolean).join(' ')} aria-label="Hemlo Website">
-        <svg className="hw-lock" viewBox={LOCKUP_VIEWBOX} aria-hidden="true">{LOCKUP_PATHS.map((d) => <path key={d.slice(0, 12)} d={d} fill="currentColor" />)}</svg><i /><span>Website</span>
+      <span className={['hw', tone === 'ink' && 'ink', size === 'lg' && 'lg'].filter(Boolean).join(' ')} aria-label={`Hemlo ${label}`}>
+        <svg className="hw-lock" viewBox={LOCKUP_VIEWBOX} aria-hidden="true">{LOCKUP_PATHS.map((d) => <path key={d.slice(0, 12)} d={d} fill="currentColor" />)}</svg><i /><span>{label}</span>
       </span>
     </>
   );

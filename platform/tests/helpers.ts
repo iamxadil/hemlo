@@ -4,7 +4,7 @@ import { createPgliteDb } from '@hemlo/db/pglite';
 import { outbox } from '@hemlo/notify';
 import { createApp } from '../apps/api/src/app';
 import { memoryStore } from '../apps/api/src/files';
-import type { Env } from '../apps/api/src/types';
+import type { Deps, Env } from '../apps/api/src/types';
 import type { Engine } from '../apps/api/src/ai/engine';
 
 export const ORIGIN = 'http://localhost:4321';
@@ -21,11 +21,11 @@ export const testEnv: Env = {
   STAFF_PASSKEY: '0',
 };
 
-export async function setup(overrides: Partial<Env> = {}, ai?: Engine) {
+export async function setup(overrides: Partial<Env> = {}, ai?: Engine, extra: { wa?: Deps['wa'] } = {}) {
   const { db, client } = await createPgliteDb();
   const files = memoryStore();
-  const { app, auth } = createApp({ db, env: { ...testEnv, ...overrides }, files, ai });
-  return { db, client, app, auth, files };
+  const { app, auth, deps } = createApp({ db, env: { ...testEnv, ...overrides }, files, ai, wa: extra.wa });
+  return { db, client, app, auth, files, deps };
 }
 
 export type App = Awaited<ReturnType<typeof setup>>['app'];

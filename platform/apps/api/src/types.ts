@@ -5,6 +5,7 @@ import type { Principal } from './principal';
 import type { Staff } from './staff';
 import type { FileStore } from './files';
 import type { Engine } from './ai/engine';
+import type { WaProvider } from './connect/wa';
 
 export type Env = AuthEnv & NotifyEnv & { ALLOWED_RETURN_HOSTS?: string; EARLY_ACCESS_NOTIFY?: string; ADMIN_URL?: string; FIB_BASE_URL?: string;
   // usage tracker (admin): read-only keys for live plan meters, and the plan limits (defaults: the free plans)
@@ -15,10 +16,16 @@ export type Env = AuthEnv & NotifyEnv & { ALLOWED_RETURN_HOSTS?: string; EARLY_A
   // other AI providers (or set their keys in the admin dashboard, kept encrypted with AI_KEYS_SECRET, else AUTH_SECRET)
   OPENAI_API_KEY?: string; OPENROUTER_API_KEY?: string; GEMINI_API_KEY?: string; GROQ_API_KEY?: string; AI_KEYS_SECRET?: string;
   // where the system app lives (the demo agency's photographs are its static files), and the public pages' site
-  SYSTEM_URL?: string; PUBLIC_SITE_URL?: string };
+  SYSTEM_URL?: string; PUBLIC_SITE_URL?: string;
+  // Hemlo Connect: the Meta app (WhatsApp Business Platform) — the webhook's secret and token, and Embedded Signup
+  META_APP_ID?: string; META_APP_SECRET?: string; META_VERIFY_TOKEN?: string; META_CONFIG_ID?: string };
 
 export interface Deps { db: Database; auth: Auth; env: Env; notifier: Notifier; files?: FileStore; ai?: Engine;
   /** tell a clinic's waiting-room screens that its queue changed (the Worker's ScreenHub; absent in tests) */
-  screens?: { changed(org: string): void } }
+  screens?: { changed(org: string): void };
+  /** run work after the response, on its own database connection (the Worker); absent in tests, where it runs inline */
+  later?: (task: () => Promise<void>) => void;
+  /** a WhatsApp of the tests' own (Connect) */
+  wa?: (channel: { provider: string; organizationId: string }) => WaProvider }
 
 export type AppEnv = { Variables: { principal: Principal | null; deps: Deps; staff?: Staff } };

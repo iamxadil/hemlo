@@ -108,10 +108,10 @@ describe('asking for a plan, paying, and the admin side', () => {
 describe('optional add-ons', () => {
   it('launches at its list price, keeps an unconfigured price non-purchasable, and activates only after staff confirms the catalog amount', async () => {
     const offers = (await new Browser(t.app).get('/v1/plans/addons?edition=realestate')).json.addons;
-    expect(offers).toHaveLength(1);
-    expect(offers[0]).toMatchObject({ code: 'website', configured: true, priceMonth: 25000, priceYear: 250000 });
+    expect(offers.map((x: any) => [x.code, x.priceMonth, x.priceYear])).toEqual(expect.arrayContaining([['website', 25000, 250000], ['connect', 35000, 350000], ['connect-pro', 75000, 750000]]));
+    expect(offers).toHaveLength(3);
     await founder.req('PATCH', '/v1/admin/addons/website', { priceMonth: null, priceYear: null });
-    expect((await new Browser(t.app).get('/v1/plans/addons?edition=realestate')).json.addons[0]).toMatchObject({ configured: false, priceMonth: null });
+    expect((await new Browser(t.app).get('/v1/plans/addons?edition=realestate')).json.addons.find((x: any) => x.code === 'website')).toMatchObject({ configured: false, priceMonth: null });
     expect((await new Browser(t.app).get('/v1/plans/addons?edition=store')).json.addons).toEqual([]);
     expect((await shop.post('/v1/billing/addons/website/request')).status).toBe(403);
 
@@ -138,16 +138,31 @@ describe('optional add-ons', () => {
     expect(activated.status).toBe(201);
     expect(activated.json.entitlement).toMatchObject({ status: 'active', price: 12000, billing: 'month', edition: 'realestate' });
     expect((await founder.req('GET', '/v1/admin/overview')).json.waiting.addons).toBe(waitingBefore - 1);
-    expect((await owner.get('/v1/billing/addons')).json.addons[0].entitlement.active).toBe(true);
+    const mine = async (code: string) => (await owner.get('/v1/billing/addons')).json.addons.find((x: any) => x.code === code);
+    expect((await mine('website')).entitlement.active).toBe(true);
+    expect((await mine('connect')).entitlement).toBeNull(); // one add-on's entitlement is never shown on another
     expect((await owner.post('/v1/web/site/enable')).status).toBe(200);
     await owner.put('/v1/web/site', { settings: { contact: { whatsapp: '07701234567' } } });
     expect((await owner.post('/v1/web/site/publish')).status).toBe(200);
     const cancel = await owner.post('/v1/billing/addons/website/cancel-request');
     expect(cancel.status).toBe(201);
-    expect((await owner.get('/v1/billing/addons')).json.addons[0].entitlement.active).toBe(true);
+    expect((await mine('website')).entitlement.active).toBe(true);
     const canceled = await founder.req('PATCH', `/v1/admin/addon-requests/${cancel.json.request.id}`, { action: 'cancel' });
     expect(canceled.json.entitlement.status).toBe('canceled');
     expect((await owner.post('/v1/web/site/publish')).status).toBe(402);
+
+    // Connect's two tiers: an upgrade to Pro ends Starter, and Starter can't be asked for while on Pro
+    const approve = async (code: string, amount: number) => {
+      const req = await owner.post(`/v1/billing/addons/${code}/request`, { billing: 'month' });
+      expect(req.status).toBe(201);
+      return founder.req('PATCH', `/v1/admin/addon-requests/${req.json.request.id}`, { action: 'activate', amount, method: 'cash' });
+    };
+    expect((await approve('connect', 35000)).status).toBe(201);
+    expect((await approve('connect-pro', 75000)).status).toBe(201);
+    expect((await mine('connect-pro')).entitlement.active).toBe(true);
+    expect((await mine('connect')).entitlement.status).toBe('canceled');
+    expect((await owner.post('/v1/billing/addons/connect/request', { billing: 'month' })).json.error).toBe('ADDON_ALREADY_ACTIVE');
+    expect((await owner.get('/v1/connect')).json.plan).toBe('connect-pro');
   });
 });
 

@@ -27,6 +27,10 @@ const site = () => import('./website');
 const WebsitePage = lazy(() => site().then((m) => ({ default: m.Site })));
 const WEBSITE: Page = { path: 'website', icon: 'globe', need: 'website.manage', view: WebsitePage, gapBefore: true };
 
+// ---- Hemlo Connect: WhatsApp inbox, assistant and automations (real estate first; its own chunk) ----
+const ConnectPage = lazy(() => import('./connect').then((m) => ({ default: m.Connect })));
+const CONNECT: Page = { path: 'connect', icon: 'wa', need: 'leads.read', view: ConnectPage, label: (t) => t.nav.connect };
+
 export const STORE_PAGES: Page[] = [
   { path: 'home', icon: 'home', need: 'reports.read', tab: true, view: Home },
   { path: 'sell', icon: 'sell', need: 'sales.create', tab: true, view: Sell },
@@ -82,6 +86,7 @@ export const RE_PAGES: Page[] = [
   { path: 'map', icon: 'globe', need: 'listings.read', view: R('MapView'), label: rl('map') },
   { path: 'reports', icon: 'chart', need: 'reports.read', view: R('Reports'), label: rl('reports') },
   { path: 'agency', icon: 'gear', need: 'agency.configure', view: R('Setup'), label: rl('agency') },
+  CONNECT,
   WEBSITE,
   PLAN,
   { path: 'settings', icon: 'gear', need: null, label: (t) => t.settings.title, view: Settings },

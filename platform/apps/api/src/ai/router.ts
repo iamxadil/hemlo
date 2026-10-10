@@ -29,6 +29,7 @@ export const AI_JOBS: { edition: string; feature: string; vision: boolean }[] = 
   { edition: 'gym', feature: 'members', vision: true },
   { edition: 'realestate', feature: 're_describe', vision: false },
   { edition: 'realestate', feature: 're_ask', vision: false },
+  { edition: 'realestate', feature: 'connect_reply', vision: false },
 ];
 export const EDITIONS_WITH_AI = ['store', 'dental', 'gym', 'realestate', 'school'] as const;
 
