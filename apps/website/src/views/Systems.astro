@@ -115,23 +115,27 @@ const HELPER = L2(
 // ---------- features in every plan, and the add-ons on top (Hemlo Website first) ----------
 // The add-on's price lives in hemlo_addon (admin → Billing → Add-ons); keep these figures in step with it.
 const ADD = L2({
-  title: 'كل الميزات في كل خطة. والإضافات حين تحتاجها.',
-  sub: 'الخطط تختلف بالحجم فقط، لا بالميزات. أما الإضافات فخدمات اختيارية فوق نظامك، لكل منها سعرها، وتُفعَّل من داخل النظام نفسه.',
-  inTitle: 'في كل خطة', included: ['موظفون بصلاحيات، وأجهزة مشتركة', 'يعمل حين ينقطع الإنترنت', 'تذكيرات واتساب بكلماتك', 'المساعد الذكي', 'عربي وإنجليزي وكوردي', 'تصدير بياناتك في أي وقت'],
-  tag: 'إضافة', soonFor: 'متاحة الآن لمكاتب العقارات', name: 'Hemlo Website',
-  pitch: 'موقع لعملك على عنوانه الخاص، يقرأ من نظامك مباشرة. تنشر العقار في Hemlo فيظهر في موقعك، ويصل كل استفسار إلى قائمة زبائنك.',
-  points: ['عنوانك: اسمك.hemlohq.com', 'العقارات من نظامك، بلا نسخ ولا إدخال مرتين', 'الاستفسارات تصبح زبائن محتملين في النظام', 'تصميم هادئ بالعربي والإنجليزي، سريع على أضعف شبكة'],
-  price: '15,000', per: 'د.ع شهرياً', year: 'أو 150,000 د.ع سنوياً (عشرة أشهر)', onTop: 'فوق خطة نظامك',
-  sample: 'شاهد موقعاً نموذجياً', turnOn: 'مشترك في Hemlo؟ فعّلها من صفحة «الخطة» في نظامك.', more: 'المتاجر والأندية والعيادات: قريباً.',
+  eyebrow: 'إضافة', live: 'متاح الآن لمكاتب العقارات',
+  title: ['موقع لمكتبك.', 'يملأ نفسه بنفسه.'],
+  sub: 'Hemlo Website يمنح مكتبك موقعاً خاصاً به. لا تبنيه ولا تحدّثه: كل عقار تضيفه في Hemlo يظهر فيه وحده، وكل من يسأل عنه يصلك.',
+  addr: 'nakheel.hemlohq.com', synced: 'أُضيف في Hemlo · ظاهر في موقعك الآن', syncedSub: 'فيلا بحديقة · دريم ستي',
+  how: 'كيف يعمل', steps: [['أضف العقار في Hemlo', 'كما تفعل الآن: الصور والسعر والتفاصيل.'], ['يظهر في موقعك', 'فوراً، وله صفحة خاصة ترسلها على واتساب.'], ['يسأل الزائر، وتتابع أنت', 'كل استفسار من الموقع يصل إلى قائمة زبائنك المحتملين.']],
+  name: 'Hemlo Website', price: '15,000', per: 'د.ع / شهرياً', onTop: 'يُضاف إلى خطة نظام Hemlo العقاري.', year: 'أو سنوياً بـ 150,000 د.ع، أي شهران مجاناً.',
+  included: ['عنوان باسم مكتبك على hemlohq.com', 'بالعربي والإنجليزي', 'كل عقاراتك، محدّثة دائماً', 'الاستفسارات تصل إلى زبائنك', 'سريع على أي موبايل'],
+  sample: 'شاهد موقعاً نموذجياً', turnOn: 'مشترك في Hemlo؟ فعّله من صفحة «الخطة» في نظامك.', more: 'للمتاجر والأندية والعيادات: قريباً.',
+  plansTitle: 'وفي كل خطة نظام، كل الميزات.', plansSub: 'الخطط تختلف بالحجم فقط.',
+  plans: ['موظفون بصلاحيات', 'يعمل بدون إنترنت', 'تذكيرات واتساب', 'المساعد الذكي', 'عربي وإنجليزي وكوردي', 'تصدير بياناتك'],
 }, {
-  title: 'Every feature in every plan. Add-ons when you need them.',
-  sub: 'Plans differ by size, never by features. Add-ons are optional extras on top of your system, each with its own price, switched on from inside the system itself.',
-  inTitle: 'In every plan', included: ['Staff with their own access, shared devices', 'Keeps working without internet', 'WhatsApp reminders in your words', 'The AI helper', 'Arabic, English and Kurdish', 'Export your data any time'],
-  tag: 'Add-on', soonFor: 'Live now for real estate offices', name: 'Hemlo Website',
-  pitch: 'A website for your business on its own address, reading straight from your system. Publish a property in Hemlo and it’s on your site; every inquiry lands in your leads.',
-  points: ['Your address: yourname.hemlohq.com', 'Properties from your system, never copied or typed twice', 'Inquiries become leads in the system', 'A quiet design in Arabic and English, fast on the weakest signal'],
-  price: '15,000', per: 'IQD a month', year: 'or 150,000 IQD a year (ten months)', onTop: 'on top of your system plan',
-  sample: 'See a sample site', turnOn: 'Already on Hemlo? Turn it on from the Plan page in your system.', more: 'Shops, gyms and clinics: soon.',
+  eyebrow: 'Add-on', live: 'Available now for real estate offices',
+  title: ['A website for your office.', 'It fills itself.'],
+  sub: 'Hemlo Website gives your office a website of its own. You don’t build it or update it: every property you add in Hemlo appears on it by itself, and everyone who asks about one reaches you.',
+  addr: 'nakheel.hemlohq.com', synced: 'Added in Hemlo · on your site now', syncedSub: 'Villa with a garden · Dream City',
+  how: 'How it works', steps: [['Add a property in Hemlo', 'As you already do: photos, price, details.'], ['It’s on your website', 'Right away, with its own page to send on WhatsApp.'], ['Visitors ask, you follow up', 'Every inquiry from the site lands in your leads.']],
+  name: 'Hemlo Website', price: '15,000', per: 'IQD / month', onTop: 'Added to your Hemlo Real Estate plan.', year: 'Or 150,000 IQD a year: two months free.',
+  included: ['Your own address: yourname.hemlohq.com', 'Arabic and English', 'Every property, always up to date', 'Inquiries straight to your leads', 'Fast on any phone'],
+  sample: 'See a sample site', turnOn: 'Already on Hemlo? Switch it on from the Plan page in your system.', more: 'Shops, gyms and clinics: soon.',
+  plansTitle: 'And every system plan has every feature.', plansSub: 'Plans differ by size only.',
+  plans: ['Staff with their own access', 'Works offline', 'WhatsApp reminders', 'The AI helper', 'Arabic, English, Kurdish', 'Export your data'],
 });
 const sampleHref = ar ? '/hero-sample/' : '/en/hero-sample/';
 const END = L2(
@@ -289,33 +293,47 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
     </section>
 
     <!-- features in every plan, and the add-ons on top: Hemlo Website is part of Hemlo Systems, not another branch -->
-    <section class="wrap border-t border-line py-20 sm:py-24" id="addons">
-      <div class="max-w-3xl">
-        <h2 class="reveal text-[clamp(1.8rem,3.6vw,2.8rem)] font-semibold tracking-tight">{ADD.title}</h2>
-        <p class="reveal mt-4 text-lead text-fg-2">{ADD.sub}</p>
+    <section class="wrap border-t border-line py-20 sm:py-28 web" id="addons">
+      <!-- what it is, in one line -->
+      <div class="web-head">
+        <p class="reveal web-eyebrow"><span class="web-tag">{ADD.eyebrow}</span><span class="web-live"><span class="dot" aria-hidden="true"></span>{ADD.live}</span></p>
+        <h2 class="reveal mt-5 text-[clamp(2rem,4.2vw,3.3rem)] font-semibold leading-[1.08] tracking-tight"><span class="block">{ADD.title[0]}</span><span class="block web-acc">{ADD.title[1]}</span></h2>
+        <p class="reveal mt-5 text-lead text-fg-2">{ADD.sub}</p>
       </div>
-      <div class="addons mt-12">
-        <div class="reveal add-in">
-          <p class="text-sm font-semibold text-fg-2">{ADD.inTitle}</p>
-          <ul>{ADD.included.map((x) => <li>{x}</li>)}</ul>
+
+      <!-- what it looks like: the sample site, in a browser, on its own address -->
+      <a class="reveal web-shot" href={sampleHref} aria-label={ADD.sample}>
+        <span class="web-chrome" aria-hidden="true"><i></i><i></i><i></i><span class="web-url" dir="ltr"><svg viewBox="0 0 16 16"><path d="M4.5 7V5.5a3.5 3.5 0 0 1 7 0V7M3.5 7h9v6.5h-9z" /></svg>{ADD.addr}</span></span>
+        <img src={`/images/realestate/sample/site-${lang}-1400.webp`} srcset={`/images/realestate/sample/site-${lang}-800.webp 800w, /images/realestate/sample/site-${lang}-1400.webp 1400w`} sizes="(min-width: 1200px) 1100px, 92vw" width="1400" height="809" alt="" loading="lazy" decoding="async" />
+        <span class="web-sync" aria-hidden="true"><span class="ok">✓</span><span><b>{ADD.synced}</b><small>{ADD.syncedSub}</small></span></span>
+      </a>
+
+      <!-- how it works, and the price -->
+      <div class="web-grid">
+        <div class="reveal">
+          <p class="text-sm font-semibold text-fg-2">{ADD.how}</p>
+          <ol class="web-steps">{ADD.steps.map(([h, p], i) => <li><span class="n">{num(i)}</span><span><b>{h}</b><span>{p}</span></span></li>)}</ol>
+          <p class="mt-5 text-sm text-fg-2">{ADD.more}</p>
         </div>
-        <article class="reveal add-card">
-          <div class="add-photo"><img src="/images/realestate/sample/hero.webp" width="1400" height="933" alt="" loading="lazy" decoding="async" /><span class="add-tag">{ADD.tag}</span></div>
-          <div class="add-body">
-            <p class="add-for"><span class="dot" aria-hidden="true"></span>{ADD.soonFor}</p>
-            <h3 class="add-name">{ADD.name}</h3>
-            <p class="mt-3 leading-relaxed text-fg-2">{ADD.pitch}</p>
-            <ul class="add-points">{ADD.points.map((x) => <li>{x}</li>)}</ul>
-            <div class="add-price"><p><b dir="ltr">{ADD.price}</b> <span>{ADD.per}</span></p><p class="text-sm text-fg-2">{ADD.year} · {ADD.onTop}</p></div>
-            <div class="mt-6 flex flex-wrap items-center gap-3">
-              <a class="btn btn-primary" href={sampleHref}>{ADD.sample}<span class="arr" aria-hidden="true">→</span></a>
-              <a class="btn btn-secondary" href={ask('realestate')}>{L.ask}</a>
-            </div>
-            <p class="mt-5 text-sm text-fg-2">{ADD.turnOn}</p>
+        <article class="reveal web-price">
+          <p class="web-pname">{ADD.name}</p>
+          <p class="web-amount"><b dir="ltr">{ADD.price}</b><span>{ADD.per}</span></p>
+          <p class="web-ontop">{ADD.onTop}</p>
+          <p class="web-year">{ADD.year}</p>
+          <ul class="web-inc">{ADD.included.map((x) => <li>{x}</li>)}</ul>
+          <div class="web-cta">
+            <a class="btn web-btn" href={sampleHref}>{ADD.sample}<span class="arr" aria-hidden="true">→</span></a>
+            <a class="btn btn-secondary" href={ask('realestate')}>{L.ask}</a>
           </div>
+          <p class="web-note">{ADD.turnOn}</p>
         </article>
       </div>
-      <p class="reveal mt-6 text-sm text-fg-2">{ADD.more}</p>
+
+      <!-- the core plans, quietly: every feature in every plan -->
+      <div class="reveal web-plans">
+        <p><b>{ADD.plansTitle}</b> <span>{ADD.plansSub}</span></p>
+        <ul>{ADD.plans.map((x) => <li>{x}</li>)}</ul>
+      </div>
     </section>
 
     <!-- a system, or a website built for you? the difference at a glance -->
@@ -653,28 +671,67 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
   .helper b { color: var(--fg); font-weight: 600; }
   .helper .spark { color: var(--c); font-size: 1.1rem; }
   @media (prefers-color-scheme: dark) { .helper .spark { color: var(--cd); } }
-  /* features & add-ons */
-  .addons { display: grid; gap: 2rem; align-items: start; }
-  @media (min-width: 960px) { .addons { grid-template-columns: 5fr 7fr; gap: 3.5rem; } }
-  .add-in ul { margin-top: 1rem; border-top: 1px solid var(--line); }
-  .add-in li { display: flex; gap: .75rem; align-items: baseline; padding: .9rem 0; border-bottom: 1px solid var(--line); }
-  .add-in li::before { content: "✓"; color: var(--c); font-size: .9rem; }
-  @media (prefers-color-scheme: dark) { .add-in li::before { color: var(--cd); } }
-  .add-card { display: grid; overflow: hidden; border: 1px solid var(--line); border-radius: 1.5rem; background: var(--surface); }
-  @media (min-width: 700px) { .add-card { grid-template-columns: 1fr 1.15fr; } }
-  .add-photo { position: relative; min-height: 15rem; overflow: hidden; background: var(--sunken); }
-  .add-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 1.4s cubic-bezier(.22,.7,.18,1); }
-  .add-card:hover .add-photo img { transform: scale(1.04); }
-  .add-tag { position: absolute; top: 1rem; inset-inline-start: 1rem; padding: .3rem .75rem; border-radius: 999px; background: rgba(246,244,239,.92); color: #1B1A17; font-size: .8rem; font-weight: 500; }
-  .add-body { padding: 1.75rem; }
-  .add-for { display: flex; align-items: center; gap: .5rem; font-size: .85rem; color: var(--fg-2); }
-  .add-for .dot { width: .45rem; height: .45rem; border-radius: 50%; background: #1F6F5C; }
-  .add-name { margin-top: .6rem; font-size: 1.7rem; font-weight: 600; letter-spacing: -.01em; }
-  .add-points { display: grid; gap: .55rem; margin-top: 1.1rem; font-size: .95rem; }
-  .add-points li { display: flex; gap: .6rem; align-items: baseline; }
-  .add-points li::before { content: ""; flex: none; width: .9rem; height: 1px; background: currentColor; opacity: .5; transform: translateY(-.25rem); }
-  .add-price { margin-top: 1.4rem; padding-top: 1.1rem; border-top: 1px solid var(--line); }
-  .add-price b { font-size: 1.9rem; font-weight: 600; letter-spacing: -.02em; }
+  /* ---------- Hemlo Website: what it is, what it looks like, how it works, what it costs ---------- */
+  .web { --re: #1F6F5C; --re-soft: color-mix(in oklab, #1F6F5C 10%, transparent); }
+  @media (prefers-color-scheme: dark) { .web { --re: #5FBF9F; --re-soft: color-mix(in oklab, #5FBF9F 14%, transparent); } }
+  .web-head { max-width: 46rem; }
+  .web-eyebrow { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .9rem; font-size: .88rem; }
+  .web-tag { padding: .28rem .7rem; border-radius: 999px; border: 1px solid var(--line-strong); font-weight: 500; color: var(--fg); }
+  .web-live { display: inline-flex; align-items: center; gap: .55rem; color: var(--fg-2); }
+  .web-live .dot, .web-live .dot::after { background: var(--re); }
+  .web-acc { color: var(--re); }
+
+  /* the sample site, framed as a browser on its own address */
+  .web-shot { position: relative; display: block; margin-top: 3rem; border-radius: 1.1rem; border: 1px solid var(--line); background: var(--surface); overflow: hidden;
+    box-shadow: 0 1px 2px rgb(14 20 32 / .05), 0 60px 110px -60px color-mix(in oklab, var(--re) 60%, rgb(14 20 32 / .55)); transition: transform .5s cubic-bezier(.23, 1, .32, 1), box-shadow .5s ease; }
+  @media (hover: hover) and (pointer: fine) { .web-shot:hover { transform: translateY(-3px); } }
+  .web-shot:focus-visible { outline: 2px solid var(--re); outline-offset: 4px; }
+  .web-chrome { display: flex; align-items: center; gap: .4rem; padding: .7rem .9rem; border-bottom: 1px solid var(--line); background: var(--sunken); }
+  .web-chrome i { width: .62rem; height: .62rem; border-radius: 999px; background: var(--line-strong); }
+  .web-url { display: inline-flex; align-items: center; gap: .4rem; margin-inline: auto; padding: .3rem 1rem; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: .82rem; color: var(--fg-2); }
+  .web-url svg { width: .8rem; height: .8rem; fill: none; stroke: var(--re); stroke-width: 1.5; stroke-linejoin: round; }
+  .web-shot img { display: block; width: 100%; height: auto; }
+  .web-sync { position: absolute; inset-inline-end: 1.2rem; bottom: 1.2rem; display: flex; align-items: center; gap: .7rem; max-width: calc(100% - 2.4rem); padding: .75rem 1rem .75rem .8rem; border-radius: .9rem;
+    background: color-mix(in oklab, var(--surface) 92%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--line); box-shadow: 0 18px 40px -20px rgb(14 20 32 / .45); }
+  .web-sync .ok { width: 1.6rem; height: 1.6rem; font-size: .8rem; background: var(--re-soft); color: var(--re); }
+  .web-sync b { display: block; font-size: .88rem; font-weight: 600; }
+  .web-sync small { display: block; font-size: .8rem; color: var(--fg-2); }
+  @media (max-width: 560px) { .web-sync { position: static; margin: .8rem; max-width: none; box-shadow: none; } }
+
+  /* how it works · the price */
+  .web-grid { display: grid; gap: 2.5rem; margin-top: 3.5rem; align-items: start; }
+  @media (min-width: 960px) { .web-grid { grid-template-columns: 1fr minmax(0, 25rem); gap: 4rem; } }
+  .web-steps { margin-top: 1rem; border-top: 1px solid var(--line); }
+  .web-steps li { display: flex; gap: 1.1rem; align-items: flex-start; padding: 1.35rem 0; border-bottom: 1px solid var(--line); }
+  .web-steps .n { display: grid; place-items: center; flex: none; width: 2.1rem; height: 2.1rem; border-radius: 999px; background: var(--re-soft); color: var(--re); font-weight: 600; font-size: .95rem; }
+  .web-steps b { display: block; font-size: 1.15rem; font-weight: 600; letter-spacing: -.01em; }
+  :global(html[lang="ar"]) .web-steps b { letter-spacing: 0; }
+  .web-steps li > span:last-child > span { display: block; margin-top: .25rem; color: var(--fg-2); line-height: 1.55; }
+
+  .web-price { padding: 1.9rem; border-radius: 1.4rem; background: var(--surface); border: 1px solid var(--line); box-shadow: 0 30px 60px -45px rgb(14 20 32 / .35); }
+  .web-pname { font-size: .9rem; font-weight: 600; color: var(--re); }
+  .web-amount { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem; margin-top: .6rem; }
+  .web-amount b { font-size: clamp(2.6rem, 5vw, 3.2rem); font-weight: 600; line-height: 1; letter-spacing: -.03em; }
+  .web-amount span { color: var(--fg-2); font-size: 1rem; }
+  .web-ontop { margin-top: .8rem; font-weight: 500; }
+  .web-year { margin-top: .2rem; font-size: .92rem; color: var(--fg-2); }
+  .web-inc { display: grid; gap: .6rem; margin-top: 1.4rem; padding-top: 1.3rem; border-top: 1px solid var(--line); font-size: .95rem; }
+  .web-inc li { display: flex; gap: .65rem; align-items: baseline; }
+  .web-inc li::before { content: "✓"; flex: none; color: var(--re); font-size: .85rem; font-weight: 600; }
+  .web-cta { display: grid; gap: .6rem; margin-top: 1.6rem; }
+  .web-cta .btn { justify-content: center; }
+  .web-btn { background: var(--re); color: #fff; }
+  @media (prefers-color-scheme: dark) { .web-btn { color: #0B1019; } }
+  .web-btn:hover { filter: brightness(1.07); }
+  :global(html[dir="rtl"]) .web-btn .arr { transform: scaleX(-1); }
+  .web-note { margin-top: 1rem; font-size: .85rem; color: var(--fg-2); line-height: 1.5; }
+
+  /* the core plans, one quiet line */
+  .web-plans { margin-top: 4rem; padding-top: 1.6rem; border-top: 1px solid var(--line); }
+  .web-plans p b { font-weight: 600; }
+  .web-plans p span { color: var(--fg-2); }
+  .web-plans ul { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
+  .web-plans li { padding: .4rem .85rem; border-radius: 999px; background: var(--sunken); font-size: .88rem; color: var(--fg-2); }
   .how3 { display: grid; gap: 2rem; }
   @media (min-width: 860px) { .how3 { grid-template-columns: repeat(3, 1fr); } }
   .how3 li { padding-top: 1.2rem; border-top: 2px solid var(--line); }
