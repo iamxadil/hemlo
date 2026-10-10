@@ -106,10 +106,12 @@ describe('asking for a plan, paying, and the admin side', () => {
 });
 
 describe('optional add-ons', () => {
-  it('keeps an unconfigured price non-purchasable, then activates only after staff confirms the catalog amount', async () => {
+  it('launches at its list price, keeps an unconfigured price non-purchasable, and activates only after staff confirms the catalog amount', async () => {
     const offers = (await new Browser(t.app).get('/v1/plans/addons?edition=realestate')).json.addons;
     expect(offers).toHaveLength(1);
-    expect(offers[0]).toMatchObject({ code: 'website', configured: false, priceMonth: null, priceYear: null });
+    expect(offers[0]).toMatchObject({ code: 'website', configured: true, priceMonth: 15000, priceYear: 150000 });
+    await founder.req('PATCH', '/v1/admin/addons/website', { priceMonth: null, priceYear: null });
+    expect((await new Browser(t.app).get('/v1/plans/addons?edition=realestate')).json.addons[0]).toMatchObject({ configured: false, priceMonth: null });
     expect((await new Browser(t.app).get('/v1/plans/addons?edition=store')).json.addons).toEqual([]);
     expect((await shop.post('/v1/billing/addons/website/request')).status).toBe(403);
 

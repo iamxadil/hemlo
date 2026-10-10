@@ -135,12 +135,13 @@ describe('the public website', () => {
     const r = await pub.get('/v1/web/pub', siteHeaders);
     expect(r.status).toBe(200);
     expect(r.headers.get('content-type')).toContain('text/html');
-    expect(String(r.json)).toContain('Baghdad Gadgets');
+    expect(String(r.json)).toContain('أجهزة بغداد'); // the Arabic page shows the Arabic name
+    expect(String((await pub.get('/v1/web/pub?lang=en', siteHeaders)).json)).toContain('Baghdad Gadgets');
     expect(String(r.json)).toContain('wa.me/9647701234567');
     expect(String(r.json)).toContain('Villa in Mansour'); // live data, never a copy
     expect(String(r.json)).toContain('id="inq"');  // the inquiry form
     expect(String(r.json)).toContain('https://baghdad-gadgets.hemlohq.com');
-    expect(String(r.json)).toContain('href="https://baghdad-gadgets.hemlohq.com/properties/villa-mansour"');
+    expect(String(r.json)).toContain('href="/properties/villa-mansour"'); // same-origin, so the photo carries over into the property page
   });
 
   it('keeps edits in draft until the next publish while property data stays live', async () => {
@@ -149,7 +150,7 @@ describe('the public website', () => {
     await owner.put(`/v1/web/pages/${about.id}`, { title: { en: 'Draft About' } });
     await owner.put('/v1/web/site', { name: { en: 'Draft Brand' } });
     expect((await owner.get('/v1/web/site')).json.hasUnpublishedChanges).toBe(true);
-    const oldHome = String((await pub.get('/v1/web/pub', siteHeaders)).json);
+    const oldHome = String((await pub.get('/v1/web/pub?lang=en', siteHeaders)).json);
     const oldAbout = String((await pub.get('/v1/web/pub/about?lang=en', siteHeaders)).json);
     expect(oldHome).toContain('Baghdad Gadgets');
     expect(oldHome).not.toContain('Draft Brand');
@@ -174,8 +175,9 @@ describe('the public website', () => {
     const r = await pub.get('/v1/web/pub/properties/villa-mansour?lang=en', siteHeaders);
     expect(r.status).toBe(200);
     expect(String(r.json)).toContain('Mansour villa');
-    expect(String(r.json)).toContain('href="/properties"');
+    expect(String(r.json)).toContain('href="/properties?lang=en"'); // an English visitor stays in English
     expect(String(r.json)).toContain('endpoint":"/inquiry"');
+    expect(String(r.json)).toContain('"page":"property:villa-mansour"');
   });
 
   it('turns an inquiry into a lead in the business’s existing workflow', async () => {

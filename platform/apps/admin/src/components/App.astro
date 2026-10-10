@@ -610,7 +610,91 @@ const I = {
           list(t.billing.trialsEnding, B.trialsEnding.map((s: any) => h('li', {}, h('div', { class: 'min-w-0 flex-1' }, bizLink(s.id, s.name), h('p', { class: 'sub', text: `${t.kinds[s.edition] ?? s.edition} · ${fill(t.plan.trialUntil, { date: date(s.trialEndsAt) })}` })), planPill(s))), t.billing.none),
           list(t.billing.dueSoon, B.dueSoon.map((s: any) => h('li', {}, h('div', { class: 'min-w-0 flex-1' }, bizLink(s.id, s.name), h('p', { class: 'sub', text: `${words(s.plan?.name)} · ${fill(t.plan.until, { date: date(s.paidUntil) })}` })), planPill(s))), t.billing.none),
           list(t.billing.recent, B.payments.map((p: any) => h('li', {}, h('div', { class: 'min-w-0 flex-1' }, bizLink(p.organizationId, p.business), h('p', { class: 'sub', text: `${date(p.createdAt)} · ${t.billing.methods[p.method] ?? p.method} · ${fill(t.billing.months, { n: num(p.months) })}` })), h('b', { text: money(p.amount) }))), t.billing.none)),
-        await plansPanel());
+        await addonsPanel(), await plansPanel());
+    }
+
+    /** Add-ons (Hemlo Website…): their open requests, each confirmed against a recorded payment, and their price. */
+    async function addonsPanel() {
+      const [{ addons }, { requests: asks }] = await Promise.all([api('/v1/admin/addons'), api('/v1/admin/addon-requests')]);
+      const nameOf = (id: string) => words(addons.find((a: any) => a.id === id)?.name) || id;
+      const asksList = h('section', { class: 'panel' }, h('div', { class: 'panel-h' }, h('h2', { text: t.billing.addonRequests })),
+        asks.length ? h('ul', { class: 'bill-list' }, ...asks.map((r: any) => {
+          const btn = h('button', { type: 'button', class: `btn ${r.action === 'cancel' ? 'btn-secondary' : 'btn-primary'} btn-sm`, text: r.action === 'cancel' ? t.billing.cancelAddon : t.billing.activateAddon }) as HTMLButtonElement;
+          btn.addEventListener('click', () => addonRequestDrawer(r, nameOf(r.addon_id)));
+          return h('li', {}, h('div', { class: 'min-w-0 flex-1' }, h('a', { class: 'font-medium hover:underline', href: `#/usage?id=${r.organization_id}`, text: r.business }),
+            h('p', { class: 'sub', text: [nameOf(r.addon_id), r.action === 'cancel' ? t.billing.wantsCancel : t.billing.wantsAddon, t.kinds[r.edition] ?? r.edition,
+              r.price != null ? `${money(r.price)} · ${r.billing === 'year' ? t.billing.yearly : t.billing.monthly}` : '', r.user_name, ago(r.created_at)].filter(Boolean).join(' · ') })),
+            can('billing.manage') ? btn : null);
+        })) : h('p', { class: 'sub px-5 pb-5', text: t.billing.noAddonRequests }));
+      const catalog = h('div', { class: 'panel overflow-clip' }, h('table', { class: 'tbl' },
+        h('thead', {}, h('tr', {}, ...[t.billing.addons, t.billing.perMonth, t.billing.perYear, t.billing.compatible, ''].map((x) => h('th', { text: x })))),
+        h('tbody', {}, ...addons.map((a: any) => {
+          const priced = a.priceMonth != null && a.priceYear != null;
+          const tr = h('tr', { class: can('billing.manage') ? 'click' : '' },
+            h('td', {}, h('b', { text: words(a.name) }), !a.active ? h('span', { class: 'pill ms-2', text: t.billing.retired }) : null, h('p', { class: 'sub', text: priced ? words(a.description) : t.billing.unpriced })),
+            h('td', { text: a.priceMonth != null ? money(a.priceMonth) : '—' }), h('td', { text: a.priceYear != null ? money(a.priceYear) : '—' }),
+            h('td', { class: 'sub', text: a.compatibleEditions.map((e: string) => t.kinds[e] ?? e).join(' · ') }),
+            h('td', {}, can('billing.manage') ? SVG('<path d="m9 6 6 6-6 6"/>') : ''));
+          if (can('billing.manage')) tr.addEventListener('click', () => addonDrawer(a));
+          return tr;
+        }))));
+      return h('section', { class: 'mt-4 grid gap-4' }, h('div', {}, h('h2', { class: 'text-lg font-semibold', text: t.billing.addons }), h('p', { class: 'sub', text: t.billing.addonsHint })), asksList, catalog);
+    }
+
+    const drawerField = (label: string, el: Node, hint = '') => h('label', { class: 'grid gap-1 text-sm' }, h('span', { class: 'text-muted text-xs', text: label }), el, hint ? h('span', { class: 'sub', text: hint }) : null);
+    const addonHead = (title: string, sub: string) => h('div', { class: 'drawer-h' }, h('div', { class: 'min-w-0 flex-1' }, h('p', { class: 'text-lg font-semibold', text: title }), h('p', { class: 'sub', text: sub })),
+      h('a', { class: 'icon-btn', href: '#/billing', 'aria-label': t.close, onclick: (e: Event) => { e.preventDefault(); closeDrawer(); } }, SVG(ICON.close)));
+    /** One drawer action: the server's reason shows under the form (a wrong amount, a plan that ended), never a generic toast. */
+    const drawerSave = (label: string, err: HTMLElement, run: () => Promise<void>) => {
+      const b = h('button', { type: 'button', class: 'btn btn-primary w-full justify-center', text: label }) as HTMLButtonElement;
+      b.addEventListener('click', () => act(b, async () => {
+        err.textContent = '';
+        try { await run(); } catch (e: any) { err.textContent = t.billing.errors[e?.code] ?? e?.code ?? t.errors.generic; throw e; }
+      }));
+      return b;
+    };
+
+    function addonRequestDrawer(r: any, addonName: string) {
+      const err = h('p', { class: 'text-sm text-bad' });
+      const body: Node[] = [];
+      let run: () => Promise<void>;
+      if (r.action === 'cancel') {
+        body.push(h('p', { class: 'text-sm', text: t.billing.wantsCancel }));
+        run = async () => { await api(`/v1/admin/addon-requests/${r.id}`, { method: 'PATCH', body: { action: 'cancel' } }); };
+      } else {
+        const periods = h('input', { class: 'input', type: 'number', min: '1', max: '36', value: '1', dir: 'ltr' }) as HTMLInputElement;
+        const amount = h('input', { class: 'input', type: 'number', value: String(r.price ?? ''), dir: 'ltr', readonly: true }) as HTMLInputElement;
+        periods.addEventListener('input', () => { amount.value = String((r.price ?? 0) * Math.max(1, Number(periods.value) || 1)); });
+        const method = h('select', { class: 'input' }, ...Object.entries(t.billing.methods).map(([k, v]) => h('option', { value: k, text: v as string }))) as HTMLSelectElement;
+        const ref = h('input', { class: 'input', dir: 'auto', maxlength: '120' }) as HTMLInputElement;
+        body.push(h('div', { class: 'grid grid-cols-2 gap-3' }, drawerField(t.billing.periods, periods, r.billing === 'year' ? t.billing.yearly : t.billing.monthly), drawerField(t.billing.amount, amount)),
+          h('div', { class: 'grid grid-cols-2 gap-3' }, drawerField(t.billing.method, method), drawerField(t.billing.reference, ref)));
+        run = async () => { await api(`/v1/admin/addon-requests/${r.id}`, { method: 'PATCH', body: { action: 'activate', periods: Number(periods.value) || 1, amount: Number(amount.value), method: method.value, reference: ref.value || undefined } }); };
+      }
+      const dismiss = h('button', { type: 'button', class: 'btn btn-secondary w-full justify-center', text: t.billing.dismiss }) as HTMLButtonElement;
+      dismiss.addEventListener('click', () => act(dismiss, async () => { await api(`/v1/admin/addon-requests/${r.id}`, { method: 'PATCH', body: { action: 'dismiss' } }); closeDrawer(); showBilling(true); }));
+      const save = drawerSave(r.action === 'cancel' ? t.billing.cancelAddon : t.billing.activateAddon, err, async () => { await run(); toast(t.plan.saved); closeDrawer(); showBilling(true); });
+      drawer().replaceChildren(addonHead(r.business, `${addonName} · ${t.kinds[r.edition] ?? r.edition}`), h('div', { class: 'drawer-b grid gap-4' }, ...body, err), h('div', { class: 'drawer-f grid gap-2' }, save, dismiss));
+      openDrawer();
+    }
+
+    function addonDrawer(a: any) {
+      const inp = (v: any) => h('input', { class: 'input', type: 'number', min: '0', step: '1000', dir: 'ltr', value: v ?? '' }) as HTMLInputElement;
+      const month = inp(a.priceMonth), year = inp(a.priceYear);
+      const chk = (label: string, on: boolean) => { const c = h('input', { type: 'checkbox', checked: on }) as HTMLInputElement; return { c, el: h('label', { class: 'flex items-center gap-2 text-sm' }, c, label) }; };
+      const eds = ['store', 'dental', 'gym', 'realestate', 'school'].map((e) => ({ e, ...chk(t.kinds[e] ?? e, a.compatibleEditions.includes(e)) }));
+      const pub = chk(t.billing.public, a.public), active = chk(t.billing.active, a.active);
+      const err = h('p', { class: 'text-sm text-bad' });
+      const save = drawerSave(t.plan.save, err, async () => {
+        await api(`/v1/admin/addons/${a.code}`, { method: 'PATCH', body: { priceMonth: month.value === '' ? null : Number(month.value), priceYear: year.value === '' ? null : Number(year.value),
+          compatibleEditions: eds.filter((x) => x.c.checked).map((x) => x.e), public: pub.c.checked, active: active.c.checked } });
+        toast(t.billing.addonSaved); closeDrawer(); showBilling(true);
+      });
+      drawer().replaceChildren(addonHead(words(a.name), words(a.description)), h('div', { class: 'drawer-b grid gap-4' },
+        h('div', { class: 'grid grid-cols-2 gap-3' }, drawerField(t.billing.perMonth, month), drawerField(t.billing.perYear, year, t.billing.yearHint)),
+        h('div', {}, h('p', { class: 'sec-t', text: t.billing.compatible }), h('div', { class: 'flex flex-wrap gap-4' }, ...eds.map((x) => x.el))),
+        h('div', { class: 'flex flex-wrap gap-4' }, pub.el, active.el), err), h('div', { class: 'drawer-f' }, save));
+      openDrawer();
     }
 
     /** The price list, per system: edit a plan's prices and limits, hide it, mark one "most chosen", add one. */

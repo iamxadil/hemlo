@@ -91,7 +91,9 @@ const ar = {
     monthly: 'شهري', yearly: 'سنوي', agreed: 'سعر متفق: {v}', listPrice: 'سعر القائمة', cycle: 'الدفع', price: 'سعر متفق (اختياري)',
     payTitle: 'تسجيل دفعة', amount: 'المبلغ', forMonths: 'المدة', method: 'الطريقة', reference: 'المرجع', record: 'سجّل الدفعة وفعّل', months: '{n} شهر', extend30: 'تمديد التجربة 30 يوماً', payments: 'الدفعات',
     methods: { cash: 'نقداً', fib: 'FIB', zaincash: 'زين كاش', transfer: 'تحويل', other: 'أخرى' } as Record<string, string>,
-    errors: { CODE_TAKEN: 'الرمز مستخدم في هذا النظام', BAD_CODE: 'الرمز: حروف إنجليزية صغيرة وأرقام', BAD_NAME: 'الاسم بالعربية والإنجليزية مطلوب', BAD_PRICE: 'سعر غير صحيح', BAD_LIMIT: 'حد غير صحيح' } as Record<string, string>,
+    addons: 'الإضافات', addonsHint: 'خدمات اختيارية فوق النظام، بسعرها الخاص. لا تعمل إلا بعد تسجيل دفعتها.', addonRequests: 'طلبات الإضافات', noAddonRequests: 'لا طلبات إضافات.',
+    wantsAddon: 'يطلب التفعيل', wantsCancel: 'يطلب الإيقاف', activateAddon: 'سجّل الدفعة وفعّل', cancelAddon: 'أوقف الإضافة', periods: 'عدد الفترات', unpriced: 'بلا سعر · لا يمكن طلبها', compatible: 'تعمل مع', addonSaved: 'تم حفظ سعر الإضافة',
+    errors: { CODE_TAKEN: 'الرمز مستخدم في هذا النظام', BAD_CODE: 'الرمز: حروف إنجليزية صغيرة وأرقام', BAD_NAME: 'الاسم بالعربية والإنجليزية مطلوب', BAD_PRICE: 'سعر غير صحيح', BAD_LIMIT: 'حد غير صحيح', PAYMENT_AMOUNT_MISMATCH: 'المبلغ لا يطابق سعر الطلب', CORE_SUBSCRIPTION_REQUIRED: 'اشتراك النظام غير فعّال', ADDON_UNAVAILABLE: 'الإضافة غير متاحة لهذا النظام', REQUEST_CLOSED: 'عولج هذا الطلب' } as Record<string, string>,
   },
   plan: {
     title: 'الاشتراك', free: 'مجاني', trial: 'تجربة', active: 'مفعّل', grace: 'فترة سماح', ended: 'منتهٍ', daysLeft: 'باقي {n} يوم', until: 'حتى {date}', trialUntil: 'التجربة حتى {date}',
@@ -261,7 +263,9 @@ const en: typeof ar = {
     monthly: 'Monthly', yearly: 'Yearly', agreed: 'agreed price {v}', listPrice: 'List price', cycle: 'Billing', price: 'Agreed price (optional)',
     payTitle: 'Record a payment', amount: 'Amount', forMonths: 'Covers', method: 'Method', reference: 'Reference', record: 'Record and activate', months: '{n} mo.', extend30: 'Extend trial 30 days', payments: 'Payments',
     methods: { cash: 'Cash', fib: 'FIB', zaincash: 'Zain Cash', transfer: 'Transfer', other: 'Other' },
-    errors: { CODE_TAKEN: 'That code is used in this system', BAD_CODE: 'Code: lowercase letters and digits', BAD_NAME: 'Arabic and English names are needed', BAD_PRICE: 'Bad price', BAD_LIMIT: 'Bad limit' },
+    addons: 'Add-ons', addonsHint: 'Optional extras on top of a system, with their own price. They only switch on once their payment is recorded.', addonRequests: 'Add-on requests', noAddonRequests: 'No add-on requests.',
+    wantsAddon: 'Wants it switched on', wantsCancel: 'Wants it stopped', activateAddon: 'Record payment and activate', cancelAddon: 'Stop the add-on', periods: 'Periods', unpriced: 'No price · cannot be requested', compatible: 'Works with', addonSaved: 'Add-on price saved',
+    errors: { CODE_TAKEN: 'That code is used in this system', BAD_CODE: 'Code: lowercase letters and digits', BAD_NAME: 'Arabic and English names are needed', BAD_PRICE: 'Bad price', BAD_LIMIT: 'Bad limit', PAYMENT_AMOUNT_MISMATCH: 'The amount doesn’t match the requested price', CORE_SUBSCRIPTION_REQUIRED: 'The system’s plan isn’t active', ADDON_UNAVAILABLE: 'Not available for this system', REQUEST_CLOSED: 'Already handled' },
   },
   plan: {
     title: 'Plan', free: 'Free', trial: 'Trial', active: 'Active', grace: 'Grace days', ended: 'Ended', daysLeft: '{n} days left', until: 'until {date}', trialUntil: 'trial until {date}',

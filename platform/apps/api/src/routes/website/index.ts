@@ -91,14 +91,15 @@ const siteUrl = (subdomain: string | null, _base: string) => {
   return `https://${subdomain}.${WEBSITE_DOMAIN}`;
 };
 
-/** The starter site for a new business: a home page that leads with what they sell, plus about and contact. */
-function starterPages(vertical: string, name: Two) {
+/** The starter site for a new business: a home page that leads with what they sell, plus about and contact.
+ *  The hero carries no words of its own: it shows the site's name and tagline, so it follows them when they change. */
+function starterPages(vertical: string, _name: Two) {
   const aboutTitle = { ar: 'من نحن', en: 'About us' }, contactTitle = { ar: 'تواصل معنا', en: 'Contact' };
   const lead = vertical === 'realestate' ? { type: 'listings', title: { ar: 'عقاراتنا', en: 'Our properties' } }
     : vertical === 'store' ? { type: 'products', title: { ar: 'منتجاتنا', en: 'Our products' } }
     : { type: 'services', title: { ar: 'خدماتنا', en: 'Our services' } };
   return [
-    { slug: '', kind: 'home', title: { ar: 'الرئيسية', en: 'Home' }, sort: 0, sections: [{ id: newId(), type: 'hero', title: name }, { id: newId(), ...lead }, { id: newId(), type: 'about', title: aboutTitle }, { id: newId(), type: 'contact', title: contactTitle }] },
+    { slug: '', kind: 'home', title: { ar: 'الرئيسية', en: 'Home' }, sort: 0, sections: [{ id: newId(), type: 'hero' }, { id: newId(), ...lead }, { id: newId(), type: 'about', title: aboutTitle }, { id: newId(), type: 'contact', title: contactTitle }] },
     { slug: 'about', kind: 'about', title: aboutTitle, sort: 1, sections: [{ id: newId(), type: 'about', title: aboutTitle }] },
     { slug: 'contact', kind: 'contact', title: contactTitle, sort: 2, sections: [{ id: newId(), type: 'contact', title: contactTitle }] },
   ];
