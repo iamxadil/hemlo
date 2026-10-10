@@ -214,13 +214,13 @@ function Address({ site, url, onSaved }: { site: SiteT; url: string | null; onSa
   const { w, toast, err } = useW();
   const [sub, setSub] = useState(site.subdomain ?? '');
   useEffect(() => { setSub(site.subdomain ?? ''); }, [site]);
-  const save = useMutation({ mutationFn: () => api('/v1/web/site', { method: 'PUT', body: { subdomain: sub.trim().toLowerCase() } }), onSuccess: () => { toast(w.saved); onSaved(); }, onError: (e) => toast(err(e), 'bad') });
+  const save = useMutation({ mutationFn: () => api('/v1/web/site', { method: 'PUT', body: { subdomain: sub.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/\.hemlohq\.com$/, '') } }), onSuccess: () => { toast(w.saved); onSaved(); }, onError: (e) => toast(err(e), 'bad') });
   return (
     <>
       <Sec title={w.addressSec} />
       <div className="panel web-form">
         <label className="field">{w.subdomain}
-          <span className="web-url"><input className="input" dir="ltr" value={sub} onChange={(e) => setSub(e.target.value)} /><span className="sub">.hemlohq.com</span></span>
+          <span className="web-url"><input className="input" dir="ltr" value={sub} placeholder="agency" onChange={(e) => setSub(e.target.value.replace(/^https?:\/\//i, '').replace(/\.hemlohq\.com\/?$/i, ''))} /><span className="sub">.hemlohq.com</span></span>
           <small className="sub">{w.subdomainHint}</small>
         </label>
         {site.status === 'published' && url && <div className="web-url"><Icon n="globe" /><a href={url} target="_blank" rel="noopener">{url}</a></div>}

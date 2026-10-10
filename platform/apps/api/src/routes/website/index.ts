@@ -80,8 +80,10 @@ const slugIn = (v: unknown): string => {
   return /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/.test(s) ? s : bad('BAD_SLUG');
 };
 const kindIn = (v: unknown): string => ((WEB_PAGE_KINDS as readonly string[]).includes(v as string) ? (v as string) : 'custom');
+/** "agency", "agency.hemlohq.com" or "https://agency.hemlohq.com/" all mean the same address: keep the name. */
+export const subdomainName = (v: unknown) => String(v ?? '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/\.hemlohq\.com$/, '');
 const subdomainIn = (v: unknown): string => {
-  const s = String(v ?? '').trim().toLowerCase();
+  const s = subdomainName(v);
   if (!/^[a-z0-9](?:[a-z0-9-]{1,28}[a-z0-9])?$/.test(s) || RESERVED_SUBDOMAINS.includes(s)) bad('BAD_SUBDOMAIN');
   return s;
 };

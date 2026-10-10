@@ -238,6 +238,10 @@ describe('the public website', () => {
   it('keeps Hemlo’s own hosts out of customers’ hands', async () => {
     expect((await owner.put('/v1/web/site', { subdomain: 'business' })).status).toBe(400);
     expect((await owner.put('/v1/web/site', { subdomain: 'sample' })).status).toBe(400);
+    // the full address, or a link to it, means the same name
+    expect((await owner.put('/v1/web/site', { subdomain: 'Agency-Test.hemlohq.com' })).json.site.subdomain).toBe('agency-test');
+    expect((await owner.put('/v1/web/site', { subdomain: 'https://agency-test2.hemlohq.com/' })).json.site.subdomain).toBe('agency-test2');
+    await owner.put('/v1/web/site', { subdomain: 'baghdad-gadgets' });
   });
 
   it('serves the public sample through the same renderer, without the database, and keeps it out of search', async () => {
