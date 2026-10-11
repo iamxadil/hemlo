@@ -10,14 +10,14 @@ export type LegalSet = {
   company: [string, string][]; docs: LegalDoc[];
 };
 
-export const LEGAL_UPDATED = '2026-10-08';
+export const LEGAL_UPDATED = '2026-10-11';
 export const LEGAL_SLUGS = ['terms', 'privacy', 'data', 'billing', 'acceptable-use', 'ai', 'cookies'] as const;
 
 const ar: LegalSet = {
   eyebrow: 'الشؤون القانونية',
   hubTitle: 'الشروط والسياسات',
   hubIntro: 'الشروط التي تعمل بها هيملو، مكتوبة لتُقرأ. إن لم يتضح شيء، راسلنا وسنشرحه.',
-  updated: 'آخر تحديث: ٨ تشرين الأول ٢٠٢٦',
+  updated: 'آخر تحديث: ١١ تشرين الأول ٢٠٢٦',
   contents: 'المحتويات',
   others: 'وثائق أخرى',
   questions: 'سؤال عن هذه الشروط؟',
@@ -30,7 +30,7 @@ const ar: LegalSet = {
       sections: [
         ['من نحن', [
           'هيملو («هيملو» أو «نحن») شركة برمجيات مقرها بغداد، العراق. تشمل هذه الشروط كل منتجاتنا:',
-          ['أنظمة هيملو (المتاجر، النوادي الرياضية، عيادات الأسنان، مكاتب العقارات) على system.hemlohq.com',
+          ['أنظمة هيملو (المتاجر، النوادي الرياضية، عيادات الأسنان، مكاتب العقارات) على system.hemlohq.com، وإضافاتها: Hemlo Website (موقع للعمل على hemlohq.com) وHemlo Connect (رسائل واتساب ومساعد ذكي يرد على زبائن العمل)',
             'حساب هيملو على account.hemlohq.com',
             'أدوات هيملو المجانية على tools.hemlohq.com',
             'الموقع hemlohq.com وكل صفحاته'],
@@ -60,6 +60,11 @@ const ar: LegalSet = {
         ]],
         ['مزايا الذكاء الاصطناعي', [
           'بعض المزايا تستعمل الذكاء الاصطناعي لتقترح مسودة (مثل قراءة فاتورة من صورة). المسودة تراجعها أنت قبل الحفظ، وقد تكون فيها أخطاء. التفاصيل في {doc:ai}.',
+          'في Hemlo Connect Pro يرد مساعد ذكي على زبائنك على واتساب باسم عملك ودون مراجعة مسبقة منك، ضمن القيود المذكورة في {doc:ai}. تستطيع إيقافه أو تولّي أي محادثة في أي وقت، وأنت مسؤول عما يُرسل باسم عملك.',
+        ]],
+        ['رسائل واتساب (Hemlo Connect)', [
+          'حين تربط رقم واتساب الأعمال الخاص بعملك بـ Hemlo Connect، ترسل هيملو الرسائل وتستقبلها نيابةً عنك عبر منصة واتساب للأعمال من Meta. وبتفعيلك ذلك توافق أيضاً على شروط واتساب للأعمال وسياساته، وتلتزم بها.',
+          ['لا ترسل عروضاً أو تنبيهات تسويقية إلا لمن وافق على تلقّيها.', 'كل من يكتب «إيقاف» أو «stop» لا تصله رسائل تلقائية بعدها، ولا تحاول الالتفاف على ذلك.', 'رسوم واتساب على الرسائل، إن وُجدت، تُحسب ضمن خطة Connect وحدودها الشهرية كما في صفحة الأسعار.', 'قد تُعلّق Meta رقماً يخالف سياساتها؛ وليست هيملو مسؤولة عن قرارات Meta.'],
         ]],
         ['توفر الخدمة وتغييرها', [
           'نعمل لتبقى هيملو متاحة وسريعة، لكننا لا نضمن خدمة بلا انقطاع: قد تتوقف لصيانة أو لعطل لدى مزوّدينا أو في الإنترنت.',
@@ -114,6 +119,8 @@ const ar: LegalSet = {
             'العمل: الاسم، المدينة، النوع، الموظفون وأدوارهم، الخطة والمدفوعات.',
             'طلبات الوصول المبكر: الاسم، اسم العمل، الهاتف، المدينة، البريد.',
             'ما تُدخله في النظام: المنتجات، المبيعات، الفواتير، الزبائن، المشتركون، المرضى والزيارات، العقارات، العقود، والصور والملفات التي ترفعها.',
+            'Hemlo Connect (إن فعّله عمل): رسائل واتساب بين العمل وزبائنه، وأرقام الزبائن وأسماؤهم الظاهرة في واتساب، وحالة تسليم الرسائل وقراءتها، وطلبات المعاينة التي يسجّلها المساعد.',
+            'الاستفسارات من مواقع Hemlo Website: الاسم والهاتف والرسالة التي يرسلها الزائر إلى العمل.',
             'الاستخدام: أي المزايا تُستخدم، والأخطاء، وعدد استخدامات الذكاء الاصطناعي، لنشغّل هيملو ونحسّنها.',
             'الرسائل التي ترسلها لنا.'],
         ]],
@@ -129,7 +136,8 @@ const ar: LegalSet = {
             'Neon: قاعدة البيانات.',
             'Resend: إرسال البريد الإلكتروني (رموز الدخول والدعوات).',
             'مزوّدو الذكاء الاصطناعي الذين نختارهم لمهمة معيّنة (مثل Google أو Anthropic أو OpenAI عبر واجهاتهم أو عبر OpenRouter وGroq): نرسل لهم فقط ما تحتاجه تلك المهمة، كصورة الفاتورة.',
-            'جهات الدفع (مثل FIB وزين كاش) عندما تدفع عبرها.'],
+            'جهات الدفع (مثل FIB وزين كاش) عندما تدفع عبرها.',
+            'Meta (منصة واتساب للأعمال): لإرسال رسائل واتساب واستقبالها حين يفعّل عملٌ Hemlo Connect. تمر الرسائل عبر خوادم Meta وفق سياساتها.'],
           'لا نشارك بياناتك مع غيرهم إلا إن ألزمنا القانون بذلك.',
         ]],
         ['مدة الاحتفاظ', [
@@ -137,7 +145,8 @@ const ar: LegalSet = {
             'بيانات العمل: ما دام العمل قائماً، وتُحذف خلال ٩٠ يوماً من طلب إغلاقه.',
             'سجلات المدفوعات: المدة التي يتطلبها القانون.',
             'سجلات الأمان والدخول: حتى ١٢ شهراً.',
-            'العرض التوضيحي: يُحذف خلال ٢٤ ساعة.',
+            'العرض التوضيحي: يُحذف خلال ٢٤ ساعة. وتجربة Connect على hemlohq.com لا تحفظ ما تكتبه.',
+            'محادثات Connect: ما دام العمل مشتركاً، وتُحذف مع بياناته عند إغلاقه.',
             'النسخ الاحتياطية تتجدد وتُستبدل تلقائياً خلال ٣٠ يوماً.'],
         ]],
         ['كيف نحميها', [
@@ -150,6 +159,7 @@ const ar: LegalSet = {
         ['حقوقك', [
           'يحق لك أن تطلب نسخة من بياناتك، أو تصحيحها، أو تصديرها، أو حذفها، أو أن تعترض على استخدام معيّن لها. راسلنا على {email} وسنرد خلال ٣٠ يوماً.',
           'إن كانت بياناتك محفوظة لدى عمل يستخدم هيملو (كأن تكون مريضاً في عيادة أو مشتركاً في نادٍ)، فتواصل مع ذلك العمل أولاً لأنه المسؤول عنها، وسنساعده في تلبية طلبك.',
+          'إن وصلتك رسائل واتساب من عمل يستخدم Hemlo Connect، فأرسل «إيقاف» أو «stop» في المحادثة نفسها، ولن تصلك منه رسائل تلقائية بعدها.',
         ]],
         ['الأطفال', [
           'خدماتنا للبالغين (١٨ سنة فأكثر). قد تحفظ الأعمال بيانات قاصرين (كمشترك في نادٍ أو مريض في عيادة)، وذلك على مسؤوليتها وبموافقة وليّ الأمر.',
@@ -168,7 +178,7 @@ const ar: LegalSet = {
         ]],
         ['التزاماتك', [
           ['أن يكون لديك سبب مشروع أو موافقة لجمع بيانات الناس وحفظها.',
-            'أن تكون لديك موافقة للتواصل معهم. تذكيرات واتساب في هيملو تُرسل من هاتفك وحسابك أنت، لا من هيملو.',
+            'أن تكون لديك موافقة للتواصل معهم. تذكيرات واتساب العادية في هيملو تُرسل من هاتفك وحسابك أنت. أما مع Hemlo Connect فترسل هيملو الرسائل نيابةً عنك من رقم واتساب الأعمال الخاص بعملك: لا تُرسل عروضاً إلا لمن وافق عليها، ويُحترم طلب الإيقاف تلقائياً، والتزم بسياسات واتساب للأعمال.',
             'في عيادات الأسنان: البيانات الصحية حساسة؛ احصل على موافقة المريض والتزم بالسرية المهنية.',
             'امنح كل موظف الصلاحيات التي يحتاجها فقط، وأوقف وصول من يغادر.',
             'لا تنشر في صفحات العقارات العامة بيانات شخصية لمالك أو مستأجر.'],
@@ -269,11 +279,13 @@ const ar: LegalSet = {
             'الإجابة عن أسئلة عن عملك بالأرقام من بياناتك.',
             'تحويل صورة صفحة من سجلّ المشتركين إلى مشتركين في النظام.',
             'كتابة وصف لإعلان عقاري من حقائق العقار.',
-            'البحث في العقارات والعملاء بسؤال عادي.'],
+            'البحث في العقارات والعملاء بسؤال عادي.',
+            'الرد على زبائن مكتب العقارات على واتساب (Hemlo Connect Pro) من عقاراته المنشورة، وتسجيل طلبات المعاينة.'],
         ]],
         ['الإنسان يقرر', [
           'الذكاء الاصطناعي يكتب مسودة، وأنت تراجعها قبل الحفظ أو النشر. قد يخطئ (كأن يقرأ رقماً خطأ)، ولهذا نُظهر ما يحتاج إلى تدقيق. ما تحفظه أو تنشره مسؤوليتك.',
           'أرقام إجابات «اسأل متجرك» تأتي من بياناتك مباشرة، لا يخترعها النموذج.',
+          'مساعد Connect هو الاستثناء الوحيد الذي يرد دون مراجعة مسبقة، ولهذا هو مقيّد: يجيب من عقارات العمل المنشورة فقط، ولا يذكر سعراً بنفسه (الأسعار والروابط تضيفها هيملو من بياناتك)، ولا تُرسل إجابة فيها رقم لم يُعطَ له، ويحوّل المحادثة إلى موظف حين يُطلب شخص أو يُسأل عن تفاوض أو أوراق قانونية أو ما لا يعرفه. ويستطيع العمل إيقافه أو تولّي أي محادثة.',
         ]],
         ['ما يُرسل', [
           'نرسل فقط ما تحتاجه المهمة (الصورة، أو السؤال، أو حقائق العقار) إلى مزوّد الذكاء الاصطناعي الذي يشغّل تلك المهمة، وقد يكون خارج العراق. نختار النموذج لكل مهمة بما يحقق الجودة والكلفة المناسبتين، وقد نغيّره.',
@@ -307,7 +319,7 @@ const en: LegalSet = {
   eyebrow: 'Legal',
   hubTitle: 'Terms & policies',
   hubIntro: 'The terms Hemlo works under, written to be read. If anything is unclear, write to us and we’ll explain it.',
-  updated: 'Last updated: 8 October 2026',
+  updated: 'Last updated: 11 October 2026',
   contents: 'Contents',
   others: 'Other documents',
   questions: 'A question about these terms?',
@@ -320,7 +332,7 @@ const en: LegalSet = {
       sections: [
         ['Who we are', [
           'Hemlo (“Hemlo”, “we”) is a software company based in Baghdad, Iraq. These terms cover all our products:',
-          ['Hemlo Systems (Stores, Gyms, Dental clinics, Real estate offices) at system.hemlohq.com',
+          ['Hemlo Systems (Stores, Gyms, Dental clinics, Real estate offices) at system.hemlohq.com, and their add-ons: Hemlo Website (a business’s own site on hemlohq.com) and Hemlo Connect (WhatsApp messaging and an AI assistant that answers a business’s customers)',
             'Your Hemlo account at account.hemlohq.com',
             'Hemlo’s free Tools at tools.hemlohq.com',
             'The website hemlohq.com and all its pages'],
@@ -350,6 +362,11 @@ const en: LegalSet = {
         ]],
         ['AI features', [
           'Some features use AI to suggest a draft (for example, reading an invoice from a photo). You review the draft before saving it, and it can contain mistakes. Details in {doc:ai}.',
+          'In Hemlo Connect Pro, an AI assistant answers your customers on WhatsApp in your business’s name without your review beforehand, within the limits described in {doc:ai}. You can switch it off or take over any conversation at any time, and you are responsible for what is sent in your business’s name.',
+        ]],
+        ['WhatsApp messages (Hemlo Connect)', [
+          'When you connect your business’s WhatsApp Business number to Hemlo Connect, Hemlo sends and receives messages on your behalf through Meta’s WhatsApp Business Platform. By switching it on you also accept, and agree to follow, WhatsApp’s Business terms and policies.',
+          ['Send offers or marketing alerts only to people who agreed to receive them.', 'Anyone who writes “stop” (or “إيقاف”) gets no automatic messages after that; don’t try to work around it.', 'WhatsApp’s per-message fees, if any, are covered within your Connect plan and its monthly limits, as shown on the pricing page.', 'Meta may suspend a number that breaks its policies; Hemlo is not responsible for Meta’s decisions.'],
         ]],
         ['Availability and changes', [
           'We work to keep Hemlo available and fast, but we can’t promise uninterrupted service: it may stop for maintenance or for problems at our providers or on the internet.',
@@ -404,6 +421,8 @@ const en: LegalSet = {
             'Business: name, city, type, staff and their roles, plan and payments.',
             'Early-access requests: name, business name, phone, city, email.',
             'What you enter: products, sales, invoices, customers, members, patients and visits, properties, contracts, and the photos and files you upload.',
+            'Hemlo Connect (when a business switches it on): the WhatsApp messages between the business and its customers, customers’ numbers and WhatsApp profile names, delivery and read status, and viewing requests the assistant records.',
+            'Inquiries from Hemlo Website sites: the name, phone and message a visitor sends to the business.',
             'Usage: which features are used, errors, and how often AI is used, to run and improve Hemlo.',
             'Messages you send us.'],
         ]],
@@ -419,7 +438,8 @@ const en: LegalSet = {
             'Neon: the database.',
             'Resend: email (sign-in codes and invitations).',
             'The AI providers we choose for a given job (such as Google, Anthropic or OpenAI, directly or through OpenRouter, and Groq): we send them only what that job needs, such as the invoice photo.',
-            'Payment providers (such as FIB and ZainCash) when you pay through them.'],
+            'Payment providers (such as FIB and ZainCash) when you pay through them.',
+            'Meta (the WhatsApp Business Platform): to send and receive WhatsApp messages when a business switches on Hemlo Connect. Messages pass through Meta’s servers under its policies.'],
           'We don’t share your data with anyone else unless the law requires it.',
         ]],
         ['How long we keep it', [
@@ -427,7 +447,8 @@ const en: LegalSet = {
             'Business data: while the business exists; deleted within 90 days of a request to close it.',
             'Payment records: as long as the law requires.',
             'Security and sign-in logs: up to 12 months.',
-            'Demo: deleted within 24 hours.',
+            'Demo: deleted within 24 hours. The Connect demo on hemlohq.com doesn’t keep what you type.',
+            'Connect conversations: while the business is subscribed; deleted with its data when it closes.',
             'Backups rotate out automatically within 30 days.'],
         ]],
         ['How we protect it', [
@@ -440,6 +461,7 @@ const en: LegalSet = {
         ['Your rights', [
           'You can ask for a copy of your data, or ask us to correct, export or delete it, or object to a particular use of it. Write to {email} and we’ll reply within 30 days.',
           'If your data is held by a business that uses Hemlo (for example, you are a patient at a clinic or a member of a gym), contact that business first, as it is responsible for it; we’ll help it answer you.',
+          'If you get WhatsApp messages from a business that uses Hemlo Connect, send “stop” (or “إيقاف”) in that chat and you won’t get automatic messages from it again.',
         ]],
         ['Children', [
           'Our services are for adults (18 and over). Businesses may keep minors’ data (such as a gym member or a patient) under their own responsibility and with a guardian’s consent.',
@@ -458,7 +480,7 @@ const en: LegalSet = {
         ]],
         ['Your commitments', [
           ['Have a lawful reason or consent to collect and keep people’s data.',
-            'Have consent to contact them. WhatsApp reminders in Hemlo are sent from your own phone and account, not by Hemlo.',
+            'Have consent to contact them. Ordinary WhatsApp reminders in Hemlo are sent from your own phone and account. With Hemlo Connect, Hemlo sends messages on your behalf from your business’s WhatsApp Business number: offers go only to people who agreed to them, a “stop” is honoured automatically, and you follow WhatsApp’s Business policies.',
             'For dental clinics: health data is sensitive; get the patient’s consent and keep professional confidentiality.',
             'Give each staff member only the access they need, and remove access when someone leaves.',
             'Don’t publish an owner’s or tenant’s personal details on public property pages.'],
@@ -548,11 +570,13 @@ const en: LegalSet = {
             'Answers questions about your business with numbers from your own data.',
             'Turns a photo of a register page into members in the system.',
             'Writes a property listing description from the property’s facts.',
-            'Searches properties and clients from an everyday question.'],
+            'Searches properties and clients from an everyday question.',
+            'Answers a real estate office’s customers on WhatsApp (Hemlo Connect Pro) from its published listings, and records viewing requests.'],
         ]],
         ['A person decides', [
           'AI writes a draft; you review it before saving or publishing. It can be wrong (for example, misreading a digit), which is why we show what needs checking. What you save or publish is your responsibility.',
           'The numbers in “Ask your shop” answers come straight from your data; the model doesn’t make them up.',
+          'The Connect assistant is the one exception that answers without review first, so it is restricted: it answers only from the business’s published listings, never states a price itself (Hemlo adds prices and links from your data), a reply containing a number it wasn’t given is not sent, and it hands the chat to a person when someone asks for one, negotiates, asks about legal papers or anything it doesn’t know. The business can switch it off or take over any chat.',
         ]],
         ['What is sent', [
           'We send only what the job needs (the photo, the question, or the property facts) to the AI provider running that job, which may be outside Iraq. We choose the model for each job to get the right quality and cost, and may change it.',
