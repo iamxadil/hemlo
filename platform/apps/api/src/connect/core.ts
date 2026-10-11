@@ -470,6 +470,7 @@ export async function runOrg(d: Deps, org: string, now = new Date()) {
     return n;
   });
   const out = sendingHours(now) ? await flush(d, org, now) : { sent: 0 };
+  await weeklyEmail(d, org, now).catch((e) => console.error('[connect weekly]', e instanceof Error ? e.message : e));
   return { queued, sent: out.sent };
 }
 
@@ -500,6 +501,52 @@ export async function onInquiry(d: Deps, org: string, leadId: string, about: str
       params: [first(l.name), agency, about || (lang === 'ar' ? 'عقاراتنا' : 'our listings')] }]);
   });
   if (job) await flush(d, org, new Date(), 5, 'instant_reply'); // they just wrote to us: any hour is fine
+}
+
+
+// ---------------------------------------------------------------------------------------------------------- the week
+/** The last seven days of Connect for one business: who wrote, what went out for it, viewings it booked, how fast. */
+export async function weekOf(db: Database, org: string, now = new Date()) {
+  const since = new Date(+now - 7 * DAY).toISOString();
+  const [r] = rowsOf(await withOrg(db, org, (tx) => tx.execute(sql`select
+      (select count(distinct conversation_id) from connect_message where organization_id = ${org} and direction = 'in' and created_at > ${since})::int as chats,
+      (select count(*) from connect_message where organization_id = ${org} and direction = 'out' and author in ('ai', 'automation') and status <> 'failed' and created_at > ${since})::int as replies,
+      (select count(*) from re_viewing where organization_id = ${org} and notes like '%Hemlo Connect%' and created_at > ${since})::int as viewings,
+      (select avg(extract(epoch from (r.at - m.created_at))) from connect_message m
+        cross join lateral (select min(o.created_at) as at from connect_message o where o.organization_id = m.organization_id and o.conversation_id = m.conversation_id
+          and o.direction = 'out' and o.created_at >= m.created_at) r
+        where m.organization_id = ${org} and m.direction = 'in' and m.created_at > ${since} and r.at is not null and r.at - m.created_at < interval '1 day')::float as reply`)));
+  return { chats: Number(r?.chats ?? 0), replies: Number(r?.replies ?? 0), viewings: Number(r?.viewings ?? 0), replySeconds: r?.reply == null ? null : Math.round(Number(r.reply)) };
+}
+const span = (sec: number | null, lang: 'ar' | 'en') => sec == null ? '—' : sec < 90 ? (lang === 'ar' ? `${sec} ثانية` : `${sec} seconds`)
+  : sec < 5400 ? (lang === 'ar' ? `${Math.round(sec / 60)} دقيقة` : `${Math.round(sec / 60)} minutes`) : (lang === 'ar' ? `${Math.round(sec / 3600)} ساعة` : `${Math.round(sec / 3600)} hours`);
+
+/** Saturday 9:00 Baghdad: the owner gets the week by email (once a week, however many ticks). */
+export async function weeklyEmail(d: Deps, org: string, now = new Date()) {
+  const b = new Date(+now + 3 * 3600_000);
+  if (b.getUTCDay() !== 6 || b.getUTCHours() !== 9) return false;
+  const week = await weekOf(d.db, org, now);
+  if (!week.chats && !week.replies) return false; // a quiet week isn't worth an email
+  const stamp = b.toISOString().slice(0, 10);
+  const [first] = await withOrg(d.db, org, (tx) => tx.insert(connectJob).values({ id: newId(), organizationId: org, recipe: 'weekly_summary', dedupe: `weekly_summary:${stamp}`, phone: '-',
+    payload: { template: '', lang: 'ar', params: [], text: '' }, status: 'done', doneAt: now }).onConflictDoNothing().returning({ id: connectJob.id }));
+  if (!first) return false;
+  const owners = rowsOf(await withSystem(d.db, (tx) => tx.execute(sql`select u.email, coalesce(u.locale, 'ar') as locale from member m join "user" u on u.id = m.user_id
+    where m.organization_id = ${org} and m.role = 'owner' and u.email is not null and u.email not like '%@phone.hemlohq.com' limit 3`)));
+  const business = await businessName(d, org), url = `${d.env.SYSTEM_URL ?? 'https://system.hemlohq.com'}/#/connect`;
+  for (const o of owners) {
+    const lang = o.locale === 'en' ? 'en' : 'ar';
+    await d.notifier?.connectWeekly({ email: String(o.email) }, lang, { business, chats: week.chats, replies: week.replies, viewings: week.viewings, reply: span(week.replySeconds, lang), url }).catch((e) => console.error('[connect weekly]', e instanceof Error ? e.message : e));
+  }
+  return true;
+}
+
+/** The number the website's WhatsApp buttons should open: the Connect number, when it's live (so chats land in the inbox). */
+export async function connectWhatsapp(d: Deps, org: string) {
+  const [ch] = await withOrg(d.db, org, (tx) => tx.select({ phone: connectChannel.displayPhone, provider: connectChannel.provider, status: connectChannel.status })
+    .from(connectChannel).where(eq(connectChannel.organizationId, org)));
+  if (!ch || ch.provider !== 'meta' || ch.status !== 'connected' || !ch.phone) return null;
+  return (await planOf(d, org)).plan ? `+${ch.phone.replace(/\D/g, '')}` : null;
 }
 
 export { TEMPLATES };

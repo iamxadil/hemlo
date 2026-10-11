@@ -1,4 +1,5 @@
-// Hemlo Connect's words: Arabic first, English. Kurdish shows the Arabic until a native speaker writes it.
+// Hemlo Connect's words: Arabic first, English, and Kurdish (Sorani). The Kurdish is a first version: like the other
+// editions' Kurdish, it should be read by a native speaker before it goes out widely.
 const ar = {
   tabs: { inbox: 'المحادثات', automations: 'الأتمتة', settings: 'الإعداد' },
   sandbox: 'وضع التجربة', connected: 'متصل', meterMessages: 'رسائل تلقائية', meterAi: 'ردود المساعد',
@@ -28,7 +29,7 @@ const ar = {
   assistantOn: 'المساعد يرد في هذه المحادثة. إن كتبت أنت، يتوقف فيها حتى تعيدها إليه.', write: 'اكتب رسالة…',
   rent: 'إيجار', buy: 'شراء', beds: 'غرف', noConsent: 'لم يوافق على العروض', byAi: 'المساعد', byAuto: 'تلقائي',
   weekSent: 'أُرسلت هذا الأسبوع', weekPending: 'بالانتظار', weekMissed: 'لم تُرسل',
-  recipes: { instant_reply: 'الرد الفوري', viewing_reminder: 'تذكير المعاينة', viewing_followup: 'السؤال بعد المعاينة', new_listing: 'تنبيه العقار الجديد', cold_lead: 'إحياء الزبائن', owner_report: 'تقرير المالك الشهري', rent_due: 'تذكير الإيجار', opt_out: 'إيقاف الرسائل' } as Record<string, string>,
+  recipes: { instant_reply: 'الرد الفوري', viewing_reminder: 'تذكير المعاينة', viewing_followup: 'السؤال بعد المعاينة', new_listing: 'تنبيه العقار الجديد', cold_lead: 'إحياء الزبائن', owner_report: 'تقرير المالك الشهري', rent_due: 'تذكير الإيجار', opt_out: 'إيقاف الرسائل', weekly_summary: 'ملخص الأسبوع' } as Record<string, string>,
   recipeBody: {
     instant_reply: 'كل من يكتب أو يرسل استفساراً من موقعك يصله رد خلال ثوانٍ، في أي ساعة.',
     viewing_reminder: 'قبل كل معاينة بيوم، تذكير بالعقار والموعد، ويرد الزبون للتأكيد أو التغيير.',
@@ -49,6 +50,11 @@ const ar = {
   save: 'احفظ', saved: 'حُفظ', sandboxBody: 'لا تخرج أي رسالة من هيملو. اربط رقمك حين تكون جاهزاً.', noTemplates: 'لم تُرسل القوالب بعد.', sync: 'حدّث حالة القوالب', synced: 'حُدّثت حالة القوالب.',
   tplStatus: { approved: 'موافق عليه', pending: 'بالمراجعة', rejected: 'مرفوض', missing: 'غير مرسل' } as Record<string, string>,
   types: { apartment: 'شقة', house: 'بيت', villa: 'فيلا', land: 'أرض', office: 'مكتب', shop: 'محل', commercial: 'عقار تجاري', building: 'بناية', warehouse: 'مخزن', farm: 'مزرعة' } as Record<string, string>,
+  thisWeek: 'هذا الأسبوع', wsChats: ' زبون كتب لك', wsReplies: ' رد أُرسل عنك', wsViewings: ' طلب معاينة', wsSpeed: ' متوسط سرعة الرد', unitS: ' ث', unitM: ' د', unitH: ' س',
+  quick: 'ردود جاهزة', quickBody: 'إجابات تتكرر كل يوم، تضعها في المحادثة بلمسة: الموقع، أوقات المعاينة، الأوراق المطلوبة…', quickHint: 'هذه أمثلة. عدّلها من «الإعداد».',
+  quickTitle: 'العنوان (مثلاً: الموقع)', quickText: 'النص الذي يُرسل', quickAdd: 'رد جديد', remove: 'حذف',
+  quickDefaults: [{ title: 'الموقع', text: 'مكتبنا في [العنوان]. تفضّل بزيارتنا في أوقات الدوام، أو أرسل لنا موقعك ونرتّب لك.' }, { title: 'أوقات المعاينة', text: 'المعاينات يومياً من 10 صباحاً حتى 6 مساءً عدا الجمعة. أي يوم ووقت يناسبك؟' }, { title: 'شكراً', text: 'شكراً لتواصلك معنا! أي سؤال آخر نحن حاضرون.' }] as { title: string; text: string }[],
+  sendListing: 'أرسل عقاراً', sendListingSub: 'يصل الزبون العنوان والسعر ورابط الصفحة بالصور.', listingSearch: 'ابحث برقم العقار أو المنطقة', noListings: 'لا عقارات منشورة بهذا البحث.', listingSent: 'أُرسل العقار.',
   disconnect: 'افصل الرقم', disconnectQ: 'فصل الرقم يوقف الردود والأتمتة. هل أنت متأكد؟',
 };
 export type Copy = typeof ar;
@@ -82,7 +88,7 @@ const en: Copy = {
   assistantOn: 'The assistant is answering this chat. If you write, it steps back here until you hand it back.', write: 'Write a message…',
   rent: 'Rent', buy: 'Buy', beds: 'beds', noConsent: 'No consent to offers', byAi: 'Assistant', byAuto: 'Automatic',
   weekSent: 'sent this week', weekPending: 'waiting', weekMissed: 'not sent',
-  recipes: { instant_reply: 'Instant reply', viewing_reminder: 'Viewing reminder', viewing_followup: 'After the viewing', new_listing: 'New-listing alert', cold_lead: 'Revive quiet leads', owner_report: 'Owner’s monthly report', rent_due: 'Rent reminder', opt_out: 'Stop messages' },
+  recipes: { instant_reply: 'Instant reply', viewing_reminder: 'Viewing reminder', viewing_followup: 'After the viewing', new_listing: 'New-listing alert', cold_lead: 'Revive quiet leads', owner_report: 'Owner’s monthly report', rent_due: 'Rent reminder', opt_out: 'Stop messages', weekly_summary: 'Weekly summary' },
   recipeBody: {
     instant_reply: 'Whoever writes, or sends an inquiry from your website, hears back within seconds, at any hour.',
     viewing_reminder: 'A day before each viewing, a reminder of the home and the time; the customer replies to confirm or change.',
@@ -103,7 +109,69 @@ const en: Copy = {
   save: 'Save', saved: 'Saved', sandboxBody: 'No message leaves Hemlo. Connect your number when you’re ready.', noTemplates: 'Templates not submitted yet.', sync: 'Refresh template status', synced: 'Template status refreshed.',
   tplStatus: { approved: 'approved', pending: 'in review', rejected: 'rejected', missing: 'not sent' },
   types: { apartment: 'Apartment', house: 'House', villa: 'Villa', land: 'Land', office: 'Office', shop: 'Shop', commercial: 'Commercial', building: 'Building', warehouse: 'Warehouse', farm: 'Farm' },
+  thisWeek: 'This week', wsChats: ' customers wrote', wsReplies: ' replies sent for you', wsViewings: ' viewing requests', wsSpeed: ' average reply', unitS: 's', unitM: 'm', unitH: 'h',
+  quick: 'Quick replies', quickBody: 'Answers you give every day, into the chat in one tap: the location, viewing times, the papers needed…', quickHint: 'These are examples. Change them in Set-up.',
+  quickTitle: 'Title (e.g. Location)', quickText: 'The text that is sent', quickAdd: 'New reply', remove: 'Remove',
+  quickDefaults: [{ title: 'Location', text: 'Our office is at [address]. Visit us during office hours, or send us your location and we’ll arrange it.' }, { title: 'Viewing times', text: 'Viewings are daily from 10 am to 6 pm, except Friday. Which day and time suit you?' }, { title: 'Thanks', text: 'Thank you for contacting us! We’re here for any other question.' }],
+  sendListing: 'Send a property', sendListingSub: 'The customer gets the title, the price and the page with its photos.', listingSearch: 'Search by property number or area', noListings: 'No published properties match.', listingSent: 'Property sent.',
   disconnect: 'Disconnect the number', disconnectQ: 'Disconnecting stops replies and automations. Are you sure?',
 };
 
-export const copyOf = (lang: string): Copy => (lang === 'en' ? en : ar);
+
+const ckb: Copy = {
+  ...ar,
+  tabs: { inbox: 'گفتوگۆکان', automations: 'خۆکارکردن', settings: 'ڕێکخستن' },
+  sandbox: 'دۆخی تاقیکردنەوە', connected: 'پەیوەستە', meterMessages: 'نامەی خۆکار', meterAi: 'وەڵامی یاریدەدەر',
+  heroTitle: 'واتسئاپێک کە لە جیاتی تۆ وەڵام دەداتەوە، بیر دەخاتەوە و بەدواداچوون دەکات', heroBody: 'هەر کڕیارێک بۆت بنووسێت لە چەند چرکەیەکدا وەڵام وەردەگرێت لە خانووبەرە ڕاستەقینەکانت. هەموو بینینێک بیرخستنەوەی بۆ دەچێت، و هەر خانووبەرەیەکی نوێ دەگاتە ئەوانەی بەدوایدا دەگەڕێن. هەموو شتێکیش لە Hemlo دەمێنێتەوە.',
+  flow: [['کڕیار دەنووسێت', 'لە ماڵپەڕەکەت، ڕیکلامەکەت یان ڕاستەوخۆ'], ['Connect یەکسەر وەڵام دەداتەوە', 'لە خانووبەرە ڕاستەقینەکانت، بە زمانی خۆی'], ['لە Hemlo تۆمار دەکرێت', 'کڕیارێکی نوێ و داوای بینین'], ['بەدواداچوون دەکات', 'بیرخستنەوە و پرسیارێک دوای بینین']],
+  monthly: 'مانگانە', yearly: 'ساڵانە (دوو مانگ بەخۆڕایی)', perMonth: ' / مانگانە', perYear: ' / ساڵانە', recommended: 'باشترین بۆ نووسینگەکان',
+  starterFeatures: ['سندوقی گفتوگۆی واتسئاپ بۆ هەموو تیمەکە', 'وەڵامی خێرا بۆ هەر پرسیارێک لە ماڵپەڕەکەت', 'بیرخستنەوەی بینین ڕۆژێک پێشتر، و پرسیارێک دواتر', 'ئاگادارکردنەوەی کڕیارە گونجاوەکان بە هەر خانووبەرەیەکی نوێ', 'بیرخستنەوەی کرێچی بە کاتی کرێ'],
+  bundleTag: 'پاکێجی تەواو · ١٠،٠٠٠ پاشەکەوت بکە', bundleFeatures: ['Hemlo Website: ماڵپەڕێک بۆ نووسینگەکەت کە خۆی پڕ دەکاتەوە', 'هەموو ئەوەی لە Connect Pro دایە', 'هەر پرسیارێک لە ماڵپەڕەکەت لە چەند چرکەیەکدا وەڵامی واتسئاپ وەردەگرێت'],
+  proFeatures: ['هەموو ئەوەی لە Connect دایە', 'یاریدەدەرێکی زیرەک کە شەو و ڕۆژ لە خانووبەرەکانت وەڵام دەداتەوە و بینین دیاری دەکات', 'ڕاپۆرتی مانگانە بۆ هەر خاوەنێک لە واتسئاپ', 'زیندووکردنەوەی ئەو کڕیارانەی بێدەنگ بوون'],
+  limitLine: (m: number, a: number) => a ? `${m.toLocaleString('en-US')} نامەی خۆکار و ${a.toLocaleString('en-US')} وەڵامی زیرەک لە مانگێکدا` : `${m.toLocaleString('en-US')} نامەی خۆکار لە مانگێکدا، وەڵامەکانی ناو گفتوگۆ بەخۆڕاین`,
+  request: 'داوای چالاککردن بکە', requested: 'داواکارییەکەت گەیشت؛ تیمی Hemlo پەیوەندیت پێوە دەکات بۆ پشتڕاستکردنەوەی پارەدان.', pending: 'داواکارییەکەت چاوەڕێی پشتڕاستکردنەوەی Hemlo دەکات', ownerOnly: 'خاوەنی هەژمار لە پەڕەی پلانەکەتەوە داوای دەکات.',
+  manualNote: 'پارەدان دەستییە (FIB، زەین کاش، نەقد یان گواستنەوە)، و دوای پشتڕاستکردنەوە چالاک دەبێت.',
+  setupTitle: 'ژمارەی واتسئاپی نووسینگەکەت پەیوەست بکە', setupBody: 'تەنها جارێک، و دەست پێدەکەیت. یان ئێستا Connect لە دۆخی تاقیکردنەوەدا تاقی بکەرەوە: هەموو شتێک کار دەکات و هیچ نامەیەک لە Hemlo دەرناچێت.',
+  connectNumber: 'ژمارەی واتسئاپ پەیوەست بکە', connectNumberBody: 'لە ڕێگەی پلاتفۆرمی فەرمیی واتسئاپی بازرگانی لە Meta: بێ قەدەغەکردن و بێ ئەپی ناوەندی.',
+  connectSteps: ['بە هەژماری فەیسبووکی بازرگانی بچۆ ژوورەوە', 'ژمارەی نووسینگە هەڵبژێرە یان ژمارەیەکی نوێ زیاد بکە', 'قاڵبی نامەکان خۆکارانە بۆ پەسەندکردنی واتسئاپ دەنێرین'],
+  signupCta: 'لە ڕێگەی فەیسبووکەوە پەیوەست بکە', manualLink: 'یان زانیارییەکان بە دەست بنووسە', connecting: 'پەیوەست دەکرێت…', connectedToast: 'ژمارەکەت پەیوەست کرا. ئێستا قاڵبی نامەکان بۆ پەسەندکردن دەنێرین.',
+  tryTitle: 'پێش پەیوەستکردن تاقی بکەرەوە', tryBody: 'وەک کڕیارێک بنووسە، و ببینە یاریدەدەر چۆن لە خانووبەرەکانت وەڵام دەداتەوە.', tryCta: 'تاقیکردنەوە دەست پێبکە', sandboxOn: 'دۆخی تاقیکردنەوە ئامادەیە.',
+  askManager: 'بەڕێوەبەری نووسینگە لێرەوە ژمارەی واتسئاپ پەیوەست دەکات.',
+  search: 'بە ناو یان ژمارە بگەڕێ', filters: { all: 'هەموو', unread: 'نەخوێندراوە', waiting: 'چاوەڕێتن', mine: 'کڕیارەکانم' },
+  simulate: 'وەک کڕیار بنووسە', simSub: 'دۆخی تاقیکردنەوە: نامەکە لە Hemlo دەرناچێت، و وەڵامەکە لێرە دەردەکەوێت وەک ئەوەی لە واتسئاپ دەگات.', simWho: 'ناو', simPhone: 'ژمارە', simMessage: 'نامە',
+  simName: 'کڕیاری تاقیکردنەوە', simText: 'سڵاو، بەدوای ڤێلایەکدا دەگەڕێم بۆ کڕین بە نزیکەی ٢٥٠ هەزار دۆلار', sending: 'دەنێردرێت…', send: 'بینێرە',
+  noMatch: 'هیچ گفتوگۆیەک بەم گەڕانە نییە.', empty: 'گفتوگۆکانی واتسئاپ لەگەڵ کڕیارەکانت لێرە دەردەکەون.', emptySandbox: 'کلیک لە «وەک کڕیار بنووسە» بکە بۆ تاقیکردنەوەی یەکەم گفتوگۆ.', pick: 'گفتوگۆیەک هەڵبژێرە',
+  waitingTag: 'چاوەڕێتە', optedOutTag: 'نامەکانی ڕاگرت', back: 'گەڕانەوە', openLead: 'فایلی کڕیار', giveBack: 'بیگەڕێنەوە بۆ یاریدەدەر', takeOver: 'خۆم وەڵام دەدەمەوە',
+  today: 'ئەمڕۆ', optedOutNote: 'ئەم کڕیارە داوای ڕاگرتنی نامەکانی کردووە.', windowClosed: '٢٤ کاتژمێر بەسەر دوایین نامەی کڕیاردا تێپەڕیوە: واتسئاپ ڕێگە بە نووسینی ئازاد نادات تا دووبارە بنووسێتەوە.',
+  assistantOn: 'یاریدەدەر لەم گفتوگۆیەدا وەڵام دەداتەوە. ئەگەر تۆ بنووسیت، لێرە دەوەستێت تا بیگەڕێنیتەوە.', write: 'نامەیەک بنووسە…',
+  rent: 'کرێ', buy: 'کڕین', beds: 'ژوور', noConsent: 'ڕازی نەبووە بە ئۆفەرەکان', byAi: 'یاریدەدەر', byAuto: 'خۆکار',
+  weekSent: 'ئەم هەفتەیە نێردرا', weekPending: 'چاوەڕێ', weekMissed: 'نەنێردرا',
+  recipes: { instant_reply: 'وەڵامی خێرا', viewing_reminder: 'بیرخستنەوەی بینین', viewing_followup: 'پرسیار دوای بینین', new_listing: 'ئاگادارکردنەوەی خانووبەرەی نوێ', cold_lead: 'زیندووکردنەوەی کڕیاران', owner_report: 'ڕاپۆرتی مانگانەی خاوەن', rent_due: 'بیرخستنەوەی کرێ', opt_out: 'ڕاگرتنی نامەکان', weekly_summary: 'پوختەی هەفتە' },
+  recipeBody: {
+    instant_reply: 'هەر کەسێک بنووسێت یان لە ماڵپەڕەکەتەوە پرسیار بنێرێت، لە چەند چرکەیەکدا وەڵام وەردەگرێت، لە هەر کاتژمێرێکدا.',
+    viewing_reminder: 'ڕۆژێک پێش هەر بینینێک، بیرخستنەوەیەک بە خانووبەرە و کاتەکە؛ کڕیار وەڵام دەداتەوە بۆ پشتڕاستکردنەوە یان گۆڕین.',
+    viewing_followup: 'چەند کاتژمێرێک دوای بینین: «ڕات چییە؟». کڕیاری دوودڵ دەگەڕێنێتەوە بۆ گفتوگۆ.',
+    new_listing: 'هەر خانووبەرەیەکی نوێ تەنها دەگاتە ئەو کڕیارانەی بۆیان گونجاوە (٧٠٪ یان زیاتر)، زۆرترین جارێک لە هەر ٣ ڕۆژدا.',
+    cold_lead: 'کڕیارێک ماوەیەکە بێدەنگە؟ نامەیەکی نەرم دەپرسێت ئایا هێشتا دەگەڕێت.',
+    owner_report: 'لە یەکەمی هەر مانگێکدا، هەر خاوەنێک ڕاپۆرتی خانووبەرەکەی وەردەگرێت: بینین، پەیوەندی و سەردانەکان.',
+    rent_due: 'سێ ڕۆژ پێش کاتی کرێ، بیرخستنەوەیەک بۆ کرێچی لە گرێبەستە واژۆکراوەکانی کرێوە.',
+  },
+  consentTag: 'بە ڕەزامەندی کڕیار', needsPro: 'لە Pro دا', coldDays: 'دوای چەند ڕۆژ بێدەنگی', awaitingApproval: 'قاڵبەکە چاوەڕێی پەسەندکردنی واتسئاپە',
+  lately: 'دوایین ئەوەی خۆکارکردن ناردی', noLog: 'خۆکارکردن هێشتا هیچی نەناردووە.',
+  jobStatus: { pending: 'چاوەڕێ', done: 'نێردرا', skipped: 'تێپەڕێنرا', failed: 'سەرنەکەوت' },
+  why: { TEMPLATE_NOT_APPROVED: 'قاڵبەکە چاوەڕێی پەسەندکردنی واتسئاپە', MONTHLY_LIMIT: 'گەیشتیتە سنووری پلانی ئەم مانگە', OPTED_OUT: 'کڕیار نامەکانی ڕاگرتووە', OFF: 'خۆکارکردن وەستاوە', WINDOW_CLOSED: 'پەنجەرەی ٢٤ کاتژمێر داخرا' },
+  assistant: 'یاریدەدەری زیرەک', assistantBody: 'تەنها لە خانووبەرە ڕاستەقینەکانت وەڵامی کڕیارەکانت دەداتەوە، هیچ نرخ یان بەڵێنێک دروست ناکات، و لە کاتی پێویستدا گفتوگۆکە دەداتە هاوکارێک.', assistantPro: 'یاریدەدەری زیرەک لە Connect Pro دا بەردەستە.',
+  hours: 'کاتی دەوام', hoursHint: 'شەممە–پێنجشەممە، ٩ی بەیانی – ٦ی ئێوارە', notes: 'ئەوەی یاریدەدەر دەبێت دەربارەی نووسینگەکەت بیزانێت', notesHint: 'بۆ نموونە: لە هەولێر و بەغدا کار دەکەین، کۆمیسیۆن ٢٪، بینین بە کاتی پێشوەختە.',
+  greetingAr: 'نامەی بەخێرهاتن (عەرەبی)', greetingEn: 'نامەی بەخێرهاتن (ئینگلیزی)', greetingHint: 'بۆ یەکەم نامەی کڕیارێکی نوێ دەنێردرێت کاتێک یاریدەدەر وەڵام نادات.',
+  save: 'پاشەکەوت بکە', saved: 'پاشەکەوت کرا', sandboxBody: 'هیچ نامەیەک لە Hemlo دەرناچێت. کاتێک ئامادە بوویت ژمارەکەت پەیوەست بکە.', noTemplates: 'قاڵبەکان هێشتا نەنێردراون.', sync: 'باری قاڵبەکان نوێ بکەرەوە', synced: 'باری قاڵبەکان نوێ کرایەوە.',
+  tplStatus: { approved: 'پەسەندکراو', pending: 'لە پێداچوونەوەدا', rejected: 'ڕەتکراوە', missing: 'نەنێردراو' },
+  types: { apartment: 'شوقە', house: 'خانوو', villa: 'ڤێلا', land: 'زەوی', office: 'نووسینگە', shop: 'دوکان', commercial: 'بازرگانی', building: 'باڵەخانە', warehouse: 'کۆگا', farm: 'کێڵگە' },
+  thisWeek: 'ئەم هەفتەیە', wsChats: ' کڕیار نووسیان', wsReplies: ' وەڵام لە جیاتی تۆ نێردرا', wsViewings: ' داوای بینین', wsSpeed: ' تێکڕای خێرایی وەڵام', unitS: ' چ', unitM: ' خ', unitH: ' ک',
+  quick: 'وەڵامی ئامادە', quickBody: 'ئەو وەڵامانەی هەموو ڕۆژێک دەیاندەیتەوە، بە یەک کلیک دەچنە ناو گفتوگۆ: شوێن، کاتی بینین، بەڵگەنامەکان…', quickHint: 'ئەمانە نموونەن. لە «ڕێکخستن» بیانگۆڕە.',
+  quickTitle: 'ناونیشان (بۆ نموونە: شوێن)', quickText: 'ئەو دەقەی دەنێردرێت', quickAdd: 'وەڵامی نوێ', remove: 'سڕینەوە',
+  quickDefaults: [{ title: 'شوێن', text: 'نووسینگەکەمان لە [ناونیشان]ە. لە کاتی دەوامدا سەردانمان بکە، یان شوێنەکەت بنێرە و ڕێکی دەخەین.' }, { title: 'کاتی بینین', text: 'بینینەکان هەموو ڕۆژێک لە ١٠ی بەیانی تا ٦ی ئێوارەن، جگە لە هەینی. چ ڕۆژ و کاتێک بۆت گونجاوە؟' }, { title: 'سوپاس', text: 'سوپاس بۆ پەیوەندیکردنت! بۆ هەر پرسیارێکی تر ئامادەین.' }],
+  sendListing: 'خانووبەرەیەک بنێرە', sendListingSub: 'کڕیار ناونیشان، نرخ و پەڕەکەی بە وێنەکانەوە وەردەگرێت.', listingSearch: 'بە ژمارەی خانووبەرە یان ناوچە بگەڕێ', noListings: 'هیچ خانووبەرەیەکی بڵاوکراوە بەم گەڕانە نییە.', listingSent: 'خانووبەرەکە نێردرا.',
+  disconnect: 'ژمارەکە جیا بکەرەوە', disconnectQ: 'جیاکردنەوەی ژمارە وەڵام و خۆکارکردن ڕادەگرێت. دڵنیایت؟',
+};
+
+export const copyOf = (lang: string): Copy => (lang === 'en' ? en : lang === 'ckb' ? ckb : ar);

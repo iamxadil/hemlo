@@ -5,10 +5,11 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { and, eq } from 'drizzle-orm';
 import { withOrg, withSystem } from '@hemlo/db';
-import { hemloAddonEntitlement, reProperty, reLead, reViewing, reContract, connectChannel, connectConversation, connectJob, connectMessage } from '@hemlo/db/schema';
+import { hemloAddonEntitlement, reProperty, reLead, reLeadProperty, reViewing, reContract, connectChannel, connectConversation, connectJob, connectMessage } from '@hemlo/db/schema';
 import { newId } from '@hemlo/core';
 import { setup, Browser, signInEmail } from './helpers';
-import { inventedNumbers, nextRentDue, runOrg, flush, onInquiry, windowOpen, sendingHours } from '../apps/api/src/connect/core';
+import { inventedNumbers, nextRentDue, runOrg, flush, onInquiry, windowOpen, sendingHours, weeklyEmail, connectWhatsapp } from '../apps/api/src/connect/core';
+import { outbox } from '@hemlo/notify';
 import { parseWebhook, validSignature, type WaProvider } from '../apps/api/src/connect/wa';
 import { fill, isStop } from '../apps/api/src/connect/catalog';
 import type { Engine, AskJson } from '../apps/api/src/ai/engine';
@@ -306,6 +307,49 @@ describe('the automations', () => {
     expect((await owner.put('/v1/connect/recipes/viewing_reminder', { enabled: true })).status).toBe(200);
     expect((await owner.get('/v1/connect')).json.plan).toBe('connect');
     await withOrg(t.db, org, (tx) => tx.update(hemloAddonEntitlement).set({ addonId: 'connect-pro' }).where(eq(hemloAddonEntitlement.organizationId, org)));
+  });
+});
+
+describe('in the inbox, and around it', () => {
+  let omar = '';
+  beforeAll(async () => {
+    omar = (await owner.get('/v1/connect/conversations?q=Omar')).json.conversations[0].id;
+  });
+  it('lists the agency’s homes, and sends one into a chat with its price and page', async () => {
+    const l = (await owner.get('/v1/connect/listings?q=Dream')).json.listings;
+    expect(l.map((x: any) => x.ref)).toContain(1001);
+    const before = sent.length;
+    const r = await owner.post(`/v1/connect/conversations/${omar}/listing`, { propertyId: villa.id, lang: 'en' });
+    expect(r.status).toBe(201);
+    expect(sent.slice(before)[0].text).toContain('Villa in Dream City · $240,000');
+    expect(sent.slice(before)[0].text).toContain('/p/villa-abc123');
+    const lead = (await owner.get(`/v1/connect/conversations/${omar}`)).json.lead;
+    const [lp] = await withOrg(t.db, org, (tx) => tx.select().from(reLeadProperty).where(and(eq(reLeadProperty.leadId, lead.id), eq(reLeadProperty.propertyId, villa.id))));
+    expect(lp.status).toBe('sent'); // the lead's list remembers it
+  });
+  it('keeps quick replies, and saving one part of the set-up never wipes another', async () => {
+    await owner.req('PATCH', '/v1/connect/settings', { persona: { hours: 'Sat–Thu 9–6' } });
+    await owner.req('PATCH', '/v1/connect/settings', { persona: { quick: [{ title: 'Location', text: 'We are on 100 Street, next to the bank.' }, { title: '', text: 'dropped' }] } });
+    const ch = (await owner.get('/v1/connect')).json.channel;
+    expect(ch.persona.quick).toEqual([{ title: 'Location', text: 'We are on 100 Street, next to the bank.' }]);
+    expect(ch.persona.hours).toBe('Sat–Thu 9–6');
+  });
+  it('sums up the week, and emails it to the owner once, on Saturday morning', async () => {
+    const o = (await owner.get('/v1/connect')).json;
+    expect(o.summary.chats).toBeGreaterThanOrEqual(1);
+    expect(o.summary.replies).toBeGreaterThanOrEqual(1);
+    const b = new Date(Date.now() + 3 * 3600_000); b.setUTCDate(b.getUTCDate() + ((6 - b.getUTCDay() + 7) % 7)); b.setUTCHours(9, 5, 0, 0);
+    const saturday = new Date(+b - 3 * 3600_000);
+    const n = outbox.length;
+    expect(await weeklyEmail(t.deps, org, saturday)).toBe(true);
+    expect(await weeklyEmail(t.deps, org, saturday)).toBe(false);
+    expect(await weeklyEmail(t.deps, org, new Date(+saturday + 86400_000))).toBe(false); // Sunday: not the day
+    const mail = outbox.slice(n).find((m) => m.kind === 'connect-weekly');
+    expect(mail?.to).toBe('connect-owner@example.com');
+  });
+  it('the website’s WhatsApp buttons open the Connect number while Connect is on', async () => {
+    await withOrg(t.db, org, (tx) => tx.update(connectChannel).set({ displayPhone: '+964 750 111 2222' }).where(eq(connectChannel.organizationId, org)));
+    expect(await connectWhatsapp(t.deps, org)).toBe('+9647501112222');
   });
 });
 

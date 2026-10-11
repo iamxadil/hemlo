@@ -16,9 +16,11 @@ type Plan = 'connect' | 'connect-pro' | null;
 type Offer = { code: 'connect' | 'connect-pro' | 'web-connect'; name: Record<string, string>; description: Record<string, string>; priceMonth: number | null; priceYear: number | null; limits: { messages: number; ai: number } };
 type Recipe = { key: string; plan: string; marketing: boolean; allowed: boolean; on: boolean; settings: Record<string, any>; template: string | null; approved: boolean };
 type Channel = { provider: 'sandbox' | 'meta'; status: string; displayPhone: string | null; verifiedName: string | null; tokenHint: string | null; ai: boolean;
-  persona: { greeting?: { ar?: string; en?: string }; hours?: string | null; notes?: string | null }; templates: Record<string, { status: string; reason?: string | null }>; error: string | null };
+  persona: { greeting?: { ar?: string; en?: string }; hours?: string | null; notes?: string | null; quick?: QuickReply[] }; templates: Record<string, { status: string; reason?: string | null }>; error: string | null };
+type QuickReply = { title: string; text: string };
 type Overview = { plan: Plan; limits: { messages: number; ai: number }; used: { messages: number; ai: number }; offers: Offer[]; canConfigure: boolean; channel: Channel | null;
-  signup: { appId: string; configId: string } | null; recipes: Recipe[]; counts: { unread: number; waiting: number; chats: number }; week: { sent: number; pending: number; missed: number } };
+  signup: { appId: string; configId: string } | null; recipes: Recipe[]; counts: { unread: number; waiting: number; chats: number }; week: { sent: number; pending: number; missed: number };
+  summary: { chats: number; replies: number; viewings: number; replySeconds: number | null } };
 type Conv = { id: string; phone: string; name: string | null; leadId: string | null; leadName: string | null; leadStatus: string | null; status: string; handoff: boolean; optedOut: boolean;
   unread: number; lastMessageAt: string; preview: string | null; open: boolean };
 type Msg = { id: string; direction: 'in' | 'out'; author: 'customer' | 'agent' | 'ai' | 'automation'; kind: string; body: string; recipe: string | null; status: string; error: string | null; meta: any; createdAt: string; pending?: boolean };
@@ -233,6 +235,8 @@ function Inbox({ o, C }: { o: Overview; C: Copy }) {
   });
   const convs = list.data?.conversations ?? [];
   return (
+    <>
+    <WeekStrip s={o.summary} C={C} />
     <div className="cx-inbox">
       <aside className="cx-list panel">
         <div className="cx-list-top">
@@ -251,6 +255,22 @@ function Inbox({ o, C }: { o: Overview; C: Copy }) {
       </section>
         : open && createPortal(<section className="cx-thread cx-full"><ThreadView id={open} C={C} o={o} onBack={() => setOpen(null)} /></section>, document.body)}
       {sim && <Simulator C={C} onClose={() => setSim(false)} onSent={(id) => { setSim(false); setOpen(id); }} />}
+    </div>
+    </>
+  );
+}
+
+/** What Connect did this week, in four numbers: the reason the owner keeps paying for it. */
+function WeekStrip({ s, C }: { s: Overview['summary']; C: Copy }) {
+  const { num, lang } = useApp();
+  if (!s || (!s.chats && !s.replies)) return null;
+  const t = s.replySeconds;
+  const speed = t == null ? '—' : t < 90 ? `${num(t)}${C.unitS}` : t < 5400 ? `${num(Math.round(t / 60))}${C.unitM}` : `${num(Math.round(t / 3600))}${C.unitH}`;
+  return (
+    <div className="cx-weekstrip" aria-label={C.thisWeek}>
+      <span className="cx-ws-k">{C.thisWeek}</span>
+      {([[s.chats, C.wsChats], [s.replies, C.wsReplies], [s.viewings, C.wsViewings]] as [number, string][]).map(([v, l]) => <span key={l}><b>{num(v)}</b>{l}</span>)}
+      <span><b dir={lang === 'en' ? undefined : 'auto'}>{speed}</b>{C.wsSpeed}</span>
     </div>
   );
 }
@@ -283,6 +303,8 @@ function ThreadView({ id, C, o, onBack }: { id: string; C: Copy; o: Overview; on
   const key = ['connect-conv', id];
   const q = useQuery<Thread>({ queryKey: key, queryFn: () => api(`/v1/connect/conversations/${id}`), refetchInterval: visible ? 4000 : false, staleTime: 2000 });
   const [text, setText] = useState('');
+  const [tool, setTool] = useState<'quick' | 'listing' | null>(null);
+  const area = useRef<HTMLTextAreaElement>(null);
   const end = useRef<HTMLDivElement>(null);
   const count = q.data?.messages.length ?? 0;
   useEffect(() => { end.current?.scrollIntoView({ block: 'end' }); }, [count, id]);
@@ -321,7 +343,7 @@ function ThreadView({ id, C, o, onBack }: { id: string; C: Copy; o: Overview; on
           <small><bdi dir="ltr">{c.phone}</bdi></small>
         </div>
         <div className="cx-th-acts">
-          {lead && <button className="btn btn-ghost btn-sm" onClick={() => go(`#/lead?id=${lead.id}`)}><Icon n="user" />{C.openLead}</button>}
+          {lead && <button className="btn btn-ghost btn-sm" onClick={() => go(`#/lead?id=${lead.id}`)} aria-label={C.openLead} title={C.openLead}><Icon n="user" /><span className="cx-wide-only">{C.openLead}</span></button>}
           {assistant && (c.handoff
             ? <button className="btn btn-secondary btn-sm" disabled={hand.isPending} onClick={() => hand.mutate(false)}><Icon n="sparkle" />{C.giveBack}</button>
             : <button className="btn btn-secondary btn-sm" disabled={hand.isPending} onClick={() => hand.mutate(true)}>{C.takeOver}</button>)}
@@ -342,14 +364,59 @@ function ThreadView({ id, C, o, onBack }: { id: string; C: Copy; o: Overview; on
           : !c.open ? <p className="cx-note"><Icon n="clock" />{C.windowClosed}</p>
           : <>
             {assistant && !c.handoff && <p className="cx-note soft"><Icon n="sparkle" />{C.assistantOn}</p>}
+            {tool === 'quick' && <QuickPick o={o} C={C} onPick={(t) => { setText((x) => (x ? `${x} ${t}` : t)); setTool(null); area.current?.focus(); }} onClose={() => setTool(null)} />}
             <form onSubmit={(e) => { e.preventDefault(); const t = text.trim(); if (t && !send.isPending) send.mutate(t); }}>
-              <textarea rows={1} value={text} placeholder={C.write} onChange={(e) => setText(e.target.value)}
+              <span className="cx-tools">
+                <button type="button" className="cx-tool" aria-pressed={tool === 'quick'} aria-label={C.quick} title={C.quick} onClick={() => setTool(tool === 'quick' ? null : 'quick')}><Icon n="sparkle" /></button>
+                <button type="button" className="cx-tool" aria-label={C.sendListing} title={C.sendListing} onClick={() => setTool('listing')}><Icon n="home" /></button>
+              </span>
+              <textarea ref={area} rows={1} value={text} placeholder={C.write} onChange={(e) => setText(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); (e.currentTarget.form as HTMLFormElement).requestSubmit(); } }} />
               <button className="cx-send" disabled={!text.trim()} aria-label={C.send}><Icon n="arrow" className="rtl:-scale-x-100" /></button>
             </form>
           </>}
       </footer>
+      {tool === 'listing' && <ListingPick convId={id} C={C} onClose={() => setTool(null)} onSent={() => { setTool(null); void qc.invalidateQueries({ queryKey: key }); void qc.invalidateQueries({ queryKey: ['connect-convs'] }); }} />}
     </>
+  );
+}
+
+/** Saved answers, one tap each (the agency's own, or a few to start with). */
+function QuickPick({ o, C, onPick, onClose }: { o: Overview; C: Copy; onPick(t: string): void; onClose(): void }) {
+  const list = o.channel?.persona.quick?.length ? o.channel.persona.quick : C.quickDefaults;
+  useEffect(() => { const on = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); }; window.addEventListener('keydown', on); return () => window.removeEventListener('keydown', on); }, [onClose]);
+  return (
+    <div className="cx-quick" role="menu">
+      {list.map((q) => <button key={q.title} role="menuitem" onClick={() => onPick(q.text)}><b>{q.title}</b><span>{q.text}</span></button>)}
+      {!o.channel?.persona.quick?.length && o.canConfigure && <p className="cx-quick-note">{C.quickHint}</p>}
+    </div>
+  );
+}
+
+/** One of the agency's homes, into the chat: its title, price and page. */
+function ListingPick({ convId, C, onClose, onSent }: { convId: string; C: Copy; onClose(): void; onSent(): void }) {
+  const { lang, toast, errorText } = useApp();
+  const [q, setQ] = useState(''), [term, setTerm] = useState('');
+  useEffect(() => { const t = window.setTimeout(() => setTerm(q.trim()), 250); return () => window.clearTimeout(t); }, [q]);
+  const list = useQuery<{ listings: { id: string; ref: number; title: string; titleEn: string | null; area: string | null; city: string | null; cover: string | null; price: string; priceEn: string }[] }>({
+    queryKey: ['connect-listings', term], queryFn: () => api(`/v1/connect/listings?q=${encodeURIComponent(term)}`), placeholderData: keepPreviousData, staleTime: 60_000 });
+  const send = useMutation({ mutationFn: (propertyId: string) => api(`/v1/connect/conversations/${convId}/listing`, { body: { propertyId, lang: lang === 'en' ? 'en' : 'ar' } }),
+    onSuccess: () => { toast(C.listingSent); onSent(); }, onError: (e) => toast(errorText(e), 'bad') });
+  return (
+    <Sheet title={C.sendListing} sub={C.sendListingSub} onClose={onClose}>
+      <div className="grid gap-3">
+        <div className="cx-search"><Icon n="search" /><input autoFocus placeholder={C.listingSearch} value={q} onChange={(e) => setQ(e.target.value)} /></div>
+        <div className="cx-plist">
+          {list.isLoading ? <div className="skeleton h-40" /> : list.data?.listings.length ? list.data.listings.map((p) => (
+            <button key={p.id} disabled={send.isPending} onClick={() => send.mutate(p.id)}>
+              {p.cover ? <img src={p.cover} alt="" loading="lazy" /> : <span className="ph" />}
+              <span className="min-w-0 flex-1"><b>{lang === 'en' ? p.titleEn || p.title : p.title}</b><small>#{p.ref} · {[p.area, p.city].filter(Boolean).join('، ')}</small></span>
+              <em dir="ltr">{lang === 'en' ? p.priceEn : p.price}</em>
+            </button>
+          )) : <p className="sub">{C.noListings}</p>}
+        </div>
+      </div>
+    </Sheet>
   );
 }
 
@@ -477,6 +544,7 @@ function Settings({ o, C }: { o: Overview; C: Copy }) {
         </div>
         <button className="btn btn-accent w-fit" disabled={save.isPending} onClick={() => save.mutate({ persona: { hours: p.hours, notes: p.notes, greeting: { ar: p.ar, en: p.en } } })}>{C.save}</button>
       </section>
+      <QuickEditor ch={ch} C={C} />
       <section className="panel cx-card">
         <div className="cx-card-h"><span className="cx-r-ic"><Icon n="wa" /></span><div><b>{ch.provider === 'sandbox' ? C.sandbox : ch.verifiedName ?? 'WhatsApp'}</b>
           <p className="sub" dir={ch.displayPhone ? 'ltr' : undefined}>{ch.provider === 'sandbox' ? C.sandboxBody : ch.displayPhone}</p></div></div>
@@ -490,5 +558,33 @@ function Settings({ o, C }: { o: Overview; C: Copy }) {
         </div>
       </section>
     </div>
+  );
+}
+
+/** The agency's saved answers: a title to find it, and the text it puts in the chat. */
+function QuickEditor({ ch, C }: { ch: Channel; C: Copy }) {
+  const { toast, errorText } = useApp();
+  const qc = useQueryClient();
+  const [rows, setRows] = useState<QuickReply[]>(() => (ch.persona.quick?.length ? ch.persona.quick : C.quickDefaults).map((x) => ({ ...x })));
+  const save = useMutation({ mutationFn: () => api('/v1/connect/settings', { method: 'PATCH', body: { persona: { quick: rows.filter((r) => r.title.trim() && r.text.trim()) } } }),
+    onSuccess: () => { toast(C.saved); void qc.invalidateQueries({ queryKey: ['connect'] }); }, onError: (e) => toast(errorText(e), 'bad') });
+  const set = (i: number, k: keyof QuickReply, v: string) => setRows(rows.map((r, j) => (j === i ? { ...r, [k]: v } : r)));
+  return (
+    <section className="panel cx-card">
+      <div className="cx-card-h"><span className="cx-r-ic"><Icon n="sparkle" /></span><div><b>{C.quick}</b><p className="sub">{C.quickBody}</p></div></div>
+      <div className="cx-qrows">
+        {rows.map((r, i) => (
+          <div key={i} className="cx-qrow">
+            <input className="input" value={r.title} maxLength={40} placeholder={C.quickTitle} onChange={(e) => set(i, 'title', e.target.value)} />
+            <textarea className="input" rows={2} value={r.text} maxLength={1000} placeholder={C.quickText} onChange={(e) => set(i, 'text', e.target.value)} />
+            <button className="btn btn-ghost btn-sm" aria-label={C.remove} onClick={() => setRows(rows.filter((_, j) => j !== i))}><Icon n="trash" /></button>
+          </div>
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {rows.length < 20 && <button className="btn btn-secondary btn-sm" onClick={() => setRows([...rows, { title: '', text: '' }])}><Icon n="plus" />{C.quickAdd}</button>}
+        <button className="btn btn-accent btn-sm" disabled={save.isPending} onClick={() => save.mutate()}>{C.save}</button>
+      </div>
+    </section>
   );
 }

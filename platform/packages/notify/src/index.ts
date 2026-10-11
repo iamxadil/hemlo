@@ -207,6 +207,8 @@ export interface Notifier {
   accessGranted(to: { email: string }, locale: Locale, v: { name: string; business: string; url: string }): Promise<void>;
   teamInvitation(to: { email: string }, locale: Locale, v: { inviter: string; role: string; url: string }): Promise<void>;
   earlyAccessAlert(to: string, v: { name: string; phone: string; business: string; kind: string; city?: string | null; note?: string | null; locale: string }): Promise<void>;
+  /** Hemlo Connect's week, for the business owner: chats answered, replies, viewings booked, how fast. */
+  connectWeekly(to: { email: string }, locale: Locale, v: { business: string; chats: number; replies: number; viewings: number; reply: string; url: string }): Promise<void>;
 }
 
 export function createNotifier(env: NotifyEnv): Notifier {
@@ -258,6 +260,18 @@ export function createNotifier(env: NotifyEnv): Notifier {
         button: { label: 'مراسلة على واتساب', url: `https://wa.me/${v.phone.replace(/\D/g, '')}` },
         footerReason: 'تنبيه داخلي لفريق هيملو.',
       } }, 'early-access');
+    },
+    async connectWeekly(to, locale, v) {
+      const ar = L(locale) !== 'en';
+      return mail(to.email, locale, { subject: ar ? `أسبوع Hemlo Connect: ${v.chats} محادثة، ${v.viewings} معاينة` : `Your Hemlo Connect week: ${v.chats} chats, ${v.viewings} viewings`, block: {
+        preheader: ar ? `ردّ Connect على ${v.chats} زبوناً هذا الأسبوع` : `Connect answered ${v.chats} customers this week`,
+        title: ar ? `أسبوع ${v.business} على واتساب` : `${v.business}'s week on WhatsApp`,
+        intro: ar ? 'هذا ما فعله Hemlo Connect عنك خلال الأيام السبعة الماضية.' : 'Here is what Hemlo Connect did for you over the last seven days.',
+        details: ar ? [['زبائن كتبوا لك', String(v.chats)], ['ردود أُرسلت عنك', String(v.replies)], ['طلبات معاينة', String(v.viewings)], ['متوسط سرعة الرد', v.reply]]
+          : [['Customers who wrote', String(v.chats)], ['Replies sent for you', String(v.replies)], ['Viewing requests', String(v.viewings)], ['Average reply time', v.reply]],
+        button: { label: ar ? 'افتح المحادثات' : 'Open your conversations', url: v.url },
+        footerReason: ar ? 'تصلك لأن Hemlo Connect مفعّل في عملك.' : 'You get this because Hemlo Connect is on for your business.',
+      } }, 'connect-weekly');
     },
   };
 }

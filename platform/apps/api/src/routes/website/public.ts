@@ -15,7 +15,7 @@ import { addonEntitlement } from '../../addons';
 import { W, pick, webFrame, waHref, telHref, moneyIqd, sectionHeading, inquiryDialog, INQUIRY_SCRIPT, esc, attr, icon, fill, type Lang } from './theme';
 import { designFor } from './designs';
 import { actor } from '../sys-common';
-import { onInquiry } from '../../connect/core';
+import { onInquiry, connectWhatsapp } from '../../connect/core';
 import type { AppEnv, Deps } from '../../types';
 
 const RESERVED = new Set(['www', 'api', 'app', 'admin', 'account', 'studio', 'mail', 'ftp', 'cdn', 'static', 'assets', 'demo', 'test', 'systems', 'tools', 'business']);
@@ -273,6 +273,8 @@ ${wa ? `<a class="btn wa" style="max-width:320px;margin:0 auto" href="${attr(waH
     const pageOf = (pages: any[]) => (slug === '' ? pages.find((p) => p.slug === '') : pages.find((p) => p.slug === slug)) ?? (slug === 'properties' ? PROPERTIES_PAGE : null);
     // which pages need the live listings: the ones that show them, and (for a design that stages them) the hero and the office
     const needsListings = (page: any) => { const types = new Set((page.sections ?? []).map((s: any) => s.type)); return adapter.sections.some((x) => types.has(x)) || (design.id === 'estate' && (types.has('hero') || types.has('about'))); };
+    // with Hemlo Connect live, the site's WhatsApp buttons open the Connect number, so chats land in the team's inbox
+    const connectWa = sample || draft ? null : await connectWhatsapp(d, site.organizationId).catch(() => null);
     const built = sample ? (() => {
       const page = pageOf(config.pages);
       if (!page) return null;
@@ -290,6 +292,7 @@ ${wa ? `<a class="btn wa" style="max-width:320px;margin:0 auto" href="${attr(waH
       const cs = config.settings?.contact ?? {};
       const contact = { phone: cs.phone ?? null, whatsapp: cs.whatsapp ?? null, email: cs.email ?? null, address: cs.address ?? null, mapUrl: cs.mapUrl ?? null };
       if (site.vertical === 'realestate') { const s = await settingsOf(tx, site.organizationId); contact.phone ??= s.phone; contact.whatsapp ??= s.whatsapp ?? s.phone; contact.email ??= s.email; contact.address ??= s.address; }
+      if (connectWa) contact.whatsapp = connectWa;
       const content = needsListings(page) ? await adapter.load(tx, d, site.organizationId, lang, origin, slug === 'properties' ? filters : {}) : { listings: [] };
       return { pages, page, name: pick(config.name, lang) || o?.name || 'Hemlo', tagline: pick(config.tagline, lang), about: config.about, logo, contact, products: [], listings: content.listings };
     });
@@ -337,6 +340,7 @@ ${wa ? `<a class="btn wa" style="max-width:320px;margin:0 auto" href="${attr(waH
     /** Homes like this one: the same kind first, then the same purpose, then anything else on the market. */
     const similarOf = (list: WebsiteListing[], p: { slug: string; type: string; purpose: string }) =>
       [...new Set([...list.filter((l) => l.type === p.type), ...list.filter((l) => l.purpose === p.purpose), ...list])].filter((l) => l.slug !== p.slug).slice(0, 4);
+    const connectWa = sample ? null : await connectWhatsapp(d, site.organizationId).catch(() => null);
     const data = sample ? (() => {
       const property = sampleProperty(lang, photosAt(), origin, slug), cs = config.settings.contact;
       return { property, name: pick(config.name, lang), logo: null, contact: { phone: cs.phone, whatsapp: cs.whatsapp, email: cs.email, address: cs.address, mapUrl: null },
@@ -349,6 +353,7 @@ ${wa ? `<a class="btn wa" style="max-width:320px;margin:0 auto" href="${attr(waH
       const cs = config.settings?.contact ?? {};
       const contact = { phone: cs.phone ?? null, whatsapp: cs.whatsapp ?? null, email: cs.email ?? null, address: cs.address ?? null, mapUrl: cs.mapUrl ?? null };
       if (site.vertical === 'realestate') { const s = await settingsOf(tx, site.organizationId); contact.phone ??= s.phone; contact.whatsapp ??= s.whatsapp ?? s.phone; contact.email ??= s.email; contact.address ??= s.address; }
+      if (connectWa) contact.whatsapp = connectWa;
       const similar = property && design.property ? similarOf((await adapter.load(tx, d, site.organizationId, lang, origin, { limit: 24 })).listings, property) : [];
       return { property, name: pick(config.name, lang) || org?.name || 'Hemlo', logo, contact, similar };
     });

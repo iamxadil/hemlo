@@ -16,6 +16,7 @@ import { screenOrg } from './routes/dental/screen';
 import { doorOrg } from './routes/gym/door';
 import { websitePathRoute, businessRootRedirect } from './website-routing';
 import { tick as connectTick } from './connect/core';
+import { createNotifier } from '@hemlo/notify';
 export { ScreenHub } from './screen-hub';
 import type { Env } from './types';
 
@@ -129,7 +130,7 @@ export default {
     try {
       if (event.cron === '7 * * * *') {
         app ??= build(env);
-        const deps = { db, env, files: filesOf(env), ai: engineFrom(env) } as any;
+        const deps = { db, env, files: filesOf(env), ai: engineFrom(env), notifier: createNotifier(env) } as any;
         console.log('[connect]', await scope.run({ db, ctx }, () => connectTick(deps)));
         return;
       }

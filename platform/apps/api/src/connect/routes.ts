@@ -5,6 +5,7 @@
 import { Hono, type Context } from 'hono';
 import { and, desc, eq, isNull, lt, or, sql, type SQL } from 'drizzle-orm';
 import { withOrg } from '@hemlo/db';
+import { newId } from '@hemlo/core';
 import { connectChannel, connectConversation, connectJob, connectMessage, connectRecipe, reLead, CONNECT_RECIPES } from '@hemlo/db/schema';
 import { audit } from '@hemlo/auth/audit';
 import { HttpError } from '../principal';
@@ -12,7 +13,10 @@ import { actor, bad, may, type Actor } from '../routes/sys-common';
 import { sealKey, masterSecret, hintOf } from '../ai/keys';
 import { addonOffer } from '../addons';
 import { LIMITS, RECIPES, TEMPLATES, planAllows, recipeOf, templateDefs } from './catalog';
-import { channelByPhoneId, channelOf, deliver, forgetChannel, planOf, providerOf, receive, statusUpdate, windowOpen } from './core';
+import { channelByPhoneId, channelOf, deliver, forgetChannel, planOf, providerOf, receive, statusUpdate, windowOpen, weekOf } from './core';
+import { priceText, SITE } from '../routes/realestate/common';
+import { withCovers } from '../routes/realestate/properties';
+import { reProperty, reLeadProperty } from '@hemlo/db/schema';
 import { demoReply, type DemoTurn } from './demo';
 import { GRAPH, metaWa, parseWebhook, validSignature, WaError } from './wa';
 import type { AppEnv, Deps } from '../types';
@@ -97,7 +101,7 @@ export function connectRoutes(d: Deps) {
         return { key: x.key, plan: x.plan, marketing: !!x.marketing, allowed: planAllows(p.plan, x), on: row ? row.enabled : x.on, settings: row?.settings ?? {},
           template: x.template, approved: !x.template || !data.ch || data.ch.provider !== 'meta' || (['ar', 'en'] as const).some((l) => data.ch!.templates?.[`${x.template}:${l}`]?.status === 'approved') };
       }),
-      counts: data.counts, week: data.week,
+      counts: data.counts, week: data.week, summary: await weekOf(d.db, org),
     });
   });
 
@@ -156,6 +160,43 @@ export function connectRoutes(d: Deps) {
     if (!(await planOf(d, a.organizationId)).plan) throw new HttpError(402, 'ADDON_NOT_ACTIVE');
     if (!conv.handoff) await withOrg(d.db, a.organizationId, (tx) => tx.update(connectConversation).set({ handoff: true }).where(eq(connectConversation.id, conv.id)));
     const message = await deliver(d, ch, conv, { author: 'agent', userId: a.userId, text });
+    return c.json({ message }, 201);
+  });
+
+  /** The agency's homes on the market, to send one into a chat (newest first, or by a word). */
+  r.get('/listings', async (c) => {
+    const a = actor(c, 'leads', 'read');
+    const q = (c.req.query('q') ?? '').trim().slice(0, 60).replace(/[%_]/g, '');
+    const out = await withOrg(d.db, a.organizationId, async (tx) => {
+      const rows = await tx.select({ id: reProperty.id, ref: reProperty.ref, slug: reProperty.slug, title: reProperty.title, titleEn: reProperty.titleEn, type: reProperty.type, purpose: reProperty.purpose,
+        price: reProperty.price, currency: reProperty.currency, rentPeriod: reProperty.rentPeriod, area: reProperty.area, city: reProperty.city, coverId: reProperty.coverId })
+        .from(reProperty).where(and(eq(reProperty.organizationId, a.organizationId), sql`${reProperty.publishedAt} is not null`, sql`${reProperty.status} in ('available', 'negotiating')`,
+          ...(q ? [or(sql`${reProperty.title} ilike ${`%${q}%`}`, sql`${reProperty.titleEn} ilike ${`%${q}%`}`, sql`${reProperty.area} ilike ${`%${q}%`}`, sql`${reProperty.ref}::text = ${q}`)] : [])))
+        .orderBy(desc(reProperty.publishedAt)).limit(24);
+      return withCovers(d, tx, a.organizationId, rows);
+    });
+    return c.json({ listings: out.map((p: any) => ({ id: p.id, ref: p.ref, title: p.title, titleEn: p.titleEn, area: p.area, city: p.city, cover: p.cover ?? null,
+      price: priceText(p.price == null ? null : Number(p.price), p.currency, 'ar', p.purpose === 'rent' ? p.rentPeriod : null), priceEn: priceText(p.price == null ? null : Number(p.price), p.currency, 'en', p.purpose === 'rent' ? p.rentPeriod : null) })) });
+  });
+
+  /** An agent sends one of the agency's homes into the chat: its title, price and page, and the lead's list remembers it. */
+  r.post('/conversations/:id/listing', async (c) => {
+    const a = actor(c, 'leads', 'update');
+    const conv = await one(a, c.req.param('id'));
+    const b = await c.req.json<{ propertyId?: string; lang?: string }>().catch(() => ({} as any));
+    if (conv.optedOut) throw new HttpError(409, 'OPTED_OUT');
+    const ch = await channelOf(d, a.organizationId);
+    if (!ch || ch.status !== 'connected') throw new HttpError(409, 'CONNECT_NOT_READY');
+    if (!(await planOf(d, a.organizationId)).plan) throw new HttpError(402, 'ADDON_NOT_ACTIVE');
+    const [p] = await withOrg(d.db, a.organizationId, (tx) => tx.select().from(reProperty).where(and(eq(reProperty.id, String(b.propertyId ?? '')), eq(reProperty.organizationId, a.organizationId),
+      sql`${reProperty.publishedAt} is not null`)));
+    if (!p) throw new HttpError(404, 'PROPERTY_NOT_FOUND');
+    const lang = b.lang === 'en' ? 'en' : 'ar', price = priceText(p.price == null ? null : Number(p.price), p.currency, lang, p.purpose === 'rent' ? p.rentPeriod : null);
+    const text = `${lang === 'en' ? p.titleEn || p.title : p.title} · ${price}\n${[p.area, p.city].filter(Boolean).join(lang === 'en' ? ', ' : '، ')}\n${SITE(d)}/p/${p.slug}${conv.leadId ? `?l=${conv.leadId.slice(0, 10)}` : ''}`;
+    if (!conv.handoff) await withOrg(d.db, a.organizationId, (tx) => tx.update(connectConversation).set({ handoff: true }).where(eq(connectConversation.id, conv.id)));
+    const message = await deliver(d, ch, conv, { author: 'agent', userId: a.userId, text, meta: { propertyId: p.id, ref: p.ref } });
+    if (conv.leadId) await withOrg(d.db, a.organizationId, (tx) => tx.insert(reLeadProperty).values({ id: newId(), organizationId: a.organizationId,
+      leadId: conv.leadId!, propertyId: p.id, status: 'sent', sentAt: new Date() }).onConflictDoNothing());
     return c.json({ message }, 201);
   });
 
@@ -268,7 +309,13 @@ export function connectRoutes(d: Deps) {
     if (typeof b.ai === 'boolean') set.ai = b.ai;
     if (b.persona !== undefined) {
       const s = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) || null : null);
-      set.persona = { greeting: { ar: s(b.persona?.greeting?.ar, 400) ?? undefined, en: s(b.persona?.greeting?.en, 400) ?? undefined }, hours: s(b.persona?.hours, 120), notes: s(b.persona?.notes, 800) };
+      // only what was sent changes: saving the quick replies leaves the greeting alone, and the other way round
+      const cur = ch.persona ?? {}, P = b.persona ?? {};
+      const quick = Array.isArray(P.quick) ? P.quick.slice(0, 20).map((x: any) => ({ title: s(x?.title, 40), text: s(x?.text, 1000) })).filter((x: any) => x.title && x.text) : (cur.quick ?? []);
+      set.persona = {
+        greeting: P.greeting !== undefined ? { ar: s(P.greeting?.ar, 400) ?? undefined, en: s(P.greeting?.en, 400) ?? undefined } : cur.greeting,
+        hours: P.hours !== undefined ? s(P.hours, 120) : cur.hours ?? null, notes: P.notes !== undefined ? s(P.notes, 800) : cur.notes ?? null, quick,
+      };
     }
     const row = await saveChannel(a.organizationId, set);
     return c.json({ channel: publicChannel(row) });

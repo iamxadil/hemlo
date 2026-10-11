@@ -19,7 +19,7 @@ export type ConnectRecipeKey = (typeof CONNECT_RECIPES)[number];
 /** A message template's state at WhatsApp, per template name: only an approved template may start a conversation. */
 export type ConnectTemplateState = Record<string, { status: 'missing' | 'pending' | 'approved' | 'rejected'; reason?: string | null }>;
 /** How the assistant speaks for this business. */
-export type ConnectPersona = { greeting?: { ar?: string; en?: string }; hours?: string | null; notes?: string | null };
+export type ConnectPersona = { greeting?: { ar?: string; en?: string }; hours?: string | null; notes?: string | null; quick?: { title: string; text: string }[] };
 
 export const connectChannel = pgTable('connect_channel', {
   organizationId: text('organization_id').primaryKey(),
