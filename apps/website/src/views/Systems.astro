@@ -6,6 +6,7 @@ import Base from '../layouts/Base.astro';
 import Mark from '../components/Mark.astro';
 import Compare from '../components/Compare.astro';
 import HwBadge from '../components/HwBadge.astro';
+import Ecosystem from '../components/Ecosystem.astro';
 import { BRANCH } from '../brand/brand';
 import { t, href, EMAIL, SYSTEM_URL, type Lang } from '../i18n/strings';
 interface Props { lang: Lang; }
@@ -113,32 +114,40 @@ const HOW = L2({
 const HELPER = L2(
   { lead: 'ومعه مساعد هادئ.', body: 'يقرأ فواتير المورّدين، ويجيب عن أسئلتك عن أرقامك. هو يكتب المسودة، وأنت تقرّر. ويصل قريباً إلى العيادات أيضاً.' },
   { lead: 'And a quiet helper.', body: 'It reads supplier invoices and answers questions about your numbers. It drafts; you decide. Clinics get theirs soon.' });
-// ---------- features in every plan, and the add-ons on top (Hemlo Website first) ----------
-// The add-on's price lives in hemlo_addon (admin → Billing → Add-ons); keep these figures in step with it.
+// ---------- the add-ons, as one unit with the system: Hemlo Website and Hemlo Connect ----------
+// Prices live in hemlo_addon (admin → Billing → Add-ons); keep these figures in step with it.
 const ADD = L2({
-  eyebrow: 'إضافة', live: 'متاح الآن لمكاتب العقارات',
-  title: ['موقع لمكتبك.', 'يملأ نفسه بنفسه.'],
-  sub: 'Hemlo Website يمنح مكتبك موقعاً خاصاً به. لا تبنيه ولا تحدّثه: كل عقار تضيفه في Hemlo يظهر فيه وحده، وكل من يسأل عنه يصلك.',
+  eyebrow: 'الإضافات', live: 'متاحة الآن لمكاتب العقارات',
+  title: ['نظامك، وموقعك، وواتساب.', 'وحدة واحدة.'],
+  sub: 'أضف إلى نظام Hemlo العقاري موقعاً يملأ نفسه، وواتساب يرد ويتابع عنك. الثلاثة يقرأون ويكتبون في المكان نفسه: عقار تضيفه مرة يظهر في كل مكان، وزبون يسأل من أي مكان يصل إلى قائمتك.',
   addr: 'nakheel.hemlohq.com', synced: 'أُضيف في Hemlo · ظاهر في موقعك الآن', syncedSub: 'فيلا بحديقة · دريم ستي',
-  how: 'كيف يعمل', steps: [['أضف العقار في Hemlo', 'كما تفعل الآن: الصور والسعر والتفاصيل.'], ['يظهر في موقعك', 'فوراً، وله صفحة خاصة ترسلها على واتساب.'], ['يسأل الزائر، وتتابع أنت', 'كل استفسار من الموقع يصل إلى قائمة زبائنك المحتملين.']],
-  name: 'Hemlo Website', price: '25,000', per: 'د.ع / شهرياً', onTop: 'يُضاف إلى خطة نظام Hemlo العقاري.', year: 'أو سنوياً بـ 250,000 د.ع، أي شهران مجاناً.',
-  trustTitle: 'موقع تثق به، ويثق به زبائنك',
-  trust: [['lock', 'عنوان خاص وآمن', 'باسم مكتبك على hemlohq.com، ومشفّر بـ HTTPS.'], ['globe', 'سريع من أي مكان', 'يُقدَّم من شبكة Cloudflare العالمية.'], ['spark', 'تبنيه Hemlo وتحدّثه', 'تصميم يتحسّن باستمرار، دون أي عمل منك.'], ['shield', 'بياناتك تبقى لك', 'لا نسخ ولا إدخال مرتين: كل شيء من نظامك.']],
-  included: ['عنوان باسم مكتبك على hemlohq.com', 'بالعربي والإنجليزي', 'كل عقاراتك، محدّثة دائماً', 'الاستفسارات تصل إلى زبائنك', 'سريع على أي موبايل'],
-  sample: 'شاهد موقعاً نموذجياً', turnOn: 'مشترك في Hemlo؟ فعّله من صفحة «الخطة» في نظامك.', more: 'للمتاجر والأندية والعيادات: قريباً.',
+  web: { name: 'Hemlo Website', line: 'موقع لمكتبك، يملأ نفسه بنفسه.', price: '25,000', per: 'د.ع / شهرياً', year: 'أو 250,000 د.ع سنوياً، أي شهران مجاناً.',
+    inc: ['عنوان باسم مكتبك على hemlohq.com', 'كل عقاراتك، محدّثة دائماً', 'عربي وإنجليزي، وسريع على أي موبايل', 'كل استفسار يصل إلى زبائنك'], cta: 'شاهد موقعاً نموذجياً' },
+  con: { name: 'Hemlo Connect', line: 'واتساب يرد ويذكّر ويتابع عنك.', from: 'من', price: '35,000', per: 'د.ع / شهرياً', pro: ['Connect Pro', '75,000 د.ع', 'مع مساعد ذكي يرد على مدار الساعة من عقاراتك ويحجز المعاينات.'],
+    inc: ['صندوق واتساب واحد لكل الفريق', 'رد فوري على كل استفسار', 'تذكير قبل المعاينة، وسؤال بعدها', 'كل عقار جديد يصل لمن يناسبه'], cta: 'اطلب Connect', isNew: 'جديد' },
+  together: ['الموقع وConnect معاً', '60,000 د.ع شهرياً فوق خطة نظامك.'], onTop: 'تُضاف إلى خطة نظام Hemlo العقاري.',
+  chat: { agency: 'دار النخيل للعقارات', online: 'متصل', ai: '✦ المساعد', q1: 'مرحبا، أبحث عن فيلا في دريم ستي بحدود 250 ألف', a1: 'أهلاً بك! عندنا فيلتان تناسبان طلبك. هل تفضّل حديقة أكبر أم مساحة بناء أكبر؟',
+    card: ['فيلا بحديقة · دريم ستي', '$240,000'], q2: 'الثانية تعجبني، أقدر أشوفها السبت العصر؟', a2: 'تمام! سجّلت طلب المعاينة، وسيؤكد لك زميلنا الموعد خلال دقائق.', toast: ['في نظامك الآن', 'طلب معاينة · السبت 5 م'] },
+  trustTitle: 'تثق بها، ويثق بها زبائنك',
+  trust: [['lock', 'عنوان خاص وآمن', 'باسم مكتبك على hemlohq.com، ومشفّر بـ HTTPS.'], ['wa', 'واتساب الرسمي', 'عبر منصة واتساب للأعمال من Meta: لا حظر، ولا تطبيقات وسيطة.'], ['spark', 'ذكاء لا يخترع', 'المساعد يرد من عقاراتك فقط، ولا يذكر سعراً لم تضعه.'], ['shield', 'بياناتك تبقى لك', 'كل شيء في نظامك، ويستطيع أي زبون إيقاف الرسائل بكلمة.']],
+  sample: 'شاهد موقعاً نموذجياً', turnOn: 'مشترك في Hemlo؟ فعّلها من صفحة «الخطة» أو «المحادثات» في نظامك.', more: 'للمتاجر والأندية والعيادات: قريباً.',
   plansTitle: 'وفي كل خطة نظام، كل الميزات.', plansSub: 'الخطط تختلف بالحجم فقط.',
   plans: ['موظفون بصلاحيات', 'يعمل بدون إنترنت', 'تذكيرات واتساب', 'المساعد الذكي', 'عربي وإنجليزي وكوردي', 'تصدير بياناتك'],
 }, {
-  eyebrow: 'Add-on', live: 'Available now for real estate offices',
-  title: ['A website for your office.', 'It fills itself.'],
-  sub: 'Hemlo Website gives your office a website of its own. You don’t build it or update it: every property you add in Hemlo appears on it by itself, and everyone who asks about one reaches you.',
+  eyebrow: 'Add-ons', live: 'Available now for real estate offices',
+  title: ['Your system, your website, your WhatsApp.', 'One unit.'],
+  sub: 'Add to Hemlo Real Estate a website that fills itself, and a WhatsApp that answers and follows up for you. All three read and write the same place: a property you add once shows everywhere, and a customer who asks from anywhere lands in your list.',
   addr: 'nakheel.hemlohq.com', synced: 'Added in Hemlo · on your site now', syncedSub: 'Villa with a garden · Dream City',
-  how: 'How it works', steps: [['Add a property in Hemlo', 'As you already do: photos, price, details.'], ['It’s on your website', 'Right away, with its own page to send on WhatsApp.'], ['Visitors ask, you follow up', 'Every inquiry from the site lands in your leads.']],
-  name: 'Hemlo Website', price: '25,000', per: 'IQD / month', onTop: 'Added to your Hemlo Real Estate plan.', year: 'Or 250,000 IQD a year: two months free.',
-  trustTitle: 'A website you can trust, and so can your clients',
-  trust: [['lock', 'Your own secure address', 'yourname.hemlohq.com, encrypted with HTTPS.'], ['globe', 'Fast from anywhere', 'Served from Cloudflare’s global network.'], ['spark', 'Built and kept up to date by Hemlo', 'The design keeps improving, with no work from you.'], ['shield', 'Your data stays yours', 'Nothing copied, nothing typed twice: it all comes from your system.']],
-  included: ['Your own address: yourname.hemlohq.com', 'Arabic and English', 'Every property, always up to date', 'Inquiries straight to your leads', 'Fast on any phone'],
-  sample: 'See a sample site', turnOn: 'Already on Hemlo? Switch it on from the Plan page in your system.', more: 'Shops, gyms and clinics: soon.',
+  web: { name: 'Hemlo Website', line: 'A website for your office that fills itself.', price: '25,000', per: 'IQD / month', year: 'Or 250,000 IQD a year: two months free.',
+    inc: ['Your own address on hemlohq.com', 'Every property, always up to date', 'Arabic and English, fast on any phone', 'Every inquiry reaches your leads'], cta: 'See a sample site' },
+  con: { name: 'Hemlo Connect', line: 'WhatsApp that answers, reminds and follows up for you.', from: 'from', price: '35,000', per: 'IQD / month', pro: ['Connect Pro', '75,000 IQD', 'with an AI assistant answering around the clock from your listings, booking viewings.'],
+    inc: ['One WhatsApp inbox for the whole team', 'An instant reply to every inquiry', 'A reminder before each viewing, a question after', 'Each new listing reaches the buyers it suits'], cta: 'Ask for Connect', isNew: 'New' },
+  together: ['Website and Connect together', '60,000 IQD a month on top of your system plan.'], onTop: 'Added to your Hemlo Real Estate plan.',
+  chat: { agency: 'Nakheel Real Estate', online: 'online', ai: '✦ Assistant', q1: 'Hi, I’m looking for a villa in Dream City, around 250k', a1: 'Welcome! Two villas fit what you asked for. Do you prefer a bigger garden or more built area?',
+    card: ['Villa with a garden · Dream City', '$240,000'], q2: 'I like the second one. Can I see it Saturday afternoon?', a2: 'Done! I’ve noted a viewing request, and a colleague will confirm the time within minutes.', toast: ['In your system now', 'Viewing request · Sat 5 PM'] },
+  trustTitle: 'You can trust them, and so can your clients',
+  trust: [['lock', 'Your own secure address', 'yourname.hemlohq.com, encrypted with HTTPS.'], ['wa', 'Official WhatsApp', 'Through Meta’s WhatsApp Business Platform: no bans, no middlemen.'], ['spark', 'AI that doesn’t invent', 'The assistant answers only from your listings, and never quotes a price you didn’t set.'], ['shield', 'Your data stays yours', 'It all lives in your system, and any customer can stop messages with one word.']],
+  sample: 'See a sample site', turnOn: 'Already on Hemlo? Switch them on from the Plan or Conversations page in your system.', more: 'Shops, gyms and clinics: soon.',
   plansTitle: 'And every system plan has every feature.', plansSub: 'Plans differ by size only.',
   plans: ['Staff with their own access', 'Works offline', 'WhatsApp reminders', 'The AI helper', 'Arabic, English, Kurdish', 'Export your data'],
 });
@@ -149,6 +158,7 @@ const TRUST_ICON: Record<string, string> = {
   globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
   spark: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/>',
   shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/>',
+  wa: '<path d="M3 21l1.65-4.94A9 9 0 1 1 7.9 19.3L3 21Z"/><path d="M9 10c.5 2 2 3.5 4 4l1.2-1.2a1 1 0 0 1 1-.25l1.8.6"/>',
 };
 const END = L2(
   { title: 'نظام لمهنتك، لا العكس.', sub: 'المتاجر والعيادات والأندية الرياضية ومكاتب العقارات متاحة الآن. ولكل مهنة أخرى، أخبرنا كيف يسير عملك ونبني إصدارها.' },
@@ -304,47 +314,64 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
       <p class="reveal helper"><span class="spark" aria-hidden="true">✦</span><span><b>{HELPER.lead}</b> {HELPER.body}</span></p>
     </section>
 
-    <!-- features in every plan, and the add-ons on top: Hemlo Website is part of Hemlo Systems, not another branch -->
+    <!-- the add-ons, as one unit with the system: Hemlo Website and Hemlo Connect are part of Hemlo Systems, not other branches -->
     <section class="wrap border-t border-line py-20 sm:py-28 web" id="addons">
-      <!-- what it is, in one line -->
       <div class="web-head">
-        <p class="reveal web-eyebrow"><HwBadge size="lg" tone="ink" /><span class="web-tag">{ADD.eyebrow}</span><span class="web-live"><span class="dot" aria-hidden="true"></span>{ADD.live}</span></p>
+        <p class="reveal web-eyebrow"><span class="web-tag">{ADD.eyebrow}</span><span class="web-live"><span class="dot" aria-hidden="true"></span>{ADD.live}</span></p>
         <h2 class="reveal mt-5 text-[clamp(2rem,4.2vw,3.3rem)] font-semibold leading-[1.08] tracking-tight"><span class="block">{ADD.title[0]}</span><span class="block web-acc">{ADD.title[1]}</span></h2>
         <p class="reveal mt-5 text-lead text-fg-2">{ADD.sub}</p>
       </div>
 
-      <!-- what it looks like: the sample site, in a browser, on its own address -->
-      <a class="reveal web-shot" href={sampleHref} aria-label={ADD.sample} target="_blank" rel="noopener">
-        <span class="web-chrome" aria-hidden="true"><i></i><i></i><i></i><span class="web-url" dir="ltr"><svg viewBox="0 0 16 16"><path d="M4.5 7V5.5a3.5 3.5 0 0 1 7 0V7M3.5 7h9v6.5h-9z" /></svg>{ADD.addr}</span></span>
-        <img src={`/images/realestate/sample/site-${lang}-1400.webp`} srcset={`/images/realestate/sample/site-${lang}-800.webp 800w, /images/realestate/sample/site-${lang}-1400.webp 1400w`} sizes="(min-width: 1200px) 1100px, 92vw" width="1400" height="809" alt="" loading="lazy" decoding="async" />
-        <span class="web-sync" aria-hidden="true"><span class="ok">✓</span><span><b>{ADD.synced}</b><small>{ADD.syncedSub}</small></span></span>
-      </a>
+      <!-- how the three work as one: a customer's way through them, step by step -->
+      <div class="reveal web-eco"><Ecosystem lang={lang} /></div>
 
-      <!-- why it can be trusted: four plain facts -->
+      <!-- the two add-ons, side by side, joined -->
+      <div class="duo">
+        <article class="reveal duo-card">
+          <HwBadge size="lg" />
+          <p class="duo-line">{ADD.web.line}</p>
+          <p class="web-amount"><b dir="ltr">{ADD.web.price}</b><span>{ADD.web.per}</span></p>
+          <p class="web-year">{ADD.web.year}</p>
+          <ul class="web-inc">{ADD.web.inc.map((x) => <li>{x}</li>)}</ul>
+          <div class="web-cta"><a class="btn web-btn" href={sampleHref} target="_blank" rel="noopener">{ADD.web.cta}<span class="arr" aria-hidden="true">→</span></a></div>
+        </article>
+        <span class="duo-link" aria-hidden="true"><Mark /></span>
+        <article class="reveal duo-card con">
+          <p class="flex flex-wrap items-center gap-2"><HwBadge size="lg" label="Connect" /><span class="duo-new">{ADD.con.isNew}</span></p>
+          <p class="duo-line">{ADD.con.line}</p>
+          <p class="web-amount"><small>{ADD.con.from}</small><b dir="ltr">{ADD.con.price}</b><span>{ADD.con.per}</span></p>
+          <p class="duo-pro"><b>{ADD.con.pro[0]}</b> · <span dir="ltr">{ADD.con.pro[1]}</span> <span>{ADD.con.pro[2]}</span></p>
+          <ul class="web-inc">{ADD.con.inc.map((x) => <li>{x}</li>)}</ul>
+          <div class="web-cta"><a class="btn con-btn" href={ask('realestate')}>{ADD.con.cta}<span class="arr" aria-hidden="true">→</span></a></div>
+        </article>
+      </div>
+      <p class="reveal duo-together"><b>{ADD.together[0]}</b> <span>{ADD.together[1]}</span> <span class="text-fg-2">{ADD.turnOn}</span></p>
+
+      <!-- what they look like: the sample site, and a WhatsApp chat Connect answered -->
+      <div class="show">
+        <a class="reveal web-shot" href={sampleHref} aria-label={ADD.sample} target="_blank" rel="noopener">
+          <span class="web-chrome" aria-hidden="true"><i></i><i></i><i></i><span class="web-url" dir="ltr"><svg viewBox="0 0 16 16"><path d="M4.5 7V5.5a3.5 3.5 0 0 1 7 0V7M3.5 7h9v6.5h-9z" /></svg>{ADD.addr}</span></span>
+          <img src={`/images/realestate/sample/site-${lang}-1400.webp`} srcset={`/images/realestate/sample/site-${lang}-800.webp 800w, /images/realestate/sample/site-${lang}-1400.webp 1400w`} sizes="(min-width: 1200px) 700px, 92vw" width="1400" height="809" alt="" loading="lazy" decoding="async" />
+          <span class="web-sync" aria-hidden="true"><span class="ok">✓</span><span><b>{ADD.synced}</b><small>{ADD.syncedSub}</small></span></span>
+        </a>
+        <div class="reveal phone" data-chat aria-hidden="true">
+          <div class="ph-bar"><span class="ph-av"><Mark /></span><span><b>{ADD.chat.agency}</b><small>{ADD.chat.online}</small></span></div>
+          <div class="ph-msgs">
+            <p class="b in" style="--i:0">{ADD.chat.q1}</p>
+            <div class="b out" style="--i:1"><span class="by">{ADD.chat.ai}</span><p>{ADD.chat.a1}</p>
+              <span class="ph-card"><img src="/images/realestate/villa-1-sm.webp" width="700" height="467" alt="" loading="lazy" decoding="async" /><span><b>{ADD.chat.card[0]}</b><em dir="ltr">{ADD.chat.card[1]}</em></span></span></div>
+            <p class="b in" style="--i:2">{ADD.chat.q2}</p>
+            <div class="b out" style="--i:3"><span class="by">{ADD.chat.ai}</span><p>{ADD.chat.a2}</p></div>
+          </div>
+          <p class="ph-toast" style="--i:4"><span class="ok">✓</span><span><small>{ADD.chat.toast[0]}</small><b>{ADD.chat.toast[1]}</b></span></p>
+        </div>
+      </div>
+
+      <!-- why they can be trusted: four plain facts -->
       <div class="reveal web-trust">
         <p class="text-sm font-semibold text-fg-2">{ADD.trustTitle}</p>
         <ul>{ADD.trust.map(([i, h, p]) => <li><span class="ti" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" set:html={TRUST_ICON[i]} /></span><span><b>{h}</b><span>{p}</span></span></li>)}</ul>
-      </div>
-
-      <!-- how it works, and the price -->
-      <div class="web-grid">
-        <div class="reveal">
-          <p class="text-sm font-semibold text-fg-2">{ADD.how}</p>
-          <ol class="web-steps">{ADD.steps.map(([h, p], i) => <li><span class="n">{num(i)}</span><span><b>{h}</b><span>{p}</span></span></li>)}</ol>
-          <p class="mt-5 text-sm text-fg-2">{ADD.more}</p>
-        </div>
-        <article class="reveal web-price">
-          <HwBadge />
-          <p class="web-amount"><b dir="ltr">{ADD.price}</b><span>{ADD.per}</span></p>
-          <p class="web-ontop">{ADD.onTop}</p>
-          <p class="web-year">{ADD.year}</p>
-          <ul class="web-inc">{ADD.included.map((x) => <li>{x}</li>)}</ul>
-          <div class="web-cta">
-            <a class="btn web-btn" href={sampleHref} target="_blank" rel="noopener">{ADD.sample}<span class="arr" aria-hidden="true">→</span></a>
-            <a class="btn btn-secondary" href={ask('realestate')}>{L.ask}</a>
-          </div>
-          <p class="web-note">{ADD.turnOn}</p>
-        </article>
+        <p class="mt-4 text-sm text-fg-2">{ADD.more}</p>
       </div>
 
       <!-- the core plans, quietly: every feature in every plan -->
@@ -690,8 +717,8 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
   .helper .spark { color: var(--c); font-size: 1.1rem; }
   @media (prefers-color-scheme: dark) { .helper .spark { color: var(--cd); } }
   /* ---------- Hemlo Website: what it is, what it looks like, how it works, what it costs ---------- */
-  .web { --re: #1F6F5C; --re-soft: color-mix(in oklab, #1F6F5C 10%, transparent); }
-  @media (prefers-color-scheme: dark) { .web { --re: #5FBF9F; --re-soft: color-mix(in oklab, #5FBF9F 14%, transparent); } }
+  .web { --re: #1F6F5C; --re-soft: color-mix(in oklab, #1F6F5C 10%, transparent); --wa: #1FA855; }
+  @media (prefers-color-scheme: dark) { .web { --re: #5FBF9F; --re-soft: color-mix(in oklab, #5FBF9F 14%, transparent); --wa: #3CCB75; } }
   .web-head { max-width: 46rem; }
   .web-eyebrow { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .9rem; font-size: .88rem; }
   .web-tag { padding: .28rem .7rem; border-radius: 999px; border: 1px solid var(--line-strong); font-weight: 500; color: var(--fg); }
@@ -717,21 +744,10 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
   @media (max-width: 560px) { .web-sync { position: static; margin: .8rem; max-width: none; box-shadow: none; } }
 
   /* how it works · the price */
-  .web-grid { display: grid; gap: 2.5rem; margin-top: 3.5rem; align-items: start; }
-  @media (min-width: 960px) { .web-grid { grid-template-columns: 1fr minmax(0, 25rem); gap: 4rem; } }
-  .web-steps { margin-top: 1rem; border-top: 1px solid var(--line); }
-  .web-steps li { display: flex; gap: 1.1rem; align-items: flex-start; padding: 1.35rem 0; border-bottom: 1px solid var(--line); }
-  .web-steps .n { display: grid; place-items: center; flex: none; width: 2.1rem; height: 2.1rem; border-radius: 999px; background: var(--re-soft); color: var(--re); font-weight: 600; font-size: .95rem; }
-  .web-steps b { display: block; font-size: 1.15rem; font-weight: 600; letter-spacing: -.01em; }
-  :global(html[lang="ar"]) .web-steps b { letter-spacing: 0; }
-  .web-steps li > span:last-child > span { display: block; margin-top: .25rem; color: var(--fg-2); line-height: 1.55; }
 
-  .web-price { padding: 1.9rem; border-radius: 1.4rem; background: var(--surface); border: 1px solid var(--line); box-shadow: 0 30px 60px -45px rgb(14 20 32 / .35); }
-  .web-pname { font-size: .9rem; font-weight: 600; color: var(--re); }
   .web-amount { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem; margin-top: .6rem; }
   .web-amount b { font-size: clamp(2.6rem, 5vw, 3.2rem); font-weight: 600; line-height: 1; letter-spacing: -.03em; }
   .web-amount span { color: var(--fg-2); font-size: 1rem; }
-  .web-ontop { margin-top: .8rem; font-weight: 500; }
   .web-year { margin-top: .2rem; font-size: .92rem; color: var(--fg-2); }
   .web-inc { display: grid; gap: .6rem; margin-top: 1.4rem; padding-top: 1.3rem; border-top: 1px solid var(--line); font-size: .95rem; }
   .web-inc li { display: flex; gap: .65rem; align-items: baseline; }
@@ -742,7 +758,6 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
   @media (prefers-color-scheme: dark) { .web-btn { color: #0B1019; } }
   .web-btn:hover { filter: brightness(1.07); }
   :global(html[dir="rtl"]) .web-btn .arr { transform: scaleX(-1); }
-  .web-note { margin-top: 1rem; font-size: .85rem; color: var(--fg-2); line-height: 1.5; }
 
   /* why it can be trusted */
   .web-trust { margin-top: 3rem; }
@@ -762,6 +777,63 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
   .web-plans p span { color: var(--fg-2); }
   .web-plans ul { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
   .web-plans li { padding: .4rem .85rem; border-radius: 999px; background: var(--sunken); font-size: .88rem; color: var(--fg-2); }
+
+  /* how the three work as one */
+  .web-eco { margin-top: 3.2rem; padding: clamp(1.4rem, 4vw, 3rem) clamp(1rem, 3vw, 2.5rem) clamp(1.6rem, 3vw, 2.4rem); border-radius: 1.6rem; background: var(--surface); border: 1px solid var(--line);
+    background-image: radial-gradient(circle, color-mix(in oklab, var(--fg) 7%, transparent) 1px, transparent 1px); background-size: 20px 20px; }
+
+  /* the two add-ons, joined by the system between them */
+  .duo { position: relative; display: grid; gap: 1.2rem; margin-top: 2.2rem; align-items: stretch; }
+  @media (min-width: 900px) { .duo { grid-template-columns: 1fr 3.4rem 1fr; gap: 0; } }
+  .duo-card { display: flex; flex-direction: column; padding: 1.9rem; border-radius: 1.4rem; background: var(--surface); border: 1px solid var(--line); box-shadow: 0 30px 60px -45px rgb(14 20 32 / .35); }
+  .duo-card.con { border-color: color-mix(in oklab, var(--wa) 45%, var(--line)); box-shadow: 0 30px 60px -40px color-mix(in oklab, var(--wa) 45%, transparent); }
+  .duo-card .web-cta { margin-top: auto; padding-top: 1.6rem; }
+  .duo-card > :global(.hw) { align-self: flex-start; }
+  .duo-line { margin-top: 1.1rem; font-size: 1.15rem; font-weight: 600; letter-spacing: -.01em; }
+  :global(html[lang="ar"]) .duo-line { letter-spacing: 0; }
+  .duo-card .web-amount small { color: var(--fg-2); font-size: .95rem; }
+  .duo-pro { margin-top: .5rem; font-size: .92rem; color: var(--fg-2); line-height: 1.55; }
+  .duo-pro b { color: var(--fg); font-weight: 600; }
+  .duo-new { padding: .2rem .6rem; border-radius: 999px; background: var(--wa); color: #fff; font-size: .75rem; font-weight: 700; }
+  .duo-link { display: none; }
+  @media (min-width: 900px) {
+    .duo-link { position: relative; display: grid; place-items: center; }
+    .duo-link::before { content: ""; position: absolute; inset-inline: 0; top: 50%; height: 2px; background: linear-gradient(90deg, var(--re), var(--wa)); opacity: .55; }
+    :global(html[dir="rtl"]) .duo-link::before { background: linear-gradient(-90deg, var(--re), var(--wa)); }
+    .duo-link :global(svg) { position: relative; width: 2.6rem; height: 2.6rem; padding: .6rem; border-radius: 50%; background: #0E1420; color: #F4F1EA; box-shadow: 0 12px 24px -12px rgb(14 20 32 / .6); }
+  }
+  .con-btn { background: var(--wa); color: #fff; }
+  .con-btn:hover { filter: brightness(1.06); }
+  :global(html[dir="rtl"]) .con-btn .arr { transform: scaleX(-1); }
+  @media (prefers-color-scheme: dark) { .con-btn, .duo-new { color: #0B1019; } }
+  .duo-together { margin-top: 1.2rem; padding: 1rem 1.2rem; border-radius: 1rem; background: var(--sunken); line-height: 1.6; }
+  .duo-together b { font-weight: 600; }
+
+  /* what they look like: the site, and a chat */
+  .show { display: grid; gap: 1.4rem; margin-top: 3rem; align-items: center; }
+  @media (min-width: 960px) { .show { grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr); gap: 2rem; } }
+  .show .web-shot { margin-top: 0; }
+  .phone { position: relative; justify-self: center; width: min(100%, 22rem); padding: .7rem; border-radius: 2.2rem; background: #0E1420; box-shadow: 0 50px 90px -50px rgb(14 20 32 / .7); }
+  .ph-bar { display: flex; align-items: center; gap: .6rem; padding: .7rem .8rem; border-radius: 1.6rem 1.6rem 0 0; background: #F4F1EA; color: #0E1420; }
+  .ph-av { display: grid; place-items: center; width: 2.1rem; height: 2.1rem; border-radius: 50%; background: #0E1420; color: #5FBF9F; padding: .45rem; }
+  .ph-av :global(svg) { width: 100%; height: auto; }
+  .ph-bar b { display: block; font-size: .88rem; font-weight: 600; } .ph-bar small { display: block; font-size: .72rem; color: #1FA855; }
+  .ph-msgs { display: grid; gap: .45rem; align-content: start; min-height: 23rem; padding: .9rem .75rem 4.2rem; border-radius: 0 0 1.6rem 1.6rem; background: #EFEAE2;
+    background-image: radial-gradient(circle, rgb(14 20 32 / .05) 1px, transparent 1px); background-size: 16px 16px; color: #0E1420; }
+  .phone .b { max-width: 86%; padding: .5rem .7rem; border-radius: .9rem; font-size: .84rem; line-height: 1.5; box-shadow: 0 1px 1px rgb(0 0 0 / .08); }
+  .phone .b.in { justify-self: start; background: #fff; border-start-start-radius: .25rem; }
+  .phone .b.out { justify-self: end; background: #E6E0F0; border-start-end-radius: .25rem; }
+  .phone .by { display: block; font-size: .7rem; font-weight: 700; color: #6E4A86; margin-bottom: .1rem; }
+  .ph-card { display: flex; gap: .5rem; align-items: center; margin-top: .45rem; padding: .35rem; border-radius: .6rem; background: #fff; }
+  .ph-card img { width: 3.6rem; height: 2.6rem; object-fit: cover; border-radius: .4rem; }
+  .ph-card b { display: block; font-size: .74rem; font-weight: 600; } .ph-card em { font-style: normal; font-size: .76rem; font-weight: 700; color: #1F6F5C; }
+  .ph-toast { position: absolute; inset-inline: 1.2rem; bottom: 1.3rem; display: flex; align-items: center; gap: .6rem; padding: .6rem .75rem; border-radius: .9rem; background: #0E1420; color: #F4F1EA; box-shadow: 0 18px 30px -16px rgb(0 0 0 / .6); }
+  .ph-toast .ok { display: grid; place-items: center; flex: none; width: 1.6rem; height: 1.6rem; border-radius: 50%; background: #1FA855; color: #fff; font-size: .8rem; }
+  .ph-toast small { display: block; font-size: .7rem; opacity: .7; } .ph-toast b { display: block; font-size: .84rem; font-weight: 600; }
+  /* the chat plays once when it comes into view */
+  :global(.js) .phone .b, :global(.js) .phone .ph-toast { opacity: 0; translate: 0 8px; }
+  :global(.js) .phone.in .b, :global(.js) .phone.in .ph-toast { opacity: 1; translate: 0 0; transition: opacity .45s ease, translate .45s cubic-bezier(.23, 1, .32, 1); transition-delay: calc(.35s + var(--i) * .9s); }
+  @media (prefers-reduced-motion: reduce) { :global(.js) .phone .b, :global(.js) .phone .ph-toast { opacity: 1; translate: none; transition: none; } }
   .how3 { display: grid; gap: 2rem; }
   @media (min-width: 860px) { .how3 { grid-template-columns: repeat(3, 1fr); } }
   .how3 li { padding-top: 1.2rem; border-top: 2px solid var(--line); }

@@ -4,6 +4,8 @@ import Mark from '../components/Mark.astro';
 import BranchLogo from '../components/BranchLogo.astro';
 import Compare from '../components/Compare.astro';
 import HomeHero from '../components/HomeHero.astro';
+import Ecosystem from '../components/Ecosystem.astro';
+import HwBadge from '../components/HwBadge.astro';
 import { BRANCH, type BranchId } from '../brand/brand';
 import { t, href, EMAIL, TOOLS_URL, studioUrl, type Lang } from '../i18n/strings';
 interface Props { lang: Lang; }
@@ -15,10 +17,37 @@ const picks: { id: BranchId; url: string; ext?: boolean }[] = [
   { id: 'systems', url: href(lang, 'systems') },
   { id: 'school', url: href(lang, 'school') },
 ];
+// the announcement: Hemlo Systems now joined by its add-ons (Hemlo Website, Hemlo Connect), shown as one loop
+const NEW = lang === 'ar' ? {
+  eyebrow: 'جديد في Hemlo Systems', title: ['نظامك الآن متصل.', 'موقعك وواتساب ونظامك، وحدة واحدة.'],
+  sub: 'زبون يجد عقارك على موقعك، يسأل، فيصل إلى نظامك، ويرد عليه واتساب خلال ثوانٍ. لا نسخ ولا لصق، ولا رسالة تضيع. متاح الآن لمكاتب العقارات.',
+  cta: 'تعرّف على الإضافات', sample: 'شاهد موقعاً نموذجياً',
+} : {
+  eyebrow: 'New in Hemlo Systems', title: ['Your system is now connected.', 'Your website, WhatsApp and system, one unit.'],
+  sub: 'A customer finds your listing on your website, asks, lands in your system, and hears back on WhatsApp within seconds. No copying, no pasting, no message lost. Available now for real estate offices.',
+  cta: 'See the add-ons', sample: 'See a sample site',
+};
 const num = (i: number) => (lang === 'ar' ? ['٠١', '٠٢', '٠٣', '٠٤'][i] : `0${i + 1}`);
 ---
 <Base lang={lang} page="home">
   <HomeHero lang={lang} />
+
+  <!-- the announcement: Hemlo Systems, connected to its add-ons -->
+  <section class="wrap pt-20 sm:pt-28" id="connected">
+    <div class="conn">
+      <div class="conn-head">
+        <p class="reveal conn-eyebrow"><span class="conn-new">{NEW.eyebrow}</span><HwBadge /><HwBadge label="Connect" /></p>
+        <h2 class="reveal mt-5 text-display font-semibold tracking-tight">{NEW.title[0]}</h2>
+        <p class="reveal mt-3 conn-acc text-[clamp(1.25rem,2.4vw,1.75rem)] font-semibold tracking-tight">{NEW.title[1]}</p>
+        <p class="reveal mt-4 max-w-2xl text-lead text-fg-2">{NEW.sub}</p>
+      </div>
+      <div class="reveal conn-stage"><Ecosystem lang={lang} /></div>
+      <p class="reveal conn-cta">
+        <a class="btn btn-primary" href={`${href(lang, 'systems')}#addons`}>{NEW.cta}<span class="arr" aria-hidden="true">→</span></a>
+        <a class="link-arrow" href={lang === 'ar' ? 'https://business.hemlohq.com/s/sample' : 'https://business.hemlohq.com/s/sample?lang=en'} target="_blank" rel="noopener">{NEW.sample} <span class="arr">→</span></a>
+      </p>
+    </div>
+  </section>
 
   <!-- the difference at a glance: tools, a system, or something built for you -->
   <section class="wrap pt-16 sm:pt-24"><Compare lang={lang} title={false} /></section>
@@ -118,5 +147,16 @@ const num = (i: number) => (lang === 'ar' ? ['٠١', '٠٢', '٠٣', '٠٤'][i] 
   .pick:hover .go .arr { transform: translateX(3px); }
   :global(html[dir="rtl"]) .go .arr { transform: scaleX(-1); }
   :global(html[dir="rtl"]) .pick:hover .go .arr { transform: scaleX(-1) translateX(3px); }
+  .conn { position: relative; padding: clamp(1.6rem, 4vw, 3.4rem); border-radius: 2rem; border: 1px solid var(--line); background: var(--surface); overflow: hidden; }
+  .conn::before { content: ""; position: absolute; inset: -40% -10% auto; height: 70%; background: radial-gradient(60% 60% at 50% 40%, color-mix(in oklab, #1F6F5C 14%, transparent), transparent 70%); pointer-events: none; }
+  .conn-head { position: relative; text-align: center; display: grid; justify-items: center; }
+  .conn-eyebrow { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: .5rem; }
+  .conn-new { padding: .3rem .8rem; border-radius: 999px; background: #1F6F5C; color: #fff; font-size: .85rem; font-weight: 600; }
+  .conn-acc { color: #1F6F5C; }
+  .conn-stage { position: relative; margin-top: clamp(2rem, 5vw, 3.4rem); }
+  .conn-cta { position: relative; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 1rem 1.6rem; margin-top: 2.6rem; }
+  .conn-cta .btn .arr { margin-inline-start: .4rem; }
+  :global(html[dir="rtl"]) .conn-cta .arr { display: inline-block; transform: scaleX(-1); }
+  @media (prefers-color-scheme: dark) { .conn-new { background: #5FBF9F; color: #0B1019; } .conn-acc { color: #5FBF9F; } }
   @media (prefers-color-scheme: dark) { .pay { background: var(--td); color: var(--cd); } .go { background: var(--cd); color: #0B0F16; } .pick::before { background: var(--cd); } .pick:hover { border-color: var(--cd); } }
 </style>
