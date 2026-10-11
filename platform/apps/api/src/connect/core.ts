@@ -185,7 +185,7 @@ export async function statusUpdate(d: Deps, ch: Channel, waId: string, status: s
 }
 
 // ---------------------------------------------------------------------------------------------------------- the assistant
-const REPLY_SCHEMA: JsonSchema = {
+export const REPLY_SCHEMA: JsonSchema = {
   type: 'object', additionalProperties: false, required: ['reply', 'handoff', 'refs', 'purpose', 'types', 'areas', 'budgetMax', 'currency', 'bedrooms', 'viewingRef', 'viewingWhen', 'name'],
   properties: {
     reply: { type: 'string' }, handoff: { type: 'boolean' }, refs: { type: 'array', items: { type: 'integer' } },
@@ -194,7 +194,7 @@ const REPLY_SCHEMA: JsonSchema = {
     viewingRef: { type: 'integer' }, viewingWhen: { type: 'string' }, name: { type: 'string' },
   },
 };
-type Reply = { reply: string; handoff: boolean; refs: number[]; purpose: string; types: string[]; areas: string[]; budgetMax: number; currency: string; bedrooms: number; viewingRef: number; viewingWhen: string; name: string };
+export type Reply = { reply: string; handoff: boolean; refs: number[]; purpose: string; types: string[]; areas: string[]; budgetMax: number; currency: string; bedrooms: number; viewingRef: number; viewingWhen: string; name: string };
 
 export const ASSISTANT = (agency: string, persona: Channel['persona']) => `You are the WhatsApp assistant of ${agency}, a real-estate agency in Iraq. You answer its customers.
 Rules that never bend:

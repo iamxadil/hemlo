@@ -13,7 +13,7 @@ import { copyOf, type Copy } from './words';
 import './connect.css';
 
 type Plan = 'connect' | 'connect-pro' | null;
-type Offer = { code: 'connect' | 'connect-pro'; name: Record<string, string>; description: Record<string, string>; priceMonth: number | null; priceYear: number | null; limits: { messages: number; ai: number } };
+type Offer = { code: 'connect' | 'connect-pro' | 'web-connect'; name: Record<string, string>; description: Record<string, string>; priceMonth: number | null; priceYear: number | null; limits: { messages: number; ai: number } };
 type Recipe = { key: string; plan: string; marketing: boolean; allowed: boolean; on: boolean; settings: Record<string, any>; template: string | null; approved: boolean };
 type Channel = { provider: 'sandbox' | 'meta'; status: string; displayPhone: string | null; verifiedName: string | null; tokenHint: string | null; ai: boolean;
   persona: { greeting?: { ar?: string; en?: string }; hours?: string | null; notes?: string | null }; templates: Record<string, { status: string; reason?: string | null }>; error: string | null };
@@ -105,14 +105,15 @@ function Offers({ o, C }: { o: Overview; C: Copy }) {
       <div className="seg w-fit mx-auto">{(['month', 'year'] as const).map((c) => <button key={c} aria-pressed={cycle === c} onClick={() => setCycle(c)}>{c === 'month' ? C.monthly : C.yearly}</button>)}</div>
       <div className="cx-plans">
         {o.offers.map((x) => {
-          const pro = x.code === 'connect-pro', price = cycle === 'year' ? x.priceYear : x.priceMonth, p = pending(x.code);
+          const pro = x.code === 'connect-pro', all = x.code === 'web-connect', price = cycle === 'year' ? x.priceYear : x.priceMonth, p = pending(x.code);
           return (
             <article key={x.code} className={`cx-plan ${pro ? 'pro' : ''}`}>
               {pro && <span className="cx-ribbon">{C.recommended}</span>}
-              <h3>{pro ? 'Connect Pro' : 'Connect'}</h3>
+              {all && <span className="cx-ribbon soft">{C.bundleTag}</span>}
+              <h3>{all ? 'Website + Connect Pro' : pro ? 'Connect Pro' : 'Connect'}</h3>
               <p className="sub">{L(x.description)}</p>
               <div className="cx-price">{price == null ? '—' : money(price)}<small>{cycle === 'year' ? C.perYear : C.perMonth}</small></div>
-              <ul>{(pro ? C.proFeatures : C.starterFeatures).map((f) => <li key={f}><Icon n="check" />{f}</li>)}
+              <ul>{(all ? C.bundleFeatures : pro ? C.proFeatures : C.starterFeatures).map((f) => <li key={f}><Icon n="check" />{f}</li>)}
                 <li><Icon n="check" />{C.limitLine(x.limits.messages, x.limits.ai)}</li></ul>
               {p ? <span className="pill warn"><Icon n="clock" className="h-4 w-4" />{C.pending}</span>
                 : owner ? <button className={`btn ${pro ? 'btn-accent' : 'btn-secondary'} justify-center`} disabled={ask.isPending || price == null} onClick={() => ask.mutate(x.code)}>{C.request}</button>

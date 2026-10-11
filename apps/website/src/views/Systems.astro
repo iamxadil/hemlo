@@ -8,7 +8,7 @@ import Compare from '../components/Compare.astro';
 import HwBadge from '../components/HwBadge.astro';
 import Ecosystem from '../components/Ecosystem.astro';
 import { BRANCH } from '../brand/brand';
-import { t, href, EMAIL, SYSTEM_URL, type Lang } from '../i18n/strings';
+import { t, href, EMAIL, SYSTEM_URL, API_URL, type Lang } from '../i18n/strings';
 interface Props { lang: Lang; }
 const { lang } = Astro.props;
 const ar = lang === 'ar';
@@ -125,7 +125,12 @@ const ADD = L2({
     inc: ['عنوان باسم مكتبك على hemlohq.com', 'كل عقاراتك، محدّثة دائماً', 'عربي وإنجليزي، وسريع على أي موبايل', 'كل استفسار يصل إلى زبائنك'], cta: 'شاهد موقعاً نموذجياً' },
   con: { name: 'Hemlo Connect', line: 'واتساب يرد ويذكّر ويتابع عنك.', from: 'من', price: '35,000', per: 'د.ع / شهرياً', pro: ['Connect Pro', '75,000 د.ع', 'مع مساعد ذكي يرد على مدار الساعة من عقاراتك ويحجز المعاينات.'],
     inc: ['صندوق واتساب واحد لكل الفريق', 'رد فوري على كل استفسار', 'تذكير قبل المعاينة، وسؤال بعدها', 'كل عقار جديد يصل لمن يناسبه'], cta: 'اطلب Connect', isNew: 'جديد' },
-  together: ['الموقع وConnect معاً', '60,000 د.ع شهرياً فوق خطة نظامك.'], onTop: 'تُضاف إلى خطة نظام Hemlo العقاري.',
+  bundle: { k: 'الباقة الكاملة', name: 'Website + Connect Pro', line: 'موقع يملأ نفسه، وواتساب بمساعد ذكي يرد ويتابع عنك، بسعر أقل من الاثنين منفصلين.', price: '90,000', was: '100,000', per: 'د.ع / شهرياً', save: 'توفّر 10,000 د.ع كل شهر', cta: 'اطلب الباقة الكاملة' },
+  askWeb: 'اطلب Website', onTop: 'تُضاف إلى خطة نظام Hemlo العقاري.',
+  form: { title: 'اطلب إضافات Hemlo لمكتبك', sub: 'اترك رقمك، ويتصل بك فريق Hemlo خلال يوم عمل ليفعّلها معك.', name: 'اسمك', business: 'اسم المكتب', phone: 'رقم الهاتف', city: 'المدينة', what: 'ما الذي تريده؟',
+    opts: [['web-connect', 'الباقة الكاملة: Website + Connect Pro (90,000)'], ['connect-pro', 'Connect Pro (75,000)'], ['connect', 'Connect (35,000)'], ['website', 'Website (25,000)']], send: 'أرسل الطلب', sending: 'يُرسل…', done: 'وصل طلبك. سنتصل بك قريباً.', failed: 'لم يُرسل. تأكد من الرقم وحاول مجدداً.', close: 'إغلاق' },
+  demo: { try: 'جرّب المحادثة بنفسك', note: 'تجربة حية بعقارات المكتب النموذجي. لا يُرسل شيء على واتساب ولا يُحفظ.', greet: 'أهلاً بك في دار النخيل للعقارات! اكتب ما تبحث عنه: بيع أو إيجار، المنطقة، والميزانية.', write: 'اكتب كأنك زبون…', send: 'أرسل',
+    chips: ['أبحث عن فيلا في دريم ستي', 'شقة للإيجار في عنكاوة', 'أريد أشوف الفيلا السبت'], busy: 'التجربة مزدحمة الآن، جرّب بعد قليل.', reset: 'ابدأ من جديد', viewing: 'في النظام الآن: طلب معاينة' },
   chat: { agency: 'دار النخيل للعقارات', online: 'متصل', ai: '✦ المساعد', q1: 'مرحبا، أبحث عن فيلا في دريم ستي بحدود 250 ألف', a1: 'أهلاً بك! عندنا فيلتان تناسبان طلبك. هل تفضّل حديقة أكبر أم مساحة بناء أكبر؟',
     card: ['فيلا بحديقة · دريم ستي', '$240,000'], q2: 'الثانية تعجبني، أقدر أشوفها السبت العصر؟', a2: 'تمام! سجّلت طلب المعاينة، وسيؤكد لك زميلنا الموعد خلال دقائق.', toast: ['في نظامك الآن', 'طلب معاينة · السبت 5 م'] },
   trustTitle: 'تثق بها، ويثق بها زبائنك',
@@ -142,7 +147,12 @@ const ADD = L2({
     inc: ['Your own address on hemlohq.com', 'Every property, always up to date', 'Arabic and English, fast on any phone', 'Every inquiry reaches your leads'], cta: 'See a sample site' },
   con: { name: 'Hemlo Connect', line: 'WhatsApp that answers, reminds and follows up for you.', from: 'from', price: '35,000', per: 'IQD / month', pro: ['Connect Pro', '75,000 IQD', 'with an AI assistant answering around the clock from your listings, booking viewings.'],
     inc: ['One WhatsApp inbox for the whole team', 'An instant reply to every inquiry', 'A reminder before each viewing, a question after', 'Each new listing reaches the buyers it suits'], cta: 'Ask for Connect', isNew: 'New' },
-  together: ['Website and Connect together', '60,000 IQD a month on top of your system plan.'], onTop: 'Added to your Hemlo Real Estate plan.',
+  bundle: { k: 'The full set', name: 'Website + Connect Pro', line: 'A website that fills itself, and WhatsApp with an AI assistant that answers and follows up for you, for less than the two apart.', price: '90,000', was: '100,000', per: 'IQD / month', save: 'You save 10,000 IQD a month', cta: 'Ask for the full set' },
+  askWeb: 'Ask for Website', onTop: 'Added to your Hemlo Real Estate plan.',
+  form: { title: 'Ask for Hemlo add-ons for your office', sub: 'Leave your number, and Hemlo’s team will call within a working day to switch them on with you.', name: 'Your name', business: 'Office name', phone: 'Phone number', city: 'City', what: 'What would you like?',
+    opts: [['web-connect', 'The full set: Website + Connect Pro (90,000)'], ['connect-pro', 'Connect Pro (75,000)'], ['connect', 'Connect (35,000)'], ['website', 'Website (25,000)']], send: 'Send', sending: 'Sending…', done: 'Got it. We’ll call you soon.', failed: 'Not sent. Check the number and try again.', close: 'Close' },
+  demo: { try: 'Try the chat yourself', note: 'A live demo with the sample agency’s homes. Nothing goes to WhatsApp, nothing is kept.', greet: 'Welcome to Nakheel Real Estate! Tell me what you’re looking for: buy or rent, the area, and your budget.', write: 'Write as a customer…', send: 'Send',
+    chips: ['A villa in Dream City', 'A flat to rent in Ankawa', 'Can I see the villa on Saturday?'], busy: 'The demo is busy right now, try again shortly.', reset: 'Start again', viewing: 'In the system now: a viewing request' },
   chat: { agency: 'Nakheel Real Estate', online: 'online', ai: '✦ Assistant', q1: 'Hi, I’m looking for a villa in Dream City, around 250k', a1: 'Welcome! Two villas fit what you asked for. Do you prefer a bigger garden or more built area?',
     card: ['Villa with a garden · Dream City', '$240,000'], q2: 'I like the second one. Can I see it Saturday afternoon?', a2: 'Done! I’ve noted a viewing request, and a colleague will confirm the time within minutes.', toast: ['In your system now', 'Viewing request · Sat 5 PM'] },
   trustTitle: 'You can trust them, and so can your clients',
@@ -353,7 +363,7 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
           <p class="web-amount"><b dir="ltr">{ADD.web.price}</b><span>{ADD.web.per}</span></p>
           <p class="web-year">{ADD.web.year}</p>
           <ul class="web-inc">{ADD.web.inc.map((x) => <li>{x}</li>)}</ul>
-          <div class="web-cta"><a class="btn web-btn" href={sampleHref} target="_blank" rel="noopener">{ADD.web.cta}<span class="arr" aria-hidden="true">→</span></a></div>
+          <div class="web-cta"><a class="btn web-btn" href={sampleHref} target="_blank" rel="noopener">{ADD.web.cta}<span class="arr" aria-hidden="true">→</span></a><button type="button" class="btn btn-secondary" data-ask="website">{ADD.askWeb}</button></div>
         </article>
         <span class="duo-link" aria-hidden="true"><Mark /></span>
         <article class="reveal duo-card con">
@@ -362,10 +372,23 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
           <p class="web-amount"><small>{ADD.con.from}</small><b dir="ltr">{ADD.con.price}</b><span>{ADD.con.per}</span></p>
           <p class="duo-pro"><b>{ADD.con.pro[0]}</b> · <span dir="ltr">{ADD.con.pro[1]}</span> <span>{ADD.con.pro[2]}</span></p>
           <ul class="web-inc">{ADD.con.inc.map((x) => <li>{x}</li>)}</ul>
-          <div class="web-cta"><a class="btn con-btn" href={ask('realestate')}>{ADD.con.cta}<span class="arr" aria-hidden="true">→</span></a></div>
+          <div class="web-cta"><button type="button" class="btn con-btn" data-ask="connect-pro">{ADD.con.cta}<span class="arr" aria-hidden="true">→</span></button></div>
         </article>
       </div>
-      <p class="reveal duo-together"><b>{ADD.together[0]}</b> <span>{ADD.together[1]}</span> <span class="text-fg-2">{ADD.turnOn}</span></p>
+      <!-- the two together, below the price of the two -->
+      <article class="reveal bundle">
+        <div class="bundle-m">
+          <p class="bundle-k">{ADD.bundle.k}</p>
+          <p class="bundle-n"><HwBadge tone="ink" /><span aria-hidden="true">+</span><HwBadge tone="ink" label="Connect Pro" /></p>
+          <p class="bundle-l">{ADD.bundle.line}</p>
+        </div>
+        <div class="bundle-p">
+          <p class="bundle-amt"><s dir="ltr">{ADD.bundle.was}</s><b dir="ltr">{ADD.bundle.price}</b><span>{ADD.bundle.per}</span></p>
+          <p class="bundle-save">{ADD.bundle.save}</p>
+          <button type="button" class="btn bundle-btn" data-ask="web-connect">{ADD.bundle.cta}<span class="arr" aria-hidden="true">→</span></button>
+        </div>
+      </article>
+      <p class="reveal mt-3 text-sm text-fg-2">{ADD.onTop} {ADD.turnOn}</p>
 
       <!-- what they look like: the sample site, and a WhatsApp chat Connect answered -->
       <div class="show">
@@ -374,7 +397,8 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
           <img src={`/images/realestate/sample/site-${lang}-1400.webp`} srcset={`/images/realestate/sample/site-${lang}-800.webp 800w, /images/realestate/sample/site-${lang}-1400.webp 1400w`} sizes="(min-width: 1200px) 700px, 92vw" width="1400" height="809" alt="" loading="lazy" decoding="async" />
           <span class="web-sync" aria-hidden="true"><span class="ok">✓</span><span><b>{ADD.synced}</b><small>{ADD.syncedSub}</small></span></span>
         </a>
-        <div class="reveal phone" data-chat aria-hidden="true">
+        <div class="reveal phone-wrap">
+        <div class="phone" data-chat data-api={API_URL} data-lang={lang} data-copy={JSON.stringify(ADD.demo)} data-agency={ADD.chat.agency} data-ai={ADD.chat.ai}>
           <div class="ph-bar"><span class="ph-av"><Mark /></span><span><b>{ADD.chat.agency}</b><small>{ADD.chat.online}</small></span></div>
           <div class="ph-msgs">
             <p class="b in" style="--i:0">{ADD.chat.q1}</p>
@@ -384,6 +408,13 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
             <div class="b out" style="--i:3"><span class="by">{ADD.chat.ai}</span><p>{ADD.chat.a2}</p></div>
           </div>
           <p class="ph-toast" style="--i:4"><span class="ok">✓</span><span><small>{ADD.chat.toast[0]}</small><b>{ADD.chat.toast[1]}</b></span></p>
+          <form class="ph-input" data-demo-form hidden><input name="q" autocomplete="off" maxlength="300" placeholder={ADD.demo.write} /><button aria-label={ADD.demo.send}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" /></svg></button></form>
+        </div>
+        <div class="demo-ctl">
+          <button type="button" class="btn btn-secondary demo-try" data-demo-try><span class="spark" aria-hidden="true">✦</span>{ADD.demo.try}</button>
+          <div class="demo-chips" data-demo-chips hidden>{ADD.demo.chips.map((c) => <button type="button" data-chip>{c}</button>)}<button type="button" class="demo-reset" data-demo-reset>{ADD.demo.reset}</button></div>
+          <p class="demo-note">{ADD.demo.note}</p>
+        </div>
         </div>
       </div>
 
@@ -399,6 +430,20 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
         <h3 class="text-[clamp(1.4rem,2.6vw,1.9rem)] font-semibold tracking-tight">{FAQ.title}</h3>
         <div class="faq-list">{FAQ.items.map(([q, a], i) => <details open={i === 0}><summary><span>{q}</span><i aria-hidden="true"></i></summary><p>{a}</p></details>)}</div>
       </div>
+
+      <!-- asking for the add-ons: lands in Hemlo's admin (early access, real estate), and Hemlo calls back -->
+      <dialog class="askd" data-askd>
+        <form method="dialog" class="askd-x"><button aria-label={ADD.form.close}>✕</button></form>
+        <h3>{ADD.form.title}</h3><p class="askd-sub">{ADD.form.sub}</p>
+        <form class="askd-f" data-ask-form data-api={API_URL} data-lang={lang}>
+          <input type="text" name="website" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true" />
+          <label>{ADD.form.what}<select name="interest">{ADD.form.opts.map(([v, l]) => <option value={v}>{l}</option>)}</select></label>
+          <div class="askd-2"><label>{ADD.form.name}<input name="name" required maxlength="80" autocomplete="name" /></label><label>{ADD.form.business}<input name="business" required maxlength="100" autocomplete="organization" /></label></div>
+          <div class="askd-2"><label>{ADD.form.phone}<input name="phone" required inputmode="tel" dir="ltr" placeholder="07xx xxx xxxx" autocomplete="tel" /></label><label>{ADD.form.city}<input name="city" maxlength="60" /></label></div>
+          <button class="btn btn-primary askd-send" data-label={ADD.form.send} data-sending={ADD.form.sending}>{ADD.form.send}</button>
+          <p class="askd-msg" data-ok={ADD.form.done} data-bad={ADD.form.failed} aria-live="polite"></p>
+        </form>
+      </dialog>
 
       <!-- the core plans, quietly: every feature in every plan -->
       <div class="reveal web-plans">
@@ -520,6 +565,80 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
   };
   document.addEventListener('astro:page-load', init);
   document.addEventListener('astro:before-swap', () => { stop?.(); stop = null; });
+</script>
+
+<script>
+  // ---- the live Connect demo: the phone turns into a chat with the sample agency's assistant ----
+  for (const phone of document.querySelectorAll<HTMLElement>('[data-chat]')) {
+    const wrap = phone.closest('.phone-wrap')!;
+    const C = JSON.parse(phone.dataset.copy!);
+    const msgs = phone.querySelector<HTMLElement>('.ph-msgs')!, toast = phone.querySelector<HTMLElement>('.ph-toast')!;
+    const form = phone.querySelector<HTMLFormElement>('[data-demo-form]')!, input = form.querySelector('input')!;
+    const tryBtn = wrap.querySelector<HTMLButtonElement>('[data-demo-try]')!, chips = wrap.querySelector<HTMLElement>('[data-demo-chips]')!;
+    let turns: { from: 'customer' | 'agency'; text: string }[] = [], busy = false;
+    const esc = (t: string) => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
+    const bubble = (html: string, out: boolean) => {
+      const el = document.createElement('div');
+      el.className = `b ${out ? 'out' : 'in'} live`;
+      el.innerHTML = html;
+      msgs.appendChild(el);
+      msgs.scrollTop = msgs.scrollHeight;
+      return el;
+    };
+    const say = (text: string) => bubble(`<span class="by">${esc(phone.dataset.ai!)}</span><p>${esc(text)}</p>`, true);
+    const start = () => {
+      phone.classList.add('live'); toast.hidden = true; msgs.innerHTML = ''; turns = [];
+      form.hidden = false; chips.hidden = false; tryBtn.hidden = true;
+      say(C.greet); turns.push({ from: 'agency', text: C.greet });
+      input.focus({ preventScroll: true });
+    };
+    const send = async (text: string) => {
+      text = text.trim();
+      if (!text || busy) return;
+      busy = true; input.value = '';
+      bubble(`<p>${esc(text)}</p>`, false);
+      turns.push({ from: 'customer', text });
+      const typing = bubble('<span class="dots"><i></i><i></i><i></i></span>', true);
+      try {
+        const res = await fetch(`${phone.dataset.api}/v1/connect/demo`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ lang: phone.dataset.lang, messages: turns }) });
+        const r = await res.json();
+        typing.remove();
+        if (!res.ok) { say(C.busy); return; }
+        const cards = (r.cards ?? []).map((c: any) => `<a class="ph-card" href="${esc(c.href)}" target="_blank" rel="noopener">${c.image ? `<img src="${esc(c.image)}" alt="" loading="lazy" />` : ''}<span><b>${esc(c.title)}</b><em dir="ltr">${esc(c.price)}</em></span></a>`).join('');
+        bubble(`<span class="by">${esc(phone.dataset.ai!)}</span><p>${esc(r.reply)}</p>${cards}`, true);
+        turns.push({ from: 'agency', text: r.reply });
+        if (r.viewing) { toast.hidden = false; toast.querySelector('small')!.textContent = C.viewing; toast.querySelector('b')!.textContent = r.viewing.when; toast.classList.add('show'); }
+      } catch { typing.remove(); say(C.busy); }
+      finally { busy = false; }
+    };
+    tryBtn.addEventListener('click', start);
+    wrap.querySelector('[data-demo-reset]')!.addEventListener('click', start);
+    chips.querySelectorAll<HTMLButtonElement>('[data-chip]').forEach((b) => b.addEventListener('click', () => send(b.textContent ?? '')));
+    form.addEventListener('submit', (e) => { e.preventDefault(); void send(input.value); });
+  }
+
+  // ---- asking for the add-ons: a small form that lands in Hemlo's admin ----
+  const dlg = document.querySelector<HTMLDialogElement>('[data-askd]');
+  if (dlg) {
+    const f = dlg.querySelector<HTMLFormElement>('[data-ask-form]')!, msg = f.querySelector<HTMLElement>('.askd-msg')!, btn = f.querySelector<HTMLButtonElement>('.askd-send')!;
+    document.querySelectorAll<HTMLElement>('[data-ask]').forEach((b) => b.addEventListener('click', () => {
+      (f.elements.namedItem('interest') as HTMLSelectElement).value = b.dataset.ask!;
+      msg.textContent = ''; msg.className = 'askd-msg'; dlg.showModal();
+    }));
+    dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+    f.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const v = Object.fromEntries(new FormData(f)) as Record<string, string>;
+      btn.disabled = true; btn.textContent = btn.dataset.sending!;
+      try {
+        const res = await fetch(`${f.dataset.api}/v1/early-access`, { method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ ...v, kind: 'realestate', locale: f.dataset.lang }) });
+        if (!res.ok) throw new Error();
+        msg.textContent = msg.dataset.ok!; msg.className = 'askd-msg is-ok'; f.reset();
+      } catch { msg.textContent = msg.dataset.bad!; msg.className = 'askd-msg is-bad'; }
+      finally { btn.disabled = false; btn.textContent = btn.dataset.label!; }
+    });
+  }
 </script>
 
 <style>
@@ -817,6 +936,67 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
   .faq summary:hover span { color: var(--re); }
   .faq details p { max-width: 52rem; padding: 0 0 1.3rem; color: var(--fg-2); line-height: 1.7; }
 
+  /* the two together */
+  .bundle { display: grid; gap: 1.4rem 2rem; align-items: center; margin-top: 1.2rem; padding: 1.8rem; border-radius: 1.4rem; background: #0E1420; color: #F4F1EA;
+    background-image: radial-gradient(70% 120% at 100% 0%, color-mix(in oklab, var(--wa) 26%, transparent), transparent 60%), radial-gradient(60% 120% at 0% 100%, color-mix(in oklab, #1F6F5C 38%, transparent), transparent 60%); }
+  @media (min-width: 900px) { .bundle { grid-template-columns: 1fr auto; padding: 2.2rem 2.4rem; } }
+  .bundle-k { font-size: .85rem; font-weight: 600; color: #5FBF9F; }
+  .bundle-n { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: .7rem; }
+  .bundle-n > span { opacity: .6; font-weight: 600; }
+  .bundle :global(.hw.ink) { background: rgb(255 255 255 / .08); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .16); }
+  .bundle-l { margin-top: .9rem; max-width: 34rem; color: rgb(244 241 234 / .78); line-height: 1.6; }
+  .bundle-p { display: grid; gap: .45rem; justify-items: start; }
+  @media (min-width: 900px) { .bundle-p { justify-items: end; text-align: end; } }
+  .bundle-amt { display: flex; flex-wrap: wrap; align-items: baseline; gap: .55rem; }
+  .bundle-amt s { opacity: .55; font-size: 1.1rem; }
+  .bundle-amt b { font-size: clamp(2.4rem, 4.6vw, 3rem); font-weight: 600; letter-spacing: -.03em; line-height: 1; }
+  .bundle-amt span { opacity: .7; }
+  .bundle-save { padding: .25rem .7rem; border-radius: 999px; background: color-mix(in oklab, var(--wa) 22%, transparent); color: #7FE0A6; font-size: .85rem; font-weight: 600; }
+  .bundle-btn { margin-top: .5rem; background: #F4F1EA; color: #0E1420; }
+  .bundle-btn:hover { filter: brightness(.96); }
+  :global(html[dir="rtl"]) .bundle-btn .arr { transform: scaleX(-1); }
+
+  /* the live demo */
+  .phone-wrap { display: grid; gap: 1rem; justify-items: center; }
+  .phone.live .ph-msgs { max-height: 26rem; overflow-y: auto; overscroll-behavior: contain; padding-bottom: 4.6rem; scroll-behavior: smooth; }
+  .phone :global(.b.live) { opacity: 1 !important; translate: none !important; animation: demo-in .3s cubic-bezier(.23, 1, .32, 1); }
+  @keyframes demo-in { from { opacity: 0; translate: 0 6px; } }
+  .phone :global(.ph-card) { text-decoration: none; color: inherit; }
+  .phone :global(.dots) { display: inline-flex; gap: .25rem; padding: .2rem 0; }
+  .phone :global(.dots i) { width: .4rem; height: .4rem; border-radius: 50%; background: #6E4A86; opacity: .4; animation: demo-dot 1s infinite; }
+  .phone :global(.dots i:nth-child(2)) { animation-delay: .15s; } .phone :global(.dots i:nth-child(3)) { animation-delay: .3s; }
+  @keyframes demo-dot { 40% { opacity: 1; translate: 0 -2px; } }
+  .phone.live .ph-toast { display: none; } .phone.live .ph-toast.show { display: flex; bottom: 4.6rem; opacity: 1; translate: none; }
+  .ph-input { position: absolute; inset-inline: .7rem; bottom: .7rem; display: flex; gap: .4rem; padding: .35rem; border-radius: 1.4rem; background: #fff; box-shadow: 0 6px 18px -8px rgb(0 0 0 / .35); }
+  .ph-input[hidden] { display: none; }
+  .ph-input input { flex: 1; min-width: 0; border: 0; outline: 0; padding: .45rem .7rem; font: inherit; font-size: .88rem; background: transparent; color: #0E1420; }
+  .ph-input button { display: grid; place-items: center; flex: none; width: 2.2rem; height: 2.2rem; border-radius: 50%; background: #1FA855; color: #fff; }
+  .ph-input svg { width: 1.05rem; height: 1.05rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  :global(html[dir="rtl"]) .ph-input svg { transform: scaleX(-1); }
+  .demo-ctl { display: grid; gap: .6rem; justify-items: center; text-align: center; max-width: 22rem; }
+  .demo-try .spark { color: #6E4A86; margin-inline-end: .35rem; }
+  .demo-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem; }
+  .demo-chips[hidden] { display: none; }
+  .demo-chips button { padding: .35rem .75rem; border-radius: 999px; font-size: .82rem; background: var(--sunken); color: var(--fg); box-shadow: inset 0 0 0 1px var(--line); }
+  .demo-chips button:hover { box-shadow: inset 0 0 0 1px var(--wa); }
+  .demo-chips .demo-reset { background: none; box-shadow: none; color: var(--muted); text-decoration: underline; }
+  .demo-note { font-size: .8rem; color: var(--muted); line-height: 1.5; }
+
+  /* asking for the add-ons */
+  .askd { margin: auto; inset: 0; width: min(32rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); overflow: auto; padding: 1.8rem; border: 0; border-radius: 1.4rem; background: var(--surface); color: var(--fg); box-shadow: 0 40px 90px -30px rgb(14 20 32 / .5); }
+  .askd::backdrop { background: rgb(14 20 32 / .45); backdrop-filter: blur(4px); }
+  .askd-x { position: absolute; inset-inline-end: 1rem; top: 1rem; }
+  .askd-x button { width: 2.2rem; height: 2.2rem; border-radius: 50%; background: var(--sunken); color: var(--fg-2); }
+  .askd h3 { font-size: 1.3rem; font-weight: 600; padding-inline-end: 2.5rem; }
+  .askd-sub { margin-top: .4rem; color: var(--fg-2); line-height: 1.55; }
+  .askd-f { display: grid; gap: .9rem; margin-top: 1.3rem; }
+  .askd-f label { display: grid; gap: .35rem; font-size: .88rem; font-weight: 500; }
+  .askd-f input, .askd-f select { width: 100%; padding: .65rem .8rem; border-radius: .7rem; border: 1px solid var(--line-strong); background: var(--canvas); color: var(--fg); font: inherit; }
+  .askd-f input:focus, .askd-f select:focus { outline: none; border-color: var(--fg-2); }
+  .askd-2 { display: grid; gap: .9rem; } @media (min-width: 520px) { .askd-2 { grid-template-columns: 1fr 1fr; } }
+  .askd-f .hp { position: absolute; inset-inline-start: -9999px; width: 1px; height: 1px; opacity: 0; }
+  .askd-send { justify-content: center; }
+  .askd-msg { font-size: .9rem; min-height: 1.2em; line-height: 1.5; } .askd-msg.is-ok { color: #1E8E5A; } .askd-msg.is-bad { color: #B42318; }
   /* how the three work as one */
   .web-eco { margin-top: 3.2rem; padding: clamp(1.4rem, 4vw, 3rem) clamp(1rem, 3vw, 2.5rem) clamp(1.6rem, 3vw, 2.4rem); border-radius: 1.6rem; background: var(--surface); border: 1px solid var(--line);
     background-image: radial-gradient(circle, color-mix(in oklab, var(--fg) 7%, transparent) 1px, transparent 1px); background-size: 20px 20px; }
@@ -859,19 +1039,19 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
   .ph-bar b { display: block; font-size: .88rem; font-weight: 600; } .ph-bar small { display: block; font-size: .72rem; color: #1FA855; }
   .ph-msgs { display: grid; gap: .45rem; align-content: start; min-height: 23rem; padding: .9rem .75rem 4.2rem; border-radius: 0 0 1.6rem 1.6rem; background: #EFEAE2;
     background-image: radial-gradient(circle, rgb(14 20 32 / .05) 1px, transparent 1px); background-size: 16px 16px; color: #0E1420; }
-  .phone .b { max-width: 86%; padding: .5rem .7rem; border-radius: .9rem; font-size: .84rem; line-height: 1.5; box-shadow: 0 1px 1px rgb(0 0 0 / .08); }
-  .phone .b.in { justify-self: start; background: #fff; border-start-start-radius: .25rem; }
-  .phone .b.out { justify-self: end; background: #E6E0F0; border-start-end-radius: .25rem; }
-  .phone .by { display: block; font-size: .7rem; font-weight: 700; color: #6E4A86; margin-bottom: .1rem; }
-  .ph-card { display: flex; gap: .5rem; align-items: center; margin-top: .45rem; padding: .35rem; border-radius: .6rem; background: #fff; }
-  .ph-card img { width: 3.6rem; height: 2.6rem; object-fit: cover; border-radius: .4rem; }
-  .ph-card b { display: block; font-size: .74rem; font-weight: 600; } .ph-card em { font-style: normal; font-size: .76rem; font-weight: 700; color: #1F6F5C; }
+  .phone :global(.b) { max-width: 86%; padding: .5rem .7rem; border-radius: .9rem; font-size: .84rem; line-height: 1.5; box-shadow: 0 1px 1px rgb(0 0 0 / .08); }
+  .phone :global(.b.in) { justify-self: start; background: #fff; border-start-start-radius: .25rem; }
+  .phone :global(.b.out) { justify-self: end; background: #E6E0F0; border-start-end-radius: .25rem; }
+  .phone :global(.by) { display: block; font-size: .7rem; font-weight: 700; color: #6E4A86; margin-bottom: .1rem; }
+  .phone :global(.ph-card) { display: flex; gap: .5rem; align-items: center; margin-top: .45rem; padding: .35rem; border-radius: .6rem; background: #fff; }
+  .phone :global(.ph-card img) { width: 3.6rem; height: 2.6rem; object-fit: cover; border-radius: .4rem; }
+  .phone :global(.ph-card b) { display: block; font-size: .74rem; font-weight: 600; } .phone :global(.ph-card em) { font-style: normal; font-size: .76rem; font-weight: 700; color: #1F6F5C; }
   .ph-toast { position: absolute; inset-inline: 1.2rem; bottom: 1.3rem; display: flex; align-items: center; gap: .6rem; padding: .6rem .75rem; border-radius: .9rem; background: #0E1420; color: #F4F1EA; box-shadow: 0 18px 30px -16px rgb(0 0 0 / .6); }
   .ph-toast .ok { display: grid; place-items: center; flex: none; width: 1.6rem; height: 1.6rem; border-radius: 50%; background: #1FA855; color: #fff; font-size: .8rem; }
   .ph-toast small { display: block; font-size: .7rem; opacity: .7; } .ph-toast b { display: block; font-size: .84rem; font-weight: 600; }
   /* the chat plays once when it comes into view */
   :global(.js) .phone .b, :global(.js) .phone .ph-toast { opacity: 0; translate: 0 8px; }
-  :global(.js) .phone.in .b, :global(.js) .phone.in .ph-toast { opacity: 1; translate: 0 0; transition: opacity .45s ease, translate .45s cubic-bezier(.23, 1, .32, 1); transition-delay: calc(.35s + var(--i) * .9s); }
+  :global(.js) .phone-wrap.in .b, :global(.js) .phone-wrap.in .ph-toast { opacity: 1; translate: 0 0; transition: opacity .45s ease, translate .45s cubic-bezier(.23, 1, .32, 1); transition-delay: calc(.35s + var(--i) * .9s); }
   @media (prefers-reduced-motion: reduce) { :global(.js) .phone .b, :global(.js) .phone .ph-toast { opacity: 1; translate: none; transition: none; } }
   .how3 { display: grid; gap: 2rem; }
   @media (min-width: 860px) { .how3 { grid-template-columns: repeat(3, 1fr); } }

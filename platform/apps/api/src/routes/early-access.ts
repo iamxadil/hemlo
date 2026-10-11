@@ -9,7 +9,9 @@ import { audit } from '@hemlo/auth/audit';
 import { accessTokenHash } from './admin';
 import type { AppEnv, Deps } from '../types';
 
-export const EARLY_ACCESS_KINDS = ['phone-repair', 'car-repair', 'ac-appliances', 'cafe-restaurant', 'store', 'clinic-salon', 'school', 'other'] as const;
+export const EARLY_ACCESS_KINDS = ['phone-repair', 'car-repair', 'ac-appliances', 'cafe-restaurant', 'store', 'clinic-salon', 'school', 'realestate', 'other'] as const;
+/** What a real-estate office asks for from the add-ons form (hemlohq.com/systems#addons): shown first in the note. */
+const INTERESTS: Record<string, string> = { website: 'Hemlo Website', connect: 'Hemlo Connect', 'connect-pro': 'Hemlo Connect Pro', 'web-connect': 'Website + Connect Pro' };
 const PER_IP_PER_HOUR = 5;
 const clip = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
 
@@ -19,7 +21,9 @@ export function earlyAccessRoutes(d: Deps) {
   r.post('/', async (c) => {
     const b = await c.req.json<Record<string, unknown>>().catch(() => ({} as Record<string, unknown>));
     if (clip(b.website, 200)) return c.json({ ok: true }); // the hidden field: only bots fill it in
-    const name = clip(b.name, 80), business = clip(b.business, 100), city = clip(b.city, 60) || null, note = clip(b.note, 500) || null;
+    const interest = INTERESTS[String(b.interest ?? '')] ?? null;
+    const name = clip(b.name, 80), business = clip(b.business, 100), city = clip(b.city, 60) || null;
+    const note = [interest && `[${interest}]`, clip(b.note, 500)].filter(Boolean).join(' ') || null;
     const email = clip(b.email, 120).toLowerCase() || null;
     const kind = EARLY_ACCESS_KINDS.includes(b.kind as any) ? (b.kind as string) : null;
     const phone = normalizeIraqiPhone(String(b.phone ?? ''));

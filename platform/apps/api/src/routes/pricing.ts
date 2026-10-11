@@ -15,7 +15,7 @@ import { plansOf, forgetPlans, stateOf, subscriptionOf, forgetSubscription, EDIT
 import { addonEntitlement, addonOffer, addonsActive, requireAddonOffer } from '../addons';
 
 /** Tiers of one product: the higher one replaces the lower (asking for Starter while on Pro makes no sense). */
-const REPLACES: Record<string, string[]> = { 'connect-pro': ['connect'] };
+const REPLACES: Record<string, string[]> = { 'connect-pro': ['connect'], 'web-connect': ['website', 'connect', 'connect-pro'] };
 const higherOf = (code: string) => Object.keys(REPLACES).filter((k) => REPLACES[k].includes(code));
 import type { AppEnv, Deps } from '../types';
 

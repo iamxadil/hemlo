@@ -145,6 +145,16 @@ const n = (i: number) => (ar ? '١٢٣٤'[i] : String(i + 1));
     .eco-list b { display: block; font-weight: 600; } .eco-list small { color: var(--muted); font-size: .8rem; }
     .eco-list .pop { position: static; translate: none; margin-inline-start: auto; }
     .eco[data-step="0"] .eco-list .web, .eco[data-step="1"] .eco-list .sys, .eco[data-step="2"] .eco-list .con, .eco[data-step="3"] .eco-list .cust { animation: eco-beat var(--step) ease both; }
+    /* the line from one node to the next lights up as the step crosses it, like the map */
+    .eco-list li:not(:last-child)::after { content: ""; position: absolute; z-index: 0; inset-inline-start: 1.6rem; top: 100%; width: 3px; height: 1.6rem; border-radius: 3px; background: var(--g); transform: scaleY(0); transform-origin: top; }
+    .eco-list li.con::after { background: var(--wa); }
+    .eco[data-step="0"] .eco-list li.cust::after, .eco[data-step="1"] .eco-list li.web::after, .eco[data-step="2"] .eco-list li.sys::after { animation: eco-grow var(--step) cubic-bezier(.65, 0, .35, 1) both; }
+    .eco[data-step="2"] .eco-list li.sys::after { background: var(--wa); }
+    .eco[data-step="1"] .eco-list li.cust::after, .eco[data-step="2"] .eco-list li.cust::after, .eco[data-step="2"] .eco-list li.web::after { transform: none; opacity: .45; }
+    /* the reply goes back to the customer: the whole line glows green once */
+    .eco[data-step="3"] .eco-list::before { background: linear-gradient(var(--wa), var(--wa)); opacity: .5; animation: eco-fade var(--step) ease both; }
+    @keyframes eco-grow { 0% { transform: scaleY(0); } 45%, 100% { transform: scaleY(1); } }
+    @keyframes eco-fade { 0% { opacity: 0; } 30%, 80% { opacity: .55; } 100% { opacity: .35; } }
     .eco-steps { grid-template-columns: 1fr 1fr; gap: 1.4rem 1rem; }
   }
   @media (prefers-reduced-motion: reduce) {

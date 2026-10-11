@@ -10,8 +10,10 @@ import { audit } from '@hemlo/auth/audit';
 import { HttpError } from '../principal';
 import { actor, bad, may, type Actor } from '../routes/sys-common';
 import { sealKey, masterSecret, hintOf } from '../ai/keys';
+import { addonOffer } from '../addons';
 import { LIMITS, RECIPES, TEMPLATES, planAllows, recipeOf, templateDefs } from './catalog';
 import { channelByPhoneId, channelOf, deliver, forgetChannel, planOf, providerOf, receive, statusUpdate, windowOpen } from './core';
+import { demoReply, type DemoTurn } from './demo';
 import { GRAPH, metaWa, parseWebhook, validSignature, WaError } from './wa';
 import type { AppEnv, Deps } from '../types';
 
@@ -60,6 +62,13 @@ export function connectRoutes(d: Deps) {
     return c.text('ok'); // always 200: WhatsApp retries anything else, and a retry is deduped anyway
   });
 
+  /** The public demo on hemlohq.com: the sample agency's assistant, nothing stored, nothing sent. */
+  r.post('/demo', async (c) => {
+    const b = await c.req.json<{ lang?: string; messages?: DemoTurn[] }>().catch(() => ({} as any));
+    const ip = c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+    return c.json(await demoReply(d, ip, b.lang === 'en' ? 'en' : 'ar', Array.isArray(b.messages) ? b.messages : []));
+  });
+
   // ------------------------------------------------------------------------------------------- the overview
   /** Everything the Connect page needs, in one call: the plan and its use, the number, the automations, what's waiting. */
   r.get('/', async (c) => {
@@ -76,9 +85,11 @@ export function connectRoutes(d: Deps) {
           count(*) filter (where status in ('failed', 'skipped'))::int as missed from connect_job where organization_id = ${org} and created_at > now() - interval '7 days'`));
       return { ch: ch ?? null, recipes, counts, week };
     })]);
-    const offer = (code: 'connect' | 'connect-pro') => { const o = p.offers[code]?.offer; return o ? { code, name: o.name, description: o.description, priceMonth: o.priceMonth, priceYear: o.priceYear, limits: LIMITS[code] } : null; };
+    const bundle = await addonOffer(d.db, 'web-connect');
+    const shape = (code: 'connect' | 'connect-pro' | 'web-connect', o: Awaited<ReturnType<typeof addonOffer>> | null) => (o && o.active && o.public ? { code, name: o.name, description: o.description, priceMonth: o.priceMonth, priceYear: o.priceYear, limits: LIMITS[code === 'web-connect' ? 'connect-pro' : code] } : null);
+    const offer = (code: 'connect' | 'connect-pro') => shape(code, p.offers[code]?.offer ?? null);
     return c.json({
-      plan: p.plan, limits: p.limits, used: p.used, offers: [offer('connect'), offer('connect-pro')].filter(Boolean),
+      plan: p.plan, limits: p.limits, used: p.used, offers: [offer('connect'), offer('connect-pro'), shape('web-connect', bundle)].filter(Boolean), via: p.offers['connect-pro']?.via ?? null,
       canConfigure: canConfigure(a), channel: publicChannel(data.ch),
       signup: d.env.META_APP_ID && d.env.META_CONFIG_ID ? { appId: d.env.META_APP_ID, configId: d.env.META_CONFIG_ID } : null,
       recipes: RECIPES.map((x) => {

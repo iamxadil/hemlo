@@ -108,7 +108,7 @@ describe('before the plan', () => {
     const r = await owner.get('/v1/connect');
     expect(r.status).toBe(200);
     expect(r.json.plan).toBeNull();
-    expect(r.json.offers.map((x: any) => [x.code, x.priceMonth])).toEqual([['connect', 35000], ['connect-pro', 75000]]);
+    expect(r.json.offers.map((x: any) => [x.code, x.priceMonth])).toEqual([['connect', 35000], ['connect-pro', 75000], ['web-connect', 90000]]);
     expect(r.json.offers[1].limits).toEqual({ messages: 2000, ai: 1500 });
     expect((await owner.post('/v1/connect/channel/sandbox')).status).toBe(402);
   });
@@ -306,6 +306,35 @@ describe('the automations', () => {
     expect((await owner.put('/v1/connect/recipes/viewing_reminder', { enabled: true })).status).toBe(200);
     expect((await owner.get('/v1/connect')).json.plan).toBe('connect');
     await withOrg(t.db, org, (tx) => tx.update(hemloAddonEntitlement).set({ addonId: 'connect-pro' }).where(eq(hemloAddonEntitlement.organizationId, org)));
+  });
+});
+
+describe('the public demo on hemlohq.com', () => {
+  const ask = async (messages: unknown, ip = '10.9.9.9') => {
+    const r = await t.app.request('http://localhost:8787/v1/connect/demo', { method: 'POST', body: JSON.stringify({ lang: 'en', messages }),
+      headers: { 'content-type': 'application/json', 'cf-connecting-ip': ip, origin: 'http://localhost:4321' } });
+    return { status: r.status, json: await r.json() as any };
+  };
+  it('answers from the sample agency, with our own cards and links, and needs no sign-in', async () => {
+    next = { reply: 'Two villas fit what you asked for.', handoff: false, refs: [1001, 4242], purpose: 'sale', types: ['villa'], areas: [], budgetMax: 0, currency: '', bedrooms: 0, viewingRef: 0, viewingWhen: '', name: '' };
+    const r = await ask([{ from: 'customer', text: 'Hi, a villa in Dream City?' }]);
+    expect(r.status).toBe(200);
+    expect(r.json.reply).toBe('Two villas fit what you asked for.');
+    expect(r.json.cards).toHaveLength(1); // 4242 isn't one of the sample's homes
+    expect(r.json.cards[0].href).toMatch(/^https:\/\/business\.hemlohq\.com\/s\/sample\/properties\//);
+    expect(asked.at(-1)!.text).toContain('#1001');
+  });
+  it('never sends a made-up number, and books nothing it can’t', async () => {
+    next = { reply: 'Only $99,999 today!', handoff: false, refs: [1001], purpose: '', types: [], areas: [], budgetMax: 0, currency: '', bedrooms: 0, viewingRef: 0, viewingWhen: '', name: '' };
+    const r = await ask([{ from: 'customer', text: 'any discount?' }]);
+    expect(r.json.reply).not.toContain('99');
+    expect(r.json).toMatchObject({ cards: [], handoff: true });
+  });
+  it('refuses an empty chat, and slows down a visitor who asks too much', async () => {
+    expect((await ask([{ from: 'agency', text: 'hello' }])).status).toBe(400);
+    let last = 0;
+    for (let i = 0; i < 21; i++) last = (await ask([{ from: 'customer', text: 'hi' }], '10.7.7.7')).status;
+    expect(last).toBe(429);
   });
 });
 

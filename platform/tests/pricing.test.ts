@@ -108,8 +108,8 @@ describe('asking for a plan, paying, and the admin side', () => {
 describe('optional add-ons', () => {
   it('launches at its list price, keeps an unconfigured price non-purchasable, and activates only after staff confirms the catalog amount', async () => {
     const offers = (await new Browser(t.app).get('/v1/plans/addons?edition=realestate')).json.addons;
-    expect(offers.map((x: any) => [x.code, x.priceMonth, x.priceYear])).toEqual(expect.arrayContaining([['website', 25000, 250000], ['connect', 35000, 350000], ['connect-pro', 75000, 750000]]));
-    expect(offers).toHaveLength(3);
+    expect(offers.map((x: any) => [x.code, x.priceMonth, x.priceYear])).toEqual(expect.arrayContaining([['website', 25000, 250000], ['connect', 35000, 350000], ['connect-pro', 75000, 750000], ['web-connect', 90000, 900000]]));
+    expect(offers).toHaveLength(4);
     await founder.req('PATCH', '/v1/admin/addons/website', { priceMonth: null, priceYear: null });
     expect((await new Browser(t.app).get('/v1/plans/addons?edition=realestate')).json.addons.find((x: any) => x.code === 'website')).toMatchObject({ configured: false, priceMonth: null });
     expect((await new Browser(t.app).get('/v1/plans/addons?edition=store')).json.addons).toEqual([]);
@@ -163,6 +163,17 @@ describe('optional add-ons', () => {
     expect((await mine('connect')).entitlement.status).toBe('canceled');
     expect((await owner.post('/v1/billing/addons/connect/request', { billing: 'month' })).json.error).toBe('ADDON_ALREADY_ACTIVE');
     expect((await owner.get('/v1/connect')).json.plan).toBe('connect-pro');
+
+    // the bundle: Website + Connect Pro below the price of the two; it ends both, and switches both on
+    expect((await approve('web-connect', 90000)).status).toBe(201);
+    expect((await mine('connect-pro')).entitlement).toMatchObject({ addonId: 'web-connect', active: true }); // shown as on, through the bundle
+    expect((await sys(`select status from hemlo_addon_entitlement where organization_id = $1 and addon_id = 'connect-pro'`, [org.id]))[0].status).toBe('canceled');
+    expect((await mine('web-connect')).entitlement.active).toBe(true);
+    const c = (await owner.get('/v1/connect')).json;
+    expect(c.plan).toBe('connect-pro');
+    expect(c.via).toBe('web-connect');
+    expect((await owner.post('/v1/web/site/publish')).status).toBe(200); // the website is on again, through the bundle
+    expect((await owner.post('/v1/billing/addons/website/request', { billing: 'month' })).json.error).toBe('ADDON_ALREADY_ACTIVE');
   });
 });
 
