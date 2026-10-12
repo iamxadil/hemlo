@@ -7,7 +7,7 @@
 import type { WebSection, WebTheme } from '@hemlo/db/schema';
 import type { WebsiteListing, WebsiteProperty } from './adapters';
 import { W, pick, esc, attr, icon, fill, waHref, telHref, sectionHeading, type Lang } from './theme';
-import { initials, paras, field, STATUS, LINE, langQ, pageHref, propHref, listQ, type Ctx, type Two } from './context';
+import { initials, paras, field, itemsOf, strOf, STATUS, LINE, langQ, pageHref, propHref, listQ, type Ctx, type Two } from './context';
 import { typeName, featureName } from '../realestate/common';
 import { hwBadge, hwPill, HW_BADGE_CSS } from './badge';
 
@@ -26,6 +26,10 @@ const E = {
     fType: 'النوع', fPurpose: 'الغرض', fSize: 'المساحة', fLand: 'الأرض', fBeds: 'غرف النوم', fBaths: 'الحمّامات', fFloors: 'الطوابق', fParking: 'موقف سيارات', fYear: 'سنة البناء',
     explore: 'تصفّح', contact: 'تواصل', haveHome: 'تبحث عن بيت؟', haveHomeSub: 'أخبرنا بما تريد، ونرسل لك ما يناسبك.',
     sample: 'موقع نموذجي', sampleLine: 'هكذا يبدو موقع Hemlo لمكتب عقارات. الأسماء والأسعار تجريبية.', sampleGet: 'احصل على Hemlo Website',
+    featured: 'مميّز', spotEyebrow: 'عقار الأسبوع', viewHome: 'شاهد العقار', howEyebrow: 'كيف نعمل', howTitle: 'من أول رسالة إلى مفتاح بيتك.',
+    how: [['أخبرنا بما تريد', 'على واتساب أو من الموقع: المنطقة، والميزانية، وعدد الغرف.'], ['نختار لك ونرتّب المعاينة', 'نرسل ما يطابق طلبك فقط، ونرافقك في المعاينة حين تناسبك.'], ['نُكمل الأوراق معك', 'من العربون إلى العقد ونقل الملكية، خطوة بخطوة حتى تستلم المفتاح.']],
+    voicesEyebrow: 'بكلماتهم', voicesTitle: 'عائلات وجدت بيتها معنا.', pickDay: 'اختر يوماً للمعاينة', viewingReq: 'أرغب بمعاينة «{t}» يوم {d}.', showAll: 'كل الصور',
+    closing: 'بيت يناسب حياتك، بلا عناء.', slide: 'العقار {n}',
   },
   en: {
     saved: 'Saved', savedTitle: 'Saved homes', savedEmpty: 'Tap the heart on any home to keep it here.', save: 'Save', savedOne: 'Saved', remove: 'Remove',
@@ -40,6 +44,10 @@ const E = {
     fType: 'Type', fPurpose: 'Purpose', fSize: 'Size', fLand: 'Land', fBeds: 'Bedrooms', fBaths: 'Bathrooms', fFloors: 'Floors', fParking: 'Parking', fYear: 'Year built',
     explore: 'Explore', contact: 'Contact', haveHome: 'Looking for a home?', haveHomeSub: 'Tell us what you want and we’ll send you what fits.',
     sample: 'Sample site', sampleLine: 'This is how a Hemlo Website looks for a real estate office. Names and prices are made up.', sampleGet: 'Get Hemlo Website',
+    featured: 'Featured', spotEyebrow: 'Home of the week', viewHome: 'View the home', howEyebrow: 'How we work', howTitle: 'From your first message to your keys.',
+    how: [['Tell us what you want', 'On WhatsApp or on the site: the area, the budget, the rooms.'], ['We shortlist and arrange viewings', 'Only homes that fit, and a viewing when it suits you, with us beside you.'], ['We handle the paperwork with you', 'From the deposit to the contract and the transfer, step by step until you hold the keys.']],
+    voicesEyebrow: 'In their words', voicesTitle: 'Families who found their home with us.', pickDay: 'Pick a day to visit', viewingReq: 'I’d like to view “{t}” on {d}.', showAll: 'Show all photos',
+    closing: 'A home that fits your life, without the hassle.', slide: 'Home {n}',
   },
 } as const;
 const PLURAL: Record<Lang, Record<string, string>> = {
@@ -80,7 +88,7 @@ export function estateCard(ctx: Ctx, l: WebsiteListing, i: number) {
   const href = propHref(ctx, l.slug);
   const save = JSON.stringify({ slug: l.slug, title: l.title, price: l.price, cover: l.cover, href, where: where(l) });
   const facts = [l.bedrooms ? `<span>${ic('bed')}${l.bedrooms}</span>` : '', l.bathrooms ? `<span>${ic('bath')}${l.bathrooms}</span>` : '', l.size ? `<span>${ic('size')}${fill(ctx.t.sqm, { n: l.size })}</span>` : ''].join('');
-  return `<article class="ecard" data-purpose="${attr(l.purpose)}">
+  return `<article class="ecard erv" style="--i:${i % 4}" data-purpose="${attr(l.purpose)}">
 <div class="ecard-media">${l.cover ? `<img src="${attr(l.cover)}" alt="" loading="${i < 4 ? 'eager' : 'lazy'}" decoding="async" style="view-transition-name:p-${attr(l.slug)}">` : `<span class="ecard-ph">${ic('home')}</span>`}
 <div class="ecard-tags"><span class="ebadge">${esc(l.purpose === 'rent' ? ctx.t.forRent : ctx.t.forSale)}</span>${held ? `<span class="ebadge warn">${esc(STATUS[ctx.lang][l.status])}</span>` : l.fresh ? `<span class="ebadge new">${esc(e.isNew)}</span>` : ''}</div>
 <button class="esave" type="button" data-save="${attr(save)}" aria-pressed="false" aria-label="${attr(e.save)}">${ic('heart')}</button></div>
@@ -114,14 +122,20 @@ function hero(ctx: Ctx, sec: WebSection) {
   const e = E[ctx.lang], t = ctx.t, lang = ctx.lang;
   const title = pick((sec as any).title as Two, lang) || ctx.name, text = field(sec, 'text', lang) || ctx.tagline;
   const own = typeof (sec as any).image === 'string' && /^https:\/\//.test((sec as any).image) ? (sec as any).image as string : null;
-  const img = own ?? ctx.listings.find((l) => l.cover)?.cover ?? null;
+  // the business's own photograph, or a slow film of its newest homes, each with a card that opens it
+  const slides: { img: string; l: WebsiteListing | null }[] = own ? [{ img: own, l: null }] : ctx.listings.filter((l) => l.cover).slice(0, 4).map((l) => ({ img: l.cover!, l }));
   const n = ctx.listings.length, cities = [...new Set(ctx.listings.map((l) => l.city).filter(Boolean))].slice(0, 3).join(' · ');
   const chip = n ? `<span class="echip"><i></i>${esc(n === 1 ? e.homesOne : fill(e.homesNow, { n }))}${cities ? `<span class="sep"></span>${esc(cities)}` : ''}</span>` : '';
   const wa = waFor(ctx, ctx.name);
-  return `<section class="ehero${img ? '' : ' no-photo'}"><div class="ewrap"><div class="ehero-card">${img ? `<img src="${attr(img)}" alt="" fetchpriority="high" decoding="async">` : ''}
-<div class="ehero-body">${chip}<h1 class="display">${esc(title)}</h1>${text ? `<p class="lead">${esc(text)}</p>` : ''}
-<div class="ehero-cta">${n ? `<a class="ebtn ebtn-light ebtn-lg" href="${attr(listQ(ctx))}">${esc(e.browse)}${ic('arrow', 'i dir')}</a>` : ''}${wa ? `<a class="ebtn ebtn-glass ebtn-lg" href="${attr(wa)}" rel="noopener">${icon('wa', 'i')}${t.whatsapp}</a>` : ''}</div></div></div>
-${n ? search(ctx, false) : ''}</div></section>`;
+  if (slides.length) ctx.onPhoto = true;
+  const imgs = slides.map((s, i) => `<img class="ehs${i ? '' : ' on'}" src="${attr(s.img)}" alt="" ${i ? 'loading="lazy"' : 'fetchpriority="high"'} decoding="async">`).join('');
+  const cards = slides.filter((s) => s.l).map((s, i) => { const l = s.l!; return `<a class="efeature-c${i ? '' : ' on'}" href="${attr(propHref(ctx, l.slug))}"${i ? ' tabindex="-1" aria-hidden="true"' : ''}>
+<span class="efeature-k">${esc(e.featured)}</span><b>${esc(l.title)}</b><span class="efeature-m"><span>${esc(where(l))}</span><span class="efeature-p">${priceHtml(l.price)}</span></span><span class="efeature-go">${ic('arrow', 'i dir')}</span></a>`; }).join('');
+  const dots = slides.length > 1 ? `<div class="edots" role="tablist">${slides.map((_, i) => `<button type="button" role="tab" data-to="${i}" aria-selected="${i === 0}" aria-label="${attr(fill(e.slide, { n: i + 1 }))}"><i></i></button>`).join('')}</div>` : '';
+  return `<section class="ehero${slides.length ? '' : ' no-photo'}" data-hero><div class="ehero-stage">${imgs}<div class="ewrap ehero-in"><div class="ehero-body">${chip}<h1 class="display">${esc(title)}</h1>${text ? `<p class="lead">${esc(text)}</p>` : ''}
+<div class="ehero-cta">${n ? `<a class="ebtn ebtn-light ebtn-lg" href="${attr(listQ(ctx))}">${esc(e.browse)}${ic('arrow', 'i dir')}</a>` : ''}${wa ? `<a class="ebtn ebtn-glass ebtn-lg" href="${attr(wa)}" rel="noopener">${icon('wa', 'i')}${t.whatsapp}</a>` : ''}</div></div>
+${cards || dots ? `<div class="efeature">${cards ? `<div class="efeature-cs">${cards}</div>` : ''}${dots}</div>` : ''}</div></div>
+${n ? `<div class="ewrap">${search(ctx, false)}</div>` : ''}</section>`;
 }
 
 function shelf(ctx: Ctx) {
@@ -130,12 +144,41 @@ function shelf(ctx: Ctx) {
   const counts = new Map<string, { n: number; cover: string | null }>();
   for (const l of ls) { const c = counts.get(l.type) ?? { n: 0, cover: null }; c.n++; c.cover ??= l.cover; counts.set(l.type, c); }
   const cats = [...counts].sort((a, b) => b[1].n - a[1].n);
-  const rail = cats.length > 1 ? `<section class="esec"><div class="ewrap"><div class="ehead"><div><p class="eeyebrow">${esc(e.catsEyebrow)}</p><h2 class="eh2">${esc(e.catsTitle)}</h2></div><a class="elink" href="${attr(listQ(ctx))}">${esc(e.viewAll)}${ic('arrow', 'i dir')}</a></div>
-<div class="ecats">${cats.map(([k, c]) => `<a class="ecat" href="${attr(listQ(ctx, { type: k }))}">${c.cover ? `<img src="${attr(c.cover)}" alt="" loading="lazy" decoding="async">` : ''}<span class="ecat-t"><span><b>${esc(PLURAL[ctx.lang][k] ?? typeName(k, ctx.lang))}</b><small>${esc(fill(e.homesN, { n: c.n }))}</small></span><span class="ecat-go">${ic('arrow', 'i dir')}</span></span></a>`).join('')}</div></div></section>` : '';
+  const rail = cats.length > 1 ? `<section class="esec"><div class="ewrap"><div class="ehead erv"><div><p class="eeyebrow">${esc(e.catsEyebrow)}</p><h2 class="eh2">${esc(e.catsTitle)}</h2></div><a class="elink" href="${attr(listQ(ctx))}">${esc(e.viewAll)}${ic('arrow', 'i dir')}</a></div>
+<div class="ecats">${cats.map(([k, c], i) => `<a class="ecat erv" style="--i:${i % 6}" href="${attr(listQ(ctx, { type: k }))}">${c.cover ? `<img src="${attr(c.cover)}" alt="" loading="lazy" decoding="async">` : ''}<span class="ecat-t"><span><b>${esc(PLURAL[ctx.lang][k] ?? typeName(k, ctx.lang))}</b><small>${esc(fill(e.homesN, { n: c.n }))}</small></span><span class="ecat-go">${ic('arrow', 'i dir')}</span></span></a>`).join('')}</div></div></section>` : '';
   const shown = ls.slice(0, 8), both = shown.some((l) => l.purpose === 'sale') && shown.some((l) => l.purpose === 'rent');
   const toggle = both ? `<div class="etoggle" role="group">${([['', e.all], ['sale', e.sale], ['rent', e.rent]] as const).map(([k, label], i) => `<button type="button" data-show="${k}" aria-pressed="${i === 0}">${esc(label)}</button>`).join('')}</div>` : '';
-  return `${rail}<section class="esec" data-shelf><div class="ewrap"><div class="ehead"><div><p class="eeyebrow">${esc(e.latestEyebrow)}</p><h2 class="eh2">${esc(e.latestTitle)}</h2></div><div class="ehead-r">${toggle}<a class="elink" href="${attr(listQ(ctx))}">${esc(e.viewAll)} <span class="num">(${ls.length})</span>${ic('arrow', 'i dir')}</a></div></div>
-<div class="egrid">${shown.map((l, i) => estateCard(ctx, l, i)).join('')}</div></div></section>`;
+  return `${rail}<section class="esec" data-shelf><div class="ewrap"><div class="ehead erv"><div><p class="eeyebrow">${esc(e.latestEyebrow)}</p><h2 class="eh2">${esc(e.latestTitle)}</h2></div><div class="ehead-r">${toggle}<a class="elink" href="${attr(listQ(ctx))}">${esc(e.viewAll)} <span class="num">(${ls.length})</span>${ic('arrow', 'i dir')}</a></div></div>
+<div class="egrid">${shown.map((l, i) => estateCard(ctx, l, i)).join('')}</div></div></section>${spotlight(ctx)}${how(ctx)}`;
+}
+
+/** One home, staged large: the "home of the week" (a roomy one for sale that the hero isn't already showing). */
+function spotlight(ctx: Ctx) {
+  const e = E[ctx.lang], ls = ctx.listings.filter((l) => l.cover);
+  const l = ls.slice(4).find((x) => x.purpose === 'sale' && (x.bedrooms ?? 0) >= 4) ?? ls.slice(4).find((x) => x.purpose === 'sale') ?? ls[0];
+  if (!l || ctx.listings.length < 5) return '';
+  const key = (v: string | number | null, label: string) => (v == null || v === '' ? '' : `<div><b class="num">${esc(String(v))}</b><small>${esc(label)}</small></div>`);
+  const keys = [key(l.bedrooms, e.fBeds), key(l.bathrooms, e.fBaths), key(l.size ? fill(ctx.t.sqm, { n: l.size }) : null, e.fSize)].join('');
+  return `<section class="esec"><div class="ewrap"><a class="espot erv" href="${attr(propHref(ctx, l.slug))}"><figure><img src="${attr(l.cover!)}" alt="" loading="lazy" decoding="async"></figure>
+<div class="espot-b"><p class="eeyebrow">${esc(e.spotEyebrow)}</p><h2 class="espot-t">${esc(l.title)}</h2><p class="espot-w">${ic('pin')}${esc(where(l))}</p>${keys ? `<div class="espot-k">${keys}</div>` : ''}
+<div class="espot-f"><span class="espot-p">${priceHtml(l.price)}</span><span class="ebtn ebtn-primary ebtn-lg">${esc(e.viewHome)}${ic('arrow', 'i dir')}</span></div></div></a></div></section>`;
+}
+
+/** How the office works, in three steps: what a visitor most wants to know before writing. */
+function how(ctx: Ctx) {
+  const e = E[ctx.lang], two = (i: number) => String(i + 1).padStart(2, '0');
+  return `<section class="esec"><div class="ewrap"><div class="ehead erv"><div><p class="eeyebrow">${esc(e.howEyebrow)}</p><h2 class="eh2">${esc(e.howTitle)}</h2></div></div>
+<ol class="ehow">${e.how.map(([h, p], i) => `<li class="erv" style="--i:${i}"><span class="ehow-n num">${two(i)}</span><h3>${esc(h)}</h3><p>${esc(p)}</p></li>`).join('')}</ol></div></section>`;
+}
+
+/** What clients said, set in the serif: the business's own words (a testimonials section). */
+function voices(ctx: Ctx, sec: WebSection) {
+  const e = E[ctx.lang], lang = ctx.lang, items = itemsOf(sec).filter((q) => strOf(q.quote ?? q.text, lang));
+  if (!items.length) return '';
+  const own = pick(sec.title as Two, lang);
+  return `<section class="esec"><div class="ewrap"><div class="ehead erv"><div><p class="eeyebrow">${esc(e.voicesEyebrow)}</p><h2 class="eh2">${esc(own || e.voicesTitle)}</h2></div></div>
+<div class="evoices">${items.slice(0, 6).map((q, i) => { const who = strOf(q.author ?? q.name, lang), role = strOf(q.role ?? q.title, lang); return `<figure class="evoice erv" style="--i:${i % 3}"><span class="evoice-q" aria-hidden="true">“</span><blockquote>${esc(strOf(q.quote ?? q.text, lang))}</blockquote>
+${who ? `<figcaption><span class="av">${esc(initials(who))}</span><span><b>${esc(who)}</b>${role ? `<small>${esc(role)}</small>` : ''}</span></figcaption>` : ''}</figure>`; }).join('')}</div></div></section>`;
 }
 
 function listingsPage(ctx: Ctx) {
@@ -166,8 +209,8 @@ function about(ctx: Ctx, sec: WebSection) {
   const areas = new Set(ls.map((l) => l.area || l.city).filter(Boolean)).size;
   const stats = ls.length > 1 ? [[ls.length, e.stHomes], [ls.filter((l) => l.purpose === 'sale').length, e.stSale], [ls.filter((l) => l.purpose === 'rent').length, e.stRent], [areas, e.stAreas]]
     .filter(([n]) => n).map(([n, l]) => `<div class="estat"><b class="num">${n}</b><span>${esc(String(l))}</span></div>`).join('') : '';
-  return `<section class="esec"><div class="ewrap"><div class="eabout">${pic ? `<figure><img src="${attr(pic)}" alt="" loading="lazy" decoding="async"></figure>` : ''}
-<div class="eabout-b"><p class="eeyebrow">${esc(e.aboutEyebrow)}</p><h2 class="eh2">${esc(heading)}</h2><div class="eprose">${paras(body)}</div>${stats ? `<div class="estats">${stats}</div>` : ''}</div></div></div></section>`;
+  return `<section class="esec"><div class="ewrap"><div class="eabout">${pic ? `<figure class="erv"><img src="${attr(pic)}" alt="" loading="lazy" decoding="async"></figure>` : ''}
+<div class="eabout-b erv" style="--i:1"><p class="eeyebrow">${esc(e.aboutEyebrow)}</p><h2 class="eh2">${esc(heading)}</h2><div class="eprose">${paras(body)}</div>${stats ? `<div class="estats">${stats}</div>` : ''}</div></div></div></section>`;
 }
 
 function contact(ctx: Ctx, sec: WebSection) {
@@ -177,7 +220,7 @@ function contact(ctx: Ctx, sec: WebSection) {
     `<button class="ebtn ebtn-light ebtn-lg" type="button" data-inquire>${t.inquire}</button>`].join('');
   const dl = [c.phone ? `<div><dt>${t.phoneLabel}</dt><dd><bdi class="num">${esc(c.phone)}</bdi></dd></div>` : '', c.email ? `<div><dt>${t.emailLabel}</dt><dd><a href="mailto:${attr(c.email)}">${esc(c.email)}</a></dd></div>` : '',
     c.address ? `<div><dt>${t.whereLabel}</dt><dd>${c.mapUrl && /^https:\/\//.test(c.mapUrl) ? `<a href="${attr(c.mapUrl)}" rel="noopener" target="_blank">${esc(c.address)}</a>` : esc(c.address)}</dd></div>` : ''].join('');
-  return `<section class="esec" id="contact"><div class="ewrap"><div class="econtact"><p class="eeyebrow">${esc(e.contactEyebrow)}</p><h2 class="display">${esc(own && own !== label ? own : t.letsTalk)}</h2><p class="lead">${esc(t.replyNote)}</p>
+  return `<section class="esec" id="contact"><div class="ewrap"><div class="econtact erv"><p class="eeyebrow">${esc(e.contactEyebrow)}</p><h2 class="display">${esc(own && own !== label ? own : t.letsTalk)}</h2><p class="lead">${esc(t.replyNote)}</p>
 <div class="acts">${acts}</div>${dl ? `<dl>${dl}</dl>` : ''}</div></div></section>`;
 }
 
@@ -188,6 +231,7 @@ export function estateSection(ctx: Ctx, sec: WebSection, _first: boolean): strin
     case 'listings': return ctx.pageSlug === 'properties' ? listingsPage(ctx) : shelf(ctx);
     case 'about': return about(ctx, sec);
     case 'contact': return contact(ctx, sec);
+    case 'testimonials': return voices(ctx, sec);
     default: return null;
   }
 }
@@ -225,7 +269,7 @@ export function estateFooter(ctx: Ctx) {
   const e = E[ctx.lang], c = ctx.contact, wa = waFor(ctx, ctx.name);
   const links = navItems(ctx).map((p) => `<li><a href="${attr(pageHref(ctx, p.slug))}">${esc(p.label)}</a></li>`).join('');
   const contact = [c.phone ? `<li><a href="${attr(telHref(c.phone)!)}"><bdi class="num">${esc(c.phone)}</bdi></a></li>` : '', c.email ? `<li><a href="mailto:${attr(c.email)}">${esc(c.email)}</a></li>` : '', c.address ? `<li>${esc(c.address)}</li>` : ''].join('');
-  return `<footer class="efoot"><div class="ewrap"><div class="efoot-top"><div class="efoot-brand"><a class="ebrand" href="${attr(pageHref(ctx, ''))}">${brandMark(ctx)}<span>${esc(ctx.name)}</span></a>${ctx.tagline ? `<p>${esc(ctx.tagline)}</p>` : ''}</div>
+  return `<footer class="efoot"><div class="ewrap"><p class="efoot-line erv">${esc(e.closing)}</p><div class="efoot-top"><div class="efoot-brand"><a class="ebrand" href="${attr(pageHref(ctx, ''))}">${brandMark(ctx)}<span>${esc(ctx.name)}</span></a>${ctx.tagline ? `<p>${esc(ctx.tagline)}</p>` : ''}</div>
 <div><h4>${esc(e.explore)}</h4><ul>${links}</ul></div>${contact ? `<div><h4>${esc(e.contact)}</h4><ul>${contact}</ul></div>` : ''}
 <div class="efoot-cta"><h4>${esc(e.haveHome)}</h4><p>${esc(e.haveHomeSub)}</p>${wa ? `<a class="ebtn ebtn-wa" href="${attr(wa)}" rel="noopener">${icon('wa', 'i')}${ctx.t.whatsapp}</a>` : `<button class="ebtn ebtn-primary" type="button" data-inquire>${ctx.t.inquire}</button>`}</div></div>
 <div class="efoot-bot"><span>© ${new Date().getFullYear()} ${esc(ctx.name)}</span>${hwBadge(ctx.lang, `https://hemlohq.com/${ctx.lang === 'en' ? 'en/' : ''}systems/#addons`)}</div></div></footer>`;
@@ -241,9 +285,12 @@ export function estateProperty(ctx: Ctx, p: WebsiteProperty, similar: WebsiteLis
   const e = E[ctx.lang], t = ctx.t, lang = ctx.lang;
   const unavailable = ['sold', 'rented'].includes(p.status), held = p.status === 'reserved' || p.status === 'negotiating';
   const photos = p.photos;
-  const gallery = photos.length ? `<div class="egal"><div class="egal-track" data-gal>${photos.map((x, i) => `<button type="button" data-photo="${attr(x.url)}" aria-label="${attr(x.caption ?? p.title)}"><img src="${attr(x.url)}" alt="${attr(x.caption ?? p.title)}" ${i ? 'loading="lazy"' : `fetchpriority="high" style="view-transition-name:p-${attr(p.slug)}"`} decoding="async"></button>`).join('')}</div>
+  const gallery = photos.length ? `<div class="egal"><div class="egal-track" data-gal>${photos.map((x, i) => `<button type="button" data-photo="${attr(x.url)}" aria-label="${attr(x.caption ?? p.title)}"><img src="${attr(x.url)}" alt="${attr(x.caption ?? p.title)}" ${i ? 'loading="lazy"' : 'fetchpriority="high"'} decoding="async"></button>`).join('')}</div>
 ${photos.length > 1 ? `<button class="egal-nav prev" type="button" data-gal-prev aria-label="${attr(t.prev)}">${ic('chevl', 'i dir')}</button><button class="egal-nav next" type="button" data-gal-next aria-label="${attr(t.next)}">${ic('chev', 'i dir')}</button><span class="egal-n num" data-gal-n>1 / ${photos.length}</span>` : ''}</div>
 ${photos.length > 1 ? `<div class="egal-thumbs">${photos.map((x, i) => `<button type="button" data-go="${i}"${i ? '' : ' aria-current="true"'} aria-label="${i + 1}"><img src="${attr(x.url)}" alt="" loading="lazy" decoding="async"></button>`).join('')}</div>` : ''}` : '';
+  // on a computer the photographs open as a mosaic; a tile opens the same viewer as the phone's gallery
+  const mosN = photos.length >= 5 ? 5 : photos.length >= 3 ? 3 : 0;
+  const mos = mosN ? `<div class="emos n${mosN}">${photos.slice(0, mosN).map((x, i) => `<button type="button" data-mos="${i}" aria-label="${attr(x.caption ?? p.title)}"><img src="${attr(x.url)}" alt="" ${i ? 'loading="lazy"' : ''} decoding="async"></button>`).join('')}<span class="emos-all ebtn ebtn-outline" data-mos="0" role="button" tabindex="0">${ic('grid')}${esc(e.showAll)} <span class="num">${photos.length}</span></span></div>` : '';
   const key = (i: string, v: string | number | null, label: string) => (v == null || v === '' ? '' : `<div class="ekey">${ic(i)}<b>${esc(String(v))}</b><small>${esc(label)}</small></div>`);
   const keys = [key('bed', p.bedrooms, e.fBeds), key('bath', p.bathrooms, e.fBaths), key('size', p.size ? fill(t.sqm, { n: p.size }) : null, e.fSize), key('land', p.land ? fill(t.sqm, { n: p.land }) : null, e.fLand)].filter(Boolean).slice(0, 4).join('');
   const row = (i: string, label: string, v: string | number | null) => (v == null || v === '' ? '' : `<div>${ic(i)}<span><dt>${esc(label)}</dt><dd>${esc(String(v))}</dd></span></div>`);
@@ -257,7 +304,7 @@ ${photos.length > 1 ? `<div class="egal-thumbs">${photos.map((x, i) => `<button 
   const buy = `<aside class="ebuy">${tags}<h1 class="eh1">${esc(p.title)}</h1><p class="ebuy-where">${ic('pin')}${esc(where(p))}</p>
 <div class="ebuy-price"><span class="v">${priceHtml(p.price)}</span>${p.negotiable && !unavailable ? `<span class="ebadge soft">${esc(t.negotiable)}</span>` : ''}</div>${keys ? `<div class="ekeys">${keys}</div>` : ''}
 ${unavailable ? `<p class="eunavail">${esc(t.unavailable)}</p><a class="ebtn ebtn-outline ebtn-lg eblock" href="${attr(listQ(ctx))}">${esc(t.allProperties)}</a>`
-    : `<button class="ebtn ebtn-primary ebtn-lg eblock" type="button" data-inquire>${ic('cal')}${esc(e.book)}</button>${wa ? `<a class="ebtn ebtn-wa ebtn-lg eblock" href="${attr(wa)}" rel="noopener">${icon('wa', 'i')}${t.whatsapp}</a>` : ''}`}
+    : `<div class="edays"><p>${esc(e.pickDay)}</p><div class="edays-r" data-days></div></div><button class="ebtn ebtn-primary ebtn-lg eblock" type="button" data-inquire data-book="${attr(p.title)}">${ic('cal')}${esc(e.book)}</button>${wa ? `<a class="ebtn ebtn-wa ebtn-lg eblock" href="${attr(wa)}" rel="noopener">${icon('wa', 'i')}${t.whatsapp}</a>` : ''}`}
 <div class="ebuy-row">${tel && !unavailable ? `<a class="ebtn ebtn-outline" href="${attr(tel)}">${icon('call', 'i')}${t.call}</a>` : ''}<button class="ebtn ebtn-outline" type="button" data-save="${attr(save)}" aria-pressed="false">${ic('heart')}<span data-save-label>${esc(e.save)}</span></button><button class="ebtn ebtn-outline" type="button" data-share>${ic('share')}${esc(e.share)}</button></div>
 <div class="ebuy-office">${brandMark(ctx)}<span><small>${esc(e.listedBy)}</small><b>${esc(ctx.name)}</b></span></div></aside>`;
   const desc = p.description[lang] ?? p.description[lang === 'ar' ? 'en' : 'ar'];
@@ -266,18 +313,18 @@ ${unavailable ? `<p class="eunavail">${esc(t.unavailable)}</p><a class="ebtn ebt
     p.features.length ? `<section class="eblock"><h2>${esc(t.features)}</h2><ul class="efeat">${p.features.map((f) => `<li>${ic('check')}${esc(featureName(f, lang))}</li>`).join('')}</ul></section>` : '',
     p.map || (p.video && /^https:\/\//.test(p.video)) ? `<section class="eblock"><h2>${esc(e.location)}</h2><div class="eblock-a">${p.map ? `<a class="ebtn ebtn-outline" href="https://www.openstreetmap.org/?mlat=${p.map.lat}&mlon=${p.map.lng}#map=16/${p.map.lat}/${p.map.lng}" rel="noopener" target="_blank">${ic('pin')}${esc(t.map)}</a>` : ''}${p.video && /^https:\/\//.test(p.video) ? `<a class="ebtn ebtn-outline" href="${attr(p.video)}" rel="noopener" target="_blank">${esc(t.video)}</a>` : ''}</div></section>` : ''].join('');
   const more = similar.length ? `<section class="esimilar"><div class="ehead"><div><h2 class="eh2">${esc(e.similar)}</h2></div><a class="elink" href="${attr(listQ(ctx, { type: p.type }))}">${esc(e.viewAll)}${ic('arrow', 'i dir')}</a></div><div class="egrid">${similar.map((l, i) => estateCard(ctx, l, i + 4)).join('')}</div></section>` : '';
-  const main = `<main class="epdp"><div class="ewrap"><nav class="ecrumb" aria-label="breadcrumb"><a href="${attr(pageHref(ctx, ''))}">${esc(e.home)}</a>${ic('chev', 'i dir')}<a href="${attr(listQ(ctx))}">${esc(e.pageTitle)}</a>${ic('chev', 'i dir')}<span>${esc(p.title)}</span></nav>
-<div class="epdp-top"><div class="epdp-gal">${gallery}</div>${buy}<div class="epdp-body">${blocks}</div></div>${more}</div></main>`;
-  const bar = unavailable ? '' : `<div class="ebar pdp"><span class="ebar-p">${priceHtml(p.price)}</span>${wa ? `<a class="ebtn ebtn-wa ebtn-lg sq" href="${attr(wa)}" rel="noopener" aria-label="${attr(t.whatsapp)}">${icon('wa', 'i')}</a>` : ''}<button class="ebtn ebtn-primary ebtn-lg" type="button" data-inquire>${esc(e.book)}</button></div>`;
+  const main = `<main class="epdp" style="--vt:p-${attr(p.slug)}"><div class="ewrap"><nav class="ecrumb" aria-label="breadcrumb"><a href="${attr(pageHref(ctx, ''))}">${esc(e.home)}</a>${ic('chev', 'i dir')}<a href="${attr(listQ(ctx))}">${esc(e.pageTitle)}</a>${ic('chev', 'i dir')}<span>${esc(p.title)}</span></nav>
+<div class="epdp-top"><div class="epdp-gal${mos ? ' has-mos' : ''}">${mos}${gallery}</div>${buy}<div class="epdp-body">${blocks}</div></div>${more}</div></main>`;
+  const bar = unavailable ? '' : `<div class="ebar pdp"><span class="ebar-p">${priceHtml(p.price)}</span>${wa ? `<a class="ebtn ebtn-wa ebtn-lg sq" href="${attr(wa)}" rel="noopener" aria-label="${attr(t.whatsapp)}">${icon('wa', 'i')}</a>` : ''}<button class="ebtn ebtn-primary ebtn-lg" type="button" data-inquire data-book="${attr(p.title)}">${esc(e.book)}</button></div>`;
   return { main, bar };
 }
 
 // ---------- behaviour: one small script ----------
 export const estateScript = (lang: Lang) => {
   const e = E[lang];
-  const S = { save: e.save, saved: e.savedOne, remove: e.remove, copied: e.copied, x: ic('x') };
+  const S = { save: e.save, saved: e.savedOne, remove: e.remove, copied: e.copied, x: ic('x'), req: e.viewingReq, loc: lang === 'ar' ? 'ar-IQ' : 'en-GB' };
   return `(function(){var S=${JSON.stringify(S).replace(/</g, '\\u003c')},d=document,rtl=d.dir==='rtl';
-var nav=d.querySelector('[data-enav]'),top=d.getElementById('etop');if(nav&&top&&'IntersectionObserver' in window)new IntersectionObserver(function(x){nav.classList.toggle('is-stuck',!x[0].isIntersecting)}).observe(top);
+var nav=d.querySelector('[data-enav]'),stage=d.querySelector('[data-hero] .ehero-stage'),top=d.body.classList.contains('on-photo')&&stage?stage:d.getElementById('etop');if(nav&&top&&'IntersectionObserver' in window)new IntersectionObserver(function(x){nav.classList.toggle('is-stuck',!x[0].isIntersecting)},{rootMargin:top===stage?'-90px 0px 0px 0px':'0px'}).observe(top);
 var links=d.querySelector('.elinks'),pill=links&&links.querySelector('.epill');if(pill){var cur=links.querySelector('[aria-current]');var place=function(a){if(!a){pill.style.opacity='0';return}pill.style.opacity='1';pill.style.width=a.offsetWidth+'px';pill.style.transform='translateX('+a.offsetLeft+'px)'};
 [].forEach.call(links.querySelectorAll('a'),function(a){a.addEventListener('pointerenter',function(){place(a)});a.addEventListener('focus',function(){place(a)})});links.addEventListener('pointerleave',function(){place(cur)});requestAnimationFrame(function(){pill.style.transition='none';place(cur);requestAnimationFrame(function(){pill.style.transition=''})})}
 var KEY='hemlo-saved:'+location.host;function load(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(_){return[]}}var saved=load();
@@ -298,6 +345,15 @@ tr.addEventListener('scroll',function(){var i=idx();if(cnt)cnt.textContent=(i+1)
 function toast(m){var x=d.createElement('div');x.className='etoast';x.setAttribute('role','status');x.textContent=m;d.body.append(x);setTimeout(function(){x.classList.add('out');setTimeout(function(){x.remove()},400)},1800)}
 [].forEach.call(d.querySelectorAll('[data-share]'),function(b){b.addEventListener('click',function(){var u=location.href.split('#')[0];if(navigator.share)navigator.share({title:d.title,url:u}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(u).then(function(){toast(S.copied)})})});
 [].forEach.call(d.querySelectorAll('[data-autosubmit]'),function(s){s.addEventListener('change',function(){var f=s.form;if(f){if(f.requestSubmit)f.requestSubmit();else f.submit()}})});
+var hero=d.querySelector('[data-hero]');if(hero){var sl=hero.querySelectorAll('.ehs'),fc=hero.querySelectorAll('.efeature-c'),dots=hero.querySelectorAll('[data-to]'),k=0,still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+var show=function(i){k=(i+sl.length)%sl.length;[].forEach.call(sl,function(x,j){x.classList.toggle('on',j===k)});[].forEach.call(fc,function(x,j){var on=j===k;x.classList.toggle('on',on);if(on){x.removeAttribute('tabindex');x.removeAttribute('aria-hidden')}else{x.setAttribute('tabindex','-1');x.setAttribute('aria-hidden','true')}});[].forEach.call(dots,function(x,j){x.setAttribute('aria-selected',String(j===k))})};
+[].forEach.call(dots,function(x,j){x.addEventListener('click',function(){show(j)});var b=x.querySelector('i');if(b)b.addEventListener('animationend',function(){if(!still)show(k+1)})});
+if('IntersectionObserver' in window)new IntersectionObserver(function(x){hero.classList.toggle('playing',x[0].isIntersecting)},{threshold:.25}).observe(hero);else hero.classList.add('playing')}
+var rv=d.querySelectorAll('.erv');if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){es.forEach(function(x){if(x.isIntersecting){x.target.classList.add('in');io.unobserve(x.target)}})},{rootMargin:'0px 0px -6% 0px'});[].forEach.call(rv,function(x){io.observe(x)})}else [].forEach.call(rv,function(x){x.classList.add('in')});
+[].forEach.call(d.querySelectorAll('[data-mos]'),function(b){b.addEventListener('click',function(){var tr2=d.querySelector('[data-gal]'),c=tr2&&tr2.children[+b.getAttribute('data-mos')];if(c)c.click()})});
+var days=d.querySelector('[data-days]'),pick=null;if(days){var base=new Date();for(var i=1;i<=7;i++){(function(i){var dt=new Date(base.getFullYear(),base.getMonth(),base.getDate()+i),b=d.createElement('button');b.type='button';b.setAttribute('aria-pressed','false');var w=d.createElement('small'),m=d.createElement('b');w.textContent=new Intl.DateTimeFormat(S.loc,{weekday:'short'}).format(dt);m.textContent=new Intl.DateTimeFormat(S.loc,{day:'numeric'}).format(dt);b.append(w,m);b.setAttribute('aria-label',new Intl.DateTimeFormat(S.loc,{weekday:'long',day:'numeric',month:'long'}).format(dt));
+b.addEventListener('click',function(){var on=b.getAttribute('aria-pressed')!=='true';[].forEach.call(days.children,function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed',String(on));pick=on?b.getAttribute('aria-label'):null});days.append(b)})(i)}}
+[].forEach.call(d.querySelectorAll('[data-book]'),function(b){b.addEventListener('click',function(){var m=d.querySelector('#inq [name=message]');if(m&&pick)m.value=S.req.replace('{t}',b.getAttribute('data-book')).replace('{d}',pick)})});
 sync()})();`;
 };
 
@@ -306,11 +362,11 @@ const LATIN = 'U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+
 const ARABIC = 'U+0600-06FF, U+0750-077F, U+0870-089F, U+08A0-08FF, U+200C-200E, U+FB50-FDFF, U+FE70-FEFF';
 export function estateCss(_theme: WebTheme, fontBase: string) {
   const f = (w: number) => `@font-face{font-family:"Poppins";font-style:normal;font-weight:${w};font-display:swap;src:url(${fontBase}/poppins-${w}.woff2) format("woff2");unicode-range:${LATIN}}`;
-  return `${f(400)}${f(500)}${f(600)}@font-face{font-family:"Vazirmatn";font-weight:300 700;font-display:swap;src:url(${fontBase}/vazirmatn.woff2) format("woff2");unicode-range:${ARABIC}}
+  return `${f(400)}${f(500)}${f(600)}@font-face{font-family:"Instrument Serif";font-style:normal;font-weight:400;font-display:swap;src:url(${fontBase}/instrument-serif-400.woff2) format("woff2");unicode-range:${LATIN}}@font-face{font-family:"Instrument Serif";font-style:italic;font-weight:400;font-display:swap;src:url(${fontBase}/instrument-serif-italic.woff2) format("woff2");unicode-range:${LATIN}}@font-face{font-family:"Vazirmatn";font-weight:300 700;font-display:swap;src:url(${fontBase}/vazirmatn.woff2) format("woff2");unicode-range:${ARABIC}}
 :root{--bg:#FFFFFF;--surface:#F5F5F4;--card:#FFFFFF;--ink:#0C0A09;--ink2:#44403C;--muted:#78716C;--line:#E7E5E4;--line2:#D6D3D1;--r:12px;--primary:var(--accent);
---text:"Poppins","Vazirmatn",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;--display:var(--text);--wrap:min(1240px,100% - 32px);
+--text:"Poppins","Vazirmatn",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;--display:var(--text);--serif:"Instrument Serif","Iowan Old Style",Georgia,serif;--wrap:min(1240px,100% - 32px);
 --sh-sm:0 1px 2px rgba(12,10,9,.06);--sh:0 1px 3px rgba(12,10,9,.06),0 10px 30px -14px rgba(12,10,9,.22);--sh-lg:0 30px 70px -28px rgba(12,10,9,.4);--e:cubic-bezier(.23,1,.32,1);--e-sheet:cubic-bezier(.32,.72,0,1)}
-html[lang=ar]{--text:"Vazirmatn","Poppins",ui-sans-serif,system-ui,sans-serif}
+html[lang=ar]{--text:"Vazirmatn","Poppins",ui-sans-serif,system-ui,sans-serif;--serif:var(--text)}
 html[data-dark]{--bg:#0C0A09;--surface:#1C1917;--card:#141210;--ink:#FAFAF9;--ink2:#D6D3D1;--muted:#A8A29E;--line:#292524;--line2:#3A3532}
 @media (min-width:768px){:root{--wrap:min(1240px,100% - 64px)}}
 body{font-size:15.5px;letter-spacing:-.005em;line-height:1.6;-webkit-tap-highlight-color:transparent}html[lang=ar] body{letter-spacing:0;line-height:1.75}
@@ -359,19 +415,45 @@ html[lang=ar] .eh1,html[lang=ar] .eh2{font-weight:700;letter-spacing:0;line-heig
 .ecount{position:absolute;top:3px;inset-inline-end:2px;display:grid;place-items:center;min-width:17px;height:17px;padding:0 4px;border-radius:999px;background:var(--primary);color:#fff;font-size:10.5px;font-weight:600;box-shadow:0 0 0 2px var(--bg)}
 .ehead-wa{margin-inline-start:4px;border-radius:999px}.emenu{display:none}
 @media (max-width:900px){.elinks,.ehead-wa{display:none}.emenu{display:grid}.enav{border-radius:20px}.enav-in{height:56px;padding-inline:14px 6px}.eacts .elang{display:none}}
-/* hero: the house, the name, the search */
-.ehero{padding-top:14px}
-.ehero-card{position:relative;isolation:isolate;overflow:hidden;display:flex;align-items:flex-end;min-height:clamp(480px,74svh,720px);border-radius:28px;background:#1C1917;color:#fff}
-.ehero-card>img{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover;animation:esettle 2.4s var(--e) both}
-.ehero-card::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(12,10,9,.1) 25%,rgba(12,10,9,.78)),linear-gradient(var(--side,90deg),rgba(12,10,9,.5),transparent 70%)}html[dir=rtl] .ehero-card{--side:270deg}
-.ehero.no-photo .ehero-card{background:radial-gradient(110% 120% at 0% 0%,color-mix(in oklab,var(--primary) 75%,#000),#0C0A09 70%)}
-@media (max-width:640px){.ehero-card{min-height:min(560px,68svh);border-radius:24px}.ehero-cta .ebtn-lg{height:46px;padding:0 18px}}
-.ehero-body{max-width:780px;padding:clamp(24px,4.5vw,60px);padding-bottom:clamp(84px,9vw,112px)}
-.echip{display:inline-flex;align-items:center;gap:9px;min-height:32px;padding:4px 14px;border-radius:999px;font-size:13px;font-weight:500;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);animation:erise .9s var(--e) both .1s}
+/* hero: edge to edge, a slow film of the newest homes under the floating header; one of them featured in a glass card */
+body.on-photo .ehero{margin-top:-82px}@media (max-width:900px){body.on-photo .ehero{margin-top:-76px}}
+.ehero-stage{position:relative;isolation:isolate;overflow:hidden;display:flex;align-items:flex-end;min-height:clamp(600px,96svh,940px);background:#1C1917;color:#fff}
+.ehero.no-photo .ehero-stage{min-height:clamp(480px,70svh,640px);background:radial-gradient(110% 120% at 0% 0%,color-mix(in oklab,var(--primary) 75%,#000),#0C0A09 70%)}
+.ehs{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.07);transition:opacity 1.6s ease,transform 0s linear 1.6s}
+.ehs.on{opacity:1;transform:none;transition:opacity 1.6s ease,transform 9s cubic-bezier(.2,.6,.3,1)}
+.ehero-stage::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(12,10,9,.5) 0%,rgba(12,10,9,0) 22%,rgba(12,10,9,.08) 48%,rgba(12,10,9,.74) 100%),linear-gradient(var(--side,90deg),rgba(12,10,9,.42),transparent 65%)}html[dir=rtl] .ehero-stage{--side:270deg}
+.ehero-in{display:grid;gap:28px 48px;align-items:end;padding-block:150px 124px}@media (min-width:1000px){.ehero-in{grid-template-columns:minmax(0,1fr) 340px}}
+.ehero-body{max-width:820px}
+.echip{display:inline-flex;align-items:center;gap:9px;min-height:32px;padding:4px 14px;border-radius:999px;font-size:13px;font-weight:500;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);animation:erise .9s var(--e) both .1s}
 .echip i{width:7px;height:7px;border-radius:50%;background:#4ADE80;box-shadow:0 0 0 3px rgba(74,222,128,.25)}.echip .sep{width:1px;height:12px;background:rgba(255,255,255,.35)}
-.ehero h1{margin:18px 0 0;font-size:clamp(2.6rem,6.6vw,5.6rem);text-wrap:balance;text-shadow:0 2px 30px rgba(0,0,0,.2);animation:erise 1s var(--e) both .18s}
-.ehero .lead{max-width:560px;margin:16px 0 0;font-size:clamp(15.5px,1.7vw,18.5px);line-height:1.6;color:rgba(255,255,255,.86);animation:erise 1s var(--e) both .26s}
-.ehero-cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px;animation:erise 1s var(--e) both .34s}
+.ehero h1{margin:22px 0 0;font-size:clamp(3.2rem,8.4vw,7.4rem);line-height:.96;text-wrap:balance;text-shadow:0 2px 40px rgba(0,0,0,.18);animation:erise 1.1s var(--e) both .18s}
+html[lang=ar] .ehero h1{font-size:clamp(2.7rem,6.6vw,5.6rem);line-height:1.22}
+.ehero .lead{max-width:540px;margin:20px 0 0;font-size:clamp(15.5px,1.6vw,18.5px);line-height:1.6;color:rgba(255,255,255,.84);animation:erise 1.1s var(--e) both .28s}
+.ehero-cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:30px;animation:erise 1.1s var(--e) both .36s}
+.efeature{display:grid;gap:14px;animation:erise 1.1s var(--e) both .5s}@media (max-width:999px){.efeature{max-width:420px}}
+.efeature-cs{display:grid}
+.efeature-c{grid-area:1/1;position:relative;display:grid;gap:4px;padding:16px 56px 16px 18px;border-radius:20px;background:rgba(12,10,9,.32);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);color:#fff;opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .7s ease,transform .9s var(--e),background-color .3s}
+html[dir=rtl] .efeature-c{padding:16px 18px 16px 56px}
+.efeature-c.on{opacity:1;transform:none;pointer-events:auto}.efeature-c:hover{background:rgba(12,10,9,.46)}
+.efeature-k{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.66)}html[lang=ar] .efeature-k{letter-spacing:0;font-size:12.5px}
+.efeature-c b{font-family:var(--serif);font-size:21px;font-weight:400;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}html[lang=ar] .efeature-c b{font-size:17px;font-weight:600}
+.efeature-m{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:13px;color:rgba(255,255,255,.72)}.efeature-m>span:first-child{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.efeature-p{flex:none;color:#fff;font-size:15px;font-weight:600}.efeature-p small{color:rgba(255,255,255,.66)}
+.efeature-go{position:absolute;top:16px;inset-inline-end:14px;display:grid;place-items:center;width:32px;height:32px;border-radius:999px;background:#fff;color:#0C0A09;transition:transform .35s var(--e)}.efeature-go .i{width:15px;height:15px}
+.efeature-c:hover .efeature-go{transform:translateX(3px)}html[dir=rtl] .efeature-c:hover .efeature-go{transform:translateX(-3px)}
+.edots{display:flex;gap:6px}.edots button{position:relative;flex:1;height:22px;padding:0;cursor:pointer}
+.edots button::before{content:"";position:absolute;inset-inline:0;top:10px;height:2px;border-radius:2px;background:rgba(255,255,255,.28)}
+.edots i{position:absolute;inset-inline:0;top:10px;height:2px;border-radius:2px;background:#fff;transform:scaleX(0);transform-origin:left}html[dir=rtl] .edots i{transform-origin:right}
+.edots [aria-selected=true] i{animation:efill 6.8s linear both}.ehero:not(.playing) .edots i,.ehero:has(.efeature:hover) .edots i{animation-play-state:paused}
+@keyframes efill{to{transform:scaleX(1)}}
+@media (max-width:640px){.ehero-in{padding-block:130px 112px}.ehero-cta .ebtn-lg{height:46px;padding:0 18px}.efeature-c b{font-size:18px}}
+/* the header over the photograph: clear glass and white type, until the page moves on */
+body.on-photo .enav:not(.is-stuck){background:rgba(12,10,9,.14);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%)}
+body.on-photo .enav:not(.is-stuck) :is(.ebrand,.eicon,.elinks a){color:#fff}body.on-photo .enav:not(.is-stuck) .elinks a{color:rgba(255,255,255,.8)}body.on-photo .enav:not(.is-stuck) .elinks a:hover,body.on-photo .enav:not(.is-stuck) .elinks a[aria-current]{color:#fff}
+body.on-photo .enav:not(.is-stuck) .epill{background:rgba(255,255,255,.14)}body.on-photo .enav:not(.is-stuck) .eicon:hover{background:rgba(255,255,255,.14)}
+body.on-photo .enav:not(.is-stuck) .elang{background:rgba(255,255,255,.14)}body.on-photo .enav:not(.is-stuck) .elang span{color:rgba(255,255,255,.72)}body.on-photo .enav:not(.is-stuck) .elang span.on{background:#fff;color:#0C0A09}
+body.on-photo .enav:not(.is-stuck) .ebtn-primary,body.on-photo .enav:not(.is-stuck) .ebrand .mono{background:#fff;color:#0C0A09}
+.enav,.enav :is(.ebrand,.eicon,.elinks a,.elang span){transition:background-color .45s var(--e),color .45s var(--e),box-shadow .45s var(--e),height .35s var(--e)}
 @keyframes esettle{from{transform:scale(1.07)}to{transform:none}}@keyframes erise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 /* the search (Tabs + Select + Input + Button, in one Card) */
 .esearch{position:relative;z-index:2;display:grid;gap:8px;width:min(1000px,100% - 24px);margin:-56px auto 0;padding:10px;border-radius:20px;background:var(--card);border:1px solid var(--line);box-shadow:var(--sh-lg);animation:erise 1s var(--e) both .42s}
@@ -390,6 +472,7 @@ html[lang=ar] .eh1,html[lang=ar] .eh2{font-weight:700;letter-spacing:0;line-heig
 .emore{grid-column:1/-1}.emore summary{display:inline-flex;align-items:center;gap:6px;padding:6px 8px;border-radius:8px;font-size:13.5px;font-weight:500;color:var(--ink2);cursor:pointer;list-style:none}.emore summary::-webkit-details-marker{display:none}.emore summary .i{width:15px;height:15px}
 .emore-b{display:grid;gap:4px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));padding:4px 0 2px}
 /* categories with photographs */
+@media (min-width:900px){.ecats{grid-auto-flow:row!important;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));overflow:visible!important}}
 .ecats{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(210px,1fr);gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;margin-inline:-4px;padding:4px}.ecats::-webkit-scrollbar{display:none}
 @media (max-width:640px){.ecats{grid-auto-columns:64%}}
 .ecat{position:relative;isolation:isolate;display:block;aspect-ratio:4/5;overflow:hidden;border-radius:20px;background:var(--surface);color:#fff;scroll-snap-align:start}
@@ -495,8 +578,57 @@ dialog.esheet[open]{display:flex;flex-direction:column}
 .emenu-links a:nth-child(2){animation-delay:.04s}.emenu-links a:nth-child(3){animation-delay:.08s}.emenu-links a:nth-child(4){animation-delay:.12s}.emenu-links a:nth-child(5){animation-delay:.16s}.emenu-links .i{color:var(--muted)}
 .emenu-foot{display:grid;gap:10px;margin-top:24px}.emenu-foot .elang{justify-self:start;font-size:13px}
 .etoast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));z-index:60;padding:10px 16px;border-radius:999px;background:var(--ink);color:var(--bg);font-size:14px;font-weight:500;box-shadow:var(--sh-lg);transform:translateX(-50%);animation:erise .35s var(--e) both;transition:opacity .35s}.etoast.out{opacity:0}
+/* the display face: Instrument Serif for Latin headings; Arabic keeps Vazirmatn, a weight lighter than before */
+html[lang=en] :is(.display,.eh1,.eh2,.espot-t,.efoot-line,.ehow h3){font-family:var(--serif);font-weight:400;letter-spacing:-.012em;line-height:1.02}
+html[lang=en] .eh2{font-size:clamp(32px,3.8vw,52px)}html[lang=en] .eblock h2{font-family:var(--serif);font-weight:400;font-size:30px;letter-spacing:-.01em}html[lang=en] .ebuy .eh1{font-size:clamp(30px,2.8vw,38px);line-height:1.05}html[lang=en] .econtact h2{font-size:clamp(40px,6vw,76px)}
+html[lang=ar] :is(.display,.eh1,.eh2){font-weight:600}
+/* reveal as it scrolls in; with no script (or reduced motion) everything is simply there */
+html.js .erv{opacity:0}html.js .erv.in{opacity:1;animation:erise .95s var(--e) backwards;animation-delay:calc(var(--i,0) * 75ms)}
+/* home of the week */
+.espot{display:grid;overflow:hidden;border-radius:28px;border:1px solid var(--line);background:var(--card)}@media (min-width:900px){.espot{grid-template-columns:1.25fr 1fr}}
+.espot figure{position:relative;margin:0;min-height:320px;overflow:hidden;background:var(--surface)}@media (min-width:900px){.espot figure{min-height:520px}}
+.espot figure img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 1.4s var(--e)}@media (hover:hover) and (pointer:fine){.espot:hover figure img{transform:scale(1.04)}}
+.espot-b{display:flex;flex-direction:column;padding:clamp(26px,4vw,56px)}
+.espot-t{margin:14px 0 0;font-size:clamp(32px,3.6vw,52px);line-height:1.04;text-wrap:balance}html[lang=ar] .espot-t{font-weight:600;line-height:1.35;font-size:clamp(26px,2.8vw,38px)}
+.espot-w{display:flex;align-items:center;gap:6px;margin:14px 0 0;color:var(--muted);font-size:14.5px}.espot-w .i{width:16px;height:16px}
+.espot-k{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:30px;border-block:1px solid var(--line)}.espot-k>div{padding:18px 0;display:grid;gap:4px}.espot-k>div+div{padding-inline-start:18px;border-inline-start:1px solid var(--line)}
+.espot-k b{font-size:24px;font-weight:600;letter-spacing:-.02em}.espot-k small{font-size:12.5px;color:var(--muted)}
+.espot-f{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;margin-top:auto;padding-top:30px}.espot-p{font-size:28px;font-weight:600;letter-spacing:-.03em}.espot-p small{font-size:.6em;font-weight:500;color:var(--muted)}
+.espot .ebtn .i{transition:transform .35s var(--e)}.espot:hover .ebtn .i{transform:translateX(3px)}html[dir=rtl] .espot:hover .ebtn .i{transform:scaleX(-1) translateX(3px)}
+/* how we work */
+.ehow{display:grid;gap:14px;margin:0;padding:0;list-style:none}@media (min-width:860px){.ehow{grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}}
+.ehow li{position:relative;padding:28px 26px 30px;border-radius:22px;background:var(--surface)}
+.ehow-n{display:block;font-family:var(--serif);font-size:56px;line-height:1;color:color-mix(in oklab,var(--primary) 70%,var(--ink));opacity:.9}html[lang=ar] .ehow-n{font-family:var(--text);font-size:44px;font-weight:300}
+.ehow h3{margin:22px 0 0;font-size:24px;font-weight:600;letter-spacing:-.02em;line-height:1.2}html[lang=ar] .ehow h3{font-size:20px;letter-spacing:0;line-height:1.5}
+.ehow p{margin:10px 0 0;color:var(--ink2);line-height:1.65}
+/* in their words */
+.evoices{display:grid;gap:14px}@media (min-width:860px){.evoices{grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}}
+.evoice{position:relative;display:flex;flex-direction:column;margin:0;padding:30px 28px 26px;border-radius:22px;border:1px solid var(--line);background:var(--card)}
+.evoice-q{font-family:var(--serif);font-size:72px;line-height:.6;height:30px;color:var(--primary)}html[lang=ar] .evoice-q{font-family:Georgia,serif}
+.evoice blockquote{margin:14px 0 24px;font-family:var(--serif);font-style:italic;font-size:22px;line-height:1.38;color:var(--ink)}html[lang=ar] .evoice blockquote{font-family:var(--text);font-style:normal;font-size:17.5px;line-height:1.9}
+.evoice figcaption{display:flex;align-items:center;gap:12px;margin-top:auto;padding-top:18px;border-top:1px solid var(--line)}
+.evoice .av{display:grid;place-items:center;flex:none;width:40px;height:40px;border-radius:999px;background:var(--surface);font-size:14px;font-weight:600;color:var(--ink2)}
+.evoice figcaption span:last-child{display:grid}.evoice b{font-size:14.5px;font-weight:600}.evoice small{font-size:12.5px;color:var(--muted)}
+/* the footer's last word */
+.efoot-line{margin:0 0 44px;max-width:18ch;font-size:clamp(34px,5vw,64px);line-height:1.02;color:var(--ink)}html[lang=ar] .efoot-line{font-weight:600;line-height:1.35;font-size:clamp(28px,4vw,48px)}
+/* the property's photographs, as a mosaic on a computer */
+.emos{display:none}
+@media (min-width:1000px){.epdp-gal.has-mos .egal,.epdp-gal.has-mos .egal-thumbs{display:none}
+.emos{position:relative;display:grid;gap:8px;grid-template-columns:2fr 1fr 1fr;grid-template-rows:repeat(2,250px);border-radius:22px;overflow:hidden}.emos.n3{grid-template-columns:2fr 1fr}
+.emos button{position:relative;padding:0;border:0;overflow:hidden;background:var(--surface);cursor:zoom-in}.emos button:first-child{grid-row:span 2}
+.emos img{width:100%;height:100%;object-fit:cover;transition:transform 1.2s var(--e),filter .4s}.emos button:hover img{transform:scale(1.035);filter:brightness(.94)}
+.emos button:first-child img{view-transition-name:var(--vt)}
+.emos-all{position:absolute;bottom:16px;inset-inline-end:16px;cursor:pointer}}
+@media (max-width:999px){.egal-track button:first-child img{view-transition-name:var(--vt)}}
+/* pick a day to visit */
+.edays p{margin:0 0 8px;font-size:13px;font-weight:500;color:var(--ink2)}
+.edays-r{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.edays-r button{display:grid;justify-items:center;gap:2px;padding:8px 0 9px;border-radius:12px;border:1px solid var(--line);background:var(--card);cursor:pointer;transition:background-color .2s,border-color .2s,color .2s,transform .16s var(--e)}
+.edays-r button:active{transform:scale(.95)}.edays-r small{font-size:10.5px;color:var(--muted)}.edays-r b{font-size:16px;font-weight:600}
+.edays-r [aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:var(--bg)}.edays-r [aria-pressed=true] small{color:color-mix(in oklab,var(--bg) 70%,transparent)}
+@media (hover:hover) and (pointer:fine){.edays-r button:hover{border-color:var(--line2)}}
 /* the shared inquiry dialog, in this design's type */
 dialog#inq{border-radius:22px;border:1px solid var(--line)}dialog#inq h3{font-weight:600;letter-spacing:-.02em;font-size:24px}html[lang=ar] dialog#inq h3{letter-spacing:0}
 dialog#inq .btn{border-radius:12px;height:46px}dialog#inq .win{height:44px;border-radius:10px}dialog#inq textarea.win{height:96px}
-@media (prefers-reduced-motion:reduce){.ehero-card>img,.echip,.ehero h1,.ehero .lead,.ehero-cta,.esearch,.emenu-links a{animation:none!important}}`;
+@media (prefers-reduced-motion:reduce){.ehs,.ehs.on{transition:opacity .4s ease!important;transform:none!important}.echip,.ehero h1,.ehero .lead,.ehero-cta,.efeature,.esearch,.emenu-links a,html.js .erv.in{animation:none!important}html.js .erv{opacity:1}.edots i{animation:none!important}.edots [aria-selected=true] i{transform:scaleX(1)}}`;
 }

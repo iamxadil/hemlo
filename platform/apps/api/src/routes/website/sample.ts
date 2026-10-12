@@ -14,6 +14,13 @@ const AREA_AR: Record<string, string> = {
 const CITY_AR: Record<string, string> = { Erbil: 'أربيل', Baghdad: 'بغداد' };
 const slugOf = (key: string, type: string) => `${type}-${key}`.replace(/[^a-z0-9-]/g, '-');
 
+// made-up clients for the sample office (the sample is labelled as such on every page)
+const VOICES = [
+  { quote: { ar: 'أرسلنا ما نريد على واتساب، وبعد يومين كنا نعاين بيتين يطابقان طلبنا تماماً. لا وقت ضائع.', en: 'We sent what we wanted on WhatsApp, and two days later we were viewing two homes that matched it exactly. No time wasted.' }, author: { ar: 'سارة م.', en: 'Sara M.' }, role: { ar: 'اشترت فيلا في دريم ستي', en: 'Bought a villa in Dream City' } },
+  { quote: { ar: 'السعر الذي سمعناه في أول رسالة هو نفسه الذي كُتب في العقد. هذا نادر.', en: 'The price we heard in the first message was the price in the contract. That is rare.' }, author: { ar: 'كرار ح.', en: 'Karrar H.' }, role: { ar: 'استأجر شقة في عنكاوة', en: 'Rented an apartment in Ankawa' } },
+  { quote: { ar: 'رافقونا من العربون حتى نقل الملكية، وكانوا يردّون حتى في المساء.', en: 'They stayed with us from the deposit to the transfer, and answered even in the evening.' }, author: { ar: 'زينب ع.', en: 'Zainab A.' }, role: { ar: 'اشترت بيتاً في المنصور', en: 'Bought a house in Mansour' } },
+];
+
 /** The site as the database would hold it, published. Arabic is its first language; English is ?lang=en, as on any site. */
 export const sampleSite = (lang: Lang) => {
   const cfg = {
@@ -23,7 +30,7 @@ export const sampleSite = (lang: Lang) => {
     theme: { accent: '#1F6F5C' }, settings: { contact: { phone: '+9647701234567', whatsapp: '+9647701234567', email: 'hello@nakheel.example', address: lang === 'ar' ? 'شارع 100، أربيل' : '100 Street, Erbil' }, cta: { whatsapp: true, phone: true, inquiry: true } },
     logoId: null, faviconId: null,
     pages: [
-      { id: 's-home', slug: '', kind: 'home', sort: 0, title: { ar: 'الرئيسية', en: 'Home' }, seo: {}, sections: [{ id: 'h', type: 'hero' }, { id: 'l', type: 'listings' }, { id: 'a', type: 'about', title: { ar: 'من نحن', en: 'About us' } }, { id: 'c', type: 'contact' }] },
+      { id: 's-home', slug: '', kind: 'home', sort: 0, title: { ar: 'الرئيسية', en: 'Home' }, seo: {}, sections: [{ id: 'h', type: 'hero' }, { id: 'l', type: 'listings' }, { id: 'a', type: 'about', title: { ar: 'من نحن', en: 'About us' } }, { id: 'v', type: 'testimonials', items: VOICES }, { id: 'c', type: 'contact' }] },
       { id: 's-about', slug: 'about', kind: 'about', sort: 1, title: { ar: 'من نحن', en: 'About us' }, seo: {}, sections: [{ id: 'a2', type: 'about', title: { ar: 'من نحن', en: 'About us' } }, { id: 'c2', type: 'contact' }] },
       { id: 's-contact', slug: 'contact', kind: 'contact', sort: 2, title: { ar: 'تواصل معنا', en: 'Contact' }, seo: {}, sections: [{ id: 'c3', type: 'contact' }] },
     ],
