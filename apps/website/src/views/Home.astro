@@ -4,7 +4,7 @@ import Mark from '../components/Mark.astro';
 import BranchLogo from '../components/BranchLogo.astro';
 import Compare from '../components/Compare.astro';
 import HomeHero from '../components/HomeHero.astro';
-import Ecosystem from '../components/Ecosystem.astro';
+import ConnectedStory from '../components/ConnectedStory.astro';
 import HwBadge from '../components/HwBadge.astro';
 import { BRANCH, type BranchId } from '../brand/brand';
 import { t, href, EMAIL, TOOLS_URL, studioUrl, type Lang } from '../i18n/strings';
@@ -20,11 +20,11 @@ const picks: { id: BranchId; url: string; ext?: boolean }[] = [
 // the announcement: Hemlo Systems now joined by its add-ons (Hemlo Website, Hemlo Connect), shown as one loop
 const NEW = lang === 'ar' ? {
   eyebrow: 'جديد في Hemlo Systems', title: ['نظامك الآن متصل.', 'موقعك وواتساب ونظامك، وحدة واحدة.'],
-  sub: 'زبون يجد عقارك على موقعك، يسأل، فيصل إلى نظامك، ويرد عليه واتساب خلال ثوانٍ. لا نسخ ولا لصق، ولا رسالة تضيع. متاح الآن لمكاتب العقارات.',
+  sub: 'تابِع زبوناً واحداً من موقعك إلى معاينة محجوزة: هاتفه في جهة، ونظامك في الجهة الأخرى. لا نسخ ولا لصق، ولا رسالة تضيع. اضغط أي فصل لتنتقل إليه. متاح الآن لمكاتب العقارات.',
   cta: 'تعرّف على الإضافات', sample: 'شاهد موقعاً نموذجياً',
 } : {
   eyebrow: 'New in Hemlo Systems', title: ['Your system is now connected.', 'Your website, WhatsApp and system, one unit.'],
-  sub: 'A customer finds your listing on your website, asks, lands in your system, and hears back on WhatsApp within seconds. No copying, no pasting, no message lost. Available now for real estate offices.',
+  sub: 'Follow one customer from your website to a booked viewing: their phone on one side, your system on the other. No copying, no pasting, no message lost. Tap any chapter to jump to it. Available now for real estate offices.',
   cta: 'See the add-ons', sample: 'See a sample site',
 };
 const num = (i: number) => (lang === 'ar' ? ['٠١', '٠٢', '٠٣', '٠٤'][i] : `0${i + 1}`);
@@ -41,7 +41,7 @@ const num = (i: number) => (lang === 'ar' ? ['٠١', '٠٢', '٠٣', '٠٤'][i] 
         <p class="reveal mt-3 conn-acc text-[clamp(1.25rem,2.4vw,1.75rem)] font-semibold tracking-tight">{NEW.title[1]}</p>
         <p class="reveal mt-4 max-w-2xl text-lead text-fg-2">{NEW.sub}</p>
       </div>
-      <div class="reveal conn-stage"><Ecosystem lang={lang} /></div>
+      <div class="reveal conn-stage"><ConnectedStory lang={lang} /></div>
       <p class="reveal conn-cta">
         <a class="btn btn-primary" href={`${href(lang, 'systems')}#addons`}>{NEW.cta}<span class="arr" aria-hidden="true">→</span></a>
         <a class="link-arrow" href={lang === 'ar' ? 'https://business.hemlohq.com/s/sample' : 'https://business.hemlohq.com/s/sample?lang=en'} target="_blank" rel="noopener">{NEW.sample} <span class="arr">→</span></a>

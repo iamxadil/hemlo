@@ -1,0 +1,443 @@
+---
+// How Hemlo Systems works with its add-ons, told as one customer's story on two screens at once: the customer's phone
+// (the agency's Hemlo Website, then WhatsApp through Hemlo Connect) and the agency's Hemlo system. Five chapters; each
+// plays on its own while the section is on screen (its progress bar is the clock), and any chapter can be tapped.
+// Plain CSS transitions on transform and opacity, driven by one data attribute; no library, nothing runs off screen.
+// Reduced motion: no autoplay and no movement, only crossfades; the chapters are tapped.
+import type { Lang } from '../i18n/strings';
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const ar = lang === 'ar';
+const C = ar ? {
+  chapters: [
+    ['تنشر العقار', 'تضيفه في نظامك وتضغط «على الموقع». يظهر على موقعك في اللحظة نفسها.'],
+    ['يجده الزبون', 'من بحث جوجل أو رابط على واتساب. صور وسعر وتفاصيل، كلها من نظامك.'],
+    ['يسأل، فيصل إليك', 'ضغطة واحدة، فيصبح زبوناً محتملاً في نظامك، ومعه ما يبحث عنه.'],
+    ['يُردّ عليه خلال ثوانٍ', 'يجيبه Connect على واتساب من عقاراتك الحقيقية، وبلغته. وتتدخل متى شئت.'],
+    ['يحجز معاينة', 'يدخل الموعد تقويمك، ويصله التذكير وحده قبل يوم.'],
+  ],
+  step: 'الفصل', live: 'مباشر', synced: ['نُشر على موقعك', 'يتصفّح الآن', 'زبون جديد', 'ردّ Connect', 'موعد محجوز'],
+  sysTitle: 'هيملو · العقارات', nav: ['اليوم', 'العقارات', 'الزبائن', 'الرسائل', 'التقويم'],
+  props: 'العقارات', add: '+ إضافة', onSite: 'على الموقع', draft: 'مسودة', published: 'منشور', views: ['لا مشاهدات بعد', '٣ مشاهدات اليوم'],
+  rows: [['فيلا · دريم ستي', '$265,000'], ['شقة · عنكاوة', '$900 / شهر'], ['أرض · كسنزان', '$95,000']],
+  leads: 'الزبائن', leadName: 'أحمد كريم', leadFrom: 'من موقعك · الآن', wants: ['فيلا', 'دريم ستي', 'حتى ٢٧٠ ألف دولار'], matches: 'يطابق عقارين', newTag: 'جديد',
+  oldLeads: [['سارة محمود', 'شقة · عنكاوة'], ['كرار حسن', 'أرض · أربيل']],
+  inbox: 'الرسائل · أحمد كريم', q: 'هل فيلا دريم ستي ما زالت متاحة؟', a: 'نعم متاحة. ٤ غرف وحديقة خاصة، بسعر $265,000. هل يناسبك السبت الساعة ٥ لمعاينتها؟', by: '✦ Connect · ٣ ثوانٍ', takeNote: 'أُجيب من عقاراتك. تستطيع التدخل في أي وقت.', take: 'تولَّ المحادثة',
+  cal: 'السبت', viewing: 'معاينة · أحمد ك.', viewingSub: 'فيلا دريم ستي', reminder: 'تذكير · الجمعة ٦ م', confirmed: 'أُكّد على واتساب ✓',
+  hours: ['٣ م', '٤ م', '٥ م', '٦ م'],
+  brand: 'دار النخيل', brandMono: 'ن', listing: 'فيلا بحديقة خاصة', where: 'دريم ستي · أربيل', facts: '٤ غرف · ٣ حمّام · ٣٢٠ م²', newBadge: 'جديد',
+  about: 'عن العقار', aboutLines: ['حديقة خاصة تطل عليها غرفة المعيشة.', 'مطبخ مفتوح، وموقف لسيارتين.'], ask: 'استفسر على واتساب', sent: 'أُرسل ✓',
+  waName: 'دار النخيل للعقارات', online: 'متصل الآن', okSat: 'السبت يناسبني 👍', booked: 'تم الحجز ✓ السبت ٥ م. سنذكّرك يوم الجمعة.',
+} : {
+  chapters: [
+    ['You publish a property', 'Add it in your system and switch on “On website”. It’s on your site that same moment.'],
+    ['A customer finds it', 'From a Google search or a link on WhatsApp. Photos, price, details, all from your system.'],
+    ['They ask, and land with you', 'One tap, and they’re a lead in your system, with what they’re looking for.'],
+    ['They hear back in seconds', 'Connect answers on WhatsApp from your real listings, in their language. Step in any time.'],
+    ['They book a viewing', 'It lands in your calendar, and the reminder goes out by itself the day before.'],
+  ],
+  step: 'Chapter', live: 'Live', synced: ['Published to your site', 'Viewing now', 'New lead', 'Connect replied', 'Viewing booked'],
+  sysTitle: 'Hemlo · Real estate', nav: ['Today', 'Properties', 'Leads', 'Inbox', 'Calendar'],
+  props: 'Properties', add: '+ Add', onSite: 'On website', draft: 'Draft', published: 'Published', views: ['No views yet', '3 views today'],
+  rows: [['Villa · Dream City', '$265,000'], ['Apartment · Ankawa', '$900 / mo'], ['Land · Kasnazan', '$95,000']],
+  leads: 'Leads', leadName: 'Ahmed Kareem', leadFrom: 'From your website · just now', wants: ['Villa', 'Dream City', 'Up to $270k'], matches: 'Matches 2 properties', newTag: 'New',
+  oldLeads: [['Sara Mahmoud', 'Apartment · Ankawa'], ['Karrar Hassan', 'Land · Erbil']],
+  inbox: 'Inbox · Ahmed Kareem', q: 'Is the Dream City villa still available?', a: 'Yes, it is. 4 bedrooms and a private garden, $265,000. Would Saturday at 5 PM suit a viewing?', by: '✦ Connect · 3 s', takeNote: 'Answered from your listings. Step in any time.', take: 'Take over',
+  cal: 'Saturday', viewing: 'Viewing · Ahmed K.', viewingSub: 'Dream City villa', reminder: 'Reminder · Fri 6 PM', confirmed: 'Confirmed on WhatsApp ✓',
+  hours: ['3 PM', '4 PM', '5 PM', '6 PM'],
+  brand: 'Nakheel', brandMono: 'N', listing: 'A villa with a private garden', where: 'Dream City · Erbil', facts: '4 bed · 3 bath · 320 m²', newBadge: 'New',
+  about: 'About this home', aboutLines: ['A private garden the living room opens onto.', 'An open kitchen, and parking for two.'], ask: 'Ask on WhatsApp', sent: 'Sent ✓',
+  waName: 'Nakheel Real Estate', online: 'online', okSat: 'Saturday works 👍', booked: 'Booked ✓ Saturday, 5 PM. We’ll remind you on Friday.',
+};
+const n = (i: number) => (ar ? '١٢٣٤٥'[i] : String(i + 1));
+// which screen leads each chapter (on a phone only that one is in front; on wide screens it is lifted a little)
+const FOCUS = ['sys', 'phone', 'sys', 'phone', 'sys'];
+// the system's view for each chapter, and the phone's
+const SYS_VIEW = ['props', 'props', 'leads', 'inbox', 'cal'];
+const PH_VIEW = ['site', 'site', 'site', 'wa', 'wa'];
+const NAV_ON = [1, 1, 2, 3, 4];
+---
+<div class="cs" data-cs data-step="0" data-focus="sys" data-sys="props" data-ph="site" data-nav="1"
+     data-focusmap={FOCUS.join(',')} data-sysmap={SYS_VIEW.join(',')} data-phmap={PH_VIEW.join(',')} data-navmap={NAV_ON.join(',')}>
+
+  <!-- the two screens -->
+  <div class="cs-stage" aria-hidden="true">
+    <div class="cs-glow"></div>
+
+    <!-- the agency's Hemlo system -->
+    <div class="cs-sys">
+      <div class="sys-bar"><span class="dots"><i></i><i></i><i></i></span><span class="t">{C.sysTitle}</span><span class="live"><i></i>{C.live}</span></div>
+      <div class="sys-body">
+        <nav class="sys-nav">{C.nav.map((x, i) => <span data-n={i}><i></i>{x}</span>)}</nav>
+        <div class="sys-views">
+
+          <section class="v" data-v="props">
+            <header><b>{C.props}</b><span class="btn-s">{C.add}</span></header>
+            <ul class="rows">
+              <li class="row hot">
+                <span class="thumb" style="background-image:url(/images/realestate/sample/villa-3.webp)"></span>
+                <span class="nm"><b>{C.rows[0][0]}</b><small><span class="seen0">{C.views[0]}</span><span class="seen1">👁 {C.views[1]}</span></small></span>
+                <span class="pr" dir="ltr">{C.rows[0][1]}</span>
+                <span class="tg"><span class="sw"><i></i></span><small>{C.onSite}</small></span>
+                <span class="st"><span class="d">{C.draft}</span><span class="p">{C.published}</span></span>
+              </li>
+              <li class="row"><span class="thumb" style="background-image:url(/images/realestate/sample/apartment-1.webp)"></span><span class="nm"><b>{C.rows[1][0]}</b><small>👁 12</small></span><span class="pr" dir="ltr">{C.rows[1][1]}</span><span class="tg"><span class="sw on"><i></i></span><small>{C.onSite}</small></span><span class="st"><span class="p show">{C.published}</span></span></li>
+              <li class="row"><span class="thumb" style="background-image:url(/images/realestate/sample/villa-4.webp)"></span><span class="nm"><b>{C.rows[2][0]}</b><small>—</small></span><span class="pr" dir="ltr">{C.rows[2][1]}</span><span class="tg"><span class="sw"><i></i></span><small>{C.onSite}</small></span><span class="st"><span class="d show">{C.draft}</span></span></li>
+            </ul>
+          </section>
+
+          <section class="v" data-v="leads">
+            <header><b>{C.leads}</b><span class="count" dir="ltr">24</span></header>
+            <div class="lead new">
+              <span class="av">{C.leadName.slice(0, 1)}</span>
+              <div class="lt"><b>{C.leadName}</b><small>{C.leadFrom}</small><span class="chips">{C.wants.map((w) => <i>{w}</i>)}</span></div>
+              <div class="lr"><span class="tag">{C.newTag}</span><small>{C.matches}</small></div>
+            </div>
+            {C.oldLeads.map(([a, b]) => <div class="lead old"><span class="av">{a.slice(0, 1)}</span><div class="lt"><b>{a}</b><small>{b}</small></div></div>)}
+          </section>
+
+          <section class="v" data-v="inbox">
+            <header><b>{C.inbox}</b><span class="wa-dot"><i></i>WhatsApp</span></header>
+            <div class="thread">
+              <p class="msg in">{C.q}</p>
+              <p class="msg out"><span class="by">{C.by}</span>{C.a}</p>
+            </div>
+            <div class="take"><small>{C.takeNote}</small><span class="btn-s">{C.take}</span></div>
+          </section>
+
+          <section class="v" data-v="cal">
+            <header><b>{C.cal}</b><span class="count">⌁</span></header>
+            <div class="grid">
+              {C.hours.map((h) => <div class="hr"><small>{h}</small><i></i></div>)}
+              <div class="slot"><b>{C.viewing}</b><small>{C.viewingSub}</small></div>
+            </div>
+            <div class="cal-foot"><span class="chip">{C.reminder}</span><span class="chip ok">{C.confirmed}</span></div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <!-- the customer's phone -->
+    <div class="cs-phone">
+      <div class="ph-screen">
+        <div class="ph-status"><span dir="ltr">9:41</span><span class="isl"></span><span class="sig"><i></i><i></i><i></i></span></div>
+
+        <div class="pv" data-pv="site">
+          <div class="site-top"><span class="mono">{C.brandMono}</span><b>{C.brand}</b></div>
+          <div class="site-scroll"><div class="in">
+            <figure><img src="/images/realestate/sample/villa-3.webp" alt="" loading="lazy" decoding="async" /><span class="nb">{C.newBadge}</span></figure>
+            <p class="w">{C.where}</p>
+            <p class="h">{C.listing}</p>
+            <p class="row2"><span>{C.facts}</span><b dir="ltr">$265,000</b></p>
+            <div class="more"><p class="ab">{C.about}</p>{C.aboutLines.map((l) => <p class="l">{l}</p>)}</div>
+          </div></div>
+          <div class="cta"><span class="ask"><svg viewBox="0 0 24 24"><path d="M3 21l1.65-4.94A9 9 0 1 1 7.9 19.3L3 21Z" /></svg>{C.ask}</span><span class="sent">{C.sent}</span></div>
+        </div>
+
+        <div class="pv" data-pv="wa">
+          <div class="wa-top"><span class="av">{C.brandMono}</span><span><b>{C.waName}</b><small>{C.online}</small></span></div>
+          <div class="wa-chat">
+            <p class="b me" data-at="3">{C.q}</p>
+            <p class="b typing" data-at="3"><i></i><i></i><i></i></p>
+            <p class="b them" data-at="3">{C.a}</p>
+            <p class="b me" data-at="4">{C.okSat}</p>
+            <p class="b them" data-at="4">{C.booked}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- what just travelled between the two -->
+    <p class="cs-sync">{C.synced.map((x, i) => <span data-s={i}><i></i>{x}</span>)}</p>
+  </div>
+
+  <!-- the chapters: each one's bar is its clock -->
+  <div class="cs-ch" role="tablist" aria-label={ar ? 'كيف يعمل' : 'How it works'}>
+    {C.chapters.map(([h, p], i) => (
+      <button type="button" role="tab" id={`cs-t${i}`} data-go={i} aria-selected={i === 0 ? 'true' : 'false'} tabindex={i === 0 ? 0 : -1}>
+        <span class="bar"><i></i></span>
+        <span class="k">{C.step} {n(i)}</span>
+        <b>{h}</b>
+        <span class="p">{p}</span>
+      </button>
+    ))}
+  </div>
+  <div class="cs-cap" aria-hidden="true">{C.chapters.map(([h, p], i) => <div data-c={i}><span class="k">{C.step} {n(i)}</span><b>{h}</b><p>{p}</p></div>)}</div>
+</div>
+
+<script>
+  // One story per section. The active chapter's bar animates; when it ends, the next chapter begins. Pausing (off
+  // screen, hover, focus, a hidden tab) just pauses that bar, so nothing runs that nobody sees.
+  for (const root of document.querySelectorAll<HTMLElement>('[data-cs]')) {
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-go]')];
+    const map = (k: string) => (root.dataset[k] ?? '').split(',');
+    const focus = map('focusmap'), sys = map('sysmap'), ph = map('phmap'), nav = map('navmap');
+    const count = tabs.length;
+    let step = 0;
+    const show = (i: number, byHand = false) => {
+      step = (i + count) % count;
+      Object.assign(root.dataset, { step: String(step), focus: focus[step], sys: sys[step], ph: ph[step], nav: nav[step] });
+      tabs.forEach((t, j) => { const on = j === step; t.setAttribute('aria-selected', String(on)); t.tabIndex = on ? 0 : -1; });
+      if (byHand) tabs[step].focus({ preventScroll: true });
+    };
+    tabs.forEach((t, j) => {
+      t.addEventListener('click', () => show(j));
+      t.querySelector('.bar i')?.addEventListener('animationend', () => { if (!still) show(step + 1); });
+    });
+    root.querySelector('[role="tablist"]')?.addEventListener('keydown', (e) => {
+      const k = (e as KeyboardEvent).key, rtl = getComputedStyle(root).direction === 'rtl';
+      const fwd = k === 'ArrowDown' || k === (rtl ? 'ArrowLeft' : 'ArrowRight'), back = k === 'ArrowUp' || k === (rtl ? 'ArrowRight' : 'ArrowLeft');
+      if (fwd || back || k === 'Home' || k === 'End') { e.preventDefault(); show(k === 'Home' ? 0 : k === 'End' ? count - 1 : step + (fwd ? 1 : -1), true); }
+    });
+    const hold = (on: boolean) => root.classList.toggle('held', on);
+    root.addEventListener('pointerenter', (e) => { if ((e as PointerEvent).pointerType === 'mouse') hold(true); });
+    root.addEventListener('pointerleave', () => hold(false));
+    root.addEventListener('focusin', () => hold(true));
+    root.addEventListener('focusout', (e) => { if (!root.contains((e as FocusEvent).relatedTarget as Node)) hold(false); });
+    new IntersectionObserver(([e]) => root.classList.toggle('on', e.isIntersecting), { threshold: 0.4 }).observe(root);
+    if (still) root.classList.add('still');
+  }
+</script>
+
+<style>
+  .cs {
+    --g: #1F6F5C; --wa: #1FA855; --wa-bg: #E7F6EC; --ink: #0E1420; --paper: #F6F4EF;
+    --ease-out: cubic-bezier(.23, 1, .32, 1); --ease-io: cubic-bezier(.77, 0, .175, 1); --dur: 5.6s;
+    position: relative;
+  }
+  @media (prefers-color-scheme: dark) { .cs { --g: #5FBF9F; } }
+
+  /* ---------- the stage: one container, so everything in it scales with its width ---------- */
+  .cs-stage { position: relative; container-type: inline-size; aspect-ratio: 16 / 9.4; border-radius: 1.6rem; overflow: hidden; isolation: isolate;
+    background: linear-gradient(160deg, var(--sunken), color-mix(in oklab, var(--sunken) 60%, var(--surface))); box-shadow: inset 0 0 0 1px var(--line); }
+  .cs-glow { position: absolute; inset: -30% -10%; z-index: -1; pointer-events: none; transition: translate 1.2s var(--ease-io), opacity .6s ease;
+    background: radial-gradient(38% 46% at 50% 50%, color-mix(in oklab, var(--g) 16%, transparent), transparent 70%); }
+  .cs[data-focus="phone"] .cs-glow { translate: -24% 6%; }
+  :global(html[dir="rtl"]) .cs[data-focus="phone"] .cs-glow { translate: 24% 6%; }
+  .cs[data-focus="sys"] .cs-glow { translate: 12% -6%; }
+  :global(html[dir="rtl"]) .cs[data-focus="sys"] .cs-glow { translate: -12% -6%; }
+
+  /* ---------- the system window ---------- */
+  .cs-sys { position: absolute; top: 5.5%; inset-inline-end: 3.5%; width: 70.5%; height: 84%; display: grid; grid-template-rows: auto 1fr; font-size: 1.22cqw;
+    border-radius: 1.1cqw; background: var(--surface); color: var(--fg); overflow: hidden;
+    box-shadow: 0 0 0 1px var(--line), 0 2.4cqw 5cqw -2.6cqw rgb(14 20 32 / .35);
+    transition: transform .9s var(--ease-out), box-shadow .9s var(--ease-out), opacity .6s ease; }
+  .cs[data-focus="sys"] .cs-sys { transform: translateY(-.4cqw); box-shadow: 0 0 0 1px var(--line), 0 3.4cqw 6cqw -2.8cqw rgb(14 20 32 / .42); }
+  .sys-bar { display: flex; align-items: center; gap: .9em; padding: .85em 1.1em; border-bottom: 1px solid var(--line); font-size: .92em; color: var(--muted); }
+  .sys-bar .dots { display: flex; gap: .4em; } .sys-bar .dots i { width: .7em; height: .7em; border-radius: 50%; background: var(--line-strong); }
+  .sys-bar .t { font-weight: 500; color: var(--fg-2); }
+  .sys-bar .live { margin-inline-start: auto; display: inline-flex; align-items: center; gap: .45em; color: var(--g); font-weight: 600; }
+  .sys-bar .live i { width: .55em; height: .55em; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 0 currentColor; animation: cs-live 2.4s ease-out infinite; }
+  @keyframes cs-live { 0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--g) 50%, transparent); } 100% { box-shadow: 0 0 0 .7em transparent; } }
+  .sys-body { display: grid; grid-template-columns: 12.5em 1fr; min-height: 0; }
+  .sys-nav { display: grid; align-content: start; gap: .25em; padding: 1em .7em; border-inline-end: 1px solid var(--line); background: color-mix(in oklab, var(--sunken) 50%, var(--surface)); }
+  .sys-nav span { display: flex; align-items: center; gap: .6em; padding: .55em .7em; border-radius: .55em; color: var(--muted); font-size: .95em; transition: background-color .4s ease, color .4s ease; }
+  .sys-nav i { width: .8em; height: .8em; border-radius: .25em; border: 1.5px solid currentColor; opacity: .7; }
+  .cs[data-nav="1"] [data-n="1"], .cs[data-nav="2"] [data-n="2"], .cs[data-nav="3"] [data-n="3"], .cs[data-nav="4"] [data-n="4"] { background: var(--surface); color: var(--fg); box-shadow: 0 0 0 1px var(--line); }
+  .sys-views { position: relative; min-width: 0; }
+
+  /* each view crossfades in, rising a little; the one leaving just fades */
+  .v { position: absolute; inset: 0; padding: 1.4em 1.6em; opacity: 0; transform: translateY(.8em); transition: opacity .35s ease, transform .35s ease; pointer-events: none; }
+  .cs[data-sys="props"] [data-v="props"], .cs[data-sys="leads"] [data-v="leads"], .cs[data-sys="inbox"] [data-v="inbox"], .cs[data-sys="cal"] [data-v="cal"] {
+    opacity: 1; transform: none; transition: opacity .6s var(--ease-out) .12s, transform .8s var(--ease-out) .12s; }
+  .v header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.1em; }
+  .v header b { font-size: 1.45em; font-weight: 600; letter-spacing: -.02em; }
+  .btn-s { padding: .45em .9em; border-radius: .55em; background: var(--invert); color: var(--on-invert); font-size: .88em; font-weight: 500; }
+  .count { color: var(--muted); font-size: .9em; }
+
+  /* properties: the toggle goes on, the draft becomes published, and then the views come in */
+  .rows { display: grid; }
+  .row { display: grid; grid-template-columns: 3.4em minmax(0, 1fr) auto 7.4em 5.6em; align-items: center; gap: 1em; padding: .8em 0; border-top: 1px solid var(--line); }
+  .thumb { width: 3.4em; height: 2.6em; border-radius: .45em; background: var(--sunken) center / cover; }
+  .nm { display: grid; min-width: 0; } .nm b { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .nm small { position: relative; height: 1.4em; color: var(--muted); font-size: .86em; }
+  .nm small > span { position: absolute; inset-inline-start: 0; white-space: nowrap; transition: opacity .4s ease, transform .5s var(--ease-out); }
+  .pr { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tg { display: flex; align-items: center; gap: .5em; color: var(--muted); font-size: .84em; }
+  .sw { position: relative; width: 2.3em; height: 1.3em; border-radius: 999px; background: var(--line-strong); transition: background-color .4s ease; }
+  .sw i { position: absolute; top: .15em; inset-inline-start: .15em; width: 1em; height: 1em; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgb(0 0 0 / .2); transition: transform .45s var(--ease-out); }
+  .sw.on { background: var(--g); } .sw.on i { transform: translateX(1em); }
+  :global(html[dir="rtl"]) .sw.on i { transform: translateX(-1em); }
+  .st { position: relative; height: 1.7em; }
+  .st > span { position: absolute; inset-inline-start: 0; display: inline-flex; align-items: center; height: 1.7em; padding: 0 .7em; border-radius: 999px; font-size: .82em; font-weight: 500; opacity: 0; transform: scale(.94); transition: opacity .35s ease, transform .45s var(--ease-out); }
+  .st .d { background: var(--sunken); color: var(--muted); } .st .p { background: color-mix(in oklab, var(--g) 14%, transparent); color: var(--g); }
+  .st .show { opacity: 1; transform: none; }
+  .row.hot { position: relative; }
+  .row.hot::before { content: ""; position: absolute; inset: 0 -.8em; z-index: -1; border-radius: .7em; background: color-mix(in oklab, var(--g) 7%, transparent); opacity: 0; transition: opacity .6s ease; }
+  .cs[data-step="0"] .row.hot::before, .cs[data-step="1"] .row.hot::before { opacity: 1; }
+  .row.hot .st .d { opacity: 1; transform: none; }
+  .row.hot .seen1 { opacity: 0; transform: translateY(.5em); }
+  /* chapter 1: on (after a beat), published; chapter 2: it stays on, and the views arrive */
+  .cs[data-step="0"] .row.hot .sw, .cs[data-step="1"] .row.hot .sw { background: var(--g); transition-delay: .9s; }
+  .cs[data-step="0"] .row.hot .sw i, .cs[data-step="1"] .row.hot .sw i { transform: translateX(1em); transition-delay: .9s; }
+  :global(html[dir="rtl"]) .cs[data-step="0"] .row.hot .sw i, :global(html[dir="rtl"]) .cs[data-step="1"] .row.hot .sw i { transform: translateX(-1em); }
+  .cs[data-step="0"] .row.hot .st .d, .cs[data-step="1"] .row.hot .st .d { opacity: 0; transform: scale(.94); transition-delay: 1.2s; }
+  .cs[data-step="0"] .row.hot .st .p, .cs[data-step="1"] .row.hot .st .p { opacity: 1; transform: none; transition-delay: 1.3s; }
+  .cs[data-step="1"] .row.hot .seen0 { opacity: 0; transform: translateY(-.5em); transition-delay: 1.6s; }
+  .cs[data-step="1"] .row.hot .seen1 { opacity: 1; transform: none; color: var(--g); font-weight: 500; transition-delay: 1.7s; }
+
+  /* leads: the new one drops in from the top, the others make room */
+  .lead { display: flex; align-items: center; gap: 1em; padding: .9em 1em; border-radius: .8em; border: 1px solid var(--line); margin-bottom: .7em; background: var(--surface); }
+  .lead .av { display: grid; place-items: center; flex: none; width: 2.5em; height: 2.5em; border-radius: 50%; background: var(--sunken); font-weight: 600; color: var(--fg-2); }
+  .lead .lt { display: grid; gap: .2em; min-width: 0; flex: 1; } .lead .lt b { font-weight: 600; } .lead small { color: var(--muted); font-size: .86em; }
+  .chips { display: flex; flex-wrap: wrap; gap: .35em; margin-top: .35em; } .chips i { font-style: normal; padding: .2em .6em; border-radius: 999px; background: var(--sunken); font-size: .82em; color: var(--fg-2); }
+  .lead .lr { display: grid; justify-items: end; gap: .4em; }
+  .tag { padding: .25em .7em; border-radius: 999px; background: var(--g); color: #fff; font-size: .78em; font-weight: 600; }
+  @media (prefers-color-scheme: dark) { .tag { color: #0B1019; } }
+  .lead.new { border-color: color-mix(in oklab, var(--g) 45%, var(--line)); box-shadow: 0 0 0 .35em color-mix(in oklab, var(--g) 10%, transparent); opacity: 0; transform: translateY(-1.2em) scale(.98); }
+  .lead.old { opacity: .55; transform: translateY(-4.6em); transition: transform .7s var(--ease-out) .7s; }
+  .lead.new .av { background: color-mix(in oklab, var(--g) 16%, transparent); color: var(--g); }
+  .cs[data-step="2"] .lead.new { opacity: 1; transform: none; transition: opacity .5s ease 1s, transform .8s var(--ease-out) 1s; }
+  .cs[data-step="2"] .lead.old { transform: none; transition-delay: .9s; }
+
+  /* inbox: the question, then Connect's answer */
+  .thread { display: grid; gap: .8em; }
+  .msg { max-width: 78%; margin: 0; padding: .75em 1em; border-radius: 1em; line-height: 1.45; }
+  .msg.in { background: var(--sunken); border-end-start-radius: .3em; }
+  .msg.out { justify-self: end; background: var(--wa-bg); color: #0E1420; border-end-end-radius: .3em; opacity: 0; transform: translateY(.8em); }
+  .msg .by { display: block; margin-bottom: .3em; font-size: .8em; font-weight: 600; color: var(--g); }
+  @media (prefers-color-scheme: dark) { .msg .by { color: #1F6F5C; } }
+  .cs[data-step="3"] .msg.out { opacity: 1; transform: none; transition: opacity .5s ease 2.1s, transform .7s var(--ease-out) 2.1s; }
+  .take { display: flex; align-items: center; justify-content: space-between; gap: 1em; margin-top: 1.4em; padding-top: 1em; border-top: 1px solid var(--line); color: var(--muted); }
+  .take .btn-s { background: transparent; color: var(--fg); box-shadow: inset 0 0 0 1px var(--line-strong); }
+  .wa-dot { display: inline-flex; align-items: center; gap: .4em; color: var(--wa); font-size: .88em; font-weight: 600; } .wa-dot i { width: .55em; height: .55em; border-radius: 50%; background: currentColor; }
+
+  /* calendar: the viewing settles into its hour */
+  .grid { position: relative; display: grid; }
+  .hr { display: flex; align-items: flex-start; gap: .8em; height: 3.4em; } .hr small { width: 3.6em; color: var(--muted); font-size: .82em; transform: translateY(-.55em); } .hr i { flex: 1; height: 1px; background: var(--line); }
+  .slot { position: absolute; inset-inline: 4.6em 0; top: 6.8em; height: 3.2em; display: grid; align-content: center; padding: 0 1em; border-radius: .6em; border-inline-start: .3em solid var(--g);
+    background: color-mix(in oklab, var(--g) 12%, var(--surface)); opacity: 0; transform: translateY(-1em) scale(.98); }
+  .slot b { font-weight: 600; } .slot small { color: var(--fg-2); font-size: .85em; }
+  .cs[data-step="4"] .slot { opacity: 1; transform: none; transition: opacity .5s ease 2.4s, transform .8s var(--ease-out) 2.4s; }
+  .cal-foot { display: flex; flex-wrap: wrap; gap: .5em; margin-top: 1.4em; }
+  .chip { padding: .35em .8em; border-radius: 999px; background: var(--sunken); color: var(--fg-2); font-size: .84em; opacity: 0; transform: translateY(.4em); }
+  .chip.ok { background: color-mix(in oklab, var(--wa) 14%, transparent); color: var(--wa); }
+  .cs[data-step="4"] .chip { opacity: 1; transform: none; transition: opacity .4s ease 3s, transform .6s var(--ease-out) 3s; }
+  .cs[data-step="4"] .chip.ok { transition-delay: 3.2s; }
+
+  /* ---------- the phone ---------- */
+  .cs-phone { position: absolute; bottom: 3%; inset-inline-start: 3%; width: 24.5%; aspect-ratio: 9 / 19; padding: .55cqw; border-radius: 3.6cqw; background: #0E1420;
+    box-shadow: inset 0 0 0 .14cqw #2A3140, 0 3cqw 5cqw -2.4cqw rgb(14 20 32 / .55); transition: transform .9s var(--ease-out), box-shadow .9s var(--ease-out); }
+  .cs[data-focus="phone"] .cs-phone { transform: translateY(-2.2cqw); box-shadow: inset 0 0 0 .14cqw #2A3140, 0 4.4cqw 6cqw -2.4cqw rgb(14 20 32 / .6); }
+  .ph-screen { position: relative; height: 100%; border-radius: 3.1cqw; overflow: hidden; background: var(--paper); color: #1B1A17; container-type: inline-size; font-size: 1.37cqw; }
+  .ph-status { position: relative; z-index: 3; display: flex; align-items: center; justify-content: space-between; height: 11cqw; padding: 0 8cqw; font-size: .82em; font-weight: 600; direction: ltr; }
+  .ph-status .isl { position: absolute; inset-inline-start: 50%; top: 2.6cqw; width: 28cqw; height: 6.6cqw; margin-inline-start: -14cqw; border-radius: 999px; background: #0E1420; }
+  .ph-status .sig { display: flex; gap: .15em; align-items: end; } .ph-status .sig i { width: .22em; border-radius: 1px; background: currentColor; } .sig i:nth-child(1) { height: .4em } .sig i:nth-child(2) { height: .6em } .sig i:nth-child(3) { height: .8em }
+  .pv { position: absolute; inset: 11cqw 0 0; display: flex; flex-direction: column; opacity: 0; transition: opacity .35s ease; }
+  .cs[data-ph="site"] [data-pv="site"], .cs[data-ph="wa"] [data-pv="wa"] { opacity: 1; transition: opacity .6s var(--ease-out) .15s; }
+
+  /* the agency's website: the listing arrives, the customer scrolls, then asks */
+  .site-top { display: flex; align-items: center; gap: .55em; padding: .5em 1em .7em; border-bottom: 1px solid #E2DDD2; font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Noto Naskh Arabic", Georgia, serif; }
+  .site-top .mono { display: grid; place-items: center; width: 1.7em; height: 1.7em; border-radius: 50%; border: 1px solid currentColor; font-size: .82em; }
+  .site-top b { font-weight: 400; font-size: 1.08em; }
+  .site-scroll { flex: 1; min-height: 0; overflow: hidden; } .site-scroll > .in { padding: .9em 1em 0; transition: transform 1.4s var(--ease-io); }
+  .site-scroll figure { position: relative; margin: 0; aspect-ratio: 4 / 4.2; border-radius: .7em; overflow: hidden; background: #EEEBE4; }
+  .site-scroll img { width: 100%; height: 100%; object-fit: cover; transition: transform 1.6s var(--ease-out), opacity .8s ease; }
+  .nb { position: absolute; top: .6em; inset-inline-start: .6em; padding: .15em .6em; border-radius: 999px; background: #FBFAF7; font-size: .72em; font-weight: 600; opacity: 0; transform: scale(.94); transition: opacity .4s ease, transform .5s var(--ease-out); }
+  .site-scroll .w { margin: .8em 0 0; font-size: .74em; color: #8A857B; }
+  .site-scroll .h { margin: .2em 0 0; font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Noto Naskh Arabic", Georgia, serif; font-size: 1.22em; line-height: 1.25; }
+  .site-scroll .row2 { display: flex; justify-content: space-between; align-items: baseline; gap: .5em; margin: .7em 0 0; padding-top: .6em; border-top: 1px solid #E2DDD2; font-size: .76em; color: #57534B; }
+  .site-scroll .row2 b { color: #1B1A17; font-size: 1.18em; }
+  .more { margin-top: 1em; } .more .ab { margin: 0 0 .3em; font-weight: 600; font-size: .86em; } .more .l { margin: 0 0 .3em; font-size: .78em; color: #57534B; line-height: 1.45; }
+  .cta { position: relative; padding: .7em 1em 1.1em; background: linear-gradient(transparent, var(--paper) 30%); }
+  .ask { display: flex; align-items: center; justify-content: center; gap: .45em; height: 2.6em; border-radius: .6em; background: var(--wa); color: #fff; font-size: .86em; font-weight: 600; transition: transform .16s ease-out, box-shadow .3s ease; }
+  .ask svg { width: 1.1em; height: 1.1em; fill: none; stroke: currentColor; stroke-width: 2; }
+  .sent { position: absolute; inset-inline: 1em; bottom: 4.2em; text-align: center; padding: .45em; border-radius: .6em; background: #1B1A17; color: #F6F4EF; font-size: .74em; opacity: 0; transform: translateY(.6em); }
+  /* chapter 1: the listing appears on the site (it was just published) */
+  .cs[data-step="0"] .site-scroll img { opacity: .0; transform: scale(1.06); }
+  .cs[data-step="0"] .site-scroll img { animation: cs-arrive 1.6s var(--ease-out) 1.5s both; }
+  @keyframes cs-arrive { from { opacity: 0; transform: scale(1.06); } to { opacity: 1; transform: none; } }
+  .cs[data-step="0"] .nb { opacity: 1; transform: none; transition-delay: 2.2s; }
+  /* chapter 2: the customer scrolls down to the details */
+  .cs[data-step="1"] .site-scroll > .in { transform: translateY(-38%); transition-delay: 1s; }
+  /* chapter 3: they tap "Ask on WhatsApp" */
+  .cs[data-step="2"] .site-scroll > .in { transform: translateY(-38%); transition: none; }
+  .cs[data-step="2"] .ask { animation: cs-press .5s ease-out .5s both; box-shadow: 0 0 0 .35em color-mix(in oklab, var(--wa) 22%, transparent); transition-delay: .5s; }
+  @keyframes cs-press { 0%, 100% { transform: none; } 40% { transform: scale(.96); } }
+  .cs[data-step="2"] .sent { opacity: 1; transform: none; transition: opacity .4s ease .9s, transform .6s var(--ease-out) .9s; }
+
+  /* WhatsApp: the conversation, one message at a time */
+  .wa-top { display: flex; align-items: center; gap: .6em; padding: .45em .9em .6em; background: #F0F2F0; border-bottom: 1px solid #E0E4E0; }
+  .wa-top .av { display: grid; place-items: center; width: 1.9em; height: 1.9em; border-radius: 50%; background: #1B1A17; color: #F6F4EF; font-size: .8em; font-family: Georgia, serif; }
+  .wa-top b { display: block; font-size: .82em; font-weight: 600; } .wa-top small { font-size: .68em; color: var(--wa); }
+  .wa-chat { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: .45em; padding: .8em .7em 1.2em; background: #EFEAE2; }
+  .b { max-width: 84%; margin: 0; padding: .5em .7em; border-radius: .8em; font-size: .74em; line-height: 1.4; box-shadow: 0 1px 0 rgb(0 0 0 / .06); display: none; }
+  .b.me { align-self: flex-end; background: #D9FDD3; border-end-end-radius: .25em; }
+  .b.them { align-self: flex-start; background: #fff; border-end-start-radius: .25em; }
+  .b.typing { align-self: flex-start; background: #fff; gap: .25em; padding: .6em .75em; }
+  .b.typing i { width: .38em; height: .38em; border-radius: 50%; background: #9AA0A6; animation: cs-dot 1s ease-in-out infinite; } .b.typing i:nth-child(2) { animation-delay: .15s } .b.typing i:nth-child(3) { animation-delay: .3s }
+  @keyframes cs-dot { 0%, 100% { opacity: .35; transform: none; } 50% { opacity: 1; transform: translateY(-.15em); } }
+  @keyframes cs-msg { from { opacity: 0; transform: translateY(.6em) scale(.98); } to { opacity: 1; transform: none; } }
+  @keyframes cs-typing { 0% { opacity: 0; } 12%, 88% { opacity: 1; } 100% { opacity: 0; } }
+  /* chapter 4: the question shows at once, Connect types, then answers */
+  .cs[data-step="3"] .b[data-at="3"], .cs[data-step="4"] .b[data-at="3"]:not(.typing), .cs[data-step="4"] .b[data-at="4"] { display: block; }
+  .cs[data-step="3"] .b.typing { display: flex; animation: cs-typing 1.6s ease .5s both; }
+  .cs[data-step="3"] .b.them { animation: cs-msg .6s var(--ease-out) 2.1s both; }
+  /* chapter 5: they confirm, it's booked */
+  .cs[data-step="4"] .b.me[data-at="4"] { animation: cs-msg .6s var(--ease-out) .6s both; }
+  .cs[data-step="4"] .b.them[data-at="4"] { animation: cs-msg .6s var(--ease-out) 1.9s both; }
+  .cs[data-step="3"] .b.typing { position: absolute; bottom: 1.2em; inset-inline-start: .7em; }
+  .wa-chat { position: relative; }
+
+  /* ---------- what travelled: a quiet note at the seam between the two screens ---------- */
+  .cs-sync { position: absolute; z-index: 2; bottom: 3.2%; inset-inline-end: 3.5%; height: 2.4cqw; margin: 0; font-size: 1.05cqw; }
+  .cs-sync span { position: absolute; inset-inline-end: 0; bottom: 0; display: inline-flex; align-items: center; gap: .55em; white-space: nowrap; padding: .45em .9em; border-radius: 999px;
+    background: var(--surface); color: var(--fg-2); box-shadow: 0 0 0 1px var(--line), 0 .8em 1.8em -1em rgb(14 20 32 / .3); font-weight: 500; opacity: 0; transform: translateY(-.5em); transition: opacity .3s ease, transform .3s ease; }
+  .cs-sync i { width: .55em; height: .55em; border-radius: 50%; background: var(--g); }
+  .cs[data-step="3"] .cs-sync i, .cs[data-step="4"] .cs-sync i { background: var(--wa); }
+  .cs[data-step="0"] [data-s="0"], .cs[data-step="1"] [data-s="1"], .cs[data-step="2"] [data-s="2"], .cs[data-step="3"] [data-s="3"], .cs[data-step="4"] [data-s="4"] {
+    opacity: 1; transform: none; transition: opacity .5s ease 1.4s, transform .6s var(--ease-out) 1.4s; }
+
+  /* ---------- the chapters ---------- */
+  .cs-ch { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1.4rem; margin-top: 2rem; }
+  .cs-ch button { display: grid; align-content: start; gap: .3rem; padding: 0; text-align: start; background: none; border: 0; color: inherit; cursor: pointer; }
+  .cs-ch .bar { position: relative; height: 2px; margin-bottom: .9rem; border-radius: 2px; background: var(--line); overflow: hidden; }
+  .cs-ch .bar i { position: absolute; inset: 0; background: var(--fg); transform: scaleX(0); transform-origin: left; }
+  :global(html[dir="rtl"]) .cs-ch .bar i { transform-origin: right; }
+  .cs-ch [aria-selected="true"] .bar i { animation: cs-clock var(--dur) linear both; }
+  @keyframes cs-clock { to { transform: scaleX(1); } }
+  /* the clock only runs while someone can see it and isn't reading closely */
+  .cs:not(.on) .cs-ch .bar i, .cs.held .cs-ch .bar i { animation-play-state: paused; }
+  .cs-ch .k { font-size: .78rem; font-weight: 500; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .cs-ch b { font-size: 1.02rem; font-weight: 600; line-height: 1.35; letter-spacing: -.01em; color: var(--muted); transition: color .3s ease; }
+  .cs-ch .p { font-size: .9rem; line-height: 1.55; color: var(--fg-2); opacity: .55; transition: opacity .3s ease; }
+  .cs-ch [aria-selected="true"] b { color: var(--fg); }
+  .cs-ch [aria-selected="true"] .p { opacity: 1; }
+  .cs-ch [aria-selected="true"] .k { color: var(--g); }
+  @media (hover: hover) and (pointer: fine) { .cs-ch button:hover b { color: var(--fg); } }
+  .cs-ch button:focus-visible { outline: 2px solid var(--g); outline-offset: 6px; border-radius: 6px; }
+  /* on a phone, the playing chapter spelled out under the bars */
+  .cs-cap { display: none; margin-top: 1rem; }
+  .cs-cap > div { grid-area: 1 / 1; opacity: 0; transform: translateY(.4rem); transition: opacity .3s ease, transform .3s ease; }
+  .cs-cap b { display: block; font-size: 1.1rem; font-weight: 600; letter-spacing: -.01em; } .cs-cap p { margin: .35rem 0 0; color: var(--fg-2); line-height: 1.55; }
+  .cs-cap .k { font-size: .78rem; font-weight: 500; color: var(--g); }
+  .cs[data-step="0"] [data-c="0"], .cs[data-step="1"] [data-c="1"], .cs[data-step="2"] [data-c="2"], .cs[data-step="3"] [data-c="3"], .cs[data-step="4"] [data-c="4"] { opacity: 1; transform: none; transition: opacity .5s var(--ease-out) .1s, transform .6s var(--ease-out) .1s; }
+
+  /* ---------- a phone: one screen in front at a time, the other waits behind ---------- */
+  @media (max-width: 760px) {
+    .cs-stage { aspect-ratio: 4 / 5.2; border-radius: 1.3rem; }
+    .cs-sys { top: 9%; inset-inline: 4%; width: auto; height: 60%; font-size: 2.85cqw; border-radius: 2.6cqw; transform-origin: top; }
+    .sys-body { grid-template-columns: 1fr; } .sys-nav { display: none; }
+    .row { grid-template-columns: 3em minmax(0, 1fr) auto 5.4em; } .row .tg { display: none; } .row .tg ~ .st { grid-column: 4; }
+    .cs-phone { bottom: 0; inset-inline-start: 50%; width: 56%; margin-inline-start: -28%; padding: 1.3cqw; border-radius: 8.4cqw; transform: translateY(70%); }
+    .ph-screen { border-radius: 7.2cqw; font-size: 3.14cqw; }
+    .cs[data-focus="phone"] .cs-phone { transform: translateY(-2%); }
+    .cs[data-focus="phone"] .cs-sys { transform: scale(.94) translateY(-2%); opacity: .5; }
+    .cs[data-focus="sys"] .cs-phone { transform: translateY(70%); }
+    .cs[data-focus="sys"] .cs-sys { transform: none; }
+    .cs-sync { top: 2.2%; bottom: auto; inset-inline-end: 4%; height: 6cqw; font-size: 2.9cqw; }
+    /* the chapters become a row of five bars; only the playing one is spelled out */
+    .cs-ch { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .5rem; margin-top: 1.4rem; }
+    .cs-ch .bar { margin-bottom: 0; height: 3px; }
+    .cs-ch button { position: relative; min-height: 2.75rem; align-content: center; }
+    .cs-ch .k, .cs-ch b, .cs-ch .p { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    .cs-cap { display: grid; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cs *, .cs *::before { animation: none !important; transition-property: opacity, background-color, color !important; transition-duration: .3s !important; transition-delay: 0s !important; }
+    .cs-ch [aria-selected="true"] .bar i { transform: scaleX(1); }
+    .cs .site-scroll > .in, .cs .lead, .cs .msg, .cs .slot, .cs .chip, .cs .cs-sync span, .cs .v { transform: none !important; }
+    .cs[data-step="0"] .site-scroll img { opacity: 1; }
+    .cs .b.typing { display: none !important; }
+  }
+</style>
