@@ -31,7 +31,7 @@ const C = ar ? {
   con: { kind: 'إضافة', line: 'واتساب يرد ويذكّر ويتابع عنك.', basic: 'Connect', pro: 'Connect Pro', proNote: 'مع مساعد ذكي على مدار الساعة' },
   on: 'مفعّل', add: 'أضف',
   total: 'شهرك', per: 'د.ع / شهرياً', together: 'Website + Connect Pro معاً', save: 'توفّر {n} د.ع',
-  trial: 'نظامك مجاني ٣٠ يوماً. الدفع شهرياً أو سنوياً (شهران مجاناً).', cta: 'ابدأ بهذا الإعداد', sample: 'شاهد موقعاً نموذجياً',
+  trial: 'نظامك مجاني ٣٠ يوماً. الدفع شهرياً أو سنوياً (شهران مجاناً).', cta: 'ابدأ بهذا الإعداد', ctaShort: 'ابدأ', sample: 'شاهد موقعاً نموذجياً',
   already: 'مشترك في Hemlo؟ فعّل الإضافات من صفحة «الخطة» في نظامك.',
   stats: [['٢٤', 'عقاراً'], ['٧', 'زبائن جدد'], ['٣', 'معاينات اليوم']], webStat: ['١٢٨', 'زيارة لموقعك اليوم'], conStat: ['٤٢', 'رداً على واتساب'],
   url: 'nakheel.hemlohq.com', tiles: [['فيلا · دريم ستي', '$265,000'], ['شقة · عنكاوة', '$900'], ['بيت · المنصور', '$410,000']],
@@ -46,7 +46,7 @@ const C = ar ? {
   con: { kind: 'Add-on', line: 'WhatsApp that answers, reminds and follows up for you.', basic: 'Connect', pro: 'Connect Pro', proNote: 'with an AI assistant, around the clock' },
   on: 'On', add: 'Add',
   total: 'Your month', per: 'IQD / month', together: 'Website + Connect Pro together', save: 'You save {n} IQD',
-  trial: 'Your system is free for 30 days. Pay monthly or yearly (two months free).', cta: 'Start with this setup', sample: 'See a sample site',
+  trial: 'Your system is free for 30 days. Pay monthly or yearly (two months free).', cta: 'Start with this setup', ctaShort: 'Start', sample: 'See a sample site',
   already: 'Already on Hemlo? Switch add-ons on from the Plan page in your system.',
   stats: [['24', 'properties'], ['7', 'new leads'], ['3', 'viewings today']], webStat: ['128', 'visits to your site today'], conStat: ['42', 'WhatsApp replies'],
   url: 'nakheel.hemlohq.com', tiles: [['Villa · Dream City', '$265,000'], ['Flat · Ankawa', '$900'], ['House · Mansour', '$410,000']],
@@ -117,6 +117,7 @@ const DATA = { plans: PLANS, price: PRICE, names: { web: 'Website', con: 'Connec
       <div class="layer" data-layer="web">
         <div class="lh"><span class="lk">{C.web.kind}</span><button type="button" class="sw" role="switch" aria-checked="false" data-toggle="web" aria-label="Hemlo Website"><i></i></button></div>
         <p class="ln"><HwBadge /><span class="pr" dir="ltr">+{nf.format(PRICE.web)}</span></p><p class="ld">{C.web.line}</p>
+        <div class="mini mini-web" aria-hidden="true"><div class="mini-in"><div class="mbox"><div class="mbar"><span class="u" dir="ltr">{C.url}</span></div><div class="tiles">{C.tiles.map(([n, p], i) => <div class="tile" style={`--i:${i}`}><span class="ph" style={`background-image:url(/images/realestate/sample/${tileImg[i]}.webp)`}></span><b>{n}</b><em dir="ltr">{p}</em></div>)}</div></div><p class="mnote"><i>✓</i>{C.webToast}</p></div></div>
       </div>
 
       <div class="layer" data-layer="con">
@@ -129,6 +130,10 @@ const DATA = { plans: PLANS, price: PRICE, names: { web: 'Website', con: 'Connec
           </div>
           <p class="pro-note">✦ {C.con.proNote}</p>
         </div></div>
+        <div class="mini mini-con" aria-hidden="true"><div class="mini-in"><div class="mchat">
+          <p class="b me">{C.q}</p><p class="b typing"><i></i><i></i><i></i></p>
+          <p class="b them"><span class="tag"><span class="t-basic">{C.tagBasic}</span><span class="t-pro">{C.tagPro}</span></span>{C.a}</p>
+        </div><p class="mnote"><i>✓</i>{C.conToast}</p></div></div>
       </div>
 
       <div class="sb-total">
@@ -136,10 +141,11 @@ const DATA = { plans: PLANS, price: PRICE, names: { web: 'Website', con: 'Connec
         <p class="tv"><b data-total dir="ltr">{nf.format(PLANS[start]?.price ?? 0)}</b><span>{C.per}</span></p>
         <p class="tb" data-breakdown dir="auto"></p>
         <p class="tsave" data-save hidden></p>
-        <button type="button" class="btn btn-primary sb-go" data-start>{C.cta}<span class="arr" aria-hidden="true">→</span></button>
+        <button type="button" class="btn btn-primary sb-go" data-start aria-label={C.cta}><span class="full">{C.cta}</span><span class="short">{C.ctaShort}</span><span class="arr" aria-hidden="true">→</span></button>
         <p class="tnote">{C.trial} <a class="link-quiet" href={sampleHref} target="_blank" rel="noopener">{C.sample}</a></p>
         <p class="tnote">{C.already}</p>
       </div>
+      <p class="sb-notes">{C.trial} <a class="link-quiet" href={sampleHref} target="_blank" rel="noopener">{C.sample}</a><br />{C.already}</p>
     </div>
   </div>
 
@@ -208,7 +214,7 @@ const DATA = { plans: PLANS, price: PRICE, names: { web: 'Website', con: 'Connec
       if (t.saved) save.textContent = `${M.together} · ${M.save.replace('{n}', nf.format(t.saved))}`;
       count(t.sum);
     };
-    root.querySelectorAll<HTMLElement>('[data-toggle]').forEach((b) => b.addEventListener('click', () => { if (b.dataset.toggle === 'web') web = !web; else con = !con; render(); }));
+    root.querySelectorAll<HTMLElement>('[data-toggle]').forEach((b) => b.addEventListener('click', () => { if (b.dataset.toggle === 'web') web = !web; else con = !con; navigator.vibrate?.(8); render(); }));
     planBtns.forEach((b, i) => b.addEventListener('click', () => { plan = i; render(); }));
     tierBtns.forEach((b) => b.addEventListener('click', () => { pro = b.dataset.tier === 'pro'; render(); }));
     // arrow keys move within each radio group
@@ -390,7 +396,7 @@ const DATA = { plans: PLANS, price: PRICE, names: { web: 'Website', con: 'Connec
   .tsave { display: inline-block; margin-top: .55rem; padding: .25rem .7rem; border-radius: 999px; background: rgb(74 222 128 / .16); color: #86EFAC; font-size: .82rem; font-weight: 600; animation: sb-in .5s var(--e); }
   @keyframes sb-in { from { opacity: 0; transform: translateY(4px); } }
   .sb-go { display: flex; justify-content: center; width: 100%; margin-top: 1.1rem; background: #F4F1EA; color: #0E1420; }
-  .sb-go:hover { opacity: .92; }
+  .sb-go:hover { opacity: .92; } .sb-go .short { display: none; }
   :global(html[dir="rtl"]) .sb-go .arr { display: inline-block; transform: scaleX(-1); }
   .tnote { margin-top: .75rem; font-size: .82rem; line-height: 1.55; opacity: .75; }
   .tnote :global(a) { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
@@ -411,8 +417,37 @@ const DATA = { plans: PLANS, price: PRICE, names: { web: 'Website', con: 'Connec
   .sbd-send { justify-content: center; }
   .sbd-msg { font-size: .9rem; min-height: 1.2em; line-height: 1.5; } .sbd-msg.is-ok { color: #1E8E5A; } .sbd-msg.is-bad { color: #B42318; }
 
-  /* phones: the picture a little taller, its words a little larger */
-  @media (max-width: 640px) { .sb-stage { aspect-ratio: 600 / 500; } .sb-stage > * { font-size: 2.7cqw; } }
+  /* ---------- a phone: no picture; each add-on shows itself working in its own card, and the month floats under the thumb ---------- */
+  .mini, .sb-notes { display: none; }
+  @media (max-width: 760px) {
+    .sb-stage { display: none; }
+    .mini { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .6s var(--e); }
+    .mini-in { min-height: 0; overflow: hidden; }
+    .sb[data-web="on"] .mini-web, .sb[data-con="on"] .mini-con { grid-template-rows: 1fr; }
+    .mbox { margin-top: .9rem; border-radius: .85rem; overflow: hidden; background: var(--canvas); box-shadow: inset 0 0 0 1px var(--line); font-size: 15px; }
+    .mbar { display: flex; justify-content: center; padding: .45rem; border-bottom: 1px solid var(--line); background: var(--sunken); }
+    .mbar .u { padding: .12rem .7rem; border-radius: 999px; background: var(--surface); font-size: .72rem; color: var(--fg-2); }
+    .mbox .tiles { padding: .55rem; gap: .45rem; }
+    .mchat { position: relative; display: flex; flex-direction: column; gap: .4rem; min-height: 9.5rem; margin-top: .9rem; padding: .8rem .7rem 1rem; border-radius: .85rem; background: #EFEAE2; color: #0E1420; font-size: 18px; }
+    .mchat .b.typing { bottom: 1rem; inset-inline-start: .7rem; }
+    .mnote { display: inline-flex; align-items: center; gap: .4rem; margin-top: .6rem; font-size: .8rem; font-weight: 500; color: var(--fg-2); opacity: 0; transform: translateY(.3rem); }
+    .mnote i { font-style: normal; color: #1E8E5A; }
+    .sb[data-web="on"] .mini-web .mnote { opacity: 1; transform: none; transition: opacity .4s ease 1.2s, transform .5s var(--e) 1.2s; }
+    .sb[data-con="on"] .mini-con .mnote { opacity: 1; transform: none; transition: opacity .4s ease 2.9s, transform .5s var(--e) 2.9s; }
+    /* the month, floating while the choices are on screen */
+    .sb-total { position: sticky; bottom: calc(.7rem + env(safe-area-inset-bottom)); z-index: 5; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: .9rem;
+      margin-top: .2rem; padding: .75rem .8rem .75rem 1.05rem; border-radius: 1.2rem; box-shadow: 0 20px 44px -18px rgb(14 20 32 / .65); }
+    :global(html[dir="rtl"]) .sb-total { padding: .75rem 1.05rem .75rem .8rem; }
+    .sb-total > * { grid-column: 1; }
+    .sb-total .tl { font-size: .72rem; }
+    .sb-total .tv { margin: 0; gap: .35rem; flex-wrap: nowrap; white-space: nowrap; } .sb-total .tv b { font-size: 1.65rem; } .sb-total .tv span { font-size: .72rem; }
+    .sb-total .tb, .sb-total .tnote { display: none; }
+    .sb-total .tsave { grid-column: 1 / -1; margin-top: .45rem; padding: .2rem .6rem; font-size: .72rem; justify-self: start; }
+    .sb-total .sb-go .full { display: none; } .sb-total .sb-go .short { display: inline; }
+    .sb-total .sb-go { grid-column: 2; grid-row: 1 / span 2; width: auto; margin: 0; padding: .8rem 1.2rem; font-size: .95rem; white-space: nowrap; }
+    .sb-notes { display: block; margin-top: .9rem; font-size: .85rem; line-height: 1.6; color: var(--fg-2); }
+    .sb-ctl { gap: .6rem; }
+  }
   @media (prefers-reduced-motion: reduce) {
     .sb *, .sb *::before { animation: none !important; transition-property: opacity, background-color, color, border-color !important; transition-duration: .25s !important; transition-delay: 0s !important; }
     .sb .sb-web, .sb .sb-phone, .sb .tile, .sb .b { transform: none !important; }
