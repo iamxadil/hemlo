@@ -59,6 +59,29 @@ export function publicPlanRoutes(d: Deps) {
 }
 
 // ---------------- a business's own plan ----------------
+/** A demo tries plans and add-ons for real: choosing one switches it on at once, until the demo ends (nothing to pay,
+ *  no request for Hemlo's team). A higher tier ends the lower ones, as when Hemlo activates a paid one. */
+const DEMO_UNTIL = () => new Date(Date.now() + 2 * 86400_000);
+async function demoPlan(d: Deps, org: string, planId: string, billing: string) {
+  const plan = (await plansOf(d.db)).find((x) => x.id === planId && x.active);
+  if (!plan) bad('BAD_PLAN');
+  const values = { edition: plan!.edition, status: 'active', planId: plan!.id, billing, price: billing === 'year' ? plan!.priceYear : plan!.priceMonth, paidUntil: DEMO_UNTIL(), trialEndsAt: null, updatedBy: 'demo', updatedAt: new Date() };
+  await withOrg(d.db, org, (tx) => tx.insert(hemloSubscription).values({ organizationId: org, seats: 1, ...values }).onConflictDoUpdate({ target: hemloSubscription.organizationId, set: values }));
+  forgetSubscription(org);
+}
+async function demoAddon(d: Deps, org: string, code: string, on: boolean) {
+  const { offer, subscription } = await requireAddonOffer(d.db, org, code);
+  if (isFree(offer)) throw new HttpError(409, 'ADDON_INCLUDED');
+  await withOrg(d.db, org, async (tx) => {
+    const set = { edition: subscription.edition, status: on ? 'active' : 'canceled', billing: 'month', price: offer.priceMonth ?? 0, paidUntil: DEMO_UNTIL(), updatedBy: 'demo', updatedAt: new Date() };
+    const [cur] = await tx.select({ id: hemloAddonEntitlement.id }).from(hemloAddonEntitlement).where(and(eq(hemloAddonEntitlement.organizationId, org), eq(hemloAddonEntitlement.addonId, offer.id)));
+    if (cur) await tx.update(hemloAddonEntitlement).set(set).where(eq(hemloAddonEntitlement.id, cur.id));
+    else await tx.insert(hemloAddonEntitlement).values({ id: newId(), organizationId: org, addonId: offer.id, startsAt: new Date(), ...set });
+    if (on) for (const lower of REPLACES[offer.code] ?? []) await tx.update(hemloAddonEntitlement).set({ status: 'canceled', updatedAt: new Date(), updatedBy: 'demo' })
+      .where(and(eq(hemloAddonEntitlement.organizationId, org), eq(hemloAddonEntitlement.addonId, lower)));
+  });
+}
+
 export function billingRoutes(d: Deps) {
   const r = new Hono<AppEnv>();
 
@@ -97,7 +120,7 @@ export function billingRoutes(d: Deps) {
   r.post('/addons/:code/request', async (c) => {
     const p = requireOrgUser(c);
     const a = actor(c, 'billing', 'manage');
-    if (await isDemoOrg(d, a.organizationId)) throw new HttpError(403, 'NOT_IN_DEMO');
+    if (await isDemoOrg(d, a.organizationId)) { await demoAddon(d, a.organizationId, c.req.param('code'), true); return c.json({ request: null, activated: true }, 201); }
     const { offer, subscription } = await requireAddonOffer(d.db, a.organizationId, c.req.param('code'));
     const b = await c.req.json<{ billing?: string; message?: string }>().catch(() => ({} as any));
     const billing = b.billing === 'year' ? 'year' : b.billing === undefined || b.billing === 'month' ? 'month' : bad('BAD_BILLING');
@@ -119,6 +142,7 @@ export function billingRoutes(d: Deps) {
   /** Request cancellation through the existing manual support/billing process. */
   r.post('/addons/:code/cancel-request', async (c) => {
     const p = requireOrgUser(c), a = actor(c, 'billing', 'manage');
+    if (await isDemoOrg(d, a.organizationId)) { await demoAddon(d, a.organizationId, c.req.param('code'), false); return c.json({ request: null, activated: false, status: 'canceled' }, 201); }
     const offer = await addonOffer(d.db, c.req.param('code'));
     if (!offer || !offer.active) throw new HttpError(403, 'ADDON_UNAVAILABLE');
     const subscription = await subscriptionOf(d.db, a.organizationId);
@@ -139,8 +163,12 @@ export function billingRoutes(d: Deps) {
   r.post('/request', async (c) => {
     const p = requireOrgUser(c);
     const a = actor(c, 'billing', 'manage');
-    if (await isDemoOrg(d, a.organizationId)) throw new HttpError(403, 'NOT_IN_DEMO');
     const b = await c.req.json<{ planId?: string | null; billing?: string; message?: string }>().catch(() => ({} as any));
+    if (await isDemoOrg(d, a.organizationId)) {
+      if (!b.planId) throw new HttpError(403, 'NOT_IN_DEMO'); // Enterprise is a conversation with Hemlo's team
+      await demoPlan(d, a.organizationId, String(b.planId), b.billing === 'year' ? 'year' : 'month');
+      return c.json({ request: null, activated: true }, 201);
+    }
     const sub = await subscriptionOf(d.db, a.organizationId);
     if (b.planId) { const plan = (await plansOf(d.db)).find((x) => x.id === b.planId && x.active); if (!plan || (sub.status !== 'free' && plan.edition !== sub.edition)) bad('BAD_PLAN'); }
     const billing = b.billing === 'year' ? 'year' : 'month';

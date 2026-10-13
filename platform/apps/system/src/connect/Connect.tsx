@@ -93,14 +93,14 @@ function AiNotice({ o, C }: { o: Overview; C: Copy }) {
 // ------------------------------------------------------------------------------------------------- the tiers
 /** Basic (free with the System), Pro and AI Studio: what each adds, its price, and asking for it (the owner). */
 function Offers({ o, C, bare }: { o: Overview; C: Copy; bare?: boolean }) {
-  const { money, toast, errorText } = useApp();
+  const { money, toast, errorText, t } = useApp();
   const qc = useQueryClient();
   const [cycle, setCycle] = useState<'month' | 'year'>('month');
   const req = useQuery({ queryKey: ['billing-addons'], queryFn: () => api<{ addons: any[]; requests: any[]; owner: boolean }>('/v1/billing/addons') });
   const pending = (code: string) => { const a = req.data?.addons.find((x) => x.code === code); return a && req.data?.requests.find((r) => r.addonId === a.id && r.status === 'new'); };
   const ask = useMutation({
     mutationFn: (code: string) => api(`/v1/billing/addons/${code}/request`, { body: { billing: cycle } }),
-    onSuccess: () => { toast(C.requested); void qc.invalidateQueries({ queryKey: ['billing-addons'] }); }, onError: (e) => toast(errorText(e), 'bad'),
+    onSuccess: (r: any) => { if (r?.activated) { toast(t.errors.demoOn); void qc.invalidateQueries(); return; } toast(C.requested); void qc.invalidateQueries({ queryKey: ['billing-addons'] }); }, onError: (e) => toast(errorText(e), 'bad'),
   });
   const owner = !!req.data?.owner;
   const mine = RANK[o.plan ?? ''] ?? -1;

@@ -478,6 +478,18 @@ describe('the demo agency', () => {
     expect(inbox.length).toBe(5);
     expect(inbox.some((c: any) => c.unread > 0)).toBe(true);
     expect((await v.post('/v1/connect/channel/meta', { phoneNumberId: '12345', wabaId: '12345', token: 'x'.repeat(30) }, auth)).status).toBe(403);
+    // in a demo, choosing a plan or an add-on switches it on at once (nothing to pay, no request for Hemlo's team)
+    const pro = await v.post('/v1/billing/addons/connect-pro/cancel-request', {}, auth);
+    expect(pro.json).toMatchObject({ activated: false });
+    expect((await v.post('/v1/billing/addons/ai-studio/cancel-request', {}, auth)).status).toBe(201);
+    expect((await v.get('/v1/connect', auth)).json.plan).toBe('connect'); // back to Basic
+    expect((await v.post('/v1/billing/addons/connect-pro/request', { billing: 'month' }, auth)).json).toMatchObject({ activated: true });
+    expect((await v.get('/v1/connect', auth)).json.plan).toBe('connect-pro');
+    expect((await v.post('/v1/billing/addons/connect/request', {}, auth)).json.error).toBe('ADDON_INCLUDED');
+    const office = (await v.get('/v1/billing', auth)).json.plans.find((p: any) => p.code === 'office');
+    expect((await v.post('/v1/billing/request', { planId: office.id, billing: 'month' }, auth)).json).toMatchObject({ activated: true });
+    expect((await v.get('/v1/billing', auth)).json.subscription).toMatchObject({ status: 'active', planId: office.id });
+    expect((await v.post('/v1/billing/request', { planId: null }, auth)).json.error).toBe('NOT_IN_DEMO'); // Enterprise is a conversation
     expect((await v.post('/v1/demo/end', {}, auth)).status).toBe(204); // and leaving takes all of it with it
   });
 });

@@ -53,14 +53,14 @@ function Soon({ icon, title, body }: { icon: string; title: string; body: string
 
 /** Before AI Studio: what it adds, its price, and asking for it (the account owner). */
 function Offer({ s, w }: { s: State; w: W }) {
-  const { lang, money, toast, errorText } = useApp();
+  const { lang, money, toast, errorText, t } = useApp();
   const qc = useQueryClient();
   const req = useQuery({ queryKey: ['billing-addons'], queryFn: () => api<{ addons: any[]; requests: any[]; owner: boolean }>('/v1/billing/addons') });
   const mine = req.data?.addons.find((x) => x.code === 'ai-studio');
   const pending = mine && req.data?.requests.find((r) => r.addonId === mine.id && r.status === 'new');
   const ask = useMutation({
     mutationFn: () => api('/v1/billing/addons/ai-studio/request', { body: { billing: 'month' } }),
-    onSuccess: () => { toast(w.requested); void qc.invalidateQueries({ queryKey: ['billing-addons'] }); }, onError: (e) => toast(errorText(e), 'bad'),
+    onSuccess: (r: any) => { if (r?.activated) { toast(t.errors.demoOn); void qc.invalidateQueries(); return; } toast(w.requested); void qc.invalidateQueries({ queryKey: ['billing-addons'] }); }, onError: (e) => toast(errorText(e), 'bad'),
   });
   const L = (x?: Record<string, string>) => x?.[lang === 'en' ? 'en' : 'ar'] ?? '';
   return (

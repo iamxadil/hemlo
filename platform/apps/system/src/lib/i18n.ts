@@ -85,6 +85,9 @@ const ar = {
     ended: 'انتهت التجربة المجانية.', endedPaid: 'انتهت مدة الاشتراك.', grace: 'حان موعد الدفع · باقي {n} أيام سماح', choose: 'اختر خطتك', endedBody: 'سجلاتك محفوظة ويمكنك فتحها، لكن لا يمكن إضافة أو تعديل شيء حتى التفعيل.',
   },
   errors: {
+    NOT_IN_DEMO: 'غير متاح في النسخة التجريبية.', ADDON_INCLUDED: 'هذه مشمولة مع نظامك مجاناً.', ADDON_ALREADY_ACTIVE: 'مفعّلة لديك بالفعل (أو ضمن خطة أعلى).',
+    ADDON_REQUEST_PENDING: 'طلبك السابق ينتظر تأكيد Hemlo.', CORE_SUBSCRIPTION_REQUIRED: 'فعّل خطة نظامك أولاً.', ADDON_UNAVAILABLE: 'هذه الإضافة غير متاحة لنظامك.',
+    ADDON_PRICE_UNCONFIGURED: 'سعر هذه الإضافة لم يُحدَّد بعد.', ADDON_NOT_ACTIVE: 'هذه الإضافة غير مفعّلة.', demoOn: 'فُعّلت في النسخة التجريبية. جرّبها الآن.', demoOff: 'أُوقفت في النسخة التجريبية.',
     PLAN_LIMIT_USERS: 'وصلت إلى حد حسابات الموظفين في خطتك. اختر خطة أكبر من «خطتك».', PLAN_LIMIT_DEVICES: 'وصلت إلى حد أجهزة الكاشير في خطتك. اختر خطة أكبر من «خطتك».', PLAN_LIMIT_DENTISTS: 'وصلت إلى حد الأطباء في خطتك. اختر خطة أكبر من «خطتك».',
     TRIAL_ENDED: 'انتهت التجربة المجانية. تواصل مع هيملو للاستمرار.', SUBSCRIPTION_ENDED: 'انتهى الاشتراك. تواصل مع هيملو للتجديد.',
     generic: 'حدث خطأ. حاول مرة أخرى.', network: 'لا يوجد اتصال بالإنترنت.', BARCODE_TAKEN: 'هذا الباركود مستخدم لمنتج آخر.', BAD_NAME: 'اكتب الاسم.', BAD_PRICE: 'اكتب سعراً صحيحاً بالدينار.',
@@ -294,6 +297,9 @@ const en: typeof ar = {
   },
   receipt: { thanks: 'Thank you for your visit', no: 'Receipt', date: 'Date', cashier: 'Cashier', paid: 'Paid', due: 'On account', change: 'Change' },
   errors: {
+    NOT_IN_DEMO: 'Not available in the demo.', ADDON_INCLUDED: 'This comes free with your system.', ADDON_ALREADY_ACTIVE: 'Already on for you (or part of a higher plan).',
+    ADDON_REQUEST_PENDING: 'Your earlier request is waiting for Hemlo to confirm.', CORE_SUBSCRIPTION_REQUIRED: 'Switch on your system plan first.', ADDON_UNAVAILABLE: 'This add-on isn’t available for your system.',
+    ADDON_PRICE_UNCONFIGURED: 'This add-on has no price yet.', ADDON_NOT_ACTIVE: 'This add-on isn’t on.', demoOn: 'Switched on in the demo. Try it now.', demoOff: 'Switched off in the demo.',
     PLAN_LIMIT_USERS: 'You’ve reached your plan’s staff accounts. Choose a bigger plan under “Your plan”.', PLAN_LIMIT_DEVICES: 'You’ve reached your plan’s till devices. Choose a bigger plan under “Your plan”.', PLAN_LIMIT_DENTISTS: 'You’ve reached your plan’s dentists. Choose a bigger plan under “Your plan”.',
     TRIAL_ENDED: 'Your free trial has ended. Contact Hemlo to continue.', SUBSCRIPTION_ENDED: 'Your plan has ended. Contact Hemlo to renew.',
     generic: 'Something went wrong. Try again.', network: 'No internet connection.', BARCODE_TAKEN: 'That barcode belongs to another product.', BAD_NAME: 'Enter a name.', BAD_PRICE: 'Enter a price in whole dinars.',

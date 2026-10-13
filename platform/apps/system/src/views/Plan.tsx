@@ -39,12 +39,12 @@ export function PlanPage() {
   const [addonAction, setAddonAction] = useState<'activate' | 'cancel' | null>(null);
   const ask = useMutation({
     mutationFn: () => api('/v1/billing/request', { body: { planId: asking === 'enterprise' ? null : asking?.id, billing: cycle, message: note || undefined } }),
-    onSuccess: () => { setAsking(null); setNote(''); qc.invalidateQueries({ queryKey: ['billing'] }); toast(p.sent); },
+    onSuccess: (r: any) => { setAsking(null); setNote(''); if (r?.activated) { toast(t.errors.demoOn); void qc.invalidateQueries(); return; } qc.invalidateQueries({ queryKey: ['billing'] }); toast(p.sent); },
     onError: (e) => toast(errorText(e), 'bad'),
   });
   const askAddon = useMutation({
     mutationFn: () => api(`/v1/billing/addons/website/${addonAction === 'cancel' ? 'cancel-request' : 'request'}`, { body: { billing: cycle } }),
-    onSuccess: () => { setAddonAction(null); qc.invalidateQueries({ queryKey: ['billing-addons'] }); qc.invalidateQueries({ queryKey: ['web-site'] }); toast(addonCopy(lang).sent); },
+    onSuccess: (r: any) => { setAddonAction(null); if (r && r.request === null) { toast(r.activated ? t.errors.demoOn : t.errors.demoOff); void qc.invalidateQueries(); return; } qc.invalidateQueries({ queryKey: ['billing-addons'] }); qc.invalidateQueries({ queryKey: ['web-site'] }); toast(addonCopy(lang).sent); },
     onError: (e) => toast(errorText(e), 'bad'),
   });
   if (!q.data) return <div className="grid gap-4"><div className="skeleton h-32" /><div className="skeleton h-72" /></div>;
