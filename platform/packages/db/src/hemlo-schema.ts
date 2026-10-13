@@ -229,9 +229,12 @@ export const hemloAddon = pgTable('hemlo_addon', {
   limits: jsonb('limits').$type<AddonLimits>().notNull().default({}),
   includes: jsonb('includes').$type<string[]>().notNull().default([]),
   sort: integer('sort').notNull().default(0),
+  /** Per system: its own price, allowances and words (a shop pays less than an agency); what's not set is the row's own. */
+  editions: jsonb('editions').$type<Record<string, AddonEdition>>().notNull().default({}),
   updatedBy: text('updated_by'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
+export type AddonEdition = { priceMonth?: number | null; priceYear?: number | null; limits?: AddonLimits; name?: Words; description?: Words };
 
 /** What things cost Hemlo, entered by the team (never guessed in code): the dollar rate, WhatsApp's rates per country and
  *  category, each business's share of the running costs, and a monthly ceiling on image and video generation. */

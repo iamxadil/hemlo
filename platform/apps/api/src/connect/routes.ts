@@ -2,18 +2,22 @@
 // webhook WhatsApp calls with every message (signed by Meta; nothing else is accepted). Who sees what:
 //   - an agent sees the chats of their own leads and the unassigned ones (like the leads list); managers see all;
 //   - connecting WhatsApp, the assistant and the automations are the agency's set-up (agency:configure).
+// A shop (any system without leads) uses the shared connect:read / reply / configure permissions instead, and every
+// chat is visible to whoever may read Connect.
 import { Hono, type Context } from 'hono';
 import { and, desc, eq, isNull, lt, or, sql, type SQL } from 'drizzle-orm';
 import { withOrg } from '@hemlo/db';
 import { newId } from '@hemlo/core';
-import { connectChannel, connectConversation, connectJob, connectMessage, connectRecipe, reLead, CONNECT_RECIPES } from '@hemlo/db/schema';
+import { connectChannel, connectConversation, connectJob, connectMessage, connectRecipe, reLead, shopOrder, sysCustomer, sysProduct, CONNECT_RECIPES } from '@hemlo/db/schema';
 import { audit } from '@hemlo/auth/audit';
 import { HttpError } from '../principal';
 import { actor, bad, may, type Actor } from '../routes/sys-common';
 import { sealKey, masterSecret, hintOf } from '../ai/keys';
 import { isFree, limitsOf } from '../addons';
-import { PLAN_CODES, RECIPES, TEMPLATES, hasAi, planAllows, recipeOf, templateDefs } from './catalog';
-import { channelByPhoneId, channelOf, deliver, forgetChannel, planOf, providerOf, receive, statusUpdate, windowOpen, weekOf } from './core';
+import { PLAN_CODES, TEMPLATES, hasAi, planAllows, recipeOf, recipesFor, templateDefs } from './catalog';
+import { channelByPhoneId, channelOf, deliver, editionOf, forgetChannel, planOf, providerOf, receive, statusUpdate, windowOpen, weekOf } from './core';
+import { iqd, shopOrigin } from './store';
+import { fileUrl } from '../files';
 import { engineFor } from '../ai/router';
 import { record } from '../ai/meter';
 import { AiError } from '../ai/engine';
@@ -28,13 +32,19 @@ import type { AppEnv, Deps } from '../types';
 const rowsOf = (r: any): any[] => (Array.isArray(r) ? r : r?.rows ?? []);
 const PAGE = 40;
 
-/** Which chats this person may open: all (managers, the desk), or their leads' and the unassigned ones. */
+/** Who may do what: an agency's leads and set-up permissions, or a shop's connect permissions. */
+type Level = 'read' | 'reply' | 'configure';
+function cx(c: Context<AppEnv>, level: Level): Actor {
+  try { return actor(c, 'connect', level); }
+  catch (e) { if (level === 'configure') return actor(c, 'agency', 'configure'); return actor(c, 'leads', level === 'read' ? 'read' : 'update'); }
+}
+/** Which chats this person may open: all (managers, the desk, a shop's team), or their leads' and the unassigned ones. */
 function scope(a: Actor): SQL | undefined {
-  if (may(a.principal, 'leads', 'read-all')) return undefined;
+  if (may(a.principal, 'leads', 'read-all') || may(a.principal, 'connect', 'read')) return undefined;
   const mine = (a.principal as any).memberId as string | null;
   return mine ? or(eq(connectConversation.agentId, mine), isNull(connectConversation.agentId)) : isNull(connectConversation.agentId);
 }
-const canConfigure = (a: Actor) => may(a.principal, 'agency', 'configure');
+const canConfigure = (a: Actor) => may(a.principal, 'agency', 'configure') || may(a.principal, 'connect', 'configure');
 /** The channel as the app sees it: never the token. */
 const publicChannel = (ch: typeof connectChannel.$inferSelect | null) => ch && ({
   provider: ch.provider, status: ch.status, displayPhone: ch.displayPhone, verifiedName: ch.verifiedName, tokenHint: ch.tokenHint, ai: ch.ai,
@@ -80,8 +90,8 @@ export function connectRoutes(d: Deps) {
   // ------------------------------------------------------------------------------------------- the overview
   /** Everything the Connect page needs, in one call: the plan and its use, the number, the automations, what's waiting. */
   r.get('/', async (c) => {
-    const a = actor(c, 'leads', 'read');
-    const org = a.organizationId;
+    const a = cx(c, 'read');
+    const org = a.organizationId, edition = await editionOf(d, org);
     const [p, data] = await Promise.all([planOf(d, org), withOrg(d.db, org, async (tx) => {
       const [ch] = await tx.select().from(connectChannel).where(eq(connectChannel.organizationId, org));
       const recipes = await tx.select().from(connectRecipe).where(eq(connectRecipe.organizationId, org));
@@ -106,7 +116,7 @@ export function connectRoutes(d: Deps) {
       messaging: p.wa,
       canConfigure: canConfigure(a), channel: publicChannel(data.ch),
       signup: d.env.META_APP_ID && d.env.META_CONFIG_ID ? { appId: d.env.META_APP_ID, configId: d.env.META_CONFIG_ID } : null,
-      recipes: RECIPES.map((x) => {
+      edition, recipes: recipesFor(edition).map((x) => {
         const row = data.recipes.find((y) => y.key === x.key);
         return { key: x.key, plan: x.plan, marketing: !!x.marketing, allowed: planAllows(p.plan, x), on: row ? row.enabled : x.on, settings: row?.settings ?? {},
           template: x.template, approved: !x.template || !data.ch || data.ch.provider !== 'meta' || (['ar', 'en'] as const).some((l) => data.ch!.templates?.[`${x.template}:${l}`]?.status === 'approved') };
@@ -117,19 +127,19 @@ export function connectRoutes(d: Deps) {
 
   // ------------------------------------------------------------------------------------------- the inbox
   r.get('/conversations', async (c) => {
-    const a = actor(c, 'leads', 'read');
+    const a = cx(c, 'read');
     const f = c.req.query('filter'), q = (c.req.query('q') ?? '').trim().slice(0, 60), before = c.req.query('before');
     const w: (SQL | undefined)[] = [eq(connectConversation.organizationId, a.organizationId), scope(a)];
     if (f === 'unread') w.push(sql`${connectConversation.unread} > 0`);
     if (f === 'waiting') w.push(and(eq(connectConversation.handoff, true), eq(connectConversation.status, 'open')));
     if (f === 'mine') { const me = (a.principal as any).memberId as string | null; w.push(me ? eq(connectConversation.agentId, me) : sql`false`); }
-    if (q) { const t = `%${q.replace(/[%_]/g, '')}%`; w.push(or(sql`${connectConversation.name} ilike ${t}`, sql`${connectConversation.phone} ilike ${t}`, sql`${reLead.name} ilike ${t}`)); }
+    if (q) { const t = `%${q.replace(/[%_]/g, '')}%`; w.push(or(sql`${connectConversation.name} ilike ${t}`, sql`${connectConversation.phone} ilike ${t}`, sql`${reLead.name} ilike ${t}`, sql`${sysCustomer.name} ilike ${t}`)); }
     if (before && !Number.isNaN(Date.parse(before))) w.push(lt(connectConversation.lastMessageAt, new Date(before)));
     const rows = await withOrg(d.db, a.organizationId, (tx) => tx.select({
       id: connectConversation.id, phone: connectConversation.phone, name: connectConversation.name, leadId: connectConversation.leadId, ownerId: connectConversation.ownerId,
-      leadName: reLead.name, leadStatus: reLead.status, agentId: connectConversation.agentId, status: connectConversation.status, handoff: connectConversation.handoff,
+      leadName: sql<string | null>`coalesce(${reLead.name}, ${sysCustomer.name})`, leadStatus: reLead.status, customerId: connectConversation.customerId, agentId: connectConversation.agentId, status: connectConversation.status, handoff: connectConversation.handoff,
       optedOut: connectConversation.optedOut, unread: connectConversation.unread, lastMessageAt: connectConversation.lastMessageAt, lastInboundAt: connectConversation.lastInboundAt, preview: connectConversation.preview,
-    }).from(connectConversation).leftJoin(reLead, eq(reLead.id, connectConversation.leadId)).where(and(...w)).orderBy(desc(connectConversation.lastMessageAt)).limit(PAGE));
+    }).from(connectConversation).leftJoin(reLead, eq(reLead.id, connectConversation.leadId)).leftJoin(sysCustomer, eq(sysCustomer.id, connectConversation.customerId)).where(and(...w)).orderBy(desc(connectConversation.lastMessageAt)).limit(PAGE));
     return c.json({ conversations: rows.map((x) => ({ ...x, open: windowOpen(x) })), more: rows.length === PAGE });
   });
 
@@ -141,7 +151,7 @@ export function connectRoutes(d: Deps) {
 
   /** One chat: its messages (newest 80, or older with ?before=), the lead in short, and it's marked read. */
   r.get('/conversations/:id', async (c) => {
-    const a = actor(c, 'leads', 'read');
+    const a = cx(c, 'read');
     const conv = await one(a, c.req.param('id'));
     const before = c.req.query('before');
     const out = await withOrg(d.db, a.organizationId, async (tx) => {
@@ -151,15 +161,19 @@ export function connectRoutes(d: Deps) {
           ...(before && !Number.isNaN(Date.parse(before)) ? [lt(connectMessage.createdAt, new Date(before))] : []))).orderBy(desc(connectMessage.createdAt)).limit(80);
       const [lead] = conv.leadId ? await tx.select({ id: reLead.id, name: reLead.name, status: reLead.status, purpose: reLead.purpose, types: reLead.types, areas: reLead.areas,
         budgetMax: reLead.budgetMax, currency: reLead.currency, bedrooms: reLead.bedrooms, consent: reLead.consent, agentId: reLead.agentId }).from(reLead).where(eq(reLead.id, conv.leadId)) : [];
+      // a shop's customer: who they are in the book, what they owe, and their latest online orders
+      const [customer] = conv.customerId ? await tx.select({ id: sysCustomer.id, name: sysCustomer.name, phone: sysCustomer.phone, balance: sysCustomer.balance }).from(sysCustomer).where(eq(sysCustomer.id, conv.customerId)) : [];
+      const orders = lead ? [] : await tx.select({ id: shopOrder.id, number: shopOrder.number, status: shopOrder.status, total: shopOrder.total, createdAt: shopOrder.createdAt }).from(shopOrder)
+        .where(and(eq(shopOrder.organizationId, a.organizationId), eq(shopOrder.phone, conv.phone))).orderBy(desc(shopOrder.createdAt)).limit(3);
       if (conv.unread) await tx.update(connectConversation).set({ unread: 0 }).where(eq(connectConversation.id, conv.id));
-      return { msgs: msgs.reverse(), lead: lead ?? null };
+      return { msgs: msgs.reverse(), lead: lead ?? null, customer: customer ?? null, orders };
     });
-    return c.json({ conversation: { ...conv, unread: 0, open: windowOpen(conv) }, messages: out.msgs, lead: out.lead, more: out.msgs.length === 80 });
+    return c.json({ conversation: { ...conv, unread: 0, open: windowOpen(conv) }, messages: out.msgs, lead: out.lead, customer: out.customer, orders: out.orders, more: out.msgs.length === 80 });
   });
 
   /** An agent writes: the assistant steps back in this chat (a person took over), until they hand it back. */
   r.post('/conversations/:id/messages', async (c) => {
-    const a = actor(c, 'leads', 'update');
+    const a = cx(c, 'reply');
     const conv = await one(a, c.req.param('id'));
     const b = await c.req.json<{ text?: string }>().catch(() => ({} as { text?: string }));
     const text = typeof b.text === 'string' ? b.text.trim() : '';
@@ -175,7 +189,7 @@ export function connectRoutes(d: Deps) {
 
   /** The agency's homes on the market, to send one into a chat (newest first, or by a word). */
   r.get('/listings', async (c) => {
-    const a = actor(c, 'leads', 'read');
+    const a = cx(c, 'read');
     const q = (c.req.query('q') ?? '').trim().slice(0, 60).replace(/[%_]/g, '');
     const out = await withOrg(d.db, a.organizationId, async (tx) => {
       const rows = await tx.select({ id: reProperty.id, ref: reProperty.ref, slug: reProperty.slug, title: reProperty.title, titleEn: reProperty.titleEn, type: reProperty.type, purpose: reProperty.purpose,
@@ -191,7 +205,7 @@ export function connectRoutes(d: Deps) {
 
   /** An agent sends one of the agency's homes into the chat: its title, price and page, and the lead's list remembers it. */
   r.post('/conversations/:id/listing', async (c) => {
-    const a = actor(c, 'leads', 'update');
+    const a = cx(c, 'reply');
     const conv = await one(a, c.req.param('id'));
     const b = await c.req.json<{ propertyId?: string; lang?: string }>().catch(() => ({} as any));
     if (conv.optedOut) throw new HttpError(409, 'OPTED_OUT');
@@ -210,26 +224,64 @@ export function connectRoutes(d: Deps) {
     return c.json({ message }, 201);
   });
 
+  /** A shop's products, to send one into a chat (by a word, or the ones on the online shop first). */
+  r.get('/products', async (c) => {
+    const a = cx(c, 'read');
+    const q = (c.req.query('q') ?? '').trim().slice(0, 60).replace(/[%_]/g, '');
+    const out = await withOrg(d.db, a.organizationId, async (tx) => {
+      const rows = await tx.select({ id: sysProduct.id, name: sysProduct.name, category: sysProduct.category, price: sysProduct.price, stock: sysProduct.stock, trackStock: sysProduct.trackStock,
+        online: sysProduct.online, slug: sysProduct.slug, imageId: sysProduct.imageId }).from(sysProduct)
+        .where(and(eq(sysProduct.organizationId, a.organizationId), sql`${sysProduct.archivedAt} is null`, ...(q ? [or(sql`${sysProduct.name} ilike ${`%${q}%`}`, sql`${sysProduct.category} ilike ${`%${q}%`}`, sql`${sysProduct.barcode} = ${q}`)] : [])))
+        .orderBy(desc(sysProduct.online), desc(sysProduct.updatedAt)).limit(24);
+      return Promise.all(rows.map(async (p) => ({ ...p, image: p.imageId ? await fileUrl(d.env, a.organizationId, p.imageId) : null })));
+    });
+    return c.json({ products: out });
+  });
+
+  /** An agent sends one of the shop's products into the chat: its name, price and (when it's online) its page. */
+  r.post('/conversations/:id/product', async (c) => {
+    const a = cx(c, 'reply');
+    const conv = await one(a, c.req.param('id'));
+    const b = await c.req.json<{ productId?: string; lang?: string }>().catch(() => ({} as any));
+    if (conv.optedOut) throw new HttpError(409, 'OPTED_OUT');
+    const ch = await channelOf(d, a.organizationId);
+    if (!ch || ch.status !== 'connected') throw new HttpError(409, 'CONNECT_NOT_READY');
+    if (!(await planOf(d, a.organizationId)).plan) throw new HttpError(402, 'ADDON_NOT_ACTIVE');
+    const lang = b.lang === 'en' ? 'en' as const : 'ar' as const;
+    const found = await withOrg(d.db, a.organizationId, async (tx) => {
+      const [p] = await tx.select().from(sysProduct).where(and(eq(sysProduct.id, String(b.productId ?? '')), eq(sysProduct.organizationId, a.organizationId), sql`${sysProduct.archivedAt} is null`));
+      return p ? { p, origin: await shopOrigin(tx, a.organizationId) } : null;
+    });
+    if (!found) throw new HttpError(404, 'PRODUCT_NOT_FOUND');
+    const { p, origin } = found;
+    const text = `${p.name} · ${iqd(p.price, lang)}${p.online && p.slug && origin ? `\n${origin}/products/${p.slug}` : ''}`;
+    if (!conv.handoff) await withOrg(d.db, a.organizationId, (tx) => tx.update(connectConversation).set({ handoff: true }).where(eq(connectConversation.id, conv.id)));
+    const message = await deliver(d, ch, conv, { author: 'agent', userId: a.userId, text, meta: { productId: p.id } });
+    return c.json({ message }, 201);
+  });
+
   /** The agent's AI tools (Connect Pro and up): a reply to send, in the customer's language, or the chat in a few lines.
    *  Counted with the assistant's replies; when the day's, week's or month's limit is reached they wait for it to reset. */
   r.post('/conversations/:id/assist', async (c) => {
-    const a = actor(c, 'leads', 'read');
+    const a = cx(c, 'read');
     const conv = await one(a, c.req.param('id'));
     const b = await c.req.json<{ mode?: string; lang?: string }>().catch(() => ({} as any));
     const mode = b.mode === 'summary' ? 'summary' : b.mode === 'suggest' ? 'suggest' : bad('BAD_MODE');
     const p = await planOf(d, a.organizationId);
     if (!hasAi(p.plan)) throw new HttpError(402, 'PLAN_PRO_NEEDED');
     if (!p.ai.open) throw new HttpError(429, 'AI_PAUSED', p.ai.resetsAt ?? undefined);
-    const engine = await engineFor(d, 'realestate', 'connect_assist', a.organizationId);
+    const edition = await editionOf(d, a.organizationId), agency = edition === 'realestate';
+    const engine = await engineFor(d, edition, 'connect_assist', a.organizationId);
     if (!engine) throw new HttpError(503, 'AI_UNAVAILABLE');
     const msgs = await withOrg(d.db, a.organizationId, async (tx) => (await tx.select({ direction: connectMessage.direction, body: connectMessage.body }).from(connectMessage)
       .where(and(eq(connectMessage.organizationId, a.organizationId), eq(connectMessage.conversationId, conv.id))).orderBy(desc(connectMessage.createdAt)).limit(30)).reverse());
     if (!msgs.length) throw new HttpError(409, 'NOTHING_TO_READ');
-    const chat = msgs.map((m) => `${m.direction === 'in' ? 'Customer' : 'Agency'}: ${m.body.slice(0, 600)}`).join('\n');
+    const chat = msgs.map((m) => `${m.direction === 'in' ? 'Customer' : agency ? 'Agency' : 'Shop'}: ${m.body.slice(0, 600)}`).join('\n');
     const lang = b.lang === 'en' ? 'English' : 'Arabic';
+    const trade = agency ? 'a real-estate agent' : 'a shop';
     const system = mode === 'suggest'
-      ? 'You help a real-estate agent in Iraq answer a customer on WhatsApp. Write the next reply the agent could send: in the customer\'s own language (Iraqi-friendly Arabic, English or Kurdish), warm, under 60 words, one question at a time, no emojis. Never invent a price, size, address or promise that is not in the chat. Return JSON only.'
-      : `You summarise a WhatsApp chat between a real-estate agency in Iraq and a customer, for the agent, in ${lang}: who they are, what they want (buy or rent, area, type, budget, bedrooms), what was promised, and the next step. At most 5 short lines. Use only what the chat says. Return JSON only.`;
+      ? `You help ${trade} in Iraq answer a customer on WhatsApp.` + ' Write the next reply the agent could send: in the customer\'s own language (Iraqi-friendly Arabic, English or Kurdish), warm, under 60 words, one question at a time, no emojis. Never invent a price, size, address or promise that is not in the chat. Return JSON only.'
+      : `You summarise a WhatsApp chat between ${agency ? 'a real-estate agency' : 'a shop'} in Iraq and a customer, for the team, in ${lang}: who they are, what they want (${agency ? 'buy or rent, area, type, budget, bedrooms' : 'which products, how many, delivery'}), what was promised, and the next step. At most 5 short lines. Use only what the chat says. Return JSON only.`;
     const t0 = Date.now();
     try {
       const out = await engine.json<{ text: string }>({ system, text: `The chat:\n${chat}`, schema: { type: 'object', additionalProperties: false, required: ['text'], properties: { text: { type: 'string' } } }, maxTokens: 500 });
@@ -243,7 +295,7 @@ export function connectRoutes(d: Deps) {
 
   /** Hand a chat back to the assistant (or take it), or close it. */
   r.patch('/conversations/:id', async (c) => {
-    const a = actor(c, 'leads', 'update');
+    const a = cx(c, 'reply');
     const conv = await one(a, c.req.param('id'));
     const b = await c.req.json<{ handoff?: boolean; status?: string }>().catch(() => ({} as any));
     const set: Partial<typeof connectConversation.$inferInsert> = {};
@@ -254,7 +306,7 @@ export function connectRoutes(d: Deps) {
   });
 
   // ------------------------------------------------------------------------------------------- set-up
-  const configure = (c: Context<AppEnv>) => actor(c, 'agency', 'configure');
+  const configure = (c: Context<AppEnv>) => cx(c, 'configure');
   const needPlan = async (org: string) => { const p = await planOf(d, org); if (!p.plan) throw new HttpError(402, 'ADDON_NOT_ACTIVE'); return p; };
   const saveChannel = async (org: string, values: Partial<typeof connectChannel.$inferInsert>) => {
     const [row] = await withOrg(d.db, org, async (tx) => {
@@ -317,7 +369,7 @@ export function connectRoutes(d: Deps) {
     const wa = await providerOf(d, ch);
     const have = await wa.templates();
     const state: typeof ch.templates = {};
-    for (const t of templateDefs()) {
+    for (const t of templateDefs(await editionOf(d, ch.organizationId))) {
       const key = `${t.name}:${t.lang}`, cur = have[key];
       if (!cur) { try { await wa.submitTemplate(t); state[key] = { status: 'pending' }; } catch (e) { state[key] = { status: 'rejected', reason: e instanceof WaError ? e.message : 'SUBMIT_FAILED' }; } }
       else state[key] = { status: cur.status === 'approved' ? 'approved' : cur.status === 'rejected' ? 'rejected' : 'pending', reason: cur.reason ?? null };
@@ -368,11 +420,12 @@ export function connectRoutes(d: Deps) {
     const a = configure(c);
     const key = c.req.param('key');
     const recipe = recipeOf(key);
-    if (!recipe || !(CONNECT_RECIPES as readonly string[]).includes(key)) throw new HttpError(404, 'NOT_FOUND');
+    if (!recipe || !(CONNECT_RECIPES as readonly string[]).includes(key) || !recipesFor(await editionOf(d, a.organizationId)).includes(recipe)) throw new HttpError(404, 'NOT_FOUND');
     const b = await c.req.json<{ enabled?: boolean; settings?: Record<string, unknown> }>().catch(() => ({} as any));
     const p = await needPlan(a.organizationId);
     if (b.enabled && !planAllows(p.plan, recipe)) throw new HttpError(402, 'NEEDS_PRO');
     const settings: Record<string, unknown> = {};
+    if (key === 'debt_reminder' && b.settings?.min != null) { const n = Number(b.settings.min); settings.min = Number.isInteger(n) && n >= 1000 && n <= 100_000_000 ? n : bad('BAD_AMOUNT'); }
     if (key === 'cold_lead' && b.settings?.days != null) { const n = Number(b.settings.days); settings.days = Number.isInteger(n) && n >= 7 && n <= 90 ? n : bad('BAD_DAYS'); }
     const values = { organizationId: a.organizationId, key, enabled: !!b.enabled, settings, updatedAt: new Date() };
     const [row] = await withOrg(d.db, a.organizationId, (tx) => tx.insert(connectRecipe).values(values)
@@ -382,7 +435,7 @@ export function connectRoutes(d: Deps) {
 
   /** What the automations did lately: sent, waiting, or why not. */
   r.get('/activity', async (c) => {
-    const a = actor(c, 'leads', 'read');
+    const a = cx(c, 'read');
     const rows = await withOrg(d.db, a.organizationId, (tx) => tx.select({ id: connectJob.id, recipe: connectJob.recipe, phone: connectJob.phone, leadId: connectJob.leadId,
       status: connectJob.status, error: connectJob.error, text: sql<string>`${connectJob.payload}->>'text'`, dueAt: connectJob.dueAt, doneAt: connectJob.doneAt })
       .from(connectJob).where(eq(connectJob.organizationId, a.organizationId)).orderBy(desc(connectJob.createdAt)).limit(60));

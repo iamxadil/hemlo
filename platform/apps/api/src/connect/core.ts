@@ -18,7 +18,9 @@ import { activity, notice, priceText, settingsOf, SITE, token, typeName } from '
 import { asWants, cardCols } from '../routes/realestate/properties';
 import { matchOf, rank, MATCHABLE } from '../routes/realestate/match';
 import { HttpError } from '../principal';
-import { PLAN_CODES, RECIPES, TEMPLATES, fill, hasAi, isStart, isStop, planAllows, recipeOf, type PlanCode } from './catalog';
+import { PLAN_CODES, TEMPLATES, fill, hasAi, isStart, isStop, planAllows, recipeOf, recipesFor, type PlanCode } from './catalog';
+import { customerByPhone, debtJobs, orderJob, storeAnswer, storeWeek } from './store';
+import { subscriptionOf } from '../subscription';
 import { metaWa, sandboxWa, WaError, type WaInbound, type WaProvider } from './wa';
 import type { Deps } from '../types';
 
@@ -27,6 +29,17 @@ type Conversation = typeof connectConversation.$inferSelect;
 const rowsOf = (r: any): any[] => (Array.isArray(r) ? r : r?.rows ?? []);
 const DAY = 86400_000, WINDOW = DAY;
 const arabic = (s: string) => /[؀-ۿ]/.test(s);
+
+/** Which system a business runs (realestate, store…): Connect speaks its language. Remembered for five minutes. */
+const kinds = new Map<string, { at: number; edition: string }>();
+export async function editionOf(d: Deps, org: string) {
+  const hit = kinds.get(org);
+  if (hit && Date.now() - hit.at < 300_000) return hit.edition;
+  const edition = (await subscriptionOf(d.db, org)).edition;
+  kinds.set(org, { at: Date.now(), edition });
+  return edition;
+}
+const isAgency = (edition: string) => edition === 'realestate';
 
 // ---------------------------------------------------------------------------------------------------------- the plan
 /** The AI jobs that count toward Connect's AI limits: the assistant's replies, and the agent's tools (suggest, summary). */
@@ -132,16 +145,24 @@ export async function channelOf(d: Deps, org: string) {
   const [ch] = await withOrg(d.db, org, (tx) => tx.select().from(connectChannel).where(eq(connectChannel.organizationId, org)));
   return ch ?? null;
 }
-async function recipesOn(tx: Database, org: string) {
+async function recipesOn(tx: Database, org: string, edition: string) {
   const rows = await tx.select().from(connectRecipe).where(eq(connectRecipe.organizationId, org));
-  return new Map(RECIPES.map((r) => { const row = rows.find((x) => x.key === r.key); return [r.key, { on: row ? row.enabled : r.on, settings: row?.settings ?? {} }]; }));
+  return new Map(recipesFor(edition).map((r) => { const row = rows.find((x) => x.key === r.key); return [r.key, { on: row ? row.enabled : r.on, settings: row?.settings ?? {} }]; }));
 }
 
 // ---------------------------------------------------------------------------------------------------------- in
-/** The conversation for a phone, made (with its lead) if it's someone new. A known owner is linked as an owner. */
-async function conversationFor(tx: Database, org: string, phone: string, name: string | null, lang: 'ar' | 'en') {
+/** The conversation for a phone, made if it's someone new: an agency makes (or finds) the lead and links a known owner;
+ *  a shop links the customer in its book with that number (it never adds one: the book is the shop's). */
+async function conversationFor(tx: Database, org: string, phone: string, name: string | null, lang: 'ar' | 'en', edition: string) {
   const [found] = await tx.select().from(connectConversation).where(and(eq(connectConversation.organizationId, org), eq(connectConversation.phone, phone)));
   if (found) return { conv: found, isNew: false };
+  if (!isAgency(edition)) {
+    const customer = await customerByPhone(tx, org, phone);
+    const [conv] = await tx.insert(connectConversation).values({ id: newId(), organizationId: org, phone, name, customerId: customer?.id ?? null }).onConflictDoNothing().returning();
+    if (conv) return { conv, isNew: true };
+    const [again] = await tx.select().from(connectConversation).where(and(eq(connectConversation.organizationId, org), eq(connectConversation.phone, phone)));
+    return { conv: again, isNew: false };
+  }
   const [lead] = await tx.select({ id: reLead.id, agentId: reLead.agentId }).from(reLead)
     .where(and(eq(reLead.organizationId, org), isNull(reLead.archivedAt), or(eq(reLead.phone, phone), eq(reLead.whatsapp, phone)))).orderBy(desc(reLead.updatedAt)).limit(1);
   const [owner] = lead ? [] : await tx.select({ id: reOwner.id, agentId: reOwner.agentId }).from(reOwner)
@@ -162,9 +183,9 @@ async function conversationFor(tx: Database, org: string, phone: string, name: s
 
 /** A customer's message: saved once (WhatsApp retries webhooks), the chat and the lead brought up to date, then answered. */
 export async function receive(d: Deps, ch: Channel, m: WaInbound) {
-  const org = ch.organizationId, lang = arabic(m.text) ? 'ar' : 'en';
+  const org = ch.organizationId, lang = arabic(m.text) ? 'ar' : 'en', edition = await editionOf(d, org);
   const out = await withOrg(d.db, org, async (tx) => {
-    const { conv, isNew } = await conversationFor(tx, org, m.from, m.name, lang);
+    const { conv, isNew } = await conversationFor(tx, org, m.from, m.name, lang, edition);
     const [msg] = await tx.insert(connectMessage).values({ id: newId(), organizationId: org, conversationId: conv.id, direction: 'in', author: 'customer',
       kind: m.type === 'text' ? 'text' : 'other', body: m.text, status: 'received', waId: m.waId, meta: m.type === 'text' ? {} : { type: m.type }, createdAt: m.at }).onConflictDoNothing().returning({ id: connectMessage.id });
     if (!msg) return null; // seen already
@@ -173,7 +194,7 @@ export async function receive(d: Deps, ch: Channel, m: WaInbound) {
       status: 'open', ...(m.name ? { name: m.name } : {}), ...(stop ? { optedOut: true } : start ? { optedOut: false } : {}) }).where(eq(connectConversation.id, conv.id)).returning();
     if (conv.leadId) await tx.update(reLead).set({ lastContactAt: m.at, ...(stop ? { consent: false } : start ? { consent: true } : {}) }).where(eq(reLead.id, conv.leadId));
     // the agent hears of a chat when it starts waiting on them (not on every message)
-    if (conv.unread === 0 && (c.handoff || !ch.ai)) await notice(tx, org, 'message', { leadId: conv.leadId, agentId: conv.agentId }, { conversationId: conv.id, preview: m.text.slice(0, 120) });
+    if (isAgency(edition) && conv.unread === 0 && (c.handoff || !ch.ai)) await notice(tx, org, 'message', { leadId: conv.leadId, agentId: conv.agentId }, { conversationId: conv.id, preview: m.text.slice(0, 120) });
     return { conv: c, isNew, stop, start };
   });
   if (!out) return null;
@@ -182,7 +203,8 @@ export async function receive(d: Deps, ch: Channel, m: WaInbound) {
     const ar = lang === 'ar';
     await deliver(d, ch, conv, { author: 'automation', recipe: 'opt_out', text: out.stop
       ? (ar ? 'تم. لن تصلك منا رسائل تلقائية بعد الآن. لإعادة الاشتراك أرسل: اشتراك' : 'Done. You will not get automatic messages from us again. To subscribe again, send: start')
-      : (ar ? 'أهلاً بعودتك. ستصلك منا العروض المناسبة لك.' : 'Welcome back. We will send you listings that suit you.') }).catch(() => {});
+      : isAgency(edition) ? (ar ? 'أهلاً بعودتك. ستصلك منا العروض المناسبة لك.' : 'Welcome back. We will send you listings that suit you.')
+        : (ar ? 'أهلاً بعودتك. ستصلك منا تحديثات طلباتك.' : 'Welcome back. You will get updates on your orders from us.') }).catch(() => {});
     return { conversationId: conv.id };
   }
   const run = () => respond(d, ch, conv.id, out.isNew);
@@ -194,14 +216,16 @@ export async function receive(d: Deps, ch: Channel, m: WaInbound) {
 async function respond(d: Deps, ch: Channel, conversationId: string, isNew: boolean) {
   const replied = await aiReply(d, ch, conversationId).catch((e) => { console.error('[connect ai]', e instanceof Error ? e.message : e); return false; });
   if (replied || !isNew) return;
+  const edition = await editionOf(d, ch.organizationId);
   const [conv, recipes] = await withOrg(d.db, ch.organizationId, async (tx) => [
-    (await tx.select().from(connectConversation).where(eq(connectConversation.id, conversationId)))[0], await recipesOn(tx, ch.organizationId)] as const);
+    (await tx.select().from(connectConversation).where(eq(connectConversation.id, conversationId)))[0], await recipesOn(tx, ch.organizationId, edition)] as const);
   if (!conv || conv.optedOut || !recipes.get('instant_reply')?.on) return;
   const { plan } = await planOf(d, ch.organizationId);
   if (!plan) return;
   const name = await businessName(d, ch.organizationId), ar = arabic(conv.preview ?? '') || !conv.preview;
   const greeting = (ar ? ch.persona?.greeting?.ar : ch.persona?.greeting?.en)
-    || (ar ? `أهلاً بك في ${name}. وصلت رسالتك وسيرد عليك أحد مستشارينا قريباً.` : `Welcome to ${name}. We got your message and one of our advisers will reply shortly.`);
+    || (isAgency(edition) ? (ar ? `أهلاً بك في ${name}. وصلت رسالتك وسيرد عليك أحد مستشارينا قريباً.` : `Welcome to ${name}. We got your message and one of our advisers will reply shortly.`)
+      : (ar ? `أهلاً بك في ${name}. وصلت رسالتك وسيرد عليك أحدنا قريباً.` : `Welcome to ${name}. We got your message and one of us will reply shortly.`));
   await deliver(d, ch, conv, { author: 'automation', recipe: 'instant_reply', text: greeting }).catch(() => {});
 }
 
@@ -258,6 +282,7 @@ export async function aiReply(d: Deps, ch: Channel, conversationId: string): Pro
   if (!ch.ai) return false;
   const { ai } = await planOf(d, org);
   if (!ai.open) return false;
+  if (!isAgency(await editionOf(d, org))) return shopReply(d, ch, conversationId);
   const ctx = await withOrg(d.db, org, async (tx) => {
     const [conv] = await tx.select().from(connectConversation).where(eq(connectConversation.id, conversationId));
     if (!conv || conv.handoff || conv.optedOut || !windowOpen(conv)) return null;
@@ -340,6 +365,35 @@ export async function aiReply(d: Deps, ch: Channel, conversationId: string): Pro
   });
   const wa = await providerOf(d, ch);
   await deliver(d, ch, { ...ctx.conv }, { author: 'ai', text: body, meta: { refs: picks.map((p) => p.ref), handoff } }, wa);
+  if (ctx.last.waId) await wa.markRead(ctx.last.waId).catch(() => {});
+  return true;
+}
+
+/** A shop's chat: the last messages, the shop's assistant, then the same checks and delivery as an agency's. */
+async function shopReply(d: Deps, ch: Channel, conversationId: string): Promise<boolean> {
+  const org = ch.organizationId;
+  const ctx = await withOrg(d.db, org, async (tx) => {
+    const [conv] = await tx.select().from(connectConversation).where(eq(connectConversation.id, conversationId));
+    if (!conv || conv.handoff || conv.optedOut || !windowOpen(conv)) return null;
+    const msgs = (await tx.select().from(connectMessage).where(and(eq(connectMessage.organizationId, org), eq(connectMessage.conversationId, conv.id)))
+      .orderBy(desc(connectMessage.createdAt)).limit(14)).reverse();
+    const last = msgs[msgs.length - 1];
+    return last && last.direction === 'in' ? { conv, msgs, last } : null;
+  });
+  if (!ctx) return false;
+  const out = await storeAnswer(d, ch, ctx, await businessName(d, org), inventedNumbers);
+  if (!out) return false;
+  const fresh = await withOrg(d.db, org, async (tx) => {
+    const [latest] = await tx.select({ id: connectMessage.id }).from(connectMessage).where(and(eq(connectMessage.organizationId, org), eq(connectMessage.conversationId, ctx.conv.id)))
+      .orderBy(desc(connectMessage.createdAt)).limit(1);
+    const [c] = await tx.select({ handoff: connectConversation.handoff }).from(connectConversation).where(eq(connectConversation.id, ctx.conv.id));
+    return latest?.id === ctx.last.id && !c?.handoff;
+  });
+  if (!fresh) return true;
+  if (out.handoff || (out.name && !ctx.conv.name)) await withOrg(d.db, org, (tx) => tx.update(connectConversation)
+    .set({ ...(out.handoff ? { handoff: true } : {}), ...(out.name && !ctx.conv.name ? { name: out.name } : {}) }).where(eq(connectConversation.id, ctx.conv.id)));
+  const wa = await providerOf(d, ch);
+  await deliver(d, ch, { ...ctx.conv }, { author: 'ai', text: out.body, meta: out.meta }, wa);
   if (ctx.last.waId) await wa.markRead(ctx.last.waId).catch(() => {});
   return true;
 }
@@ -427,6 +481,7 @@ const GENERATORS: Partial<Record<ConnectRecipeKey, (tx: Database, org: string, a
     }
     return out;
   },
+  async debt_reminder(tx, org, shop, now, settings) { return debtJobs(tx, org, shop, now, settings); },
   async rent_due(tx, org, agency, now) {
     const rows = await tx.select({ id: reContract.id, lang: reContract.lang, data: reContract.data }).from(reContract)
       .where(and(eq(reContract.organizationId, org), eq(reContract.kind, 'rent'), eq(reContract.status, 'signed'))).limit(500);
@@ -467,11 +522,12 @@ export async function flush(d: Deps, org: string, now = new Date(), limit = 60, 
   const ch = await channelOf(d, org);
   if (!ch || ch.status !== 'connected') return { sent: 0, skipped: 0, failed: 0 };
   const { plan, limits, used } = await planOf(d, org, now);
+  const edition = await editionOf(d, org);
   const jobs = await withOrg(d.db, org, (tx) => tx.select().from(connectJob).where(and(eq(connectJob.organizationId, org), eq(connectJob.status, 'pending'), lte(connectJob.dueAt, now), ...(only ? [eq(connectJob.recipe, only)] : [])))
     .orderBy(connectJob.dueAt).limit(limit));
   if (!jobs.length) return { sent: 0, skipped: 0, failed: 0 };
   const wa = await providerOf(d, ch);
-  const recipes = await withOrg(d.db, org, (tx) => recipesOn(tx, org));
+  const recipes = await withOrg(d.db, org, (tx) => recipesOn(tx, org, edition));
   const costs = await costsOf(d.db);
   const marketingCap = Math.floor((limits.waIqd * limits.waMarketingPct) / 100);
   let spent = used.wa, marketing = used.waMarketing, sends = used.sendsDay, sent = 0, skipped = 0, failed = 0;
@@ -481,7 +537,7 @@ export async function flush(d: Deps, org: string, now = new Date(), limit = 60, 
       .set({ status, error, doneAt: new Date(), tries: j.tries + 1 }).where(eq(connectJob.id, j.id)));
     if (!recipe || !planAllows(plan, recipe) || !recipes.get(recipe.key)?.on) { await finish('skipped', 'OFF'); skipped++; continue; }
     if (sends >= limits.sendsDay) break; // the day's automatic messages are out: the rest wait for tomorrow
-    const { conv } = await withOrg(d.db, org, (tx) => conversationFor(tx, org, j.phone, null, j.payload.lang));
+    const { conv } = await withOrg(d.db, org, (tx) => conversationFor(tx, org, j.phone, null, j.payload.lang, edition));
     if (conv.optedOut) { await finish('skipped', 'OPTED_OUT'); skipped++; continue; }
     // WhatsApp messaging is Hemlo's to pay: within the month's allowance, and promotions within their share of it
     const category: WaCategory = windowOpen(conv) ? 'service' : TEMPLATES[j.payload.template]?.category === 'MARKETING' ? 'marketing' : 'utility';
@@ -504,11 +560,11 @@ export async function flush(d: Deps, org: string, now = new Date(), limit = 60, 
 export async function runOrg(d: Deps, org: string, now = new Date()) {
   const { plan } = await planOf(d, org);
   if (!plan) return { queued: 0, sent: 0 };
-  const agency = await businessName(d, org);
+  const agency = await businessName(d, org), edition = await editionOf(d, org);
   const queued = await withOrg(d.db, org, async (tx) => {
-    const recipes = await recipesOn(tx, org);
+    const recipes = await recipesOn(tx, org, edition);
     let n = 0;
-    for (const r of RECIPES) {
+    for (const r of recipesFor(edition)) {
       const gen = GENERATORS[r.key];
       if (!gen || !planAllows(plan, r) || !recipes.get(r.key)?.on) continue;
       n += await queue(tx, org, await gen(tx, org, agency, now, recipes.get(r.key)!.settings, d), now);
@@ -538,7 +594,7 @@ export async function onInquiry(d: Deps, org: string, leadId: string, about: str
   const { plan } = await planOf(d, org);
   if (!plan) return;
   const job = await withOrg(d.db, org, async (tx) => {
-    if (!(await recipesOn(tx, org)).get('instant_reply')?.on) return 0;
+    if (!(await recipesOn(tx, org, 'realestate')).get('instant_reply')?.on) return 0;
     const [l] = await tx.select().from(reLead).where(eq(reLead.id, leadId));
     const phone = l?.whatsapp || l?.phone;
     if (!l || !phone) return 0;
@@ -549,6 +605,20 @@ export async function onInquiry(d: Deps, org: string, leadId: string, about: str
   if (job) await flush(d, org, new Date(), 5, 'instant_reply'); // they just wrote to us: any hour is fine
 }
 
+/** A shop's online order moved (placed, confirmed, out for delivery…): the customer hears on WhatsApp within seconds. */
+export async function onOrder(d: Deps, org: string, orderId: string) {
+  const ch = await channelOf(d, org);
+  if (!ch || ch.status !== 'connected') return;
+  const { plan } = await planOf(d, org);
+  if (!plan) return;
+  const shop = await businessName(d, org);
+  const job = await withOrg(d.db, org, async (tx) => {
+    if (!(await recipesOn(tx, org, 'store')).get('order_update')?.on) return 0;
+    const j = await orderJob(tx, org, orderId, shop);
+    return j ? queue(tx, org, [j]) : 0;
+  });
+  if (job) await flush(d, org, new Date(), 5, 'order_update'); // the customer just ordered (or is waiting on it): any hour
+}
 
 // ---------------------------------------------------------------------------------------------------------- the week
 /** The last seven days of Connect for one business: who wrote, what went out for it, viewings it booked, how fast. */
@@ -562,7 +632,8 @@ export async function weekOf(db: Database, org: string, now = new Date()) {
         cross join lateral (select min(o.created_at) as at from connect_message o where o.organization_id = m.organization_id and o.conversation_id = m.conversation_id
           and o.direction = 'out' and o.created_at >= m.created_at) r
         where m.organization_id = ${org} and m.direction = 'in' and m.created_at > ${since} and r.at is not null and r.at - m.created_at < interval '1 day')::float as reply`)));
-  return { chats: Number(r?.chats ?? 0), replies: Number(r?.replies ?? 0), viewings: Number(r?.viewings ?? 0), replySeconds: r?.reply == null ? null : Math.round(Number(r.reply)) };
+  const orders = r && (await editionOf({ db } as Deps, org).catch(() => 'realestate')) === 'store' ? await storeWeek(db, org, since) : 0;
+  return { chats: Number(r?.chats ?? 0), replies: Number(r?.replies ?? 0), viewings: Number(r?.viewings ?? 0), orders, replySeconds: r?.reply == null ? null : Math.round(Number(r.reply)) };
 }
 const span = (sec: number | null, lang: 'ar' | 'en') => sec == null ? '—' : sec < 90 ? (lang === 'ar' ? `${sec} ثانية` : `${sec} seconds`)
   : sec < 5400 ? (lang === 'ar' ? `${Math.round(sec / 60)} دقيقة` : `${Math.round(sec / 60)} minutes`) : (lang === 'ar' ? `${Math.round(sec / 3600)} ساعة` : `${Math.round(sec / 3600)} hours`);

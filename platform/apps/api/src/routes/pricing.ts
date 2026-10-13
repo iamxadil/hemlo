@@ -5,14 +5,14 @@ import { Hono, type Context } from 'hono';
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import { newId } from '@hemlo/core';
 import { withOrg, withSystem, type Database } from '@hemlo/db';
-import { hemloPlan, hemloPayment, hemloPlanRequest, hemloSubscription, hemloAddon, hemloAddonRequest, hemloAddonEntitlement, hemloAddonPayment, ADDON_LIMIT_KEYS, type AddonLimits, type PlanLimits } from '@hemlo/db/schema';
+import { hemloPlan, hemloPayment, hemloPlanRequest, hemloSubscription, hemloAddon, hemloAddonRequest, hemloAddonEntitlement, hemloAddonPayment, ADDON_LIMIT_KEYS, type AddonEdition, type AddonLimits, type PlanLimits } from '@hemlo/db/schema';
 import type { StaffPermission } from '@hemlo/core';
 import { audit } from '@hemlo/auth/audit';
 import { HttpError, requireOrgUser } from '../principal';
 import { actor, bad, text } from './sys-common';
 import { isDemoOrg } from './demo';
 import { plansOf, forgetPlans, stateOf, subscriptionOf, forgetSubscription, EDITIONS, GRACE_DAYS, type Plan } from '../subscription';
-import { addonEntitlement, addonOffer, addonsActive, forgetAddons, isFree, limitsOf, requireAddonOffer } from '../addons';
+import { addonEntitlement, addonOffer, addonsActive, forEdition, forgetAddons, isFree, limitsOf, requireAddonOffer } from '../addons';
 
 /** Tiers of one product: the higher one replaces the lower (asking for Basic while on Pro makes no sense). */
 const REPLACES: Record<string, string[]> = { 'connect-pro': ['connect'], 'ai-studio': ['connect', 'connect-pro'], 'web-connect': ['website', 'connect', 'connect-pro'] };
@@ -49,7 +49,7 @@ export function publicPlanRoutes(d: Deps) {
     const edition = c.req.query('edition');
     const rows = await withSystem(d.db, (tx) => tx.select().from(hemloAddon).where(and(eq(hemloAddon.public, true), eq(hemloAddon.active, true))));
     c.header('cache-control', 'public, max-age=300');
-    return c.json({ addons: rows.filter((x) => !edition || x.compatibleEditions.includes(edition)).sort((x, y) => x.sort - y.sort).map((x) => {
+    return c.json({ addons: rows.filter((x) => !edition || x.compatibleEditions.includes(edition)).map((x) => (edition ? forEdition(x, edition) : x)).sort((x, y) => x.sort - y.sort).map((x) => {
       const l = limitsOf(x);
       return { id: x.id, code: x.code, name: x.name, description: x.description, compatibleEditions: x.compatibleEditions, includes: x.includes,
         priceMonth: x.priceMonth, priceYear: x.priceYear, configured: x.priceMonth != null && x.priceYear != null, free: isFree(x), ai: l.aiMonth > 0, studio: l.studioMonth > 0 };
@@ -105,7 +105,7 @@ export function billingRoutes(d: Deps) {
     const a = actor(c, 'stock', 'read');
     const sub = await subscriptionOf(d.db, a.organizationId);
     const rows = await withSystem(d.db, (tx) => tx.select().from(hemloAddon).where(and(eq(hemloAddon.public, true), eq(hemloAddon.active, true))));
-    const compatible = rows.filter((x) => x.compatibleEditions.includes(sub.edition));
+    const compatible = rows.filter((x) => x.compatibleEditions.includes(sub.edition)).map((x) => forEdition(x, sub.edition));
     const [states, out] = await Promise.all([addonsActive(d.db, a.organizationId, compatible.map((x) => x.code)), withOrg(d.db, a.organizationId, async (tx) => ({
       requests: await tx.select().from(hemloAddonRequest).where(eq(hemloAddonRequest.organizationId, a.organizationId)).orderBy(desc(hemloAddonRequest.createdAt)).limit(12),
       payments: await tx.select().from(hemloAddonPayment).where(eq(hemloAddonPayment.organizationId, a.organizationId)).orderBy(desc(hemloAddonPayment.createdAt)).limit(24),
@@ -253,6 +253,31 @@ export function adminPricingRoutes(d: Deps) {
         l[k] = Number(v);
       }
       input.limits = l;
+    }
+    // per system: its own price, allowances and words ({ store: { priceMonth, priceYear, limits, description } }); null removes one
+    if (b.editions !== undefined) {
+      if (!b.editions || typeof b.editions !== 'object') bad('BAD_EDITIONS');
+      const out: Record<string, AddonEdition> = {};
+      for (const [ed, v] of Object.entries(b.editions as Record<string, any>)) {
+        if (!(EDITIONS as readonly string[]).includes(ed)) bad('BAD_EDITION');
+        if (v == null) continue;
+        const e: AddonEdition = {};
+        if (v.priceMonth !== undefined) e.priceMonth = money(v.priceMonth);
+        if (v.priceYear !== undefined) e.priceYear = money(v.priceYear);
+        if (v.description !== undefined && v.description !== null) e.description = words(v.description, 'BAD_TEXT') ?? undefined;
+        if (v.limits) {
+          const l: AddonLimits = {};
+          for (const k of ADDON_LIMIT_KEYS) {
+            const x = v.limits[k];
+            if (x == null || x === '') continue;
+            if (!Number.isInteger(Number(x)) || Number(x) < 0 || Number(x) > (k === 'waMarketingPct' ? 100 : 100_000_000)) bad('BAD_LIMITS');
+            l[k] = Number(x);
+          }
+          e.limits = l;
+        }
+        out[ed] = e;
+      }
+      input.editions = out;
     }
     const [row] = await withSystem(d.db, (tx) => tx.update(hemloAddon).set(input).where(eq(hemloAddon.code, c.req.param('code'))).returning());
     if (!row) throw new HttpError(404, 'NOT_FOUND');

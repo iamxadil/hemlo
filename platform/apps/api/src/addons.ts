@@ -17,8 +17,17 @@ export async function addonCatalog(db: Database): Promise<Offer[]> {
   catalog = { at: Date.now(), offers };
   return offers;
 }
-export async function addonOffer(db: Database, code: string) {
-  return (await addonCatalog(db)).find((x) => x.code === code || x.id === code) ?? null;
+export async function addonOffer(db: Database, code: string, edition?: string) {
+  const o = (await addonCatalog(db)).find((x) => x.code === code || x.id === code) ?? null;
+  return edition ? forEdition(o, edition) : o;
+}
+/** The add-on as one system sees it: its price, allowances and words for that system where they differ (a shop pays less
+ *  than an agency), the row's own everywhere else. Everything that prices, limits or shows an add-on goes through this. */
+export function forEdition<T extends Offer | null | undefined>(o: T, edition: string): T {
+  const e = o?.editions?.[edition];
+  if (!o || !e) return o;
+  return { ...o, ...(e.priceMonth !== undefined ? { priceMonth: e.priceMonth } : {}), ...(e.priceYear !== undefined ? { priceYear: e.priceYear } : {}),
+    ...(e.limits ? { limits: e.limits } : {}), ...(e.name ? { name: e.name } : {}), ...(e.description ? { description: e.description } : {}) };
 }
 
 /** Add-ons that switch on others: a tier includes the ones below it (AI Studio → Connect Pro → Connect), a bundle its
@@ -52,7 +61,8 @@ export async function requireAddon(db: Database, organizationId: string, code: s
 }
 
 export async function requireAddonOffer(db: Database, organizationId: string, code: string) {
-  const [offer, sub] = await Promise.all([addonOffer(db, code), subscriptionOf(db, organizationId)]);
+  const [raw, sub] = await Promise.all([addonOffer(db, code), subscriptionOf(db, organizationId)]);
+  const offer = forEdition(raw, sub.edition);
   if (!offer || !offer.active || !offer.compatibleEditions.includes(sub.edition)) throw new HttpError(403, 'ADDON_UNAVAILABLE');
   if (!live(sub)) throw new HttpError(402, 'CORE_SUBSCRIPTION_REQUIRED');
   return { offer, subscription: sub };
@@ -61,8 +71,9 @@ export async function requireAddonOffer(db: Database, organizationId: string, co
 /** Several add-ons at once (Connect's tiers, the plan page): the catalog (cached), the subscription and the entitlements.
  *  An add-on included in an active one counts as active, with the including one's entitlement ("via"). */
 export async function addonsActive(db: Database, organizationId: string, codes: readonly string[]) {
-  const [offers, sub, rows] = await Promise.all([addonCatalog(db), subscriptionOf(db, organizationId),
+  const [catalogRows, sub, rows] = await Promise.all([addonCatalog(db), subscriptionOf(db, organizationId),
     withOrg(db, organizationId, (tx) => tx.select().from(hemloAddonEntitlement).where(eq(hemloAddonEntitlement.organizationId, organizationId)))]);
+  const offers = catalogRows.map((o) => forEdition(o, sub.edition));
   const own = (code: string) => {
     const offer = offers.find((x) => x.code === code) ?? null, ent = offer ? rows.find((x) => x.addonId === offer.id) ?? null : null;
     return { offer, entitlement: ent, active: isActive(offer, ent, sub) };

@@ -14,7 +14,7 @@ const at = (name: string) => timestamp(name, { withTimezone: true });
 const org = () => text('organization_id').notNull();
 
 export const CONNECT_PROVIDERS = ['sandbox', 'meta'] as const;
-export const CONNECT_RECIPES = ['instant_reply', 'viewing_reminder', 'viewing_followup', 'new_listing', 'cold_lead', 'owner_report', 'rent_due'] as const;
+export const CONNECT_RECIPES = ['instant_reply', 'viewing_reminder', 'viewing_followup', 'new_listing', 'cold_lead', 'owner_report', 'rent_due', 'order_update', 'debt_reminder'] as const;
 export type ConnectRecipeKey = (typeof CONNECT_RECIPES)[number];
 /** A message template's state at WhatsApp, per template name: only an approved template may start a conversation. */
 export type ConnectTemplateState = Record<string, { status: 'missing' | 'pending' | 'approved' | 'rejected'; reason?: string | null }>;
@@ -54,6 +54,7 @@ export const connectConversation = pgTable('connect_conversation', {
   name: text('name'),                                        // their WhatsApp profile name
   leadId: text('lead_id'),
   ownerId: text('owner_id'),
+  customerId: text('customer_id'),                           // a shop: the customer in its book with this phone
   agentId: text('agent_id'),                                 // follows the lead's agent
   status: text('status').notNull().default('open'),          // open | closed
   handoff: boolean('handoff').notNull().default(false),      // a person took over: the assistant stays quiet in this chat

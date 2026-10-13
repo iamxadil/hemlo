@@ -13,17 +13,26 @@ export type PlanCode = (typeof PLAN_CODES)[number];
 export const rankOf = (plan: string | null | undefined) => PLAN_CODES.indexOf(plan as PlanCode);
 export const hasAi = (plan: PlanCode | null) => rankOf(plan) >= rankOf('connect-pro');
 
-export type Recipe = { key: ConnectRecipeKey; plan: PlanCode; template: string | null; on: boolean; marketing?: boolean };
+/** editions: the systems it makes sense in (none: every system). */
+export type Recipe = { key: ConnectRecipeKey; plan: PlanCode; template: string | null; on: boolean; marketing?: boolean; editions?: readonly string[] };
+const RE = ['realestate'] as const, SHOP = ['store'] as const;
 export const RECIPES: Recipe[] = [
   { key: 'instant_reply', plan: 'connect', template: 'hemlo_inquiry_reply', on: true },
-  { key: 'viewing_reminder', plan: 'connect', template: 'hemlo_viewing_reminder', on: true },
-  { key: 'viewing_followup', plan: 'connect', template: 'hemlo_viewing_followup', on: true },
-  { key: 'new_listing', plan: 'connect', template: 'hemlo_new_listing', on: false, marketing: true },
-  { key: 'rent_due', plan: 'connect', template: 'hemlo_rent_due', on: false },
-  { key: 'cold_lead', plan: 'connect-pro', template: 'hemlo_cold_lead', on: false, marketing: true },
-  { key: 'owner_report', plan: 'connect-pro', template: 'hemlo_owner_report', on: false },
+  { key: 'viewing_reminder', plan: 'connect', template: 'hemlo_viewing_reminder', on: true, editions: RE },
+  { key: 'viewing_followup', plan: 'connect', template: 'hemlo_viewing_followup', on: true, editions: RE },
+  { key: 'new_listing', plan: 'connect', template: 'hemlo_new_listing', on: false, marketing: true, editions: RE },
+  { key: 'rent_due', plan: 'connect', template: 'hemlo_rent_due', on: false, editions: RE },
+  { key: 'cold_lead', plan: 'connect-pro', template: 'hemlo_cold_lead', on: false, marketing: true, editions: RE },
+  { key: 'owner_report', plan: 'connect-pro', template: 'hemlo_owner_report', on: false, editions: RE },
+  // a shop: the customer hears where their online order stands, and (when the shop wants) about what they owe
+  { key: 'order_update', plan: 'connect', template: 'hemlo_order_update', on: true, editions: SHOP },
+  { key: 'debt_reminder', plan: 'connect', template: 'hemlo_debt_reminder', on: false, editions: SHOP },
 ];
 export const recipeOf = (key: string) => RECIPES.find((r) => r.key === key);
+/** The automations this system has. */
+export const recipesFor = (edition: string) => RECIPES.filter((r) => !r.editions || r.editions.includes(edition));
+/** The templates this system sends (submitted to its WhatsApp account): its recipes' templates. */
+export const templatesFor = (edition: string) => new Set(recipesFor(edition).map((r) => r.template).filter(Boolean) as string[]);
 export const planAllows = (plan: PlanCode | null, recipe: Recipe) => !!plan && rankOf(plan) >= rankOf(recipe.plan);
 
 type T = { category: 'UTILITY' | 'MARKETING'; ar: string; en: string; example: { ar: string[]; en: string[] } };
@@ -56,6 +65,14 @@ export const TEMPLATES: Record<string, T> = {
     ar: 'مرحباً {{1}}، معك {{2}}. تذكير بموعد دفعة إيجار {{3}} بتاريخ {{4}} بقيمة {{5}}. لأي استفسار يرجى الرد على هذه الرسالة.',
     en: 'Hello {{1}}, this is {{2}}. A reminder that the rent for {{3}} is due on {{4}}: {{5}}. Please reply to this message with any question.',
     example: { ar: ['أحمد', 'دار النخيل للعقارات', 'شقة عنكاوة', '2026-11-01', '$650'], en: ['Ahmed', 'Nakheel Real Estate', 'the Ankawa apartment', '2026-11-01', '$650'] } },
+  hemlo_order_update: { category: 'UTILITY',
+    ar: 'مرحباً {{1}}، معك {{2}}. طلبك رقم {{3}}: {{4}}. لمتابعة الطلب: {{5}} شكراً لتسوّقك معنا.',
+    en: 'Hello {{1}}, this is {{2}}. Your order number {{3}}: {{4}}. Follow your order: {{5}} Thank you for shopping with us.',
+    example: { ar: ['أحمد', 'متجر النور', '12', 'تم تأكيد طلبك وسنجهّزه قريباً', 'https://noor.hemlohq.com/order/ab12cd'], en: ['Ahmed', 'Al-Noor Market', '12', 'confirmed, and we are preparing it', 'https://noor.hemlohq.com/order/ab12cd'] } },
+  hemlo_debt_reminder: { category: 'UTILITY',
+    ar: 'مرحباً {{1}}، معك {{2}}. نذكّرك بأن المتبقي على حسابك {{3}}. للاستفسار أو ترتيب الدفع يرجى الرد على هذه الرسالة.',
+    en: 'Hello {{1}}, this is {{2}}. A reminder that the balance on your account is {{3}}. Please reply to this message with any question or to arrange payment.',
+    example: { ar: ['أحمد', 'متجر النور', '45,000 د.ع'], en: ['Ahmed', 'Al-Noor Market', '45,000 IQD'] } },
 };
 
 /** A template with its blanks filled: what the customer reads (shown in the inbox, and sent as text inside the 24-hour window). */
@@ -63,7 +80,7 @@ export const fill = (name: string, lang: 'ar' | 'en', params: string[]) =>
   (TEMPLATES[name]?.[lang] ?? '').replace(/\{\{(\d+)\}\}/g, (_, i) => params[Number(i) - 1] ?? '');
 
 /** Every template in both languages, as WhatsApp wants them submitted. */
-export const templateDefs = (): WaTemplateDef[] => Object.entries(TEMPLATES).flatMap(([name, t]) =>
+export const templateDefs = (edition?: string): WaTemplateDef[] => Object.entries(TEMPLATES).filter(([name]) => !edition || name === 'hemlo_inquiry_reply' || templatesFor(edition).has(name)).flatMap(([name, t]) =>
   (['ar', 'en'] as const).map((lang) => ({ name, category: t.category, lang, body: t[lang], example: t.example[lang] })));
 
 /** "stop" in the ways people write it: the customer never gets an automatic message again. "start" undoes it. */

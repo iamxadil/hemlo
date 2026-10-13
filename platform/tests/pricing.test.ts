@@ -112,8 +112,12 @@ describe('optional add-ons', () => {
     expect(offers.map((x: any) => [x.code, x.priceMonth, x.priceYear, x.free])).toEqual([['website', 10000, 100000, false], ['connect', 0, 0, true], ['connect-pro', 35000, 350000, false], ['ai-studio', 50000, 500000, false]]);
     await founder.req('PATCH', '/v1/admin/addons/website', { priceMonth: null, priceYear: null });
     expect((await new Browser(t.app).get('/v1/plans/addons?edition=realestate')).json.addons.find((x: any) => x.code === 'website')).toMatchObject({ configured: false, priceMonth: null });
-    expect((await new Browser(t.app).get('/v1/plans/addons?edition=store')).json.addons).toEqual([]);
-    expect((await shop.post('/v1/billing/addons/website/request')).status).toBe(403);
+    // a shop sees the same add-ons at its own prices (each system's override), with its own words
+    const shopOffers = (await new Browser(t.app).get('/v1/plans/addons?edition=store')).json.addons;
+    expect(shopOffers.map((x: any) => [x.code, x.priceMonth, x.priceYear, x.free])).toEqual([['website', 10000, 100000, false], ['connect', 0, 0, true], ['connect-pro', 25000, 250000, false], ['ai-studio', 35000, 350000, false]]);
+    expect(shopOffers.find((x: any) => x.code === 'connect-pro').description.en).toMatch(/products, prices and stock/);
+    // the shop's own price stands when the agencies' is cleared: a shop may ask for its Website
+    expect((await shop.post('/v1/billing/addons/website/request')).status).toBe(201);
 
     const owner = new Browser(t.app);
     await signInEmail(owner, 'website-buyer@example.com');
