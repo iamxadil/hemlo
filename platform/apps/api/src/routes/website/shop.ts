@@ -133,7 +133,7 @@ function contact(ctx: Ctx, sec: WebSection) {
 function checkoutPage(ctx: Ctx) {
   const t = w(ctx), s = shopRules(ctx);
   const canDeliver = s.delivery !== false, canPickup = !!s.pickup;
-  const how = canDeliver && canPickup ? `<fieldset class="etabs shows"><legend class="slabel">${esc(t.how)}</legend><label><input type="radio" name="delivery" value="delivery" checked><span>${ic('truck')}${esc(t.toDoor)}</span></label><label><input type="radio" name="delivery" value="pickup"><span>${ic('store')}${esc(t.pickup)}</span></label></fieldset>`
+  const how = canDeliver && canPickup ? `<p class="slabel">${esc(t.how)}</p><fieldset class="etabs shows"><label><input type="radio" name="delivery" value="delivery" checked><span>${ic('truck')}${esc(t.toDoor)}</span></label><label><input type="radio" name="delivery" value="pickup"><span>${ic('store')}${esc(t.pickup)}</span></label></fieldset>`
     : `<input type="hidden" name="delivery" value="${canDeliver ? 'delivery' : 'pickup'}">`;
   const cities = s.cities?.length ? `<select name="city" required>${s.cities.map((c) => `<option>${esc(c)}</option>`).join('')}</select>` : `<input name="city" maxlength="60" autocomplete="address-level2" required>`;
   const note = pick(s.note as Two, ctx.lang);
@@ -145,7 +145,7 @@ function checkoutPage(ctx: Ctx) {
 ${how}<div class="sco-addr" data-addr><div class="sco-2"><label class="sfield"><span>${esc(t.city)}</span>${cities}</label><label class="sfield"><span>${esc(t.area)}</span><input name="area" maxlength="80"></label></div>
 <label class="sfield"><span>${esc(t.address)}</span><input name="address" maxlength="240" autocomplete="street-address" placeholder="${attr(t.addressPh)}"></label></div>
 <label class="sfield"><span>${esc(t.note)}</span><textarea name="note" maxlength="400" rows="2"></textarea></label><input type="text" name="hp" tabindex="-1" autocomplete="off" class="shp" aria-hidden="true"></div>
-<aside class="sco-sum"><h2 class="sco-t">${esc(t.yourOrder)}</h2><div data-sum-lines class="sco-lines"></div>
+<aside class="sco-sum"><h2 class="sco-t">${esc(t.yourOrder)}</h2><ul data-sum-lines class="slines sco-lines"></ul>
 <dl class="sco-tot"><div><dt>${esc(t.subtotal)}</dt><dd data-sum="subtotal">—</dd></div><div><dt>${esc(t.delivery)}</dt><dd data-sum="fee">—</dd></div><div class="big"><dt>${esc(t.total)}</dt><dd data-sum="total">—</dd></div></dl>
 <p class="sco-cod">${ic('cash')}<span><b>${esc(t.cod)}</b><small>${esc(t.codSub)}</small></span></p>${note ? `<p class="sco-note">${esc(note)}</p>` : ''}
 <p class="sco-err" data-err role="alert" hidden></p><button class="ebtn ebtn-accent ebtn-lg eblock" type="submit" data-place>${esc(t.place)}</button></aside></form></div></section>`;
@@ -368,10 +368,10 @@ export function shopCss(theme: WebTheme, fontBase: string) {
 .sfield{display:grid;gap:6px}.sfield>span,.slabel{font-size:13px;font-weight:500;color:var(--ink2)}
 .sfield input,.sfield select,.sfield textarea{width:100%;height:48px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);font:inherit;font-size:15.5px;color:var(--ink);outline:none;transition:border-color .2s,box-shadow .2s}
 .sfield textarea{height:auto;padding:12px 14px;resize:vertical}.sfield :is(input,select,textarea):focus{border-color:var(--ink);box-shadow:0 0 0 3px color-mix(in oklab,var(--ink) 10%,transparent)}
-.etabs.shows{display:grid;grid-template-columns:1fr 1fr;padding:4px}.etabs.shows legend{grid-column:1/-1;margin-bottom:6px;padding:0 4px}.etabs.shows span{gap:8px}
+.slabel{margin:0 0 -6px}.etabs.shows{display:grid;grid-template-columns:1fr 1fr;padding:4px}.etabs.shows span{display:flex;align-items:center;justify-content:center;gap:8px;height:46px}.etabs.shows .i{width:18px;height:18px}
 .shp{position:absolute;inset-inline-start:-9999px;width:1px;height:1px;opacity:0}
 .sco-sum{display:grid;gap:12px;padding:22px;border-radius:22px;border:1px solid var(--line);background:var(--card);box-shadow:var(--sh)}@media (min-width:960px){.sco-sum{position:sticky;top:90px}}
-.sco-lines{max-height:320px;overflow:auto}.sco-lines .slines,.sco-lines{display:grid}
+.sco-lines{max-height:340px;overflow:auto}.sco-lines li:last-child{border-bottom:0}
 .sco-tot{display:grid;gap:8px;margin:0;padding-top:12px;border-top:1px solid var(--line)}.sco-tot>div{display:flex;justify-content:space-between;align-items:baseline;font-size:14.5px;color:var(--ink2)}.sco-tot dd{margin:0;font-weight:500;color:var(--ink)}
 .sco-tot .big{padding-top:10px;border-top:1px solid var(--line);font-size:16px;color:var(--ink)}.sco-tot .big dd{font-size:22px;font-weight:600}
 .sco-cod{display:flex;align-items:center;gap:12px;margin:0;padding:12px 14px;border-radius:14px;background:var(--surface)}.sco-cod .i{width:22px;height:22px;color:var(--primary)}.sco-cod span{display:grid;line-height:1.35}.sco-cod b{font-size:14px}.sco-cod small{font-size:12.5px;color:var(--muted)}
