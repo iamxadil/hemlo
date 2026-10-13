@@ -12,13 +12,17 @@ import { HwBadge } from '../components/HwBadge';
 import { copyOf, type Copy } from './words';
 import './connect.css';
 
-type Plan = 'connect' | 'connect-pro' | null;
-type Offer = { code: 'connect' | 'connect-pro' | 'web-connect'; name: Record<string, string>; description: Record<string, string>; priceMonth: number | null; priceYear: number | null; limits: { messages: number; ai: number } };
+type Plan = 'connect' | 'connect-pro' | 'ai-studio' | null;
+type Offer = { code: 'connect' | 'connect-pro' | 'ai-studio'; name: Record<string, string>; description: Record<string, string>; priceMonth: number | null; priceYear: number | null;
+  free: boolean; active: boolean; ai: { day: number; week: number; month: number }; studio: boolean };
+type AiState = { open: boolean; reason: 'plan' | 'day' | 'week' | 'month' | null; resetsAt: string | null };
+const RANK: Record<string, number> = { connect: 0, 'connect-pro': 1, 'ai-studio': 2 };
+const hasAi = (p: Plan) => (RANK[p ?? ''] ?? -1) >= 1;
 type Recipe = { key: string; plan: string; marketing: boolean; allowed: boolean; on: boolean; settings: Record<string, any>; template: string | null; approved: boolean };
 type Channel = { provider: 'sandbox' | 'meta'; status: string; displayPhone: string | null; verifiedName: string | null; tokenHint: string | null; ai: boolean;
   persona: { greeting?: { ar?: string; en?: string }; hours?: string | null; notes?: string | null; quick?: QuickReply[] }; templates: Record<string, { status: string; reason?: string | null }>; error: string | null };
 type QuickReply = { title: string; text: string };
-type Overview = { plan: Plan; limits: { messages: number; ai: number }; used: { messages: number; ai: number }; offers: Offer[]; canConfigure: boolean; channel: Channel | null;
+type Overview = { plan: Plan; ai: AiState; messaging: { state: 'ok' | 'low' | 'out'; pct: number }; offers: Offer[]; canConfigure: boolean; channel: Channel | null;
   signup: { appId: string; configId: string } | null; recipes: Recipe[]; counts: { unread: number; waiting: number; chats: number }; week: { sent: number; pending: number; missed: number };
   summary: { chats: number; replies: number; viewings: number; replySeconds: number | null } };
 type Conv = { id: string; phone: string; name: string | null; leadId: string | null; leadName: string | null; leadStatus: string | null; status: string; handoff: boolean; optedOut: boolean;
@@ -45,6 +49,7 @@ export function Connect() {
   const C = copyOf(lang);
   const q = useQuery<Overview>({ queryKey: ['connect'], queryFn: () => api('/v1/connect'), staleTime: 30_000 });
   const [tab, setTab] = useState<Tab>('inbox');
+  const [plans, setPlans] = useState(false);
   if (q.isLoading) return <div className="grid gap-4"><div className="skeleton h-20" /><div className="skeleton h-[28rem]" /></div>;
   if (!q.data) return <Empty icon="alert" text={errorText(q.error)} />;
   const o = q.data;
@@ -56,13 +61,14 @@ export function Connect() {
         <div className="cx-head-l">
           <HwBadge label="Connect" />
           <span className={`cx-chip ${o.channel.provider === 'sandbox' ? 'warn' : 'ok'}`}><i />{o.channel.provider === 'sandbox' ? C.sandbox : o.channel.displayPhone ?? C.connected}</span>
-          <span className="cx-chip">{o.plan === 'connect-pro' ? 'Pro' : 'Starter'}</span>
+          <button type="button" className="cx-chip tier" onClick={() => setPlans(true)} title={C.plans}>{C.tiers[o.plan] ?? o.plan}{(RANK[o.plan] ?? 0) < 2 && <small>{C.upgrade}</small>}</button>
         </div>
         <div className="cx-meters">
-          <Meter label={C.meterMessages} used={o.used.messages} of={o.limits.messages} />
-          {o.limits.ai > 0 && <Meter label={C.meterAi} used={o.used.ai} of={o.limits.ai} />}
+          <span className={`cx-chip ${o.messaging.state === 'ok' ? '' : 'warn'}`} title={o.messaging.state === 'out' ? C.messagingOut : C.waIncluded}><Icon n="wa" />{C.messaging[o.messaging.state]}</span>
         </div>
       </header>
+      <AiNotice o={o} C={C} />
+      {plans && <Sheet title={C.plans} onClose={() => setPlans(false)}><Offers o={o} C={C} bare /></Sheet>}
       <nav className="cx-tabs" role="tablist">
         {(['inbox', 'automations', 'settings'] as Tab[]).filter((k) => k !== 'settings' || o.canConfigure).map((k) => (
           <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>
@@ -77,15 +83,17 @@ export function Connect() {
   );
 }
 
-function Meter({ label, used, of }: { label: string; used: number; of: number }) {
-  const { num } = useApp();
-  const pct = of ? Math.min(100, Math.round((used / of) * 100)) : 0;
-  return <div className={`cx-meter ${pct >= 90 ? 'hot' : ''}`} title={`${num(used)} / ${num(of)}`}><span>{label}</span><b>{num(used)}<small> / {num(of)}</small></b><i style={{ inlineSize: `${pct}%` }} /></div>;
+/** When the assistant has reached a limit: until when it rests (it comes back by itself), and that chats wait for a person. */
+function AiNotice({ o, C }: { o: Overview; C: Copy }) {
+  const { dateTime } = useApp();
+  if (!hasAi(o.plan) || o.ai.open || !o.ai.resetsAt || !o.channel?.ai) return null;
+  return <p className="cx-notice"><Icon n="clock" />{C.aiPaused(o.ai.reason ?? 'day', dateTime(o.ai.resetsAt))}</p>;
 }
 
-// ------------------------------------------------------------------------------------------------- before the plan
-function Offers({ o, C }: { o: Overview; C: Copy }) {
-  const { lang, money, toast, errorText } = useApp();
+// ------------------------------------------------------------------------------------------------- the tiers
+/** Basic (free with the System), Pro and AI Studio: what each adds, its price, and asking for it (the owner). */
+function Offers({ o, C, bare }: { o: Overview; C: Copy; bare?: boolean }) {
+  const { money, toast, errorText } = useApp();
   const qc = useQueryClient();
   const [cycle, setCycle] = useState<'month' | 'year'>('month');
   const req = useQuery({ queryKey: ['billing-addons'], queryFn: () => api<{ addons: any[]; requests: any[]; owner: boolean }>('/v1/billing/addons') });
@@ -95,7 +103,34 @@ function Offers({ o, C }: { o: Overview; C: Copy }) {
     onSuccess: () => { toast(C.requested); void qc.invalidateQueries({ queryKey: ['billing-addons'] }); }, onError: (e) => toast(errorText(e), 'bad'),
   });
   const owner = !!req.data?.owner;
-  const L = (w: Record<string, string>) => w?.[lang === 'en' ? 'en' : 'ar'] ?? '';
+  const mine = RANK[o.plan ?? ''] ?? -1;
+  const cards = (
+    <>
+      <div className="seg w-fit mx-auto">{(['month', 'year'] as const).map((c) => <button key={c} aria-pressed={cycle === c} onClick={() => setCycle(c)}>{c === 'month' ? C.monthly : C.yearly}</button>)}</div>
+      <div className="cx-plans">
+        {o.offers.map((x) => {
+          const pro = x.code === 'connect-pro', price = cycle === 'year' ? x.priceYear : x.priceMonth, p = pending(x.code), here = o.plan === x.code, below = RANK[x.code] < mine;
+          return (
+            <article key={x.code} className={`cx-plan ${pro ? 'pro' : ''} ${here ? 'here' : ''}`}>
+              {pro && !here && !below && <span className="cx-ribbon">{C.recommended}</span>}
+              {here && <span className="cx-ribbon soft">{C.yourPlan}</span>}
+              <h3>Connect {C.tiers[x.code]}</h3>
+              <div className="cx-price">{x.free ? C.freeWith : <>{price == null ? '—' : money(price)}<small>{cycle === 'year' ? C.perYear : C.perMonth}</small></>}</div>
+              <ul>{(x.code === 'ai-studio' ? C.studioFeatures : pro ? C.proFeatures2 : C.basicFeatures).map((f) => <li key={f}><Icon n="check" />{f}</li>)}
+                <li><Icon n="check" />{C.waIncluded}</li>
+                {x.ai.month > 0 && <li><Icon n="check" />{C.aiLine(x.ai.day, x.ai.month)}</li>}</ul>
+              {x.free || here || below || x.active ? <span className="pill"><Icon n="check" className="h-4 w-4" />{C.included}</span>
+                : p ? <span className="pill warn"><Icon n="clock" className="h-4 w-4" />{C.pending}</span>
+                : owner ? <button className={`btn ${pro ? 'btn-accent' : 'btn-secondary'} justify-center`} disabled={ask.isPending || price == null} onClick={() => ask.mutate(x.code)}>{C.request}</button>
+                : <p className="sub">{C.ownerOnly}</p>}
+            </article>
+          );
+        })}
+      </div>
+      <p className="sub text-center">{C.manualNote}</p>
+    </>
+  );
+  if (bare) return <div className="grid gap-4">{cards}</div>;
   return (
     <div className="cx">
       <section className="cx-hero">
@@ -104,27 +139,7 @@ function Offers({ o, C }: { o: Overview; C: Copy }) {
         <p>{C.heroBody}</p>
         <div className="cx-flow">{C.flow.map((s, i) => <div key={i} className="cx-step"><span>{i + 1}</span><b>{s[0]}</b><small>{s[1]}</small></div>)}</div>
       </section>
-      <div className="seg w-fit mx-auto">{(['month', 'year'] as const).map((c) => <button key={c} aria-pressed={cycle === c} onClick={() => setCycle(c)}>{c === 'month' ? C.monthly : C.yearly}</button>)}</div>
-      <div className="cx-plans">
-        {o.offers.map((x) => {
-          const pro = x.code === 'connect-pro', all = x.code === 'web-connect', price = cycle === 'year' ? x.priceYear : x.priceMonth, p = pending(x.code);
-          return (
-            <article key={x.code} className={`cx-plan ${pro ? 'pro' : ''}`}>
-              {pro && <span className="cx-ribbon">{C.recommended}</span>}
-              {all && <span className="cx-ribbon soft">{C.bundleTag}</span>}
-              <h3>{all ? 'Website + Connect Pro' : pro ? 'Connect Pro' : 'Connect'}</h3>
-              <p className="sub">{L(x.description)}</p>
-              <div className="cx-price">{price == null ? '—' : money(price)}<small>{cycle === 'year' ? C.perYear : C.perMonth}</small></div>
-              <ul>{(all ? C.bundleFeatures : pro ? C.proFeatures : C.starterFeatures).map((f) => <li key={f}><Icon n="check" />{f}</li>)}
-                <li><Icon n="check" />{C.limitLine(x.limits.messages, x.limits.ai)}</li></ul>
-              {p ? <span className="pill warn"><Icon n="clock" className="h-4 w-4" />{C.pending}</span>
-                : owner ? <button className={`btn ${pro ? 'btn-accent' : 'btn-secondary'} justify-center`} disabled={ask.isPending || price == null} onClick={() => ask.mutate(x.code)}>{C.request}</button>
-                : <p className="sub">{C.ownerOnly}</p>}
-            </article>
-          );
-        })}
-      </div>
-      <p className="sub text-center">{C.manualNote}</p>
+      {cards}
     </div>
   );
 }
@@ -297,13 +312,20 @@ function Row({ c, on, C, onOpen }: { c: Conv; on: boolean; C: Copy; onOpen(): vo
 }
 
 function ThreadView({ id, C, o, onBack }: { id: string; C: Copy; o: Overview; onBack(): void }) {
-  const { toast, errorText, dateTime } = useApp();
+  const { toast, errorText, dateTime, lang } = useApp();
   const visible = useVisible();
   const qc = useQueryClient();
   const key = ['connect-conv', id];
   const q = useQuery<Thread>({ queryKey: key, queryFn: () => api(`/v1/connect/conversations/${id}`), refetchInterval: visible ? 4000 : false, staleTime: 2000 });
   const [text, setText] = useState('');
   const [tool, setTool] = useState<'quick' | 'listing' | null>(null);
+  const [brief, setBrief] = useState<string | null>(null);
+  const assist = useMutation({
+    mutationFn: (mode: 'suggest' | 'summary') => api<{ text: string }>(`/v1/connect/conversations/${id}/assist`, { body: { mode, lang: lang === 'en' ? 'en' : 'ar' } }).then((r) => ({ mode, text: r.text })),
+    onSuccess: (r) => { if (r.mode === 'suggest') { setText(r.text); area.current?.focus(); } else setBrief(r.text); },
+    onError: (e: any) => { toast(e?.code === 'AI_PAUSED' ? C.aiPaused(o.ai.reason ?? 'day', o.ai.resetsAt ? dateTime(o.ai.resetsAt) : '') : errorText(e), 'bad'); void qc.invalidateQueries({ queryKey: ['connect'] }); },
+  });
+  const tools = hasAi(o.plan);
   const area = useRef<HTMLTextAreaElement>(null);
   const end = useRef<HTMLDivElement>(null);
   const count = q.data?.messages.length ?? 0;
@@ -332,7 +354,7 @@ function ThreadView({ id, C, o, onBack }: { id: string; C: Copy; o: Overview; on
   if (q.isLoading) return <div className="grid gap-3 p-4"><div className="skeleton h-12" /><div className="skeleton h-64" /></div>;
   if (!q.data) return <Empty icon="alert" text={errorText(q.error)} />;
   const c = q.data.conversation, lead = q.data.lead, name = lead?.name || c.name || c.phone;
-  const assistant = o.plan === 'connect-pro' && o.channel?.ai;
+  const assistant = hasAi(o.plan) && o.channel?.ai;
   return (
     <>
       <header className="cx-th-head">
@@ -343,6 +365,7 @@ function ThreadView({ id, C, o, onBack }: { id: string; C: Copy; o: Overview; on
           <small><bdi dir="ltr">{c.phone}</bdi></small>
         </div>
         <div className="cx-th-acts">
+          {tools && <button className="btn btn-ghost btn-sm" disabled={assist.isPending} onClick={() => assist.mutate('summary')} aria-label={C.summary} title={C.summary}><Icon n="sparkle" /><span className="cx-wide-only">{assist.isPending && assist.variables === 'summary' ? C.thinking : C.summary}</span></button>}
           {lead && <button className="btn btn-ghost btn-sm" onClick={() => go(`#/lead?id=${lead.id}`)} aria-label={C.openLead} title={C.openLead}><Icon n="user" /><span className="cx-wide-only">{C.openLead}</span></button>}
           {assistant && (c.handoff
             ? <button className="btn btn-secondary btn-sm" disabled={hand.isPending} onClick={() => hand.mutate(false)}><Icon n="sparkle" />{C.giveBack}</button>
@@ -350,6 +373,7 @@ function ThreadView({ id, C, o, onBack }: { id: string; C: Copy; o: Overview; on
         </div>
       </header>
       {lead && <LeadStrip lead={lead} C={C} />}
+      {brief && <div className="cx-brief"><b><Icon n="sparkle" />{C.summaryTitle}</b><p>{brief}</p><button className="cx-x" onClick={() => setBrief(null)} aria-label={C.back}>×</button></div>}
       <div className="cx-msgs">
         {groups.map((g) => (
           <div key={g.day} className="cx-day">
@@ -369,6 +393,7 @@ function ThreadView({ id, C, o, onBack }: { id: string; C: Copy; o: Overview; on
               <span className="cx-tools">
                 <button type="button" className="cx-tool" aria-pressed={tool === 'quick'} aria-label={C.quick} title={C.quick} onClick={() => setTool(tool === 'quick' ? null : 'quick')}><Icon n="sparkle" /></button>
                 <button type="button" className="cx-tool" aria-label={C.sendListing} title={C.sendListing} onClick={() => setTool('listing')}><Icon n="home" /></button>
+                {tools && <button type="button" className={`cx-tool ${assist.isPending && assist.variables === 'suggest' ? 'busy' : ''}`} disabled={assist.isPending} aria-label={C.suggest} title={C.suggest} onClick={() => assist.mutate('suggest')}><Icon n="pen" /></button>}
               </span>
               <textarea ref={area} rows={1} value={text} placeholder={C.write} onChange={(e) => setText(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); (e.currentTarget.form as HTMLFormElement).requestSubmit(); } }} />
@@ -532,8 +557,8 @@ function Settings({ o, C }: { o: Overview; C: Copy }) {
   return (
     <div className="cx-set">
       <section className="panel cx-card">
-        <div className="cx-card-h"><span className="cx-r-ic"><Icon n="sparkle" /></span><div><b>{C.assistant}</b><p className="sub">{o.plan === 'connect-pro' ? C.assistantBody : C.assistantPro}</p></div>
-          {o.plan === 'connect-pro' && <label className="cx-switch"><input type="checkbox" role="switch" checked={ch.ai} onChange={(e) => save.mutate({ ai: e.target.checked })} /><i aria-hidden="true" /></label>}</div>
+        <div className="cx-card-h"><span className="cx-r-ic"><Icon n="sparkle" /></span><div><b>{C.assistant}</b><p className="sub">{hasAi(o.plan) ? C.assistantBody : C.assistantPro}</p></div>
+          {hasAi(o.plan) && <label className="cx-switch"><input type="checkbox" role="switch" checked={ch.ai} onChange={(e) => save.mutate({ ai: e.target.checked })} /><i aria-hidden="true" /></label>}</div>
         <div className="web-row2">
           <label className="field">{C.hours}<input className="input" value={p.hours} placeholder={C.hoursHint} onChange={(e) => setP({ ...p, hours: e.target.value })} /></label>
         </div>

@@ -5,17 +5,17 @@ import { Hono, type Context } from 'hono';
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import { newId } from '@hemlo/core';
 import { withOrg, withSystem, type Database } from '@hemlo/db';
-import { hemloPlan, hemloPayment, hemloPlanRequest, hemloSubscription, hemloAddon, hemloAddonRequest, hemloAddonEntitlement, hemloAddonPayment, type PlanLimits } from '@hemlo/db/schema';
+import { hemloPlan, hemloPayment, hemloPlanRequest, hemloSubscription, hemloAddon, hemloAddonRequest, hemloAddonEntitlement, hemloAddonPayment, ADDON_LIMIT_KEYS, type AddonLimits, type PlanLimits } from '@hemlo/db/schema';
 import type { StaffPermission } from '@hemlo/core';
 import { audit } from '@hemlo/auth/audit';
 import { HttpError, requireOrgUser } from '../principal';
 import { actor, bad, text } from './sys-common';
 import { isDemoOrg } from './demo';
 import { plansOf, forgetPlans, stateOf, subscriptionOf, forgetSubscription, EDITIONS, GRACE_DAYS, type Plan } from '../subscription';
-import { addonEntitlement, addonOffer, addonsActive, requireAddonOffer } from '../addons';
+import { addonEntitlement, addonOffer, addonsActive, forgetAddons, isFree, limitsOf, requireAddonOffer } from '../addons';
 
-/** Tiers of one product: the higher one replaces the lower (asking for Starter while on Pro makes no sense). */
-const REPLACES: Record<string, string[]> = { 'connect-pro': ['connect'], 'web-connect': ['website', 'connect', 'connect-pro'] };
+/** Tiers of one product: the higher one replaces the lower (asking for Basic while on Pro makes no sense). */
+const REPLACES: Record<string, string[]> = { 'connect-pro': ['connect'], 'ai-studio': ['connect', 'connect-pro'], 'web-connect': ['website', 'connect', 'connect-pro'] };
 const higherOf = (code: string) => Object.keys(REPLACES).filter((k) => REPLACES[k].includes(code));
 import type { AppEnv, Deps } from '../types';
 
@@ -49,10 +49,11 @@ export function publicPlanRoutes(d: Deps) {
     const edition = c.req.query('edition');
     const rows = await withSystem(d.db, (tx) => tx.select().from(hemloAddon).where(and(eq(hemloAddon.public, true), eq(hemloAddon.active, true))));
     c.header('cache-control', 'public, max-age=300');
-    return c.json({ addons: rows.filter((x) => !edition || x.compatibleEditions.includes(edition)).map((x) => ({
-      id: x.id, code: x.code, name: x.name, description: x.description, compatibleEditions: x.compatibleEditions,
-      priceMonth: x.priceMonth, priceYear: x.priceYear, configured: x.priceMonth != null && x.priceYear != null,
-    })) });
+    return c.json({ addons: rows.filter((x) => !edition || x.compatibleEditions.includes(edition)).sort((x, y) => x.sort - y.sort).map((x) => {
+      const l = limitsOf(x);
+      return { id: x.id, code: x.code, name: x.name, description: x.description, compatibleEditions: x.compatibleEditions, includes: x.includes,
+        priceMonth: x.priceMonth, priceYear: x.priceYear, configured: x.priceMonth != null && x.priceYear != null, free: isFree(x), ai: l.aiMonth > 0, studio: l.studioMonth > 0 };
+    }) });
   });
   return r;
 }
@@ -87,7 +88,8 @@ export function billingRoutes(d: Deps) {
       payments: await tx.select().from(hemloAddonPayment).where(eq(hemloAddonPayment.organizationId, a.organizationId)).orderBy(desc(hemloAddonPayment.createdAt)).limit(24),
     }))]);
     return c.json({ edition: sub.edition, coreStatus: sub.status, owner: (() => { try { actor(c, 'billing', 'manage'); return true; } catch { return false; } })(),
-      addons: compatible.map((x) => ({ id: x.id, code: x.code, name: x.name, description: x.description, priceMonth: x.priceMonth, priceYear: x.priceYear, configured: x.priceMonth != null && x.priceYear != null,
+      addons: compatible.sort((x, y) => x.sort - y.sort).map((x) => ({ id: x.id, code: x.code, name: x.name, description: x.description, priceMonth: x.priceMonth, priceYear: x.priceYear, configured: x.priceMonth != null && x.priceYear != null,
+        free: isFree(x), included: !!states[x.code]?.active && (isFree(x) || !!states[x.code]?.via), via: states[x.code]?.via ?? null,
         entitlement: states[x.code]?.entitlement ? { ...states[x.code].entitlement, active: states[x.code].active } : null })), requests: out.requests, payments: out.payments });
   });
 
@@ -101,6 +103,7 @@ export function billingRoutes(d: Deps) {
     const billing = b.billing === 'year' ? 'year' : b.billing === undefined || b.billing === 'month' ? 'month' : bad('BAD_BILLING');
     const price = billing === 'year' ? offer.priceYear : offer.priceMonth;
     if (price == null) throw new HttpError(409, 'ADDON_PRICE_UNCONFIGURED');
+    if (isFree(offer)) throw new HttpError(409, 'ADDON_INCLUDED'); // free with the System: nothing to ask for
     const pending = await withOrg(d.db, a.organizationId, (tx) => tx.select({ id: hemloAddonRequest.id }).from(hemloAddonRequest)
       .where(and(eq(hemloAddonRequest.organizationId, a.organizationId), eq(hemloAddonRequest.addonId, offer.id), eq(hemloAddonRequest.status, 'new'))).limit(1));
     if (pending.length) throw new HttpError(409, 'ADDON_REQUEST_PENDING');
@@ -199,7 +202,7 @@ export function adminPricingRoutes(d: Deps) {
   r.patch('/addons/:code', async (c) => {
     const s = need(c, 'billing.manage');
     const b = await c.req.json<any>();
-    const money = (v: unknown) => v == null || v === '' ? null : Number.isInteger(Number(v)) && Number(v) > 0 && Number(v) <= 1_000_000_000 ? Number(v) : bad('BAD_PRICE');
+    const money = (v: unknown) => v == null || v === '' ? null : Number.isInteger(Number(v)) && Number(v) >= 0 && Number(v) <= 1_000_000_000 ? Number(v) : bad('BAD_PRICE');
     const input: Partial<typeof hemloAddon.$inferInsert> = { updatedBy: s.userId, updatedAt: new Date() };
     if (b.name !== undefined) input.name = words(b.name, 'BAD_NAME', true)!;
     if (b.description !== undefined) input.description = words(b.description, 'BAD_TEXT') ?? { ar: '', en: '' };
@@ -211,8 +214,21 @@ export function adminPricingRoutes(d: Deps) {
     if (b.priceYear !== undefined) input.priceYear = money(b.priceYear);
     if (b.public !== undefined) input.public = !!b.public;
     if (b.active !== undefined) input.active = !!b.active;
+    if (b.sort !== undefined) input.sort = Number.isInteger(Number(b.sort)) ? Number(b.sort) : bad('BAD_SORT');
+    if (b.limits !== undefined) {
+      if (!b.limits || typeof b.limits !== 'object') bad('BAD_LIMITS');
+      const l: AddonLimits = {};
+      for (const k of ADDON_LIMIT_KEYS) {
+        const v = b.limits[k];
+        if (v == null || v === '') continue;
+        if (!Number.isInteger(Number(v)) || Number(v) < 0 || Number(v) > (k === 'waMarketingPct' ? 100 : 100_000_000)) bad('BAD_LIMITS');
+        l[k] = Number(v);
+      }
+      input.limits = l;
+    }
     const [row] = await withSystem(d.db, (tx) => tx.update(hemloAddon).set(input).where(eq(hemloAddon.code, c.req.param('code'))).returning());
     if (!row) throw new HttpError(404, 'NOT_FOUND');
+    forgetAddons();
     await audit(d.db, { kind: 'admin.addon_updated', userId: s.userId, detail: { code: row.code, ...input } });
     return c.json({ addon: row });
   });

@@ -108,8 +108,8 @@ describe('asking for a plan, paying, and the admin side', () => {
 describe('optional add-ons', () => {
   it('launches at its list price, keeps an unconfigured price non-purchasable, and activates only after staff confirms the catalog amount', async () => {
     const offers = (await new Browser(t.app).get('/v1/plans/addons?edition=realestate')).json.addons;
-    expect(offers.map((x: any) => [x.code, x.priceMonth, x.priceYear])).toEqual(expect.arrayContaining([['website', 25000, 250000], ['connect', 35000, 350000], ['connect-pro', 75000, 750000], ['web-connect', 90000, 900000]]));
-    expect(offers).toHaveLength(4);
+    // in order: Website, then Connect's tiers (Basic free with the System, Pro, AI Studio); the old bundle is retired
+    expect(offers.map((x: any) => [x.code, x.priceMonth, x.priceYear, x.free])).toEqual([['website', 10000, 100000, false], ['connect', 0, 0, true], ['connect-pro', 35000, 350000, false], ['ai-studio', 50000, 500000, false]]);
     await founder.req('PATCH', '/v1/admin/addons/website', { priceMonth: null, priceYear: null });
     expect((await new Browser(t.app).get('/v1/plans/addons?edition=realestate')).json.addons.find((x: any) => x.code === 'website')).toMatchObject({ configured: false, priceMonth: null });
     expect((await new Browser(t.app).get('/v1/plans/addons?edition=store')).json.addons).toEqual([]);
@@ -141,6 +141,7 @@ describe('optional add-ons', () => {
     const mine = async (code: string) => (await owner.get('/v1/billing/addons')).json.addons.find((x: any) => x.code === code);
     expect((await mine('website')).entitlement.active).toBe(true);
     expect((await mine('connect')).entitlement).toBeNull(); // one add-on's entitlement is never shown on another
+    expect(await mine('connect')).toMatchObject({ free: true, included: true }); // Basic: free with the System, nothing to ask for
     expect((await owner.post('/v1/web/site/enable')).status).toBe(200);
     await owner.put('/v1/web/site', { settings: { contact: { whatsapp: '07701234567' } } });
     expect((await owner.post('/v1/web/site/publish')).status).toBe(200);
@@ -151,29 +152,28 @@ describe('optional add-ons', () => {
     expect(canceled.json.entitlement.status).toBe('canceled');
     expect((await owner.post('/v1/web/site/publish')).status).toBe(402);
 
-    // Connect's two tiers: an upgrade to Pro ends Starter, and Starter can't be asked for while on Pro
+    // Connect's tiers: Basic is free (nothing to ask for); Pro, then AI Studio, each ending the one below
     const approve = async (code: string, amount: number) => {
       const req = await owner.post(`/v1/billing/addons/${code}/request`, { billing: 'month' });
       expect(req.status).toBe(201);
       return founder.req('PATCH', `/v1/admin/addon-requests/${req.json.request.id}`, { action: 'activate', amount, method: 'cash' });
     };
-    expect((await approve('connect', 35000)).status).toBe(201);
-    expect((await approve('connect-pro', 75000)).status).toBe(201);
+    expect((await owner.get('/v1/connect')).json.plan).toBe('connect');
+    expect((await owner.post('/v1/billing/addons/connect/request', { billing: 'month' })).json.error).toBe('ADDON_INCLUDED');
+    expect((await approve('connect-pro', 35000)).status).toBe(201);
     expect((await mine('connect-pro')).entitlement.active).toBe(true);
-    expect((await mine('connect')).entitlement.status).toBe('canceled');
-    expect((await owner.post('/v1/billing/addons/connect/request', { billing: 'month' })).json.error).toBe('ADDON_ALREADY_ACTIVE');
+    expect(await mine('connect')).toMatchObject({ included: true, via: 'connect-pro' });
     expect((await owner.get('/v1/connect')).json.plan).toBe('connect-pro');
 
-    // the bundle: Website + Connect Pro below the price of the two; it ends both, and switches both on
-    expect((await approve('web-connect', 90000)).status).toBe(201);
-    expect((await mine('connect-pro')).entitlement).toMatchObject({ addonId: 'web-connect', active: true }); // shown as on, through the bundle
+    expect((await approve('ai-studio', 50000)).status).toBe(201);
     expect((await sys(`select status from hemlo_addon_entitlement where organization_id = $1 and addon_id = 'connect-pro'`, [org.id]))[0].status).toBe('canceled');
-    expect((await mine('web-connect')).entitlement.active).toBe(true);
+    expect((await mine('connect-pro')).entitlement).toMatchObject({ addonId: 'ai-studio', active: true }); // on, through AI Studio
     const c = (await owner.get('/v1/connect')).json;
-    expect(c.plan).toBe('connect-pro');
-    expect(c.via).toBe('web-connect');
-    expect((await owner.post('/v1/web/site/publish')).status).toBe(200); // the website is on again, through the bundle
-    expect((await owner.post('/v1/billing/addons/website/request', { billing: 'month' })).json.error).toBe('ADDON_ALREADY_ACTIVE');
+    expect(c.plan).toBe('ai-studio');
+    expect(c.ai).toMatchObject({ open: true, limits: { day: 60, week: 300, month: 1000 } });
+    expect((await owner.post('/v1/billing/addons/connect-pro/request', { billing: 'month' })).json.error).toBe('ADDON_ALREADY_ACTIVE');
+    expect((await owner.get('/v1/studio')).json).toMatchObject({ active: true, allowance: { copy: 200, images: 60, videos: 0 }, tools: { copy: true, image: false, video: false } });
+    expect((await owner.post('/v1/web/site/publish')).status).toBe(402); // the website was canceled, and nothing brings it back
   });
 });
 

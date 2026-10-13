@@ -8,7 +8,8 @@ import { and, desc, eq, gte, inArray, isNotNull, isNull, lt, lte, or, sql } from
 import { newId } from '@hemlo/core';
 import { withOrg, withSystem, type Database } from '@hemlo/db';
 import { connectChannel, connectConversation, connectJob, connectMessage, connectRecipe, reContract, reLead, reOwner, reProperty, reReport, reViewing, type ConnectRecipeKey } from '@hemlo/db/schema';
-import { addonsActive } from '../addons';
+import { addonsActive, limitsOf } from '../addons';
+import { costsOf, waCost, type WaCategory } from '../costs';
 import { openKey, masterSecret } from '../ai/keys';
 import { AiError, type JsonSchema } from '../ai/engine';
 import { engineFor } from '../ai/router';
@@ -17,7 +18,7 @@ import { activity, notice, priceText, settingsOf, SITE, token, typeName } from '
 import { asWants, cardCols } from '../routes/realestate/properties';
 import { matchOf, rank, MATCHABLE } from '../routes/realestate/match';
 import { HttpError } from '../principal';
-import { LIMITS, PLAN_CODES, RECIPES, TEMPLATES, fill, isStart, isStop, planAllows, recipeOf, type PlanCode } from './catalog';
+import { PLAN_CODES, RECIPES, TEMPLATES, fill, hasAi, isStart, isStop, planAllows, recipeOf, type PlanCode } from './catalog';
 import { metaWa, sandboxWa, WaError, type WaInbound, type WaProvider } from './wa';
 import type { Deps } from '../types';
 
@@ -28,19 +29,55 @@ const DAY = 86400_000, WINDOW = DAY;
 const arabic = (s: string) => /[؀-ۿ]/.test(s);
 
 // ---------------------------------------------------------------------------------------------------------- the plan
-/** Which Connect plan is on (Pro wins over Starter), its monthly limits, and how much of them is used. */
-export async function planOf(d: Deps, org: string) {
-  const [map, used] = await Promise.all([addonsActive(d.db, org, PLAN_CODES), usageOf(d.db, org)]);
-  const plan: PlanCode | null = map['connect-pro']?.active ? 'connect-pro' : map.connect?.active ? 'connect' : null;
-  return { plan, limits: plan ? LIMITS[plan] : { messages: 0, ai: 0 }, used, offers: map };
+/** The AI jobs that count toward Connect's AI limits: the assistant's replies, and the agent's tools (suggest, summary). */
+export const CONNECT_AI = ['connect_reply', 'connect_assist'] as const;
+
+/** Which tier is on (the highest), its limits, how much of them is used, and whether the assistant may answer now. */
+export async function planOf(d: Deps, org: string, now = new Date()) {
+  const [map, used] = await Promise.all([addonsActive(d.db, org, PLAN_CODES), usageOf(d.db, org, now)]);
+  const plan = ([...PLAN_CODES].reverse().find((c) => map[c]?.active) ?? null) as PlanCode | null;
+  const limits = limitsOf(plan ? map[plan].offer : null);
+  return { plan, limits, used, ai: aiGate(plan, limits, used.ai, now), wa: waState(limits, used), offers: map };
 }
-/** This month (Baghdad): messages Hemlo started, and the assistant's replies. One indexed count. */
-export async function usageOf(db: Database, org: string) {
-  const { month } = baghdadStarts();
+
+/** Saturday 00:00 in Baghdad, this week. */
+export function weekStart(now = new Date()) {
+  const { day } = baghdadStarts(now);
+  const dow = new Date(+now + 3 * 3600_000).getUTCDay(); // 6 = Saturday
+  return new Date(+day - ((dow + 1) % 7) * DAY);
+}
+/** What Connect has used: AI calls this day, week and month; WhatsApp IQD this month (and how much of it promotional);
+ *  automatic messages today. One round trip. */
+export async function usageOf(db: Database, org: string, now = new Date()) {
+  const { month, day } = baghdadStarts(now), week = weekStart(now), from = +week < +month ? week : month;
   const [r] = rowsOf(await withOrg(db, org, (tx) => tx.execute(sql`select
-      count(*) filter (where author = 'automation' and status <> 'failed' and coalesce(recipe, '') <> 'opt_out' and not (coalesce(recipe, '') = 'instant_reply' and kind = 'text'))::int as messages, count(*) filter (where author = 'ai')::int as ai
-    from connect_message where organization_id = ${org} and created_at >= ${month.toISOString()}`)));
-  return { messages: Number(r?.messages ?? 0), ai: Number(r?.ai ?? 0) };
+      (select count(*) filter (where created_at >= ${day.toISOString()}) from ai_usage where organization_id = ${org} and ok and feature in ('connect_reply', 'connect_assist') and created_at >= ${from.toISOString()})::int as ai_day,
+      (select count(*) filter (where created_at >= ${week.toISOString()}) from ai_usage where organization_id = ${org} and ok and feature in ('connect_reply', 'connect_assist') and created_at >= ${from.toISOString()})::int as ai_week,
+      (select count(*) filter (where created_at >= ${month.toISOString()}) from ai_usage where organization_id = ${org} and ok and feature in ('connect_reply', 'connect_assist') and created_at >= ${from.toISOString()})::int as ai_month,
+      (select coalesce(sum(cost_iqd), 0) from connect_message where organization_id = ${org} and direction = 'out' and status <> 'failed' and created_at >= ${month.toISOString()})::int as wa,
+      (select coalesce(sum(cost_iqd), 0) from connect_message where organization_id = ${org} and direction = 'out' and status <> 'failed' and category = 'marketing' and created_at >= ${month.toISOString()})::int as wa_marketing,
+      (select count(*) from connect_message where organization_id = ${org} and author = 'automation' and status <> 'failed' and coalesce(recipe, '') <> 'opt_out' and created_at >= ${day.toISOString()})::int as sends_day`)));
+  return { ai: { day: Number(r?.ai_day ?? 0), week: Number(r?.ai_week ?? 0), month: Number(r?.ai_month ?? 0) },
+    wa: Number(r?.wa ?? 0), waMarketing: Number(r?.wa_marketing ?? 0), sendsDay: Number(r?.sends_day ?? 0) };
+}
+
+type Limits = ReturnType<typeof limitsOf>;
+/** May the assistant (and the agent's AI tools) run now? When a limit is reached it pauses, and it comes back by itself
+ *  when that window starts again (midnight, Saturday, the 1st, Baghdad time): no switch to flip, no job to run. */
+export function aiGate(plan: PlanCode | null, l: Limits, u: { day: number; week: number; month: number }, now = new Date()) {
+  if (!hasAi(plan) || !l.aiMonth) return { open: false, reason: 'plan' as const, resetsAt: null };
+  const { day } = baghdadStarts(now), week = weekStart(now);
+  const b = new Date(+now + 3 * 3600_000);
+  const nextMonth = new Date(Date.UTC(b.getUTCFullYear(), b.getUTCMonth() + 1, 1) - 3 * 3600_000);
+  if (u.month >= l.aiMonth) return { open: false, reason: 'month' as const, resetsAt: nextMonth.toISOString() };
+  if (l.aiWeek && u.week >= l.aiWeek) return { open: false, reason: 'week' as const, resetsAt: new Date(+week + 7 * DAY).toISOString() };
+  if (l.aiDay && u.day >= l.aiDay) return { open: false, reason: 'day' as const, resetsAt: new Date(+day + DAY).toISOString() };
+  return { open: true, reason: null, resetsAt: null };
+}
+/** WhatsApp messaging, as the business sees it: included, running low, or used up for the month (never a count). */
+export function waState(l: Limits, u: { wa: number }) {
+  const pct = l.waIqd ? Math.min(100, Math.round((u.wa / l.waIqd) * 100)) : 100;
+  return { state: !l.waIqd || pct >= 100 ? 'out' as const : pct >= 80 ? 'low' as const : 'ok' as const, pct };
 }
 
 // ---------------------------------------------------------------------------------------------------------- sending
@@ -63,6 +100,8 @@ export async function deliver(d: Deps, ch: Channel, conv: Conversation, out: Out
   if (!open && !out.template) throw new HttpError(409, 'WINDOW_CLOSED');
   if (!open && !approved(ch, out.template!.name, out.template!.lang)) throw new HttpError(409, 'TEMPLATE_NOT_APPROVED');
   const viaTemplate = !open;
+  const category: WaCategory = viaTemplate ? (TEMPLATES[out.template!.name]?.category === 'MARKETING' ? 'marketing' : 'utility') : 'service';
+  const costIqd = waCost(await costsOf(d.db), conv.phone, category);
   let waId: string | null = null, error: string | null = null;
   try { waId = (await p.send(viaTemplate ? { to: conv.phone, template: out.template!.name, lang: out.template!.lang, params: out.template!.params } : { to: conv.phone, text: out.text })).id; }
   catch (e) { error = e instanceof Error ? e.message.slice(0, 300) : 'SEND_FAILED'; }
@@ -70,7 +109,7 @@ export async function deliver(d: Deps, ch: Channel, conv: Conversation, out: Out
   const [m] = await withOrg(d.db, conv.organizationId, async (tx) => {
     const row = await tx.insert(connectMessage).values({ id: newId(), organizationId: conv.organizationId, conversationId: conv.id, direction: 'out', author: out.author,
       userId: out.userId ?? null, kind: viaTemplate ? 'template' : 'text', body: out.text, template: viaTemplate ? out.template!.name : null, recipe: out.recipe ?? null,
-      status: error ? 'failed' : 'sent', waId, error, meta: out.meta ?? {}, createdAt: now }).returning();
+      status: error ? 'failed' : 'sent', waId, error, meta: out.meta ?? {}, category, costIqd: error ? 0 : costIqd, createdAt: now }).returning();
     if (!error) await tx.update(connectConversation).set({ lastMessageAt: now, preview: out.text.slice(0, 160), ...(out.author === 'agent' ? { unread: 0 } : {}) }).where(eq(connectConversation.id, conv.id));
     return row;
   });
@@ -217,8 +256,8 @@ export function inventedNumbers(reply: string, facts: string) {
 export async function aiReply(d: Deps, ch: Channel, conversationId: string): Promise<boolean> {
   const org = ch.organizationId;
   if (!ch.ai) return false;
-  const { plan, limits, used } = await planOf(d, org);
-  if (plan !== 'connect-pro' || used.ai >= limits.ai) return false;
+  const { ai } = await planOf(d, org);
+  if (!ai.open) return false;
   const ctx = await withOrg(d.db, org, async (tx) => {
     const [conv] = await tx.select().from(connectConversation).where(eq(connectConversation.id, conversationId));
     if (!conv || conv.handoff || conv.optedOut || !windowOpen(conv)) return null;
@@ -237,7 +276,7 @@ export async function aiReply(d: Deps, ch: Channel, conversationId: string): Pro
     return { conv, msgs, last, lead: lead ?? null, list, s };
   });
   if (!ctx) return false;
-  const [snap, engine] = await Promise.all([snapshot(d.db, org), engineFor(d, 'realestate', 'connect_reply')]);
+  const [snap, engine] = await Promise.all([snapshot(d.db, org), engineFor(d, 'realestate', 'connect_reply', org)]);
   if (snap.off || !engine) return false;
   if (engine.paid && await overBudget(d.db, Number(d.env.AI_BUDGET_USD) || DEFAULT_BUDGET_USD)) return false;
   const agency = await businessName(d, org);
@@ -427,24 +466,31 @@ export const sendingHours = (now: Date) => { const h = new Date(+now + 3 * 3600_
 export async function flush(d: Deps, org: string, now = new Date(), limit = 60, only?: ConnectRecipeKey) {
   const ch = await channelOf(d, org);
   if (!ch || ch.status !== 'connected') return { sent: 0, skipped: 0, failed: 0 };
-  const { plan, limits, used } = await planOf(d, org);
+  const { plan, limits, used } = await planOf(d, org, now);
   const jobs = await withOrg(d.db, org, (tx) => tx.select().from(connectJob).where(and(eq(connectJob.organizationId, org), eq(connectJob.status, 'pending'), lte(connectJob.dueAt, now), ...(only ? [eq(connectJob.recipe, only)] : [])))
     .orderBy(connectJob.dueAt).limit(limit));
   if (!jobs.length) return { sent: 0, skipped: 0, failed: 0 };
   const wa = await providerOf(d, ch);
   const recipes = await withOrg(d.db, org, (tx) => recipesOn(tx, org));
-  let room = limits.messages - used.messages, sent = 0, skipped = 0, failed = 0;
+  const costs = await costsOf(d.db);
+  const marketingCap = Math.floor((limits.waIqd * limits.waMarketingPct) / 100);
+  let spent = used.wa, marketing = used.waMarketing, sends = used.sendsDay, sent = 0, skipped = 0, failed = 0;
   for (const j of jobs) {
     const recipe = recipeOf(j.recipe);
     const finish = (status: 'done' | 'skipped' | 'failed', error: string | null = null) => withOrg(d.db, org, (tx) => tx.update(connectJob)
       .set({ status, error, doneAt: new Date(), tries: j.tries + 1 }).where(eq(connectJob.id, j.id)));
     if (!recipe || !planAllows(plan, recipe) || !recipes.get(recipe.key)?.on) { await finish('skipped', 'OFF'); skipped++; continue; }
-    if (room <= 0) { await finish('skipped', 'MONTHLY_LIMIT'); skipped++; continue; }
+    if (sends >= limits.sendsDay) break; // the day's automatic messages are out: the rest wait for tomorrow
     const { conv } = await withOrg(d.db, org, (tx) => conversationFor(tx, org, j.phone, null, j.payload.lang));
     if (conv.optedOut) { await finish('skipped', 'OPTED_OUT'); skipped++; continue; }
+    // WhatsApp messaging is Hemlo's to pay: within the month's allowance, and promotions within their share of it
+    const category: WaCategory = windowOpen(conv) ? 'service' : TEMPLATES[j.payload.template]?.category === 'MARKETING' ? 'marketing' : 'utility';
+    const cost = waCost(costs, conv.phone, category);
+    if (cost && spent + cost > limits.waIqd) { await finish('skipped', 'ALLOWANCE_USED'); skipped++; continue; }
+    if (cost && category === 'marketing' && marketing + cost > marketingCap) { await finish('skipped', 'MARKETING_ALLOWANCE_USED'); skipped++; continue; }
     try {
       await deliver(d, ch, conv, { author: 'automation', recipe: j.recipe, text: j.payload.text, template: { name: j.payload.template, lang: j.payload.lang, params: j.payload.params } }, wa);
-      await finish('done'); sent++; room--;
+      await finish('done'); sent++; sends++; spent += cost; if (category === 'marketing') marketing += cost;
     } catch (e) {
       const code = e instanceof HttpError ? e.code : 'SEND_FAILED';
       if (code === 'TEMPLATE_NOT_APPROVED' || code === 'WINDOW_CLOSED' || j.tries >= 2) { await finish(code === 'TEMPLATE_NOT_APPROVED' ? 'skipped' : 'failed', code); failed++; }

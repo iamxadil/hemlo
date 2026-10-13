@@ -22,15 +22,22 @@ export const BUILT_IN: ProviderDef[] = [
   { id: 'groq', kind: 'openai', label: 'Groq', baseUrl: 'https://api.groq.com/openai/v1', envKey: 'GROQ_API_KEY', keyUrl: 'https://console.groq.com/keys' },
 ];
 
-/** Every AI job, by system, and whether it reads a photo (only models that see images can do those). */
-export const AI_JOBS: { edition: string; feature: string; vision: boolean }[] = [
+/** Every AI job, by system: whether it reads a photo (only models that see images can do those), and what it makes:
+ *  text (JSON), an image or a video. Image and video jobs are priced per item (the route's price), not per token. */
+export type JobKind = 'text' | 'image' | 'video';
+export const AI_JOBS: { edition: string; feature: string; vision: boolean; kind?: JobKind }[] = [
   { edition: 'store', feature: 'invoice', vision: true },
   { edition: 'store', feature: 'ask', vision: false },
   { edition: 'gym', feature: 'members', vision: true },
   { edition: 'realestate', feature: 're_describe', vision: false },
   { edition: 'realestate', feature: 're_ask', vision: false },
   { edition: 'realestate', feature: 'connect_reply', vision: false },
+  { edition: 'realestate', feature: 'connect_assist', vision: false },
+  { edition: 'realestate', feature: 'studio_copy', vision: false },
+  { edition: 'realestate', feature: 'studio_image', vision: false, kind: 'image' },
+  { edition: 'realestate', feature: 'studio_video', vision: false, kind: 'video' },
 ];
+export const kindOf = (feature: string): JobKind => AI_JOBS.find((j) => j.feature === feature)?.kind ?? 'text';
 export const EDITIONS_WITH_AI = ['store', 'dental', 'gym', 'realestate', 'school'] as const;
 
 /** A business's edition from its subscription, or (a demo, no subscription yet) from the kind of business it is. */
@@ -64,26 +71,28 @@ export async function aiConfig(d: Deps): Promise<Cfg> {
 }
 
 /** An engine for one provider and model, or nothing (switched off, no key, unknown). */
-export function engineOf(d: Deps, p: Provider | undefined, model: string, price?: { input: number; output: number } | null): Engine | undefined {
+export function engineOf(d: Deps, p: Provider | undefined, model: string, price?: { input: number; output: number } | null, each?: number | null): Engine | undefined {
   if (!p || !p.enabled || !model) return undefined;
   const ai = (d.env as unknown as { AI?: { run(model: string, input: Record<string, unknown>): Promise<any> } }).AI;
   switch (p.def.kind) {
-    case 'workers-ai': return ai ? workersAi(ai, model) : undefined;
+    case 'workers-ai': return ai ? workersAi(ai, model, each) : undefined;
     case 'anthropic': return p.key ? claude(p.key, model, price ?? undefined) : undefined;
     case 'openai': return p.key && p.def.baseUrl
-      ? openaiCompat({ name: p.def.id, baseUrl: p.def.baseUrl, apiKey: p.key, model, headers: p.def.headers, paid: !model.endsWith(':free'), price: price ?? null })
+      ? openaiCompat({ name: p.def.id, baseUrl: p.def.baseUrl, apiKey: p.key, model, headers: p.def.headers, paid: !model.endsWith(':free'), price: price ?? null, each })
       : undefined;
   }
 }
 
-/** The engine for one job in one system: the dashboard's choice (with its fallback), else the default engine. */
-export async function engineFor(d: Deps, edition: string, feature: string): Promise<Engine | undefined> {
+/** The engine for one job: this business's own choice (set for it in admin), else its system's, else the default engine. */
+export async function engineFor(d: Deps, edition: string, feature: string, org?: string | null): Promise<Engine | undefined> {
   const cfg = await aiConfig(d);
-  const route = cfg.routes.get(`${edition}:${feature}`);
-  if (!route) return d.ai;
-  const price = route.priceIn != null && route.priceOut != null ? { input: route.priceIn, output: route.priceOut } : null;
-  const first = engineOf(d, cfg.providers.get(route.provider), route.model, price);
-  const second = route.fallbackProvider && route.fallbackModel ? engineOf(d, cfg.providers.get(route.fallbackProvider), route.fallbackModel) : undefined;
+  const route = (org ? cfg.routes.get(`org:${org}:${feature}`) : undefined) ?? cfg.routes.get(`${edition}:${feature}`);
+  const media = kindOf(feature) !== 'text';
+  if (!route) return media ? undefined : d.ai; // an image or video job runs only on a model the team chose
+  const price = media ? null : route.priceIn != null && route.priceOut != null ? { input: route.priceIn, output: route.priceOut } : null;
+  const each = media && route.priceIn != null ? route.priceIn : null; // an image or video job: US$ per item, as entered
+  const first = engineOf(d, cfg.providers.get(route.provider), route.model, price, each);
+  const second = route.fallbackProvider && route.fallbackModel ? engineOf(d, cfg.providers.get(route.fallbackProvider), route.fallbackModel, null, each) : undefined;
   if (first) return withFallback(first, second);
-  return second ?? d.ai; // the chosen one can't run (no key, switched off): the fallback, else the default
+  return second ?? (media ? undefined : d.ai); // the chosen one can't run: the fallback, else the default (text only)
 }

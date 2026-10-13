@@ -11,9 +11,12 @@ import { audit } from '@hemlo/auth/audit';
 import { HttpError } from '../principal';
 import { actor, bad, may, type Actor } from '../routes/sys-common';
 import { sealKey, masterSecret, hintOf } from '../ai/keys';
-import { addonOffer } from '../addons';
-import { LIMITS, RECIPES, TEMPLATES, planAllows, recipeOf, templateDefs } from './catalog';
+import { isFree, limitsOf } from '../addons';
+import { PLAN_CODES, RECIPES, TEMPLATES, hasAi, planAllows, recipeOf, templateDefs } from './catalog';
 import { channelByPhoneId, channelOf, deliver, forgetChannel, planOf, providerOf, receive, statusUpdate, windowOpen, weekOf } from './core';
+import { engineFor } from '../ai/router';
+import { record } from '../ai/meter';
+import { AiError } from '../ai/engine';
 import { priceText, SITE } from '../routes/realestate/common';
 import { withCovers } from '../routes/realestate/properties';
 import { reProperty, reLeadProperty } from '@hemlo/db/schema';
@@ -90,11 +93,17 @@ export function connectRoutes(d: Deps) {
           count(*) filter (where status in ('failed', 'skipped'))::int as missed from connect_job where organization_id = ${org} and created_at > now() - interval '7 days'`));
       return { ch: ch ?? null, recipes, counts, week };
     })]);
-    const bundle = await addonOffer(d.db, 'web-connect');
-    const shape = (code: 'connect' | 'connect-pro' | 'web-connect', o: Awaited<ReturnType<typeof addonOffer>> | null) => (o && o.active && o.public ? { code, name: o.name, description: o.description, priceMonth: o.priceMonth, priceYear: o.priceYear, limits: LIMITS[code === 'web-connect' ? 'connect-pro' : code] } : null);
-    const offer = (code: 'connect' | 'connect-pro') => shape(code, p.offers[code]?.offer ?? null);
+    // the tiers as the business sees them: what each adds, its price, and its AI limits (never a message count:
+    // WhatsApp messaging is simply included, Hemlo pays for it)
+    const offers = PLAN_CODES.map((code) => p.offers[code]?.offer).filter((o) => o && o.active && o.public).map((o) => {
+      const l = limitsOf(o);
+      return { code: o!.code, name: o!.name, description: o!.description, priceMonth: o!.priceMonth, priceYear: o!.priceYear, free: isFree(o), active: !!p.offers[o!.code]?.active,
+        ai: { day: l.aiDay, week: l.aiWeek, month: l.aiMonth }, studio: l.studioMonth > 0 };
+    });
     return c.json({
-      plan: p.plan, limits: p.limits, used: p.used, offers: [offer('connect'), offer('connect-pro'), shape('web-connect', bundle)].filter(Boolean), via: p.offers['connect-pro']?.via ?? null,
+      plan: p.plan, offers, via: p.offers[p.plan ?? '']?.via ?? null,
+      ai: { ...p.ai, used: p.used.ai, limits: { day: p.limits.aiDay, week: p.limits.aiWeek, month: p.limits.aiMonth } },
+      messaging: p.wa,
       canConfigure: canConfigure(a), channel: publicChannel(data.ch),
       signup: d.env.META_APP_ID && d.env.META_CONFIG_ID ? { appId: d.env.META_APP_ID, configId: d.env.META_CONFIG_ID } : null,
       recipes: RECIPES.map((x) => {
@@ -199,6 +208,37 @@ export function connectRoutes(d: Deps) {
     if (conv.leadId) await withOrg(d.db, a.organizationId, (tx) => tx.insert(reLeadProperty).values({ id: newId(), organizationId: a.organizationId,
       leadId: conv.leadId!, propertyId: p.id, status: 'sent', sentAt: new Date() }).onConflictDoNothing());
     return c.json({ message }, 201);
+  });
+
+  /** The agent's AI tools (Connect Pro and up): a reply to send, in the customer's language, or the chat in a few lines.
+   *  Counted with the assistant's replies; when the day's, week's or month's limit is reached they wait for it to reset. */
+  r.post('/conversations/:id/assist', async (c) => {
+    const a = actor(c, 'leads', 'read');
+    const conv = await one(a, c.req.param('id'));
+    const b = await c.req.json<{ mode?: string; lang?: string }>().catch(() => ({} as any));
+    const mode = b.mode === 'summary' ? 'summary' : b.mode === 'suggest' ? 'suggest' : bad('BAD_MODE');
+    const p = await planOf(d, a.organizationId);
+    if (!hasAi(p.plan)) throw new HttpError(402, 'PLAN_PRO_NEEDED');
+    if (!p.ai.open) throw new HttpError(429, 'AI_PAUSED', p.ai.resetsAt ?? undefined);
+    const engine = await engineFor(d, 'realestate', 'connect_assist', a.organizationId);
+    if (!engine) throw new HttpError(503, 'AI_UNAVAILABLE');
+    const msgs = await withOrg(d.db, a.organizationId, async (tx) => (await tx.select({ direction: connectMessage.direction, body: connectMessage.body }).from(connectMessage)
+      .where(and(eq(connectMessage.organizationId, a.organizationId), eq(connectMessage.conversationId, conv.id))).orderBy(desc(connectMessage.createdAt)).limit(30)).reverse());
+    if (!msgs.length) throw new HttpError(409, 'NOTHING_TO_READ');
+    const chat = msgs.map((m) => `${m.direction === 'in' ? 'Customer' : 'Agency'}: ${m.body.slice(0, 600)}`).join('\n');
+    const lang = b.lang === 'en' ? 'English' : 'Arabic';
+    const system = mode === 'suggest'
+      ? 'You help a real-estate agent in Iraq answer a customer on WhatsApp. Write the next reply the agent could send: in the customer\'s own language (Iraqi-friendly Arabic, English or Kurdish), warm, under 60 words, one question at a time, no emojis. Never invent a price, size, address or promise that is not in the chat. Return JSON only.'
+      : `You summarise a WhatsApp chat between a real-estate agency in Iraq and a customer, for the agent, in ${lang}: who they are, what they want (buy or rent, area, type, budget, bedrooms), what was promised, and the next step. At most 5 short lines. Use only what the chat says. Return JSON only.`;
+    const t0 = Date.now();
+    try {
+      const out = await engine.json<{ text: string }>({ system, text: `The chat:\n${chat}`, schema: { type: 'object', additionalProperties: false, required: ['text'], properties: { text: { type: 'string' } } }, maxTokens: 500 });
+      await record(d.db, a.organizationId, { userId: a.userId, feature: 'connect_assist', engine: engine.name, model: out.model, inputTokens: out.inputTokens, outputTokens: out.outputTokens, costMicros: out.costMicros, ms: Date.now() - t0, ok: true, counted: false });
+      return c.json({ text: String(out.data?.text ?? '').trim().slice(0, 1500) });
+    } catch (e) {
+      await record(d.db, a.organizationId, { userId: a.userId, feature: 'connect_assist', engine: engine.name, ms: Date.now() - t0, ok: false, counted: false }).catch(() => {});
+      throw new HttpError(503, e instanceof AiError && e.message === 'REFUSED' ? 'AI_REFUSED' : 'AI_FAILED');
+    }
   });
 
   /** Hand a chat back to the assistant (or take it), or close it. */

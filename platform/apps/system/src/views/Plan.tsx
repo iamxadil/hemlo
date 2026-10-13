@@ -54,7 +54,7 @@ export function PlanPage() {
   const addonData = aq.data as { addons?: Addon[]; requests?: any[] } | undefined;
   const website = addonData?.addons?.find((x) => x.code === 'website');
   const connectOffer = addonData?.addons?.find((x) => x.code === 'connect-pro') ?? addonData?.addons?.find((x) => x.code === 'connect');
-  const connectOn = !!addonData?.addons?.some((x) => x.code.startsWith('connect') && x.entitlement?.active);
+  const connectOn = !!addonData?.addons?.some((x: any) => (x.code.startsWith('connect') || x.code === 'ai-studio') && (x.entitlement?.active || x.included));
   const pendingAddon = addonData?.requests?.find((x) => x.addonId === website?.id && x.status === 'new');
   const websiteCopy = addonCopy(lang);
   const priceOf = (x: Plan) => (cycle === 'year' ? x.priceYear : x.priceMonth);

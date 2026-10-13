@@ -85,10 +85,10 @@ const LEADS: L[] = [
   ['نادية فاضل', 'Nadia Fadhil', '+9647722334455', 'website', 'sale', ['villa'], ['Dream City'], 160000, 200000, 4, 280, 'won', 30],
 ];
 
-/** The demo agency comes with its add-ons already on (Website + Connect Pro), so a visitor uses them instead of being
- *  asked to subscribe: a trial on the edition's plan, the bundle's entitlement, a site ready to shape, and WhatsApp in the
+/** The demo agency comes with its add-ons already on (Website and AI Studio, which includes Connect Pro), so a visitor uses them instead of being
+ *  asked to subscribe: a trial on the edition's plan, the add-ons' entitlements, a site ready to shape, and WhatsApp in the
  *  sandbox (nothing leaves Hemlo) with a few days of conversations tied to the agency's own leads. */
-export type DemoAddons = { bundle?: { id: string; price: number } | null; subdomain?: string };
+export type DemoAddons = { grants?: { id: string; price: number }[]; subdomain?: string };
 
 export async function seedDemoRealEstate(tx: Database, org: string, userId: string, memberId: string, lang: Lang, first: Batch[] = [], systemUrl = PHOTOS_AT, addons: DemoAddons = {}) {
   const PHOTOS = `${systemUrl.replace(/\/$/, '')}/demo/re/`;
@@ -247,7 +247,7 @@ export async function seedDemoRealEstate(tx: Database, org: string, userId: stri
 
 // ------------------------------------------------------------------------------------------- the add-ons, switched on
 function addOns(org: string, userId: string, lang: Lang, L: (ar: string, en: string) => string, x: DemoAddons, who: Record<'layla' | 'ahmed' | 'omar' | 'sara', any>, byKey: Record<string, any>): Batch[] {
-  if (!x.bundle) return [];
+  if (!x.grants?.length) return [];
   const usd = (n: number) => `$${n.toLocaleString('en-US')}`;
   const name = { ar: DEMO_AGENCY.ar.name, en: DEMO_AGENCY.en.name };
   const site = { id: newId(), organizationId: org, vertical: 'realestate', status: 'setup', lang, name, subdomain: x.subdomain ?? null, createdBy: userId,
@@ -305,7 +305,7 @@ function addOns(org: string, userId: string, lang: Lang, L: (ar: string, en: str
   const recipes = ['instant_reply', 'viewing_reminder', 'viewing_followup', 'new_listing', 'owner_report'].map((key) => ({ organizationId: org, key, enabled: true, settings: {} }));
   return [
     [hemloSubscription, [{ organizationId: org, edition: 'realestate', status: 'trial', trialEndsAt: at(30) }]],
-    [hemloAddonEntitlement, [{ id: newId(), organizationId: org, addonId: x.bundle.id, edition: 'realestate', status: 'active', billing: 'month', price: x.bundle.price, updatedBy: 'demo' }]],
+    [hemloAddonEntitlement, x.grants.map((g) => ({ id: newId(), organizationId: org, addonId: g.id, edition: 'realestate', status: 'active', billing: 'month', price: g.price, updatedBy: 'demo' }))],
     [webSite, [site]], [webPage, pages],
     [connectChannel, [{ organizationId: org, provider: 'sandbox', status: 'connected', ai: true, persona: { hours: L('السبت إلى الخميس، 9 صباحاً إلى 7 مساءً', 'Saturday to Thursday, 9 am to 7 pm') }, connectedAt: at(-6, 10) }]],
     [connectRecipe, recipes], [connectConversation, convs], [connectMessage, msgs],

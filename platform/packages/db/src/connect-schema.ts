@@ -84,6 +84,8 @@ export const connectMessage = pgTable('connect_message', {
   waId: text('wa_id'),                                       // WhatsApp's message id (dedupes webhook retries)
   error: text('error'),
   meta: jsonb('meta').$type<Record<string, unknown>>().notNull().default({}),
+  category: text('category'),                                // out: marketing | utility (a template) | service (a reply in the 24-hour window)
+  costIqd: integer('cost_iqd').notNull().default(0),         // what WhatsApp charges for it, at Hemlo's rates when it was sent
   createdAt: at('created_at').notNull().defaultNow(),
 }, (t) => [
   index('connect_message_thread').on(t.organizationId, t.conversationId, t.createdAt),

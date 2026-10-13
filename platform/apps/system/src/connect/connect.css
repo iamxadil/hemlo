@@ -209,3 +209,25 @@
 .cx-qrows { display: grid; gap: .7rem; }
 .cx-qrow { display: grid; grid-template-columns: minmax(8rem, 12rem) 1fr auto; gap: .5rem; align-items: start; }
 @media (max-width: 640px) { .cx-qrow { grid-template-columns: 1fr auto; } .cx-qrow textarea { grid-column: 1 / -1; grid-row: 2; } }
+
+/* ---------- tiers: the plan chip opens the plans, the assistant's rest, the agent's AI tools ---------- */
+.cx-chip.tier { cursor: pointer; color: var(--fg); transition: background-color .15s; }
+.cx-chip.tier small { font-weight: 600; color: var(--accent); }
+.cx-chip.tier small::before { content: '·'; margin-inline-end: .35rem; color: var(--fg-3, var(--fg-2)); }
+@media (hover: hover) and (pointer: fine) { .cx-chip.tier:hover { background: color-mix(in oklab, var(--accent) 10%, var(--sunken)); } }
+.cx-chip svg { width: .9rem; height: .9rem; }
+.cx-notice { display: flex; align-items: flex-start; gap: .55rem; padding: .7rem .9rem; border-radius: .9rem; font-size: .85rem; line-height: 1.55;
+  color: var(--warn, #C27406); background: color-mix(in oklab, var(--warn, #C27406) 9%, var(--surface)); }
+.cx-notice svg { flex: none; width: 1rem; height: 1rem; margin-top: .2rem; }
+.cx-plan.here { box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--fg) 40%, transparent); }
+.cx-brief { position: relative; display: grid; gap: .3rem; margin: .6rem .8rem 0; padding: .7rem .9rem; padding-inline-end: 2.2rem; border-radius: .9rem; font-size: .85rem; line-height: 1.6;
+  color: #4B3560; background: color-mix(in oklab, #6E4A86 9%, var(--surface)); animation: cx-in .25s cubic-bezier(.23, 1, .32, 1); white-space: pre-line; }
+.cx-brief b { display: inline-flex; align-items: center; gap: .35rem; font-size: .78rem; }
+.cx-brief b svg { width: .9rem; height: .9rem; }
+.cx-x { position: absolute; inset-block-start: .35rem; inset-inline-end: .5rem; width: 1.6rem; height: 1.6rem; border-radius: 50%; font-size: 1.1rem; line-height: 1; color: inherit; }
+.cx-tool.busy svg { animation: cx-pulse 1s ease-in-out infinite; }
+@keyframes cx-in { from { opacity: 0; transform: translateY(-.25rem); } }
+@keyframes cx-pulse { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .cx-brief { animation: none; } .cx-tool.busy svg { animation: none; opacity: .5; } }
+:root[data-theme="dark"] .cx-brief { color: #D9C7EA; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .cx-brief { color: #D9C7EA; } }

@@ -1,8 +1,8 @@
 ---
 // "Build your Hemlo": the system first, always on, and the add-ons that plug into it. Switch Website or Connect on and
 // watch it attach to the system and start working (the system itself gains a line for it), while the month's total
-// counts to its new figure; Website + Connect Pro together take the bundle price on their own. One request for the
-// whole setup. Prices come from the API (as the pricing cards do), with today's list as the fallback.
+// counts to its new figure. Connect comes in three tiers: Basic (free with the system), Pro (the AI assistant) and AI Studio
+// (marketing). One request for the whole setup. Prices come from the API (as the pricing cards do), with today's list as the fallback.
 // Plain CSS transitions driven by data attributes on the root, one small script; reduced motion keeps only fades.
 import Mark from './Mark.astro';
 import HwBadge from './HwBadge.astro';
@@ -22,15 +22,16 @@ const PLAN_FALLBACK = [['office', 'المكتب', 'Office', 40000], ['agency', '
 const PLANS = plans.length ? plans.map((p) => ({ code: p.code, name: p.name[lang] ?? p.name.en, price: p.priceMonth }))
   : PLAN_FALLBACK.map(([code, a, e, price]) => ({ code, name: ar ? a : e, price }));
 const addon = (code: string, fb: number) => addons.find((x) => x.code === code)?.priceMonth ?? fb;
-const PRICE = { web: addon('website', 25000), con: addon('connect', 35000), pro: addon('connect-pro', 75000), bundle: addon('web-connect', 90000) };
+const PRICE = { web: addon('website', 10000), basic: addon('connect', 0), pro: addon('connect-pro', 35000), studio: addon('ai-studio', 50000) };
 const start = Math.max(0, PLANS.findIndex((p) => p.code === 'agency'));
 
 const C = ar ? {
   sys: { kind: 'نظامك', name: 'Hemlo العقارات', line: 'العقارات والزبائن والمعاينات والصفقات، في مكان واحد.', always: 'يعمل دائماً', plan: 'الخطة' },
   web: { kind: 'إضافة', line: 'عقاراتك على موقعك الخاص، محدّثة وحدها.' },
-  con: { kind: 'إضافة', line: 'واتساب يرد ويذكّر ويتابع عنك.', basic: 'Connect', pro: 'Connect Pro', proNote: 'مع مساعد ذكي على مدار الساعة' },
+  con: { kind: 'مع نظامك', line: 'واتساب يرد ويذكّر ويتابع عنك. الرسائل مشمولة.', basic: 'Basic', pro: 'Pro', studio: 'AI Studio', free: 'مجاني',
+    notes: { basic: 'مجاني مع نظامك: صندوق المحادثات، والتذكيرات، وتنبيهات العقارات الجديدة', pro: 'مساعد ذكي يرد من عقاراتك ويحجز المعاينات', studio: 'كل ما في Pro، وحملات تسويقية وتصاميم وخطة محتوى بالذكاء الاصطناعي' } },
   on: 'مفعّل', add: 'أضف',
-  total: 'شهرك', per: 'د.ع / شهرياً', together: 'Website + Connect Pro معاً', save: 'توفّر {n} د.ع',
+  total: 'شهرك', per: 'د.ع / شهرياً',
   trial: 'نظامك مجاني ٣٠ يوماً. الدفع شهرياً أو سنوياً (شهران مجاناً).', cta: 'ابدأ بهذا الإعداد', ctaShort: 'ابدأ', sample: 'شاهد موقعاً نموذجياً',
   already: 'مشترك في Hemlo؟ فعّل الإضافات من صفحة «الخطة» في نظامك.',
   stats: [['٢٤', 'عقاراً'], ['٧', 'زبائن جدد'], ['٣', 'معاينات اليوم']], webStat: ['١٢٨', 'زيارة لموقعك اليوم'], conStat: ['٤٢', 'رداً على واتساب'],
@@ -43,9 +44,10 @@ const C = ar ? {
 } : {
   sys: { kind: 'Your system', name: 'Hemlo Real Estate', line: 'Properties, leads, viewings and deals, in one place.', always: 'Always on', plan: 'Plan' },
   web: { kind: 'Add-on', line: 'Your properties on your own site, updated by themselves.' },
-  con: { kind: 'Add-on', line: 'WhatsApp that answers, reminds and follows up for you.', basic: 'Connect', pro: 'Connect Pro', proNote: 'with an AI assistant, around the clock' },
+  con: { kind: 'With your system', line: 'WhatsApp that answers, reminds and follows up for you. Messaging included.', basic: 'Basic', pro: 'Pro', studio: 'AI Studio', free: 'Free',
+    notes: { basic: 'Free with your system: the team inbox, reminders, and new-listing alerts', pro: 'An AI assistant that answers from your listings and books viewings', studio: 'Everything in Pro, plus AI campaigns, post designs and a content plan' } },
   on: 'On', add: 'Add',
-  total: 'Your month', per: 'IQD / month', together: 'Website + Connect Pro together', save: 'You save {n} IQD',
+  total: 'Your month', per: 'IQD / month',
   trial: 'Your system is free for 30 days. Pay monthly or yearly (two months free).', cta: 'Start with this setup', ctaShort: 'Start', sample: 'See a sample site',
   already: 'Already on Hemlo? Switch add-ons on from the Plan page in your system.',
   stats: [['24', 'properties'], ['7', 'new leads'], ['3', 'viewings today']], webStat: ['128', 'visits to your site today'], conStat: ['42', 'WhatsApp replies'],
@@ -59,9 +61,10 @@ const C = ar ? {
 const nf = new Intl.NumberFormat('en-US');
 const sampleHref = ar ? 'https://business.hemlohq.com/s/sample' : 'https://business.hemlohq.com/s/sample?lang=en';
 const tileImg = ['villa-3', 'apartment-1', 'villa-4'];
-const DATA = { plans: PLANS, price: PRICE, names: { web: 'Website', con: 'Connect', pro: 'Connect Pro' }, save: C.save, together: C.together };
+const DATA = { plans: PLANS, price: PRICE, names: { web: 'Website', basic: 'Connect Basic', pro: 'Connect Pro', studio: 'AI Studio' }, free: C.con.free };
+const plus = (n: number) => (n ? `+${nf.format(n)}` : C.con.free);
 ---
-<div class="sb" data-sb data-web="off" data-con="off" data-tier="basic" data-api={API_URL} data-lang={lang} data-model={JSON.stringify(DATA)}>
+<div class="sb" data-sb data-web="off" data-con="off" data-tier="basic" data-api={API_URL} data-lang={lang} data-model={JSON.stringify(DATA)} data-notes={JSON.stringify(C.con.notes)}>
   <div class="sb-grid">
 
     <!-- the picture: the system in the middle; what's switched on plugs into it and starts working -->
@@ -122,13 +125,12 @@ const DATA = { plans: PLANS, price: PRICE, names: { web: 'Website', con: 'Connec
 
       <div class="layer" data-layer="con">
         <div class="lh"><span class="lk">{C.con.kind}</span><button type="button" class="sw" role="switch" aria-checked="false" data-toggle="con" aria-label="Hemlo Connect"><i></i></button></div>
-        <p class="ln"><HwBadge label="Connect" /><span class="pr" dir="ltr" data-con-price>+{nf.format(PRICE.con)}</span></p><p class="ld">{C.con.line}</p>
+        <p class="ln"><HwBadge label="Connect" /><span class="pr" dir="auto" data-con-price>{plus(PRICE.basic)}</span></p><p class="ld">{C.con.line}</p>
         <div class="tier"><div class="tier-in">
-          <div class="seg two" role="radiogroup" aria-label="Connect">
-            <button type="button" role="radio" data-tier="basic" aria-checked="true"><b>{C.con.basic}</b><small dir="ltr">{nf.format(PRICE.con)}</small></button>
-            <button type="button" role="radio" data-tier="pro" aria-checked="false"><b>{C.con.pro}</b><small dir="ltr">{nf.format(PRICE.pro)}</small></button>
+          <div class="seg three" role="radiogroup" aria-label="Connect">
+            {(['basic', 'pro', 'studio'] as const).map((k, i) => <button type="button" role="radio" data-tier={k} aria-checked={i === 0 ? 'true' : 'false'}><b>{C.con[k]}</b><small dir="auto">{PRICE[k] ? nf.format(PRICE[k]) : C.con.free}</small></button>)}
           </div>
-          <p class="pro-note">✦ {C.con.proNote}</p>
+          <p class="pro-note" data-tier-note>{C.con.notes.basic}</p>
         </div></div>
         <div class="mini mini-con" aria-hidden="true"><div class="mini-in"><div class="mchat">
           <p class="b me">{C.q}</p><p class="b typing"><i></i><i></i><i></i></p>
@@ -140,7 +142,6 @@ const DATA = { plans: PLANS, price: PRICE, names: { web: 'Website', con: 'Connec
         <p class="tl">{C.total}</p>
         <p class="tv"><b data-total dir="ltr">{nf.format(PLANS[start]?.price ?? 0)}</b><span>{C.per}</span></p>
         <p class="tb" data-breakdown dir="auto"></p>
-        <p class="tsave" data-save hidden></p>
         <button type="button" class="btn btn-primary sb-go" data-start aria-label={C.cta}><span class="full">{C.cta}</span><span class="short">{C.ctaShort}</span><span class="arr" aria-hidden="true">→</span></button>
         <p class="tnote">{C.trial} <a class="link-quiet" href={sampleHref} target="_blank" rel="noopener">{C.sample}</a></p>
         <p class="tnote">{C.already}</p>
@@ -164,25 +165,32 @@ const DATA = { plans: PLANS, price: PRICE, names: { web: 'Website', con: 'Connec
 </div>
 
 <script>
-  type Model = { plans: { code: string; name: string; price: number }[]; price: { web: number; con: number; pro: number; bundle: number }; names: Record<string, string>; save: string; together: string };
+  type Tier = 'basic' | 'pro' | 'studio';
+  type Model = { plans: { code: string; name: string; price: number }[]; price: { web: number; basic: number; pro: number; studio: number }; names: Record<string, string>; free: string };
   for (const root of document.querySelectorAll<HTMLElement>('[data-sb]')) {
     const M: Model = JSON.parse(root.dataset.model!);
     const nf = new Intl.NumberFormat('en-US');
     const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const $ = <T extends Element = HTMLElement>(s: string) => root.querySelector<T>(s)!;
     const planBtns = [...root.querySelectorAll<HTMLButtonElement>('[data-plan]')], tierBtns = [...root.querySelectorAll<HTMLButtonElement>('[data-tier]')].filter((b) => b.tagName === 'BUTTON');
-    let plan = planBtns.findIndex((b) => b.getAttribute('aria-checked') === 'true'), web = false, con = false, pro = false, shown = M.plans[plan]?.price ?? 0, raf = 0;
+    let plan = planBtns.findIndex((b) => b.getAttribute('aria-checked') === 'true'), web = false, con = false, tier: Tier = 'basic', shown = M.plans[plan]?.price ?? 0, raf = 0;
+    const notes = JSON.parse(root.dataset.notes ?? '{}') as Record<Tier, string>;
+    const plus = (n: number) => (n ? `+${nf.format(n)}` : M.free);
 
     // live prices, in case they changed after the page was built
     fetch(`${root.dataset.api}/v1/plans?edition=realestate`).then((r) => r.json()).then(({ plans }) => {
       for (const p of plans ?? []) { const i = M.plans.findIndex((x) => x.code === p.code); if (i >= 0) M.plans[i].price = p.priceMonth; }
       planBtns.forEach((b, i) => { const s = b.querySelector('small'); if (s) s.textContent = nf.format(M.plans[i].price); }); render();
     }).catch(() => {});
+    fetch(`${root.dataset.api}/v1/plans/addons?edition=realestate`).then((r) => r.json()).then(({ addons }) => {
+      const code: Record<string, keyof Model['price']> = { website: 'web', connect: 'basic', 'connect-pro': 'pro', 'ai-studio': 'studio' };
+      for (const a of addons ?? []) if (code[a.code] && a.priceMonth != null) M.price[code[a.code]] = a.priceMonth;
+      tierBtns.forEach((b) => { const s = b.querySelector('small'); if (s) s.textContent = M.price[b.dataset.tier as Tier] ? nf.format(M.price[b.dataset.tier as Tier]) : M.free; }); render();
+    }).catch(() => {});
 
     const total = () => {
-      const base = M.plans[plan]?.price ?? 0, w = web ? M.price.web : 0, c = con ? (pro ? M.price.pro : M.price.con) : 0;
-      const bundle = web && con && pro ? M.price.bundle : w + c;
-      return { base, w, c, sum: base + bundle, saved: w + c - bundle };
+      const base = M.plans[plan]?.price ?? 0, w = web ? M.price.web : 0, c = con ? M.price[tier] : 0;
+      return { base, w, c, sum: base + w + c };
     };
     const count = (to: number) => {
       cancelAnimationFrame(raf);
@@ -197,26 +205,24 @@ const DATA = { plans: PLANS, price: PRICE, names: { web: 'Website', con: 'Connec
     const summary = () => {
       const t = total(), parts = [`${M.plans[plan].name} ${nf.format(t.base)}`];
       if (web) parts.push(`${M.names.web} ${nf.format(t.w)}`);
-      if (con) parts.push(`${pro ? M.names.pro : M.names.con} ${nf.format(t.c)}`);
+      if (con) parts.push(`${M.names[tier]} ${t.c ? nf.format(t.c) : M.free}`);
       return { t, parts };
     };
     const render = () => {
       const { t, parts } = summary();
-      Object.assign(root.dataset, { web: web ? 'on' : 'off', con: con ? 'on' : 'off', tier: pro ? 'pro' : 'basic' });
+      Object.assign(root.dataset, { web: web ? 'on' : 'off', con: con ? 'on' : 'off', tier });
       planBtns.forEach((b, i) => b.setAttribute('aria-checked', String(i === plan)));
-      tierBtns.forEach((b) => b.setAttribute('aria-checked', String((b.dataset.tier === 'pro') === pro)));
+      tierBtns.forEach((b) => b.setAttribute('aria-checked', String(b.dataset.tier === tier)));
+      $('[data-tier-note]').textContent = notes[tier] ?? '';
       root.querySelectorAll<HTMLElement>('[role="switch"]').forEach((s) => s.setAttribute('aria-checked', String(s.dataset.toggle === 'web' ? web : con)));
       $('[data-plan-name]').textContent = M.plans[plan].name;
-      $('[data-con-price]').textContent = `+${nf.format(pro ? M.price.pro : M.price.con)}`;
+      $('[data-con-price]').textContent = plus(M.price[tier]);
       const bd = $('[data-breakdown]'); bd.replaceChildren(...parts.flatMap((x, i) => { const el = document.createElement('bdi'); el.textContent = x; return i ? [document.createTextNode('  +  '), el] : [el]; }));
-      const save = $('[data-save]');
-      save.hidden = !t.saved;
-      if (t.saved) save.textContent = `${M.together} · ${M.save.replace('{n}', nf.format(t.saved))}`;
       count(t.sum);
     };
     root.querySelectorAll<HTMLElement>('[data-toggle]').forEach((b) => b.addEventListener('click', () => { if (b.dataset.toggle === 'web') web = !web; else con = !con; navigator.vibrate?.(8); render(); }));
     planBtns.forEach((b, i) => b.addEventListener('click', () => { plan = i; render(); }));
-    tierBtns.forEach((b) => b.addEventListener('click', () => { pro = b.dataset.tier === 'pro'; render(); }));
+    tierBtns.forEach((b) => b.addEventListener('click', () => { tier = b.dataset.tier as Tier; render(); }));
     // arrow keys move within each radio group
     root.querySelectorAll<HTMLElement>('[role="radiogroup"]').forEach((g) => g.addEventListener('keydown', (e) => {
       const k = (e as KeyboardEvent).key, items = [...g.querySelectorAll<HTMLButtonElement>('[role="radio"]')], i = items.indexOf(document.activeElement as HTMLButtonElement);
@@ -230,14 +236,15 @@ const DATA = { plans: PLANS, price: PRICE, names: { web: 'Website', con: 'Connec
     const dlg = $<HTMLDialogElement>('[data-sbd]'), f = dlg.querySelector<HTMLFormElement>('[data-sb-form]')!, msg = f.querySelector<HTMLElement>('.sbd-msg')!, btn = f.querySelector<HTMLButtonElement>('.sbd-send')!;
     $('[data-start]').addEventListener('click', () => {
       const { t, parts } = summary();
-      $('[data-summary]').textContent = `${parts.join(' + ')}${t.saved ? ` − ${nf.format(t.saved)}` : ''} = ${nf.format(t.sum)} IQD`;
+      $('[data-summary]').textContent = `${parts.join(' + ')} = ${nf.format(t.sum)} IQD`;
       msg.textContent = ''; msg.className = 'sbd-msg'; dlg.showModal();
     });
     dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
     f.addEventListener('submit', async (e) => {
       e.preventDefault();
       const v = Object.fromEntries(new FormData(f)) as Record<string, string>;
-      const interest = web && con && pro ? 'web-connect' : con && !web ? (pro ? 'connect-pro' : 'connect') : web && !con ? 'website' : undefined;
+      // the paid Connect tier if there is one (the full setup is in the note), else the Website, else Basic
+      const interest = con && tier !== 'basic' ? (tier === 'pro' ? 'connect-pro' : 'ai-studio') : web ? 'website' : con ? 'connect' : undefined;
       btn.disabled = true; btn.textContent = btn.dataset.sending!;
       try {
         const res = await fetch(`${root.dataset.api}/v1/early-access`, { method: 'POST', headers: { 'content-type': 'application/json' },
@@ -332,7 +339,7 @@ const DATA = { plans: PLANS, price: PRICE, names: { web: 'Website', con: 'Connec
   .b.typing i { width: .38em; height: .38em; border-radius: 50%; background: #9AA0A6; animation: sb-dot 1s ease-in-out infinite; } .b.typing i:nth-child(2) { animation-delay: .15s } .b.typing i:nth-child(3) { animation-delay: .3s }
   @keyframes sb-dot { 50% { transform: translateY(-.15em); opacity: 1; } 0%, 100% { opacity: .4; } }
   .tag { display: block; margin-bottom: .2em; font-size: .85em; font-weight: 700; color: var(--re); } .t-pro { display: none; color: #6E4A86; }
-  .sb[data-tier="pro"] .t-basic { display: none; } .sb[data-tier="pro"] .t-pro { display: inline; }
+  .sb:is([data-tier="pro"], [data-tier="studio"]) .t-basic { display: none; } .sb:is([data-tier="pro"], [data-tier="studio"]) .t-pro { display: inline; }
   .sb[data-con="on"] .b.me { opacity: 1; transform: none; transition: opacity .4s ease .7s, transform .6s var(--e) .7s; }
   .sb[data-con="on"] .b.typing { animation: sb-typing 1.3s ease 1.2s both; }
   @keyframes sb-typing { 0%, 100% { opacity: 0; } 15%, 85% { opacity: 1; } }
@@ -372,7 +379,8 @@ const DATA = { plans: PLANS, price: PRICE, names: { web: 'Website', con: 'Connec
   .sw:focus-visible, .seg button:focus-visible { outline: 2px solid var(--re); outline-offset: 2px; }
   /* segmented choices */
   .seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .25rem; margin-top: .85rem; padding: .25rem; border-radius: .9rem; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
-  .seg.two { grid-template-columns: 1fr 1fr; background: var(--sunken); box-shadow: none; }
+  .seg.two, .seg.three { grid-template-columns: 1fr 1fr; background: var(--sunken); box-shadow: none; }
+  .seg.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .seg button { display: grid; gap: .05rem; padding: .5rem .4rem; border-radius: .7rem; cursor: pointer; transition: background-color .25s ease, box-shadow .25s ease, color .25s ease; }
   .seg button b { font-size: .9rem; font-weight: 600; } .seg button small { font-size: .78rem; color: var(--muted); font-variant-numeric: tabular-nums; }
   .seg button[aria-checked="true"] { background: var(--ink); color: #F4F1EA; box-shadow: 0 6px 14px -8px rgb(14 20 32 / .6); }
@@ -382,7 +390,7 @@ const DATA = { plans: PLANS, price: PRICE, names: { web: 'Website', con: 'Connec
   .tier { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .5s var(--e); }
   .tier-in { overflow: hidden; }
   .sb[data-con="on"] .tier { grid-template-rows: 1fr; }
-  .pro-note { margin-top: .5rem; font-size: .82rem; color: #6E4A86; opacity: .5; transition: opacity .3s; } .sb[data-tier="pro"] .pro-note { opacity: 1; }
+  .pro-note { margin-top: .5rem; font-size: .82rem; color: #6E4A86; opacity: .5; transition: opacity .3s; } .sb:is([data-tier="pro"], [data-tier="studio"]) .pro-note { opacity: 1; }
   @media (prefers-color-scheme: dark) { .pro-note { color: #C4A6DB; } }
 
   /* the month */
@@ -393,7 +401,6 @@ const DATA = { plans: PLANS, price: PRICE, names: { web: 'Website', con: 'Connec
   .tv b { font-size: clamp(2.3rem, 4.4vw, 3rem); font-weight: 600; letter-spacing: -.03em; line-height: 1.05; font-variant-numeric: tabular-nums; }
   .tv span { opacity: .7; }
   .tb { margin-top: .4rem; font-size: .84rem; opacity: .7; line-height: 1.5; min-height: 1.3em; }
-  .tsave { display: inline-block; margin-top: .55rem; padding: .25rem .7rem; border-radius: 999px; background: rgb(74 222 128 / .16); color: #86EFAC; font-size: .82rem; font-weight: 600; animation: sb-in .5s var(--e); }
   @keyframes sb-in { from { opacity: 0; transform: translateY(4px); } }
   .sb-go { display: flex; justify-content: center; width: 100%; margin-top: 1.1rem; background: #F4F1EA; color: #0E1420; }
   .sb-go:hover { opacity: .92; } .sb-go .short { display: none; }
@@ -442,7 +449,6 @@ const DATA = { plans: PLANS, price: PRICE, names: { web: 'Website', con: 'Connec
     .sb-total .tl { font-size: .72rem; }
     .sb-total .tv { margin: 0; gap: .35rem; flex-wrap: nowrap; white-space: nowrap; } .sb-total .tv b { font-size: 1.65rem; } .sb-total .tv span { font-size: .72rem; }
     .sb-total .tb, .sb-total .tnote { display: none; }
-    .sb-total .tsave { grid-column: 1 / -1; margin-top: .45rem; padding: .2rem .6rem; font-size: .72rem; justify-self: start; }
     .sb-total .sb-go .full { display: none; } .sb-total .sb-go .short { display: inline; }
     .sb-total .sb-go { grid-column: 2; grid-row: 1 / span 2; width: auto; margin: 0; padding: .8rem 1.2rem; font-size: .95rem; white-space: nowrap; }
     .sb-notes { display: block; margin-top: .9rem; font-size: .85rem; line-height: 1.6; color: var(--fg-2); }

@@ -11,7 +11,7 @@ import type { AppEnv, Deps } from '../types';
 
 export const EARLY_ACCESS_KINDS = ['phone-repair', 'car-repair', 'ac-appliances', 'cafe-restaurant', 'store', 'clinic-salon', 'school', 'realestate', 'other'] as const;
 /** What a real-estate office asks for from the add-ons form (hemlohq.com/systems#addons): shown first in the note. */
-const INTERESTS: Record<string, string> = { website: 'Hemlo Website', connect: 'Hemlo Connect', 'connect-pro': 'Hemlo Connect Pro', 'web-connect': 'Website + Connect Pro' };
+const INTERESTS: Record<string, string> = { website: 'Hemlo Website', connect: 'Hemlo Connect Basic', 'connect-pro': 'Hemlo Connect Pro', 'ai-studio': 'Hemlo AI Studio', 'web-connect': 'Website + Connect Pro' };
 const PER_IP_PER_HOUR = 5;
 const clip = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
 

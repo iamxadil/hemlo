@@ -461,7 +461,7 @@ describe('the demo agency', () => {
     expect((await v.post('/v1/demo/end', {}, auth)).status).toBe(204);
   });
 
-  it('comes with Website and Connect Pro on, to use rather than to buy, and none of it reaches the public', async () => {
+  it('comes with Website and AI Studio (with Connect Pro) on, to use rather than to buy, and none of it reaches the public', async () => {
     const v = new Browser(t.app);
     const auth = { authorization: `Bearer ${(await v.post('/v1/demo/start', { lang: 'en', kind: 'realestate' })).json.token}` };
     const web = (await v.get('/v1/web/site', auth)).json;
@@ -472,7 +472,8 @@ describe('the demo agency', () => {
     expect((await v.req('PUT', '/v1/web/site', { tagline: { en: 'Homes in Erbil' } }, auth)).status).toBe(200); // shaping it works
     expect((await v.post('/v1/web/site/publish', {}, auth)).status).toBe(403);                            // going live does not
     const cx = (await v.get('/v1/connect', auth)).json;
-    expect(cx).toMatchObject({ plan: 'connect-pro', canConfigure: true, channel: { provider: 'sandbox' } });
+    expect(cx).toMatchObject({ plan: 'ai-studio', canConfigure: true, channel: { provider: 'sandbox' }, ai: { open: true } });
+    expect((await v.get('/v1/studio', auth)).json).toMatchObject({ active: true, allowance: { copy: 10, images: 2, videos: 0 } }); // a demo's own small allowance
     const inbox = (await v.get('/v1/connect/conversations', auth)).json.conversations;
     expect(inbox.length).toBe(5);
     expect(inbox.some((c: any) => c.unread > 0)).toBe(true);

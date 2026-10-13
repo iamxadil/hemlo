@@ -30,6 +30,7 @@ import { schoolRoutes } from './routes/school';
 import { webRoutes } from './routes/website';
 import { webPublicRoutes } from './routes/website/public';
 import { connectRoutes } from './connect/routes';
+import { studioRoutes } from './routes/studio';
 import type { AppEnv, Deps, Env } from './types';
 
 const originAllowed = (origin: string, patterns: string[]) =>
@@ -122,6 +123,8 @@ export function createApp(opts: { db: Database; env: Env; waitUntil?: (p: Promis
   v1.route('/web/pub', webPublicRoutes(deps)); // the public site (business.hemlo.site): no sign-in, read-only + inquiries
   v1.route('/web', webRoutes(deps));
   v1.route('/connect', connectRoutes(deps));   // Hemlo Connect: WhatsApp inbox, assistant, automations (+ the webhook at /connect/hook)           // the Website add-on: one public site per business
+  v1.use('/studio/*', subscriptionGuard);
+  v1.route('/studio', studioRoutes(deps));  // Hemlo AI Studio: campaigns, content plans, post images (realestate)
   v1.route('/sys/ai', aiRoutes(deps));
   v1.route('/sys', impactRoutes(deps));      // reminders sent, and what came back after them
   v1.route('/sys/files', sysFileRoutes(deps));

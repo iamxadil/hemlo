@@ -33,7 +33,7 @@ export function memoryStore(): FileStore & { size(): number } {
   };
 }
 
-export const PURPOSES = ['logo', 'product', 'purchase', 'expense', 'clinical', 'consent', 'member', 'property', 'redoc'] as const;
+export const PURPOSES = ['logo', 'product', 'purchase', 'expense', 'clinical', 'consent', 'member', 'property', 'redoc', 'studio'] as const;
 /** Medical pictures (X-rays, clinical photos, signed consents) get links that last about an hour, not a month. */
 export const SHORT_LIVED: Purpose[] = ['clinical', 'consent', 'redoc']; // a real-estate document (deed, contract, ID): private
 export type Purpose = (typeof PURPOSES)[number];

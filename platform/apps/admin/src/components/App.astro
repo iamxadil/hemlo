@@ -14,6 +14,7 @@ const I = {
   activity: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>',
   usage: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.9 19a9 9 0 1 1 14.2 0"/><path d="m12 13 3.5-4.5"/><circle cx="12" cy="13" r="1.3"/></svg>',
   billing: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19M6.5 15h4"/></svg>',
+  costs: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9h-9Z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15Z"/></svg>',
   ai: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3.5 11.6 8a2 2 0 0 0 1.3 1.3l4.6 1.6-4.6 1.6a2 2 0 0 0-1.3 1.3L10 18.5l-1.6-4.6a2 2 0 0 0-1.3-1.3L2.5 11l4.6-1.6A2 2 0 0 0 8.4 8Z"/><path d="M18.5 3v4M16.5 5h4M19 15.5v3M17.5 17h3"/></svg>',
   businesses: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M9 10h.01M15 10h.01"/></svg>',
 };
@@ -53,6 +54,7 @@ const I = {
         <a class="nav-item" href="#/businesses" data-nav="businesses" data-perm="businesses.view"><Fragment set:html={I.businesses} />{s.nav.businesses}</a>
         <a class="nav-item" href="#/usage" data-nav="usage" data-perm="usage.view"><Fragment set:html={I.usage} />{s.nav.usage}</a>
         <a class="nav-item" href="#/billing" data-nav="billing" data-perm="usage.view"><Fragment set:html={I.billing} />{s.nav.billing}<span class="nav-count" id="bill-count" hidden></span></a>
+        <a class="nav-item" href="#/costs" data-nav="costs" data-perm="usage.view"><Fragment set:html={I.costs} />{s.nav.costs}</a>
         <a class="nav-item" href="#/ai" data-nav="ai" data-perm="ai.manage"><Fragment set:html={I.ai} />{s.nav.ai}</a>
         <hr class="nav-div" data-perm-any="team.view activity.view" />
         <a class="nav-item" href="#/team" data-nav="team" data-perm="team.view"><Fragment set:html={I.team} />{s.nav.team}</a>
@@ -236,7 +238,7 @@ const I = {
     function setNewCount(n: number) { const b = $('#new-count'); b.textContent = String(n); b.hidden = !n; }
     function setBillCount(n: number) { const b = $('#bill-count'); b.textContent = String(n); b.hidden = !n; }
     function stamp() { $('#updated').textContent = fill(t.updated, { t: new Intl.DateTimeFormat(locale, { timeStyle: 'short' }).format(new Date()) }); }
-    const PAGES: [string, string][] = [['overview', 'overview.view'], ['requests', 'requests.view'], ['users', 'users.view'], ['businesses', 'businesses.view'], ['usage', 'usage.view'], ['billing', 'usage.view'], ['ai', 'ai.manage'], ['team', 'team.view'], ['activity', 'activity.view']];
+    const PAGES: [string, string][] = [['overview', 'overview.view'], ['requests', 'requests.view'], ['users', 'users.view'], ['businesses', 'businesses.view'], ['usage', 'usage.view'], ['billing', 'usage.view'], ['costs', 'usage.view'], ['ai', 'ai.manage'], ['team', 'team.view'], ['activity', 'activity.view']];
     function route() {
       let [path, query] = (location.hash.slice(2) || 'overview').split('?');
       const allowed = PAGES.filter(([, p]) => can(p)).map(([name]) => name);
@@ -252,7 +254,8 @@ const I = {
       else if (path === 'businesses') showBusinesses();
       else if (path === 'usage') { usageStatus = params.get('s') ?? 'all'; showUsage(params.get('id')); }
       else if (path === 'billing') showBilling();
-      else if (path === 'ai') showAi(params.get('job'), params.get('provider'));
+      else if (path === 'costs') showCosts();
+      else if (path === 'ai') showAi(params.get('job'), params.get('provider'), false, params.get('org'));
       else if (path === 'team') showTeam(params.get('id'));
       else if (path === 'activity') showActivity();
       else showOverview();
@@ -620,6 +623,53 @@ const I = {
         await plansPanel());
     }
 
+    /** Costs and margins: what Hemlo pays (entered, never guessed), and this month's margin per business. */
+    async function showCosts() {
+      const K = t.costs;
+      const sub = header(K.title, K.sub);
+      loading();
+      const [{ costs }, m] = await Promise.all([api('/v1/admin/costs'), api('/v1/admin/margins')]);
+      stamp();
+      const n = (v: any, step = '1') => h('input', { class: 'input', type: 'number', min: '0', step, dir: 'ltr', value: v ?? '' }) as HTMLInputElement;
+      const usdIqd = n(costs.usdIqd), infra = n(costs.infraIqd, '100'), media = n(costs.mediaBudgetUsd, '1'), target = n(costs.marginTarget ?? 15);
+      const countries = Object.keys(costs.waRates ?? { IQ: {}, other: {} });
+      const rates = Object.fromEntries(countries.map((c) => [c, { marketing: n(costs.waRates?.[c]?.marketing), utility: n(costs.waRates?.[c]?.utility), service: n(costs.waRates?.[c]?.service) }]));
+      const err = h('p', { class: 'text-sm text-bad' });
+      const editable = can('billing.manage');
+      const save = h('button', { type: 'button', class: 'btn btn-primary btn-sm', text: K.save }) as HTMLButtonElement;
+      save.addEventListener('click', () => act(save, async () => {
+        err.textContent = '';
+        const num0 = (i: HTMLInputElement) => (i.value === '' ? null : Number(i.value));
+        try {
+          await api('/v1/admin/costs', { method: 'PUT', body: { usdIqd: num0(usdIqd), infraIqd: num0(infra), mediaBudgetUsd: num0(media), marginTarget: num0(target),
+            waRates: Object.fromEntries(countries.map((c) => [c, { marketing: num0(rates[c].marketing) ?? 0, utility: num0(rates[c].utility) ?? 0, service: num0(rates[c].service) ?? 0 }])) } });
+        } catch (e: any) { err.textContent = e?.code ?? t.errors.generic; throw e; }
+        toast(K.saved); showCosts();
+      }));
+      const field = (label: string, el: Node, hint = '') => h('label', { class: 'grid gap-1 text-sm' }, h('span', { class: 'text-muted text-xs', text: label }), el, hint ? h('span', { class: 'sub', text: hint }) : null);
+      if (!editable) [usdIqd, infra, media, target, ...countries.flatMap((c) => Object.values(rates[c]))].forEach((i) => (i.disabled = true));
+      const iqd = (v: number | null) => (v == null ? h('span', { class: 'text-muted', text: K.unknown }) : money(v));
+      put(sub,
+        h('section', { class: 'panel' }, h('div', { class: 'panel-h' }, h('h2', { text: K.settings }), editable ? save : null),
+          h('div', { class: 'grid gap-4 px-5 pb-5' },
+            h('div', { class: 'grid gap-3 sm:grid-cols-2 xl:grid-cols-4' }, field(K.usdIqd, usdIqd), field(K.infraIqd, infra, K.infraHint), field(K.mediaBudgetUsd, media), field(K.marginTarget, target)),
+            h('div', {}, h('p', { class: 'sec-t', text: K.wa }), h('p', { class: 'sub mb-2', text: K.waHint }),
+              h('div', { class: 'grid gap-3' }, ...countries.map((c) => h('div', { class: 'grid gap-3 sm:grid-cols-[10rem_repeat(3,minmax(0,1fr))] sm:items-end' },
+                h('b', { class: 'text-sm', text: K.country[c] ?? c }), field(K.marketing, rates[c].marketing), field(K.utility, rates[c].utility), field(K.service, rates[c].service))))),
+            err)),
+        h('section', { class: 'panel mt-4 overflow-clip' }, h('div', { class: 'panel-h' }, h('h2', { text: K.margins }),
+            m.missing.length ? h('p', { class: 'sub', text: fill(K.missing, { what: m.missing.map((x: string) => K.what[x] ?? x).join(' · ') }) }) : null),
+          m.businesses.length ? h('table', { class: 'tbl' },
+            h('thead', {}, h('tr', {}, ...[K.business, K.revenue, K.ai, K.media, K.whatsapp, K.infra, K.margin].map((x, i) => h('th', { 'data-hide-sm': i >= 2 && i <= 5 ? true : null, text: x })))),
+            h('tbody', {}, ...m.businesses.map((b: any) => h('tr', {},
+              h('td', {}, h('a', { class: 'font-medium hover:underline', href: `#/usage?id=${b.id}`, text: b.name }), h('p', { class: 'sub', text: [b.status === 'trial' ? K.trial : '', b.addons].filter(Boolean).join(' · ') })),
+              h('td', { text: money(b.revenue) }),
+              h('td', { 'data-hide-sm': true }, iqd(b.costs.ai)), h('td', { 'data-hide-sm': true }, iqd(b.costs.media)), h('td', { 'data-hide-sm': true, text: money(b.costs.whatsapp) }), h('td', { 'data-hide-sm': true }, iqd(b.costs.infra)),
+              h('td', {}, b.margin == null ? h('span', { class: 'text-muted', text: '—' }) : h('b', { class: b.below ? 'text-bad' : '', text: `${b.margin}%` }),
+                b.below ? h('p', { class: 'sub text-bad', text: K.below }) : null, b.unknown.length ? h('p', { class: 'sub', text: K.unknown }) : null)))))
+            : h('p', { class: 'sub px-5 pb-5', text: K.none })));
+    }
+
     /** Add-ons (Hemlo Website…): their open requests, each confirmed against a recorded payment, and their price. */
     async function addonsPanel() {
       const [{ addons }, { requests: asks }] = await Promise.all([api('/v1/admin/addons'), api('/v1/admin/addon-requests')]);
@@ -639,7 +689,7 @@ const I = {
           const priced = a.priceMonth != null && a.priceYear != null;
           const tr = h('tr', { class: can('billing.manage') ? 'click' : '' },
             h('td', {}, h('b', { text: words(a.name) }), !a.active ? h('span', { class: 'pill ms-2', text: t.billing.retired }) : null, h('p', { class: 'sub', text: priced ? words(a.description) : t.billing.unpriced })),
-            h('td', { text: a.priceMonth != null ? money(a.priceMonth) : '—' }), h('td', { text: a.priceYear != null ? money(a.priceYear) : '—' }),
+            h('td', { text: a.priceMonth === 0 ? t.billing.free : a.priceMonth != null ? money(a.priceMonth) : '—' }), h('td', { text: a.priceMonth === 0 ? '' : a.priceYear != null ? money(a.priceYear) : '—' }),
             h('td', { class: 'sub', text: a.compatibleEditions.map((e: string) => t.kinds[e] ?? e).join(' · ') }),
             h('td', {}, can('billing.manage') ? SVG('<path d="m9 6 6 6-6 6"/>') : ''));
           if (can('billing.manage')) tr.addEventListener('click', () => addonDrawer(a));
@@ -691,15 +741,23 @@ const I = {
       const chk = (label: string, on: boolean) => { const c = h('input', { type: 'checkbox', checked: on }) as HTMLInputElement; return { c, el: h('label', { class: 'flex items-center gap-2 text-sm' }, c, label) }; };
       const eds = ['store', 'dental', 'gym', 'realestate', 'school'].map((e) => ({ e, ...chk(t.kinds[e] ?? e, a.compatibleEditions.includes(e)) }));
       const pub = chk(t.billing.public, a.public), active = chk(t.billing.active, a.active);
+      const LIMS = Object.keys(t.billing.addonLimits);
+      const lim = Object.fromEntries(LIMS.map((k) => [k, h('input', { class: 'input', type: 'number', min: '0', step: '1', dir: 'ltr', value: a.limits?.[k] ?? '' }) as HTMLInputElement])) as Record<string, HTMLInputElement>;
+      const sort = h('input', { class: 'input', type: 'number', dir: 'ltr', value: a.sort ?? 0 }) as HTMLInputElement;
       const err = h('p', { class: 'text-sm text-bad' });
       const save = drawerSave(t.plan.save, err, async () => {
         await api(`/v1/admin/addons/${a.code}`, { method: 'PATCH', body: { priceMonth: month.value === '' ? null : Number(month.value), priceYear: year.value === '' ? null : Number(year.value),
-          compatibleEditions: eds.filter((x) => x.c.checked).map((x) => x.e), public: pub.c.checked, active: active.c.checked } });
+          compatibleEditions: eds.filter((x) => x.c.checked).map((x) => x.e), public: pub.c.checked, active: active.c.checked, sort: Number(sort.value) || 0,
+          limits: Object.fromEntries(LIMS.filter((k) => lim[k].value !== '').map((k) => [k, Number(lim[k].value)])) } });
         toast(t.billing.addonSaved); closeDrawer(); showBilling(true);
       });
       drawer().replaceChildren(addonHead(words(a.name), words(a.description)), h('div', { class: 'drawer-b grid gap-4' },
         h('div', { class: 'grid grid-cols-2 gap-3' }, drawerField(t.billing.perMonth, month), drawerField(t.billing.perYear, year, t.billing.yearHint)),
         h('div', {}, h('p', { class: 'sec-t', text: t.billing.compatible }), h('div', { class: 'flex flex-wrap gap-4' }, ...eds.map((x) => x.el))),
+        h('div', {}, h('p', { class: 'sec-t', text: t.billing.addonLimitsT }), h('div', { class: 'grid grid-cols-2 gap-3' }, ...LIMS.map((k) => drawerField(t.billing.addonLimits[k], lim[k]))),
+          h('p', { class: 'sub mt-1', text: t.billing.addonLimitsHint })),
+        a.includes?.length ? h('p', { class: 'sub', text: `${t.billing.includes}: ${a.includes.join(' · ')}` }) : null,
+        h('div', { class: 'grid grid-cols-2 gap-3' }, drawerField(t.billing.sort, sort)),
         h('div', { class: 'flex flex-wrap gap-4' }, pub.el, active.el), err), h('div', { class: 'drawer-f' }, save));
       openDrawer();
     }
@@ -777,7 +835,7 @@ const I = {
     };
     const jobName = (f: string) => (t.ai.jobs as any)[f]?.[0] ?? f;
 
-    async function showAi(openJob: string | null, openProv: string | null, fresh = false) {
+    async function showAi(openJob: string | null, openProv: string | null, fresh = false, openOrg: string | null = null) {
       drawerBack = '#/ai';
       const A = t.ai;
       const sub = header(A.title, A.sub);
@@ -796,8 +854,10 @@ const I = {
         const us = ai.usage.filter((u: any) => u.edition === job.edition && u.feature === job.feature);
         const calls = us.reduce((s: number, u: any) => s + u.calls, 0), failed = us.reduce((s: number, u: any) => s + u.failed, 0), cost = us.reduce((s: number, u: any) => s + u.costMicros, 0);
         const okCalls = calls - failed, ms = okCalls ? us.reduce((s: number, u: any) => s + u.ms * (u.calls - u.failed), 0) / okCalls : 0;
+        const own = ai.routes.filter((x: any) => x.organizationId && x.feature === job.feature && x.edition === job.edition).length;
         const tr = h('tr', { class: 'click', onclick: () => (location.hash = `#/ai?job=${id}`) },
-          h('td', {}, h('b', { text: jobName(job.feature) }), h('p', { class: 'sub', text: (A.jobs as any)[job.feature]?.[1] ?? '' }), job.vision ? h('span', { class: 'ai-tag', text: A.readsPhotos }) : null),
+          h('td', {}, h('b', { text: jobName(job.feature) }), h('p', { class: 'sub', text: (A.jobs as any)[job.feature]?.[1] ?? '' }), job.vision ? h('span', { class: 'ai-tag', text: A.readsPhotos }) : null,
+            job.kind !== 'text' ? h('span', { class: 'ai-tag', text: A.kinds[job.kind] ?? job.kind }) : null, own ? h('span', { class: 'ai-tag', text: fill(A.ownN, { n: num(own) }) }) : null),
           h('td', {}, r
             ? h('div', {}, h('p', { class: 'font-medium', text: provLabel(r.provider) }), h('p', { class: 'ai-id', text: r.model }),
                 r.fallbackProvider ? h('p', { class: 'sub mt-1', text: fill(A.thenFallback, { m: `${provLabel(r.fallbackProvider)} · ${r.fallbackModel}` }) }) : null)
@@ -819,7 +879,7 @@ const I = {
               h('tbody', {}, ...jobs.map(jobRow))) : h('p', { class: 'sub px-5 pb-5', text: A.noJobs }));
         }),
         h('p', { class: 'sub mt-4', text: A.footnote }));
-      if (openJob) jobDrawer(openJob); else if (openProv) provDrawer(openProv); else closeDrawer();
+      if (openJob) jobDrawer(openJob, openOrg); else if (openProv) provDrawer(openProv); else closeDrawer();
     }
 
     const aiField = (label: string, el: Node, hint: string | Node = '') => h('label', { class: 'grid gap-1 text-sm' }, h('span', { class: 'text-muted text-xs', text: label }), el, hint ? h('span', { class: 'sub' }, hint) : null);
@@ -881,12 +941,25 @@ const I = {
     }
 
     /** One job in one system: the provider and model, a model list to choose from, the fallback, a test, and what it cost. */
-    function jobDrawer(id: string) {
+    function jobDrawer(id: string, org: string | null = null) {
       const A = t.ai;
       const [edition, feature] = id.split(':');
       const job = ai.jobs.find((j: any) => j.edition === edition && j.feature === feature);
       if (!job) return closeDrawer();
-      const r = ai.routes.find((x: any) => x.id === id);
+      const media = job.kind !== 'text';
+      const q = org ? `?org=${encodeURIComponent(org)}` : '';
+      const r = ai.routes.find((x: any) => x.id === (org ? `org:${org}:${feature}` : id));
+      // which businesses: every one in the system, or one with its own model (it wins over the system's, for this job)
+      const scope = h('select', { class: 'input' }, h('option', { value: '', text: A.allBiz }),
+        ...ai.routes.filter((x: any) => x.organizationId && x.feature === feature).map((x: any) => h('option', { value: x.organizationId, selected: x.organizationId === org, text: x.business ?? x.organizationId }))) as HTMLSelectElement;
+      if (org && ![...scope.options].some((o) => o.value === org)) scope.append(h('option', { value: org, selected: true, text: org }));
+      api(`/v1/admin/ai/businesses?edition=${encodeURIComponent(edition)}`).then((x: any) => {
+        const have = new Set([...scope.options].map((o) => o.value));
+        const more = x.businesses.filter((b: any) => !have.has(b.id));
+        if (more.length) scope.append(h('optgroup', { label: A.oneBiz }, ...more.map((b: any) => h('option', { value: b.id, text: b.name }))));
+        const cur = [...scope.options].find((o) => o.value === org); if (cur && x.businesses.find((b: any) => b.id === org)) cur.textContent = x.businesses.find((b: any) => b.id === org).name;
+      }).catch(() => {});
+      scope.addEventListener('change', () => { location.hash = `#/ai?job=${id}${scope.value ? `&org=${scope.value}` : ''}`; });
       const ready = ai.providers.filter((p: any) => p.ready);
       let prov: string = r?.provider ?? (ready.find((p: any) => p.id === 'openrouter') ?? ready.find((p: any) => p.id !== 'workers-ai') ?? ready[0])?.id ?? 'workers-ai';
       let chosen: any = null;
@@ -905,7 +978,9 @@ const I = {
       const count = h('span', { class: 'sub' });
       const priceIn = h('input', { class: 'input', type: 'number', min: '0', step: '0.01', dir: 'ltr', value: r?.priceIn ?? '' }) as HTMLInputElement;
       const priceOut = h('input', { class: 'input', type: 'number', min: '0', step: '0.01', dir: 'ltr', value: r?.priceOut ?? '' }) as HTMLInputElement;
-      const prices = h('div', {}, h('p', { class: 'sec-t', text: A.prices }), h('div', { class: 'grid grid-cols-2 gap-3' }, aiField(A.priceIn, priceIn), aiField(A.priceOut, priceOut)), h('p', { class: 'sub mt-1', text: A.pricesHint }));
+      const prices = media
+        ? h('div', {}, h('p', { class: 'sec-t', text: A.perImage }), h('div', { class: 'grid grid-cols-2 gap-3' }, aiField(A.perImage, priceIn)), h('p', { class: 'sub mt-1', text: A.perImageHint }))
+        : h('div', {}, h('p', { class: 'sec-t', text: A.prices }), h('div', { class: 'grid grid-cols-2 gap-3' }, aiField(A.priceIn, priceIn), aiField(A.priceOut, priceOut)), h('p', { class: 'sub mt-1', text: A.pricesHint }));
       const note = h('p', { class: 'ai-note' });
       let models: any[] = [];
 
@@ -917,7 +992,7 @@ const I = {
         note.className = `ai-note ${free ? 'free' : 'paid'}`;
         note.textContent = !modelIn.value.trim() ? '' : free ? A.freeNote : A.paidWarn + (m?.priceIn != null ? ' ' + fill(A.perM, { in: m.priceIn, out: m.priceOut }) : '');
         note.hidden = !modelIn.value.trim();
-        prices.hidden = prov === 'workers-ai' || prov === 'openrouter';
+        prices.hidden = !media && (prov === 'workers-ai' || prov === 'openrouter');
         if (m?.priceIn != null && !priceIn.value) { priceIn.value = String(m.priceIn); priceOut.value = String(m.priceOut); }
         list.querySelectorAll('[role="option"]').forEach((el) => el.setAttribute('aria-selected', String((el as HTMLElement).dataset.id === modelIn.value.trim())));
       }
@@ -972,7 +1047,8 @@ const I = {
           h('p', { class: 'font-semibold' }, x.ok ? (x.good ? `✓ ${A.good}` : `△ ${A.weak}`) : `✕ ${A.failed}`),
           h('p', { class: 'text-sm', dir: 'auto', text: x.ok ? x.score : String(x.error ?? '') }),
           facts ? h('p', { class: 'sub', text: facts }) : null,
-          preview ? h('details', {}, h('summary', { class: 'cursor-pointer text-sm text-muted', text: A.whatItRead }), h('pre', { dir: 'auto', text: preview })) : null));
+          typeof x.sample === 'string' && x.sample.startsWith('data:image/') ? h('img', { src: x.sample, alt: '', class: 'mt-2 w-full max-w-xs rounded-xl' })
+            : preview ? h('details', {}, h('summary', { class: 'cursor-pointer text-sm text-muted', text: A.whatItRead }), h('pre', { dir: 'auto', text: preview })) : null));
       }));
 
       // what this job used in the last 30 days, by model
@@ -984,18 +1060,20 @@ const I = {
       const save = h('button', { type: 'button', class: 'btn btn-primary w-full justify-center', text: A.save }) as HTMLButtonElement;
       save.addEventListener('click', () => act(save, async () => {
         if (!modelIn.value.trim()) { err.textContent = A.errors.BAD_MODEL; return; }
-        const paid = prov !== 'workers-ai' && prov !== 'openrouter' && !isFree(chosen);
-        await api(`/v1/admin/ai/routes/${edition}/${feature}`, { method: 'PUT', body: { provider: prov, model: modelIn.value.trim(), fallbackProvider: fbSel.value || null, fallbackModel: fbSel.value ? fbModel.value.trim() : null,
-          priceIn: paid && priceIn.value !== '' ? Number(priceIn.value) : null, priceOut: paid && priceOut.value !== '' ? Number(priceOut.value) : null } }).catch(aiErr(err));
+        const paid = media || (prov !== 'workers-ai' && prov !== 'openrouter' && !isFree(chosen));
+        await api(`/v1/admin/ai/routes/${edition}/${feature}${q}`, { method: 'PUT', body: { provider: prov, model: modelIn.value.trim(), fallbackProvider: fbSel.value || null, fallbackModel: fbSel.value ? fbModel.value.trim() : null,
+          priceIn: paid && priceIn.value !== '' ? Number(priceIn.value) : null, priceOut: !media && paid && priceOut.value !== '' ? Number(priceOut.value) : null } }).catch(aiErr(err));
         aiDone(A.saved);
       }));
       const reset = r ? h('button', { type: 'button', class: 'btn btn-secondary w-full justify-center', text: A.useDefault }) as HTMLButtonElement : null;
-      reset?.addEventListener('click', () => act(reset, async () => { await api(`/v1/admin/ai/routes/${edition}/${feature}`, { method: 'DELETE' }); aiDone(A.saved); }));
+      reset?.addEventListener('click', () => act(reset, async () => { await api(`/v1/admin/ai/routes/${edition}/${feature}${q}`, { method: 'DELETE' }); aiDone(A.saved); }));
 
       drawer().replaceChildren(
         drawerHead(jobName(feature), `${t.kinds[edition] ?? edition}${job.vision ? ` · ${A.readsPhotos}` : ''}`),
         h('div', { class: 'drawer-b grid gap-5' },
           h('p', { class: 'text-sm text-fg-2', text: (A.jobs as any)[feature]?.[1] ?? '' }),
+          aiField(A.scope, scope, org ? A.bizNote : ''),
+          job.kind === 'video' ? h('p', { class: 'ai-result', text: A.videoNone }) : null,
           aiField(A.provider, provSel),
           h('div', { class: 'grid gap-2' }, h('div', { class: 'flex items-center gap-2' }, search), h('div', { class: 'flex flex-wrap items-center gap-2' }, chip(A.free, 'free'), chip(A.readsPhotos, 'vision'), h('span', { class: 'ms-auto' }, count)), list),
           aiField(A.modelId, modelIn), note, prices,

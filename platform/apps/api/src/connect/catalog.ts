@@ -6,13 +6,12 @@
 import type { ConnectRecipeKey } from '@hemlo/db/schema';
 import type { WaTemplateDef } from './wa';
 
-export const PLAN_CODES = ['connect', 'connect-pro'] as const;
+/** The tiers, lowest first: Basic (free with the System), Pro (the AI assistant), AI Studio (marketing). Each includes
+ *  the ones below; prices and limits live with the add-on rows (admin), never here. */
+export const PLAN_CODES = ['connect', 'connect-pro', 'ai-studio'] as const;
 export type PlanCode = (typeof PLAN_CODES)[number];
-/** Per month. "messages" are the ones Hemlo starts (reminders, alerts, reports); replies inside a chat are free. */
-export const LIMITS: Record<PlanCode, { messages: number; ai: number }> = {
-  connect: { messages: 500, ai: 0 },
-  'connect-pro': { messages: 2000, ai: 1500 },
-};
+export const rankOf = (plan: string | null | undefined) => PLAN_CODES.indexOf(plan as PlanCode);
+export const hasAi = (plan: PlanCode | null) => rankOf(plan) >= rankOf('connect-pro');
 
 export type Recipe = { key: ConnectRecipeKey; plan: PlanCode; template: string | null; on: boolean; marketing?: boolean };
 export const RECIPES: Recipe[] = [
@@ -25,7 +24,7 @@ export const RECIPES: Recipe[] = [
   { key: 'owner_report', plan: 'connect-pro', template: 'hemlo_owner_report', on: false },
 ];
 export const recipeOf = (key: string) => RECIPES.find((r) => r.key === key);
-export const planAllows = (plan: PlanCode | null, recipe: Recipe) => !!plan && (recipe.plan === 'connect' || plan === 'connect-pro');
+export const planAllows = (plan: PlanCode | null, recipe: Recipe) => !!plan && rankOf(plan) >= rankOf(recipe.plan);
 
 type T = { category: 'UTILITY' | 'MARKETING'; ar: string; en: string; example: { ar: string[]; en: string[] } };
 export const TEMPLATES: Record<string, T> = {

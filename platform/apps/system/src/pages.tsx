@@ -31,6 +31,10 @@ const WEBSITE: Page = { path: 'website', icon: 'globe', need: 'website.manage', 
 const ConnectPage = lazy(() => import('./connect').then((m) => ({ default: m.Connect })));
 const CONNECT: Page = { path: 'connect', icon: 'wa', need: 'leads.read', view: ConnectPage, label: (t) => t.nav.connect };
 
+// ---- Hemlo AI Studio: marketing from the agency's listings (real estate; its own chunk). 'studio' is taken (adding a property) ----
+const StudioPage = lazy(() => import('./studio').then((m) => ({ default: m.Studio })));
+const AI_STUDIO: Page = { path: 'marketing', icon: 'sparkle', need: 'listings.read', view: StudioPage, label: () => 'AI Studio' };
+
 export const STORE_PAGES: Page[] = [
   { path: 'home', icon: 'home', need: 'reports.read', tab: true, view: Home },
   { path: 'sell', icon: 'sell', need: 'sales.create', tab: true, view: Sell },
@@ -87,6 +91,7 @@ export const RE_PAGES: Page[] = [
   { path: 'reports', icon: 'chart', need: 'reports.read', view: R('Reports'), label: rl('reports') },
   { path: 'agency', icon: 'gear', need: 'agency.configure', view: R('Setup'), label: rl('agency') },
   CONNECT,
+  AI_STUDIO,
   WEBSITE,
   PLAN,
   { path: 'settings', icon: 'gear', need: null, label: (t) => t.settings.title, view: Settings },

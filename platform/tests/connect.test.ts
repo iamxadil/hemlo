@@ -5,7 +5,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { and, eq } from 'drizzle-orm';
 import { withOrg, withSystem } from '@hemlo/db';
-import { hemloAddonEntitlement, reProperty, reLead, reLeadProperty, reViewing, reContract, connectChannel, connectConversation, connectJob, connectMessage } from '@hemlo/db/schema';
+import { hemloAddonEntitlement, reProperty, reLead, reLeadProperty, reViewing, reContract, connectChannel, connectConversation, connectJob, connectMessage, connectRecipe } from '@hemlo/db/schema';
 import { newId } from '@hemlo/core';
 import { setup, Browser, signInEmail } from './helpers';
 import { inventedNumbers, nextRentDue, runOrg, flush, onInquiry, windowOpen, sendingHours, weeklyEmail, connectWhatsapp } from '../apps/api/src/connect/core';
@@ -104,14 +104,32 @@ describe('the pieces', () => {
   });
 });
 
-describe('before the plan', () => {
-  it('shows both plans with their prices and limits, and nothing works yet', async () => {
+describe('Basic, free with the System', () => {
+  it('is on from the first day, with messaging included and no AI; Pro and AI Studio are offered at their prices', async () => {
     const r = await owner.get('/v1/connect');
     expect(r.status).toBe(200);
-    expect(r.json.plan).toBeNull();
-    expect(r.json.offers.map((x: any) => [x.code, x.priceMonth])).toEqual([['connect', 35000], ['connect-pro', 75000], ['web-connect', 90000]]);
-    expect(r.json.offers[1].limits).toEqual({ messages: 2000, ai: 1500 });
-    expect((await owner.post('/v1/connect/channel/sandbox')).status).toBe(402);
+    expect(r.json.plan).toBe('connect');
+    expect(r.json.offers.map((x: any) => [x.code, x.priceMonth, x.free])).toEqual([['connect', 0, true], ['connect-pro', 35000, false], ['ai-studio', 50000, false]]);
+    expect(r.json.offers[1].ai).toEqual({ day: 60, week: 300, month: 1000 });
+    expect(r.json.ai).toMatchObject({ open: false, reason: 'plan' });
+    expect(r.json.messaging).toEqual({ state: 'ok', pct: 0 });
+    expect(r.json.used).toBeUndefined(); // the business never sees a message count
+    expect(r.json.recipes.find((x: any) => x.key === 'cold_lead')).toMatchObject({ allowed: false });
+    expect((await owner.get('/v1/studio')).json).toMatchObject({ active: false });
+    expect((await owner.post('/v1/studio/campaign', { propertyIds: ['x'] })).status).toBe(402);
+  });
+});
+
+describe('the AI windows', () => {
+  it('pause at the day’s, the week’s or the month’s limit, and say when they come back (Baghdad time)', async () => {
+    const { aiGate } = await import('../apps/api/src/connect/core');
+    const l = { aiDay: 2, aiWeek: 5, aiMonth: 8, waIqd: 0, waMarketingPct: 0, sendsDay: 0, studioMonth: 0, imagesMonth: 0, videosMonth: 0, mediaIqd: 0 };
+    const now = new Date('2026-10-14T09:00:00Z'); // a Wednesday, 12:00 in Baghdad
+    expect(aiGate('connect-pro', l, { day: 1, week: 1, month: 1 }, now)).toMatchObject({ open: true });
+    expect(aiGate('connect-pro', l, { day: 2, week: 2, month: 2 }, now)).toMatchObject({ open: false, reason: 'day', resetsAt: '2026-10-14T21:00:00.000Z' }); // midnight
+    expect(aiGate('connect-pro', l, { day: 0, week: 5, month: 5 }, now)).toMatchObject({ open: false, reason: 'week', resetsAt: '2026-10-16T21:00:00.000Z' }); // Saturday
+    expect(aiGate('connect-pro', l, { day: 0, week: 0, month: 8 }, now)).toMatchObject({ open: false, reason: 'month', resetsAt: '2026-10-31T21:00:00.000Z' }); // the 1st
+    expect(aiGate('connect', l, { day: 0, week: 0, month: 0 }, now)).toMatchObject({ open: false, reason: 'plan' });
   });
 });
 
@@ -184,7 +202,7 @@ describe('the assistant (Connect Pro, in the sandbox)', () => {
     expect((await owner.get('/v1/connect/conversations?q=nobody')).json.conversations).toHaveLength(0);
     const o = (await owner.get('/v1/connect')).json;
     expect(o.plan).toBe('connect-pro');
-    expect(o.used.ai).toBeGreaterThanOrEqual(2);
+    expect(o.ai.used.month).toBeGreaterThanOrEqual(2);
     expect(o.counts.chats).toBe(1);
     expect(o.recipes.find((x: any) => x.key === 'owner_report')).toMatchObject({ allowed: true, on: false });
   });
@@ -290,15 +308,33 @@ describe('the automations', () => {
     expect(sent.length).toBe(before + 1); // twice the same day: once
   });
 
-  it('stops at the plan’s monthly allowance', async () => {
+  it('prices every message out at Hemlo’s rates: a template by its category, a reply in the 24-hour window free', async () => {
+    const out = await withOrg(t.db, org, (tx) => tx.select().from(connectMessage).where(and(eq(connectMessage.organizationId, org), eq(connectMessage.direction, 'out'))));
+    const reminder = out.find((m) => m.template === 'hemlo_viewing_reminder' && m.status !== 'failed');
+    expect(reminder).toMatchObject({ category: 'utility', costIqd: 10 }); // an Iraqi number, at the indicative rate
+    expect(out.find((m) => m.author === 'ai')).toMatchObject({ category: 'service', costIqd: 0 });
+  });
+
+  it('stops at the month’s WhatsApp allowance, and promotions at their share of it', async () => {
     await withOrg(t.db, org, async (tx) => {
       const [conv] = await tx.select().from(connectConversation).where(eq(connectConversation.organizationId, org)).limit(1);
-      await tx.insert(connectMessage).values(Array.from({ length: 2000 }, () => ({ id: newId(), organizationId: org, conversationId: conv.id, direction: 'out', author: 'automation', body: 'x', status: 'sent' })));
+      await tx.insert(connectMessage).values({ id: newId(), organizationId: org, conversationId: conv.id, direction: 'out', author: 'automation', body: 'x', status: 'sent', category: 'marketing', costIqd: 3990 });
+      await tx.insert(connectJob).values([
+        { id: newId(), organizationId: org, recipe: 'new_listing', dedupe: 'over-the-share', phone: '+9647705550001', dueAt: new Date(0), payload: { template: 'hemlo_new_listing', lang: 'en', params: ['a', 'b', 'c', 'd', 'e'], text: 'x' } },
+      ]);
+    });
+    await withOrg(t.db, org, (tx) => tx.insert(connectRecipe).values({ organizationId: org, key: 'new_listing', enabled: true }).onConflictDoUpdate({ target: [connectRecipe.organizationId, connectRecipe.key], set: { enabled: true } }));
+    await flush(t.deps, org, daytime());
+    const job = async (k: string) => (await withOrg(t.db, org, (tx) => tx.select().from(connectJob).where(and(eq(connectJob.organizationId, org), eq(connectJob.dedupe, k)))))[0];
+    expect(await job('over-the-share')).toMatchObject({ status: 'skipped', error: 'MARKETING_ALLOWANCE_USED' }); // 40% of 10,000 IQD on Pro
+    await withOrg(t.db, org, async (tx) => {
+      const [conv] = await tx.select().from(connectConversation).where(eq(connectConversation.organizationId, org)).limit(1);
+      await tx.insert(connectMessage).values({ id: newId(), organizationId: org, conversationId: conv.id, direction: 'out', author: 'automation', body: 'x', status: 'sent', category: 'utility', costIqd: 6000 });
       await tx.insert(connectJob).values({ id: newId(), organizationId: org, recipe: 'viewing_reminder', dedupe: 'over-the-limit', phone: '+9647705550000', dueAt: new Date(0), payload: { template: 'hemlo_viewing_reminder', lang: 'en', params: ['a', 'b', 'c', 'd'], text: 'x' } });
     });
     await flush(t.deps, org, daytime());
-    const [j] = await withOrg(t.db, org, (tx) => tx.select().from(connectJob).where(and(eq(connectJob.organizationId, org), eq(connectJob.dedupe, 'over-the-limit'))));
-    expect(j).toMatchObject({ status: 'skipped', error: 'MONTHLY_LIMIT' });
+    expect(await job('over-the-limit')).toMatchObject({ status: 'skipped', error: 'ALLOWANCE_USED' });
+    expect((await owner.get('/v1/connect')).json.messaging.state).toBe('out');
   });
 
   it('Pro-only automations can’t be switched on with Starter', async () => {

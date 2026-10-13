@@ -8,7 +8,7 @@ import { withSystem } from '@hemlo/db';
 import { hemloAiProvider, hemloAiRoute } from '@hemlo/db/schema';
 import { audit } from '@hemlo/auth/audit';
 import { HttpError } from '../principal';
-import { BUILT_IN, AI_JOBS, aiConfig, engineOf, forgetAiConfig, type Provider } from '../ai/router';
+import { BUILT_IN, AI_JOBS, aiConfig, engineOf, forgetAiConfig, kindOf, type Provider } from '../ai/router';
 import { sealKey, masterSecret } from '../ai/keys';
 import { AiError, type Engine } from '../ai/engine';
 import { readInvoice } from '../ai/invoice';
@@ -97,6 +97,13 @@ const TEST_PLANS = [{ id: 'p1', name: 'شهر واحد', duration: 1, unit: 'mon
 
 async function runTest(d: Deps, e: Engine, feature: string): Promise<{ score: string; good: boolean; sample: unknown; usage: { model: string; inputTokens: number; outputTokens: number; costMicros: number } }> {
   const day = new Date(Date.now() + 3 * 3600_000).toISOString().slice(0, 10);
+  if (kindOf(feature) === 'video') throw new HttpError(400, 'VIDEO_PROVIDER_MISSING');
+  if (kindOf(feature) === 'image') {
+    if (!e.image) throw new HttpError(400, 'NOT_AN_IMAGE_MODEL');
+    const img = await e.image('A photorealistic modern two-storey villa with a garden in Erbil at golden hour. No text, no letters, no watermark.');
+    let bin = ''; for (let i = 0; i < img.bytes.length; i += 0x8000) bin += String.fromCharCode(...img.bytes.subarray(i, i + 0x8000));
+    return { score: `${Math.round(img.bytes.length / 1024)} KB · ${img.mime}`, good: img.bytes.length > 5000, sample: `data:${img.mime};base64,${btoa(bin)}`, usage: { model: img.model, inputTokens: 0, outputTokens: 0, costMicros: img.costMicros } };
+  }
   if (feature === 'invoice') {
     const out = await readInvoice(e, await sampleImage(d, 'invoice'), []);
     const lines = out.data.lines?.length ?? 0, total = Math.round(Number(out.data.total) || 0);
@@ -143,10 +150,12 @@ export function adminAiRoutes(d: Deps) {
       from ai_usage u join organization o on o.id = u.organization_id left join hemlo_subscription s on s.organization_id = u.organization_id
       where u.created_at >= ${from} and u.engine <> 'sample' group by 1, 2, 3, 4 order by calls desc`)));
     const def = d.ai ? { provider: d.ai.name === 'claude' ? 'anthropic' : d.ai.name, model: d.ai.model ?? null } : null;
+    const own = [...cfg.routes.values()].filter((x) => x.organizationId);
+    const names = own.length ? rowsOf(await withSystem(d.db, (tx) => tx.execute(sql`select id, name from organization where id in (select json_array_elements_text(${JSON.stringify(own.map((x) => x.organizationId))}::json))`))) : [];
     return c.json({
       providers: [...cfg.providers.values()].map((p) => ({ id: p.def.id, kind: p.def.kind, label: p.def.label, baseUrl: p.def.baseUrl ?? null, keyUrl: p.def.keyUrl ?? null, envKey: p.def.envKey ?? null,
         custom: !!p.def.custom, enabled: p.enabled, source: p.source, hint: p.hint, ready: p.enabled && (p.def.kind === 'workers-ai' ? p.source === 'built-in' : !!p.key) })),
-      jobs: AI_JOBS, routes: [...cfg.routes.values()], default: def,
+      jobs: AI_JOBS.map((j) => ({ ...j, kind: j.kind ?? 'text' })), routes: [...cfg.routes.values()].map((x) => ({ ...x, business: x.organizationId ? names.find((n) => n.id === x.organizationId)?.name ?? x.organizationId : null })), default: def,
       usage: usage.map((x) => ({ edition: x.edition, feature: x.feature, engine: x.engine, model: x.model, calls: x.calls, failed: x.failed, ms: x.ms, costMicros: Number(x.cost) })),
     });
   });
@@ -220,7 +229,18 @@ export function adminAiRoutes(d: Deps) {
     return c.json({ ok: true });
   });
 
-  /** Choose the model for one job in one system, and one to fall back on. */
+  /** The businesses of one system (not demos): to give one of them its own model for a job. */
+  r.get('/ai/businesses', async (c) => {
+    need(c);
+    const edition = String(c.req.query('edition') ?? '');
+    const q = String(c.req.query('q') ?? '').trim().slice(0, 60).replace(/[%_]/g, '');
+    const rows = rowsOf(await withSystem(d.db, (tx) => tx.execute(sql`select o.id, o.name from organization o left join hemlo_subscription s on s.organization_id = o.id
+      where coalesce(o.metadata, '') not like '%"demo":true%' and (s.edition = ${edition} or (s.edition is null and o.metadata like ${'%"kind":"' + edition + '"%'}))
+        ${q ? sql`and o.name ilike ${'%' + q + '%'}` : sql``} order by o.name limit 50`)));
+    return c.json({ businesses: rows.map((x) => ({ id: x.id, name: x.name })) });
+  });
+
+  /** Choose the model for one job in one system (or, with ?org=, for one business only), and one to fall back on. */
   r.put('/ai/routes/:edition/:feature', async (c) => {
     const staff = need(c);
     const { edition, feature } = c.req.param();
@@ -235,7 +255,12 @@ export function adminAiRoutes(d: Deps) {
     const fp = b.fallbackProvider ? String(b.fallbackProvider) : null, fm = b.fallbackModel ? String(b.fallbackModel).trim() : null;
     if (fp && (!cfg.providers.has(fp) || !fm || !MODEL.test(fm))) throw new HttpError(400, 'BAD_FALLBACK');
     const price = (v: unknown) => (v == null || v === '' ? null : Number.isFinite(Number(v)) && Number(v) >= 0 && Number(v) < 10_000 ? Number(v) : (() => { throw new HttpError(400, 'BAD_PRICE'); })());
-    const row = { id: `${edition}:${feature}`, edition, feature, provider, model, fallbackProvider: fp, fallbackModel: fp ? fm : null, priceIn: price(b.priceIn), priceOut: price(b.priceOut), updatedBy: staff.userId, updatedAt: new Date() };
+    const org = c.req.query('org') ? String(c.req.query('org')) : null;
+    if (org) {
+      const [o] = rowsOf(await withSystem(d.db, (tx) => tx.execute(sql`select id from organization where id = ${org}`)));
+      if (!o) throw new HttpError(404, 'NO_BUSINESS');
+    }
+    const row = { id: org ? `org:${org}:${feature}` : `${edition}:${feature}`, organizationId: org, edition, feature, provider, model, fallbackProvider: fp, fallbackModel: fp ? fm : null, priceIn: price(b.priceIn), priceOut: price(b.priceOut), updatedBy: staff.userId, updatedAt: new Date() };
     await withSystem(d.db, (tx) => tx.insert(hemloAiRoute).values(row).onConflictDoUpdate({ target: hemloAiRoute.id, set: row }));
     forgetAiConfig();
     await audit(d.db, { kind: 'admin.ai_route_changed', userId: staff.userId, detail: { job: row.id, provider, model, fallback: fp ? `${fp} · ${fm}` : null } });
@@ -245,7 +270,8 @@ export function adminAiRoutes(d: Deps) {
   /** Back to the default engine for this job. */
   r.delete('/ai/routes/:edition/:feature', async (c) => {
     const staff = need(c);
-    const id = `${c.req.param('edition')}:${c.req.param('feature')}`;
+    const org = c.req.query('org') ? String(c.req.query('org')) : null;
+    const id = org ? `org:${org}:${c.req.param('feature')}` : `${c.req.param('edition')}:${c.req.param('feature')}`;
     await withSystem(d.db, (tx) => tx.delete(hemloAiRoute).where(eq(hemloAiRoute.id, id)));
     forgetAiConfig();
     await audit(d.db, { kind: 'admin.ai_route_changed', userId: staff.userId, detail: { job: id, provider: 'default' } });

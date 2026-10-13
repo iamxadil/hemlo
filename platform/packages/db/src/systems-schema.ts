@@ -301,6 +301,8 @@ export const aiUsage = pgTable('ai_usage', {
   ms: integer('ms').notNull().default(0),
   ok: boolean('ok').notNull(),
   counted: boolean('counted').notNull().default(true),     // counts toward the monthly allowance (samples don't)
+  kind: text('kind').notNull().default('text'),            // text | image | video (images and video are priced and capped apart)
+  units: integer('units').notNull().default(1),
   createdAt: at('created_at').notNull().defaultNow(),
 }, (t) => [index('ai_usage_org_month').on(t.organizationId, t.createdAt)]);
 
