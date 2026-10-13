@@ -28,7 +28,7 @@ const S = {
       EMPTY_CART: 'سلتك فارغة.', BAD_PHONE: 'أدخل رقم هاتف عراقي صحيح.', BAD_NAME: 'أدخل اسمك.', BAD_ADDRESS: 'أدخل المدينة والعنوان.', BAD_CART: 'تعذّر قراءة السلة.', TOO_MANY: 'طلبات كثيرة. حاول بعد قليل.', generic: 'تعذّر إرسال الطلب. حاول مرة أخرى.' },
     thanks: 'شكراً {name}، وصلنا طلبك.', orderNo: 'طلب رقم {n}', updates: 'سنرسل لك كل تحديث على واتساب.', placed: 'وصل الطلب', confirmed: 'تم التأكيد', ready: 'جاهز للاستلام', out2: 'في الطريق إليك',
     delivered: 'تم التسليم', canceled: 'أُلغي الطلب', canceledSub: 'إن كان هناك خطأ، تواصل معنا.', contactUs: 'تواصل معنا', toAddress: 'التوصيل إلى', collect: 'الاستلام من المتجر', payOnDelivery: 'الدفع عند الاستلام',
-    closing: 'شكراً لأنك تتسوّق من متجر محلي.', explore: 'تصفّح', contact: 'تواصل', story: 'قصتنا', readStory: 'تعرّف علينا', contactEyebrow: 'نحن هنا', secure: 'طلبك يصلنا مباشرة، ولا تدفع شيئاً قبل أن يصلك.',
+    closing: 'شكراً لأنك تتسوّق من متجر محلي.', explore: 'تصفّح', contact: 'تواصل', story: 'قصتنا', readStory: 'تعرّف علينا', contactEyebrow: 'نحن هنا', address2: 'العنوان', secure: 'طلبك يصلنا مباشرة، ولا تدفع شيئاً قبل أن يصلك.',
     sample: 'متجر نموذجي', sampleLine: 'هكذا يبدو Hemlo Website لمتجر. المنتجات والأسعار تجريبية، والطلبات لا تُرسل.', sampleGet: 'احصل عليه لمتجرك', prev: 'السابق', next: 'التالي', photo: 'صورة {n}',
   },
   en: {
@@ -47,7 +47,7 @@ const S = {
       EMPTY_CART: 'Your bag is empty.', BAD_PHONE: 'Enter a valid Iraqi phone number.', BAD_NAME: 'Enter your name.', BAD_ADDRESS: 'Enter your city and address.', BAD_CART: 'Your bag couldn’t be read.', TOO_MANY: 'Too many orders. Try again shortly.', generic: 'The order couldn’t be sent. Please try again.' },
     thanks: 'Thank you {name}, we got your order.', orderNo: 'Order number {n}', updates: 'We’ll send you every update on WhatsApp.', placed: 'Order received', confirmed: 'Confirmed', ready: 'Ready to collect', out2: 'On its way',
     delivered: 'Delivered', canceled: 'Order canceled', canceledSub: 'If this is a mistake, please contact us.', contactUs: 'Contact us', toAddress: 'Delivering to', collect: 'Pick up from the shop', payOnDelivery: 'Cash on delivery',
-    closing: 'Thank you for shopping local.', explore: 'Explore', contact: 'Contact', story: 'Our story', readStory: 'About us', contactEyebrow: 'We’re here', secure: 'Your order comes straight to us, and you pay nothing until it arrives.',
+    closing: 'Thank you for shopping local.', explore: 'Explore', contact: 'Contact', story: 'Our story', readStory: 'About us', contactEyebrow: 'We’re here', address2: 'Address', secure: 'Your order comes straight to us, and you pay nothing until it arrives.',
     sample: 'Sample shop', sampleLine: 'This is how Hemlo Website looks for a shop. Products and prices are made up, and orders go nowhere.', sampleGet: 'Get it for your shop', prev: 'Previous', next: 'Next', photo: 'Photo {n}',
   },
 } as const;
@@ -83,11 +83,11 @@ const priceHtml = (p: ShopItem, lang: Lang) => `${money(p.price, lang)}${p.was &
 export function shopCard(ctx: Ctx, p: ShopItem, i: number, cls = '') {
   const t = w(ctx), out = p.stock === 'out', off = savePct(p);
   const badge = out ? `<span class="sh-badge mute">${esc(t.out)}</span>` : off ? `<span class="sh-badge acc">${esc(fill(t.save, { n: off }))}</span>` : p.stock === 'low' ? `<span class="sh-badge warn">${esc(t.low)}</span>` : p.fresh ? `<span class="sh-badge">${esc(t.isNew)}</span>` : '';
-  const meta = [p.category, p.size].filter(Boolean).join(' · ');
+  const meta = [p.category ? esc(p.category) : '', p.size ? `<bdi>${esc(p.size)}</bdi>` : ''].filter(Boolean).join(' · ');
   return `<article class="sh-card sh-rv${out ? ' is-out' : ''}${cls ? ` ${cls}` : ''}" style="--i:${i % 4}" data-cat="${attr(p.category ?? '')}">
 <a class="sh-card-media${p.image && p.image2 ? ' has-2' : ''}" href="${attr(productHref(ctx, p.slug))}" tabindex="-1" aria-hidden="true">${p.image ? `<img src="${attr(p.image)}" alt="" loading="${i < 4 ? 'eager' : 'lazy'}" decoding="async">${p.image2 ? `<img class="alt" src="${attr(p.image2)}" alt="" loading="lazy" decoding="async">` : ''}` : `<span class="sh-ph">${ic('box')}</span>`}${badge ? `<span class="sh-tags">${badge}</span>` : ''}</a>
 ${out ? '' : `<button class="sh-quick" type="button" data-add="${attr(itemJson(p))}" aria-label="${attr(`${t.add}: ${p.name}`)}"><span class="q-ic">${ic('plus')}${ic('check', 'i ok')}</span><span class="q-l">${esc(t.addShort)}</span></button>`}
-<div class="sh-card-b"><h3 class="sh-card-t"><a href="${attr(productHref(ctx, p.slug))}">${esc(p.name)}</a></h3>${meta ? `<p class="sh-card-m">${esc(meta)}</p>` : ''}<p class="sh-price">${priceHtml(p, ctx.lang)}</p></div></article>`;
+<div class="sh-card-b"><h3 class="sh-card-t"><a href="${attr(productHref(ctx, p.slug))}">${esc(p.name)}</a></h3>${meta ? `<p class="sh-card-m">${meta}</p>` : ''}<p class="sh-price">${priceHtml(p, ctx.lang)}</p></div></article>`;
 }
 
 // ---------- sections ----------
@@ -129,16 +129,16 @@ ${flow}<div class="sh-wrap">${promise(ctx)}</div></section>`;
 function shelf(ctx: Ctx, sec: WebSection) {
   const t = w(ctx), list = ctx.products, cs = cats(ctx);
   if (!list.length) return '';
-  const tiles = cs.length >= 2 ? `<section class="sh-sec"><div class="sh-wrap"><div class="sh-head sh-rv"><div><p class="sh-eyebrow">${esc(t.products)}</p><h2 class="sh-h2">${esc(t.shopBy)}</h2></div></div>
+  const tiles = cs.length >= 2 ? `<section class="sh-sec"><div class="sh-wrap"><div class="sh-sechead sh-rv"><div><h2 class="sh-h2">${esc(t.shopBy)}</h2></div></div>
 <div class="sh-cats" style="--cols:${cs.length <= 5 ? Math.min(cs.length, 8) : cs.length === 6 ? 3 : 4}">${cs.slice(0, 8).map((c, i) => { const ps = list.filter((p) => p.category === c), pic = ps.find((p) => p.image)?.image;
     return `<a class="sh-tile sh-rv" style="--i:${i % 4}" href="${attr(catHref(ctx, c))}">${pic ? `<img src="${attr(pic)}" alt="" loading="lazy" decoding="async">` : ''}<span class="sh-tile-b"><b>${esc(c)}</b><small>${esc(ps.length === 1 ? t.productsOne : fill(t.items, { n: ps.length }))}</small></span><span class="sh-tile-go">${ic('arrow', 'i dir')}</span></a>`; }).join('')}</div></div></section>` : '';
   const railList = list.slice(0, 10);
-  const rail = list.length >= 6 ? `<section class="sh-sec"><div class="sh-wrap"><div class="sh-head sh-rv"><div><p class="sh-eyebrow">${esc(t.isNew)}</p><h2 class="sh-h2">${esc(pick((sec as any).title as Two, ctx.lang) || t.newIn)}</h2></div>
+  const rail = list.length >= 6 ? `<section class="sh-sec"><div class="sh-wrap"><div class="sh-sechead sh-rv"><div><h2 class="sh-h2">${esc(pick((sec as any).title as Two, ctx.lang) || t.newIn)}</h2></div>
 <div class="sh-rail-ctl"><button class="sh-ib" type="button" data-rail-go="-1" aria-label="${attr(t.prev)}">${ic('chevl', 'i dir')}</button><button class="sh-ib" type="button" data-rail-go="1" aria-label="${attr(t.next)}">${ic('chev', 'i dir')}</button></div></div></div>
 <div class="sh-rail" data-rail>${railList.map((p, i) => shopCard(ctx, p, i, 'in-rail')).join('')}</div></section>` : '';
   const grid = list.slice(0, 12);
   const tabs = cs.length >= 2 ? `<div class="sh-tabs" role="tablist" data-tabs><button type="button" role="tab" aria-selected="true" data-tab="">${esc(t.all)}</button>${cs.map((c) => `<button type="button" role="tab" aria-selected="false" data-tab="${attr(c)}">${esc(c)}</button>`).join('')}</div>` : '';
-  const all = `<section class="sh-sec"><div class="sh-wrap"><div class="sh-head sh-rv"><div><p class="sh-eyebrow">${esc(fill(t.productsN, { n: list.length }))}</p><h2 class="sh-h2">${esc(rail ? t.shopAll : pick((sec as any).title as Two, ctx.lang) || t.shopAll)}</h2></div><a class="sh-link" href="${attr(href(ctx, 'products'))}">${esc(t.viewAll)}${ic('arrow', 'i dir')}</a></div>
+  const all = `<section class="sh-sec"><div class="sh-wrap"><div class="sh-sechead sh-rv"><div><p class="sh-eyebrow">${esc(fill(t.productsN, { n: list.length }))}</p><h2 class="sh-h2">${esc(rail ? t.shopAll : pick((sec as any).title as Two, ctx.lang) || t.shopAll)}</h2></div><a class="sh-link" href="${attr(href(ctx, 'products'))}">${esc(t.viewAll)}${ic('arrow', 'i dir')}</a></div>
 ${tabs}<div class="sh-grid" data-tab-grid>${grid.map((p, i) => shopCard(ctx, p, i)).join('')}</div><p class="sh-more"><a class="sh-btn sh-btn-line sh-btn-lg" href="${attr(href(ctx, 'products'))}">${esc(t.viewAll)}${ic('arrow', 'i dir')}</a></p></div></section>`;
   return tiles + rail + all;
 }
@@ -164,7 +164,7 @@ ${ctx.pageSlug === '' ? `<a class="sh-btn sh-btn-paper sh-btn-lg" href="${attr(h
 function contact(ctx: Ctx, sec: WebSection) {
   const t = w(ctx), c = ctx.contact, title = pick((sec as any).title as Two, ctx.lang) || t.help;
   const wa = waFor(ctx, fill(ctx.t.waHello, { what: ctx.name, url: ctx.origin + '/' })), tel = telHref(c.phone);
-  const dl = [c.phone ? `<div><dt>${ic('phone')}${esc(ctx.t.call)}</dt><dd><bdi class="num">${esc(c.phone)}</bdi></dd></div>` : '', c.address ? `<div><dt>${ic('pin')}${esc(t.contact)}</dt><dd>${esc(c.address)}</dd></div>` : ''].join('');
+  const dl = [c.phone ? `<div><dt>${ic('phone')}${esc(ctx.t.call)}</dt><dd><bdi class="num">${esc(c.phone)}</bdi></dd></div>` : '', c.address ? `<div><dt>${ic('pin')}${esc(t.address2)}</dt><dd>${esc(c.address)}</dd></div>` : ''].join('');
   return `<section class="sh-sec"><div class="sh-wrap"><div class="sh-help sh-rv"><div><p class="sh-eyebrow">${esc(t.contactEyebrow)}</p><h2 class="sh-display sm">${esc(title)}</h2><p class="sh-lead">${esc(t.helpSub)}</p>
 <div class="sh-ctas">${wa ? `<a class="sh-btn sh-btn-wa sh-btn-lg" href="${attr(wa)}" rel="noopener">${icon('wa', 'i')}${ctx.t.whatsapp}</a>` : ''}${tel ? `<a class="sh-btn sh-btn-line sh-btn-lg" href="${attr(tel)}">${ic('phone')}${ctx.t.call}</a>` : ''}</div></div>${dl ? `<dl>${dl}</dl>` : ''}</div></div></section>`;
 }
@@ -270,7 +270,7 @@ export function shopFooter(ctx: Ctx) {
   const contact = [c.phone ? `<li><a href="${attr(telHref(c.phone)!)}"><bdi class="num">${esc(c.phone)}</bdi></a></li>` : '', c.email ? `<li><a href="mailto:${attr(c.email)}">${esc(c.email)}</a></li>` : '', c.address ? `<li>${esc(c.address)}</li>` : ''].join('');
   return `<footer class="sh-foot"><div class="sh-wrap"><div class="sh-foot-top"><div class="sh-foot-brand"><a class="sh-logo" href="${attr(pageHref(ctx, ''))}">${brandMark(ctx)}<span>${esc(ctx.name)}</span></a>${ctx.tagline ? `<p>${esc(ctx.tagline)}</p>` : ''}${wa ? `<a class="sh-btn sh-btn-wa" href="${attr(wa)}" rel="noopener">${icon('wa', 'i')}${ctx.t.whatsapp}</a>` : ''}</div>
 <div><h4>${esc(t.explore)}</h4><ul>${links}</ul></div>${cs ? `<div><h4>${esc(t.products)}</h4><ul>${cs}</ul></div>` : ''}${contact ? `<div><h4>${esc(t.contact)}</h4><ul>${contact}</ul></div>` : ''}</div>
-<p class="sh-foot-word" aria-hidden="true">${esc(ctx.name)}</p>
+<p class="sh-foot-word" aria-hidden="true" style="--len:${Math.max(3, [...ctx.name].length)}">${esc(ctx.name)}</p>
 <div class="sh-foot-bot"><span>© ${new Date().getFullYear()} ${esc(ctx.name)} · ${esc(t.closing)}</span><span class="sh-pay">${ic('cash')}${esc(t.cod)}</span>${hwBadge(ctx.lang, `https://hemlohq.com/${ctx.lang === 'en' ? 'en/' : ''}store/`)}</div></div></footer>`;
 }
 /** On a phone, the bag stays under the thumb once something is in it. */
@@ -301,7 +301,7 @@ ${out ? '' : `<div class="sh-buy-row"><div class="sh-qty" data-qty data-step="${
 ${wa ? `<a class="sh-btn sh-btn-line sh-btn-lg sh-block" href="${attr(wa)}" rel="noopener">${icon('wa', 'i')}${esc(t.orderWa)}</a>` : ''}
 <div class="sh-acc">${p.description ? `<details open><summary>${esc(t.details)}${ic('plus')}</summary><div class="sh-prose">${paras(p.description)}</div></details>` : ''}${p.notes?.length ? `<details><summary>${esc(t.notes)}${ic('plus')}</summary><ul class="sh-notes">${p.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul></details>` : ''}
 <details><summary>${esc(t.shipping)}${ic('plus')}</summary><ul class="sh-notes">${ship.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></details></div></aside>`;
-  const more = similar.length ? `<section class="sh-sec"><div class="sh-head"><div><h2 class="sh-h2">${esc(t.similar)}</h2></div><a class="sh-link" href="${attr(href(ctx, 'products'))}">${esc(t.viewAll)}${ic('arrow', 'i dir')}</a></div><div class="sh-grid">${similar.map((x, i) => shopCard(ctx, x, i + 4)).join('')}</div></section>` : '';
+  const more = similar.length ? `<section class="sh-sec"><div class="sh-sechead"><div><h2 class="sh-h2">${esc(t.similar)}</h2></div><a class="sh-link" href="${attr(href(ctx, 'products'))}">${esc(t.viewAll)}${ic('arrow', 'i dir')}</a></div><div class="sh-grid">${similar.map((x, i) => shopCard(ctx, x, i + 4)).join('')}</div></section>` : '';
   const main = `<main class="sh-pdp"><div class="sh-wrap"><nav class="sh-crumb" aria-label="breadcrumb"><a href="${attr(pageHref(ctx, ''))}">${esc(t.home)}</a>${ic('chev', 'i dir')}<a href="${attr(href(ctx, 'products'))}">${esc(t.products)}</a>${ic('chev', 'i dir')}<span>${esc(p.name)}</span></nav>
 <div class="sh-pdp-g">${gal}${buy}</div>${more}</div></main>`;
   const bar = out ? '' : `<div class="sh-bar pdp"><span class="sh-bar-p sh-price">${money(p.price, lang)}</span><button class="sh-btn sh-btn-ink sh-btn-lg sh-add" type="button" data-add="${attr(itemJson(p))}" data-with-qty><span class="a-l">${ic('bag')}${esc(t.addShort)}</span><span class="a-ok">${ic('check')}${esc(t.added)}</span></button></div>`;
@@ -398,7 +398,7 @@ export function shopCss(_theme: WebTheme, fontBase: string) {
   const f = (wt: number) => `@font-face{font-family:"Poppins";font-style:normal;font-weight:${wt};font-display:swap;src:url(${fontBase}/poppins-${wt}.woff2) format("woff2");unicode-range:${LATIN}}`;
   return `${f(400)}${f(500)}${f(600)}@font-face{font-family:"Vazirmatn";font-weight:300 700;font-display:swap;src:url(${fontBase}/vazirmatn.woff2) format("woff2");unicode-range:${ARABIC}}
 ${HW_BADGE_CSS}
-:root{--bg:#F3EFE8;--paper:#FAF8F4;--card:#FFFFFF;--tile:#E8E2D8;--ink:#15120E;--ink2:#4A443B;--muted:#8A8276;--line:rgba(21,18,14,.1);--line2:rgba(21,18,14,.18);--acc:var(--accent);
+:root{--sp:clamp(56px,7vw,96px);--bg:#F3EFE8;--paper:#FAF8F4;--card:#FFFFFF;--tile:#E8E2D8;--ink:#15120E;--ink2:#4A443B;--muted:#8A8276;--line:rgba(21,18,14,.1);--line2:rgba(21,18,14,.18);--acc:var(--accent);
 --text:"Poppins","Vazirmatn",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;--wrap:min(1320px,100% - 32px);--gut:16px;--e:cubic-bezier(.23,1,.32,1);--e2:cubic-bezier(.32,.72,0,1);
 --sh:0 1px 2px rgba(21,18,14,.05),0 14px 36px -18px rgba(21,18,14,.28);--sh-lg:0 50px 90px -40px rgba(21,18,14,.5);--r:22px}
 html[lang=ar]{--text:"Vazirmatn","Poppins",ui-sans-serif,system-ui,sans-serif}
@@ -444,7 +444,7 @@ html[lang=ar] :is(.sh-h1,.sh-h2){font-weight:700;letter-spacing:0;line-height:1.
 .sh-logo{display:inline-flex;align-items:center;gap:10px;font-size:19px;font-weight:600;letter-spacing:-.03em;color:var(--ink)}html[lang=ar] .sh-logo{letter-spacing:0;font-weight:700}
 .sh-logo img{width:34px;height:34px;border-radius:10px;object-fit:cover}.sh-mono{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:var(--ink);color:var(--bg);font-size:15px;font-weight:600}
 .sh-lang{position:relative;display:inline-grid;grid-template-columns:1fr 1fr;align-items:center;height:34px;padding:3px;border-radius:999px;background:color-mix(in oklab,var(--ink) 7%,transparent);font-size:12px;font-weight:600}
-.sh-lang span{position:relative;z-index:1;display:grid;place-items:center;min-width:32px;height:28px;color:var(--muted);transition:color .25s}.sh-lang span.on{color:var(--ink)}
+.sh-lang span{position:relative;z-index:1;display:grid;place-items:center;min-width:32px;height:28px;line-height:1;color:var(--muted);transition:color .25s}.sh-lang span:nth-child(2){font-family:"Vazirmatn",sans-serif;font-size:14px;padding-bottom:2px}.sh-lang span.on{color:var(--ink)}
 .sh-lang i{position:absolute;top:3px;left:3px;width:calc(50% - 3px);height:28px;border-radius:999px;background:var(--card);box-shadow:0 1px 3px rgba(21,18,14,.14);transition:transform .35s var(--e)}.sh-lang span:first-child:not(.on)~i{transform:translateX(100%)}
 @media (max-width:899px){.sh-head-e .sh-lang{display:none}}
 .sh-bagb{position:relative;display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 6px 0 14px;border-radius:999px;background:var(--ink);color:var(--bg);font-size:14px;font-weight:500;box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 8px 18px -10px rgba(21,18,14,.6);transition:transform .16s var(--e)}
@@ -460,24 +460,24 @@ html[dir=rtl] .sh-bagb{padding:0 14px 0 6px}.sh-bagb:active{transform:scale(.95)
 @keyframes sh-rise{from{opacity:0;transform:translateY(18px)}}
 .sh-ctas{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:6px}
 .sh-flow{position:relative;margin-top:clamp(28px,5vw,56px);animation:sh-rise 1.1s var(--e) both .2s}
-.sh-flow-stage{position:relative;height:calc(clamp(230px,27vw,400px) * 1.25);perspective:1600px;touch-action:pan-y;user-select:none;-webkit-user-select:none}
-.sh-flow-card{position:absolute;top:0;left:50%;width:clamp(230px,27vw,400px);aspect-ratio:4/5;margin-left:calc(clamp(230px,27vw,400px) / -2);border-radius:30px;overflow:hidden;background:var(--tile);box-shadow:var(--sh-lg);transition:transform .9s var(--e2),opacity .6s var(--e),filter .6s;transform-origin:50% 60%;will-change:transform}
+.sh-flow-stage{position:relative;height:calc(clamp(230px,27vw,400px) * 1.25 + 8px);perspective:1600px;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.sh-flow-card{position:absolute;top:0;left:50%;width:clamp(230px,27vw,400px);aspect-ratio:4/5;margin-left:calc(clamp(230px,27vw,400px) / -2);border-radius:30px;overflow:hidden;background:var(--tile);box-shadow:var(--sh-lg);transition:transform .9s var(--e2),opacity .6s var(--e),filter .6s;transform-origin:50% 50%;will-change:transform}
 .sh-flow-card img{width:100%;height:100%;object-fit:cover;pointer-events:none}.sh-flow-card:not(.on){filter:saturate(.85) brightness(.92);cursor:pointer}
 .sh-flow-card::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);pointer-events:none}
-.sh-flow-cap{position:relative;display:grid;justify-items:center;height:78px;margin-top:22px;text-align:center}
+.sh-flow-cap{position:relative;display:grid;justify-items:center;margin-top:26px;text-align:center}
 .sh-flow-c{grid-area:1/1;display:grid;justify-items:center;gap:2px;opacity:0;transform:translateY(8px);transition:opacity .45s var(--e),transform .45s var(--e);pointer-events:none}.sh-flow-c.on{opacity:1;transform:none;pointer-events:auto}
-.sh-flow-c .k{font-size:12px;font-weight:500;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}html[lang=ar] .sh-flow-c .k{letter-spacing:0;font-size:13px}.sh-flow-c b{font-size:20px;font-weight:600;letter-spacing:-.02em}.sh-flow-c .sh-price{font-size:16px}
-.sh-flow-ctl{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:6px}.sh-flow-ctl .sh-ib{box-shadow:inset 0 0 0 1px var(--line2)}
+.sh-flow-c .k{font-size:12px;font-weight:500;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}html[lang=ar] .sh-flow-c .k{letter-spacing:0;font-size:13px}.sh-flow-c b{font-size:21px;font-weight:600;letter-spacing:-.02em;line-height:1.3}html[lang=ar] .sh-flow-c b{letter-spacing:0}.sh-flow-c .sh-price{margin-top:4px;font-size:16px;justify-content:center}
+.sh-flow-ctl{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:18px}.sh-flow-ctl .sh-ib{box-shadow:inset 0 0 0 1px var(--line2)}
 .sh-dots{display:flex;gap:6px}.sh-dots i{width:6px;height:6px;border-radius:999px;background:var(--line2);transition:width .4s var(--e),background-color .3s}.sh-dots i.on{width:22px;background:var(--ink)}
 @media (max-width:640px){.sh-dots{display:none}}
 .sh-flow-add.is-added,.sh-add.is-added{background:var(--acc)}
 .sh-hero-mono{display:grid;place-items:center;width:min(520px,86%);aspect-ratio:4/3;margin:40px auto 0;border-radius:32px;overflow:hidden;background:var(--tile);box-shadow:var(--sh-lg)}.sh-hero-mono img{width:100%;height:100%;object-fit:cover}.sh-hero-mono .sh-mono{width:96px;height:96px;border-radius:28px;font-size:36px}
 .sh-promise{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin:clamp(40px,6vw,72px) 0 0;padding:0;list-style:none;border-block:1px solid var(--line)}
 .sh-promise li{display:flex;align-items:center;gap:14px;padding:22px 18px}.sh-promise li+li{border-inline-start:1px solid var(--line)}.sh-promise .i{width:24px;height:24px;color:var(--acc)}.sh-promise span{display:grid;line-height:1.35}.sh-promise b{font-size:14px;font-weight:600}.sh-promise small{font-size:12.5px;color:var(--muted)}
-@media (max-width:760px){.sh-promise{grid-template-columns:1fr 1fr}.sh-promise li{padding:16px 10px;gap:10px}.sh-promise li+li{border:0}.sh-promise li:nth-child(n+3){border-top:1px solid var(--line)}.sh-promise li:nth-child(even){border-inline-start:1px solid var(--line)}}
+@media (max-width:760px){.sh-promise{grid-template-columns:1fr 1fr}.sh-promise li{flex-direction:column;justify-content:flex-start;gap:8px;padding:18px 10px;text-align:center}.sh-promise b{font-size:13.5px}.sh-promise small{font-size:12px}.sh-promise li+li{border:0}.sh-promise li:nth-child(n+3){border-top:1px solid var(--line)}.sh-promise li:nth-child(even){border-inline-start:1px solid var(--line)}}
 /* sections */
-.sh-sec{padding:clamp(56px,8vw,104px) 0 0}.sh-sec:last-of-type{padding-bottom:clamp(56px,8vw,104px)}
-.sh-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:26px}.sh-rail-ctl{display:flex;gap:8px}.sh-rail-ctl .sh-ib{box-shadow:inset 0 0 0 1px var(--line2)}@media (max-width:640px){.sh-rail-ctl{display:none}}
+.sh-sec{padding:var(--sp) 0 0}.sh-story+.sh-sec{padding-top:var(--sp)}main>.sh-sec:last-child,.sh-pdp .sh-sec:last-child{padding-bottom:var(--sp)}
+.sh-sechead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:28px}.sh-sechead .sh-h2{margin:0}.sh-sechead .sh-eyebrow+.sh-h2{margin-top:8px}.sh-rail-ctl{display:flex;gap:8px}.sh-rail-ctl .sh-ib{box-shadow:inset 0 0 0 1px var(--line2)}@media (max-width:640px){.sh-rail-ctl{display:none}}
 .sh-rv{opacity:0;transform:translateY(22px);transition:opacity .9s var(--e),transform .9s var(--e);transition-delay:calc(var(--i,0) * 70ms)}.sh-rv.in,html:not(.js) .sh-rv{opacity:1;transform:none}
 /* category tiles */
 .sh-cats{display:grid;grid-template-columns:repeat(var(--cols,4),minmax(0,1fr));gap:14px}@media (max-width:900px){.sh-cats{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;margin-inline:calc(-1 * var(--gut));padding-inline:var(--gut);scrollbar-width:none}.sh-cats::-webkit-scrollbar{display:none}.sh-tile{flex:0 0 68%;scroll-snap-align:center}}
@@ -497,7 +497,7 @@ html[dir=rtl] .sh-bagb{padding:0 14px 0 6px}.sh-bagb:active{transform:scale(.95)
 @media (hover:hover) and (pointer:fine){.sh-card:hover .sh-card-media img{transform:scale(1.04)}.sh-card:hover .sh-card-media.has-2 img.alt{opacity:1}}
 .sh-card.is-out .sh-card-media img{filter:grayscale(.7);opacity:.6}
 .sh-tags{position:absolute;top:12px;inset-inline-start:12px;display:flex;gap:6px;pointer-events:none}
-.sh-badge{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:999px;background:color-mix(in oklab,var(--card) 88%,transparent);backdrop-filter:blur(8px);color:var(--ink);font-size:11.5px;font-weight:600;letter-spacing:.01em}.sh-badge.acc{background:var(--acc);color:#fff}.sh-badge.warn{background:#FFF4DE;color:#8A5A00}.sh-badge.mute{background:var(--ink);color:var(--bg)}
+.sh-badge{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:999px;background:color-mix(in oklab,var(--card) 88%,transparent);backdrop-filter:blur(8px);color:var(--ink);font-size:11.5px;font-weight:600;letter-spacing:.01em;box-shadow:inset 0 0 0 1px var(--line),0 2px 8px -4px rgba(21,18,14,.3)}.sh-badge.acc{background:var(--acc);color:#fff}.sh-badge.warn{background:#FFF4DE;color:#8A5A00}.sh-badge.mute{background:var(--ink);color:var(--bg)}
 .sh-card{container-type:inline-size}.sh-quick{position:absolute;z-index:2;inset-inline-end:12px;top:calc(125cqw - 52px);display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 14px 0 10px;border-radius:999px;background:var(--card);color:var(--ink);font-size:13.5px;font-weight:600;box-shadow:0 10px 24px -12px rgba(21,18,14,.5);transition:transform .35s var(--e),opacity .3s,background-color .25s,color .25s}
 html[dir=rtl] .sh-quick{padding:0 10px 0 14px}
 .q-ic{position:relative;display:grid;place-items:center;width:20px;height:20px}.q-ic .i{position:absolute;width:18px;height:18px;transition:transform .35s var(--e),opacity .25s}.q-ic .ok{opacity:0;transform:rotate(-90deg) scale(.5)}
@@ -511,13 +511,13 @@ html[dir=rtl] .sh-quick{padding:0 10px 0 14px}
 .sh-tabs :is(button,a){flex:none;height:40px;padding:0 18px;border-radius:999px;font-size:14px;font-weight:500;color:var(--ink2);box-shadow:inset 0 0 0 1px var(--line);transition:background-color .25s,color .25s,box-shadow .25s}.sh-tabs :is(button,a):hover{box-shadow:inset 0 0 0 1px var(--line2);color:var(--ink)}
 .sh-tabs [aria-selected=true],.sh-tabs [aria-current]{background:var(--ink);color:var(--bg);box-shadow:none}.sh-tabs a{display:inline-flex;align-items:center}
 /* the story band */
-.sh-story{margin-top:clamp(56px,8vw,104px);background:var(--ink);color:var(--bg)}.sh-story-in{display:grid;gap:clamp(28px,5vw,72px);align-items:center;padding:clamp(48px,7vw,96px) 0}@media (min-width:900px){.sh-story-in{grid-template-columns:1.05fr 1fr}}
-.sh-story figure{margin:0;aspect-ratio:4/5;max-height:640px;border-radius:28px;overflow:hidden;background:#000}.sh-story figure img{width:100%;height:100%;object-fit:cover}
-.sh-story-b{display:grid;gap:20px;justify-items:start}.sh-story .sh-eyebrow{color:color-mix(in oklab,var(--bg) 60%,transparent)}.sh-story .sh-prose p{color:color-mix(in oklab,var(--bg) 78%,transparent);font-size:16.5px;line-height:1.75}.sh-story .sh-btn{margin-top:8px}
+.sh-story{margin-top:var(--sp);background:var(--ink);color:var(--bg)}.sh-story-in{display:grid;gap:clamp(28px,5vw,80px);align-items:center;padding:var(--sp) 0}@media (min-width:900px){.sh-story-in{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.sh-story figure{margin:0;aspect-ratio:5/4;border-radius:28px;overflow:hidden;background:#000}@media (max-width:899px){.sh-story figure{aspect-ratio:4/3}}.sh-story figure img{width:100%;height:100%;object-fit:cover}
+.sh-story-b{display:grid;gap:18px;justify-items:start;max-width:520px}.sh-story-b .sh-display{margin-top:2px}.sh-story .sh-eyebrow{color:color-mix(in oklab,var(--bg) 60%,transparent)}.sh-story .sh-prose p{color:color-mix(in oklab,var(--bg) 78%,transparent);font-size:16.5px;line-height:1.75}.sh-story .sh-btn{margin-top:8px}
 /* help */
-.sh-help{display:grid;gap:28px;padding:clamp(28px,5vw,56px);border-radius:32px;background:var(--paper);box-shadow:inset 0 0 0 1px var(--line)}@media (min-width:900px){.sh-help{grid-template-columns:1.4fr 1fr;align-items:end}}
+.sh-help{display:grid;gap:28px;padding:clamp(26px,4.5vw,56px);border-radius:32px;background:var(--paper);box-shadow:inset 0 0 0 1px var(--line)}@media (min-width:900px){.sh-help{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:56px;align-items:center}}
 .sh-help>div{display:grid;gap:16px;justify-items:start}.sh-help .sh-ctas{justify-content:flex-start}
-.sh-help dl{display:grid;gap:14px;margin:0}.sh-help dt{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}.sh-help dt .i{width:16px;height:16px}.sh-help dd{margin:2px 0 0;font-size:16px;font-weight:500}
+.sh-help dl{display:grid;margin:0;border-top:1px solid var(--line)}.sh-help dl>div{padding:16px 0;border-bottom:1px solid var(--line)}.sh-help dt{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}.sh-help dt .i{width:16px;height:16px}.sh-help dd{margin:2px 0 0;font-size:16px;font-weight:500}
 /* the footer */
 .sh-foot{padding:clamp(48px,6vw,80px) 0 28px;background:#0F0D0A;color:#D9D2C5;overflow:hidden}
 .sh-foot .sh-logo{color:#fff}.sh-foot .sh-mono{background:#fff;color:#0F0D0A}
@@ -525,7 +525,7 @@ html[dir=rtl] .sh-quick{padding:0 10px 0 14px}
 .sh-foot-brand{display:grid;gap:16px;justify-items:start}.sh-foot-brand p{margin:0;max-width:340px;color:#A39B8D;font-size:14.5px}
 .sh-foot h4{margin:0 0 14px;font-size:12px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:#8A8275}html[lang=ar] .sh-foot h4{letter-spacing:0;font-size:13px}
 .sh-foot ul{display:grid;gap:10px;margin:0;padding:0;list-style:none;font-size:14.5px}.sh-foot ul a{color:#D9D2C5;transition:color .2s}.sh-foot ul a:hover{color:#fff}
-.sh-foot-word{margin:clamp(40px,6vw,72px) 0 0;font-size:clamp(4.5rem,17vw,15rem);font-weight:600;letter-spacing:-.06em;line-height:.8;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.16);background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,0));-webkit-background-clip:text;background-clip:text;white-space:nowrap;overflow:hidden;text-overflow:clip}html[lang=ar] .sh-foot-word{letter-spacing:0;line-height:1.1}
+.sh-foot-word{margin:clamp(40px,6vw,72px) 0 0;text-align:center;font-size:min(calc((100vw - 2 * var(--gut)) / var(--len) * 1.55),22rem);font-weight:600;letter-spacing:-.06em;line-height:.8;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.16);background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,0));-webkit-background-clip:text;background-clip:text;white-space:nowrap;overflow:hidden;text-overflow:clip}html[lang=ar] .sh-foot-word{letter-spacing:0;line-height:1.1;-webkit-text-stroke:0;background:none;color:rgba(255,255,255,.07)}
 .sh-foot-bot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;margin-top:22px;padding-top:22px;border-top:1px solid rgba(255,255,255,.1);font-size:12.5px;color:#8A8275}
 .sh-pay{display:inline-flex;align-items:center;gap:8px;height:30px;padding:0 12px;border-radius:999px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);color:#D9D2C5}.sh-pay .i{width:16px;height:16px}.sh-foot .hw-made{color:#8A8275}
 /* pages: the catalogue, the product, the checkout */
