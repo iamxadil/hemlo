@@ -2,12 +2,19 @@
 // A system's prices: three plans in dinars (monthly or yearly), and Enterprise through Hemlo Studio. The plans come from
 // Hemlo's price list (edited in the admin dashboard): read at build time, then refreshed in the browser, so a price
 // changed in the dashboard shows here within minutes without rebuilding the site. Every plan has every feature.
+// Below them, the add-ons this system can take (Website, Connect, AI Studio), from the same price list: a system with
+// none yet shows none, and one that gets them shows them with no change here.
 import { API_URL, SYSTEM_URL, studioUrl, type Lang } from '../i18n/strings';
 interface Props { lang: Lang; edition: 'store' | 'dental' | 'gym' | 'realestate'; color?: string; dark?: boolean }
 const { lang, edition, color = '#A8532E', dark = false } = Astro.props;
 type Plan = { id: string; code: string; name: Record<string, string>; tagline: Record<string, string> | null; priceMonth: number; priceYear: number; limits: Record<string, number>; popular: boolean };
 let plans: Plan[] = [];
 try { plans = (await (await fetch(`${API_URL}/v1/plans?edition=${edition}`, { signal: AbortSignal.timeout(6000) })).json()).plans; } catch { plans = []; }
+type Addon = { id: string; code: string; name: Record<string, string>; description: Record<string, string> | null; priceMonth: number; priceYear: number; free: boolean };
+let addons: Addon[] = [];
+try { addons = (await (await fetch(`${API_URL}/v1/plans/addons?edition=${edition}`, { signal: AbortSignal.timeout(6000) })).json()).addons ?? []; } catch { addons = []; }
+// each add-on's mark: Website (a globe), Connect (WhatsApp), AI Studio (a spark)
+const KIND: Record<string, string> = { website: 'web', connect: 'con', 'connect-pro': 'con', 'ai-studio': 'studio' };
 const ar = lang === 'ar';
 const L = ar ? {
   title: 'الأسعار', sub: 'كل الخطط فيها كل المزايا والتحديثات والدعم. الفرق في الحجم فقط. ابدأ بثلاثين يوماً مجاناً على أكبر خطة، بلا بطاقة.',
@@ -18,6 +25,7 @@ const L = ar ? {
   ent: 'المؤسسات', entTag: 'للسلاسل والفروع والاحتياجات الخاصة', quote: 'بسعر متفق عليه', entGo: 'تحدّث مع هيملو ستوديو',
   entList: ['عدة فروع في حساب واحد', 'ربط بأجهزة وأنظمة أخرى', 'ميزات وتقارير خاصة يبنيها ستوديو', 'مدير حساب ودعم مقدّم'],
   pay: 'الدفع عبر FIB أو زين كاش أو نقداً أو تحويل. بعد انتهاء المدة لديك 7 أيام سماح، وسجلاتك تبقى لك دائماً.',
+  addTitle: 'الإضافات', addSub: 'أضفها لأي خطة، وأوقفها متى شئت. تعمل من سجلات نظامك نفسها.', free: 'مجاناً', withSystem: 'مع نظامك', onTop: 'فوق خطتك',
 } : {
   title: 'Pricing', sub: 'Every plan has every feature, updates and support; they differ by size. Start with 30 days free on the biggest plan, no card.',
   monthly: 'Monthly', yearly: 'Yearly', twoFree: '2 months free', month: 'a month', year: 'a year', popular: 'Most chosen', iqd: 'IQD', start: 'Start 30 days free',
@@ -27,6 +35,7 @@ const L = ar ? {
   ent: 'Enterprise', entTag: 'For chains, branches and special needs', quote: 'By quote', entGo: 'Talk to Hemlo Studio',
   entList: ['Several branches in one account', 'Links to devices and other systems', 'Custom features and reports built by Studio', 'An account manager and priority support'],
   pay: 'Pay by FIB, Zain Cash, cash or transfer. When a period ends you have 7 days of grace, and your records are always yours.',
+  addTitle: 'Add-ons', addSub: 'Add them to any plan and switch them off any time. They work from your system’s own records.', free: 'Free', withSystem: 'with your system', onTop: 'on top of your plan',
 };
 const nf = new Intl.NumberFormat('en-US');
 const fill = (s: string, v: Record<string, string>) => s.replace(/\{(\w+)\}/g, (_, k) => v[k] ?? '');
@@ -60,6 +69,23 @@ const studio = `${studioUrl(lang)}?from=systems&edition=${edition}`;
         <a class="btn pr-go pr-alt" href={studio}>{L.entGo}</a>
       </article>
     </div>
+    {addons.length > 0 && (
+      <div class="pr-add">
+        <div class="reveal"><h3 class="pr-add-t">{L.addTitle}</h3><p class="mt-1 pr-sub">{L.addSub}</p></div>
+        <div class="pr-add-grid">
+          {addons.map((x) => (
+            <article class:list={['pr-addon reveal', `k-${KIND[x.code] ?? 'web'}`]} data-addon={x.id}>
+              <span class="pr-ai" aria-hidden="true"><svg viewBox="0 0 24 24" set:html={KIND[x.code] === 'con' ? '<path d="M3 21l1.65-4.94A9 9 0 1 1 7.9 19.3L3 21Z"/>' : KIND[x.code] === 'studio' ? '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18"/>' : '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>'} /></span>
+              <div class="min-w-0">
+                <h4>{x.name[lang] ?? x.name.en}</h4>
+                <p class="pr-addon-p">{x.free || !x.priceMonth ? <><b>{L.free}</b> <small>{L.withSystem}</small></> : <><b data-m={x.priceMonth} data-y={x.priceYear}>{nf.format(x.priceMonth)}</b> <span>{L.iqd}</span> <small data-per>{L.month}</small> <small class="pr-top">{L.onTop}</small></>}</p>
+                {x.description && <p class="pr-addon-d">{x.description[lang] ?? x.description.en}</p>}
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    )}
     <p class="reveal mt-8 text-[.95rem] pr-sub">{L.pay}</p>
   </div>
 </section>
@@ -72,12 +98,16 @@ const studio = `${studioUrl(lang)}?from=systems&edition=${edition}`;
     let cycle: 'month' | 'year' = 'month';
     const paint = () => {
       box.querySelectorAll<HTMLElement>('[data-cycle]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.cycle === cycle)));
-      box.querySelectorAll<HTMLElement>('.pr-price b[data-m]').forEach((b) => { b.textContent = nf.format(Number(cycle === 'year' ? b.dataset.y : b.dataset.m)); });
+      box.querySelectorAll<HTMLElement>('b[data-m]').forEach((b) => { b.textContent = nf.format(Number(cycle === 'year' ? b.dataset.y : b.dataset.m)); });
       box.querySelectorAll<HTMLElement>('[data-per]').forEach((s) => { s.textContent = cycle === 'year' ? (ar ? 'سنوياً' : 'a year') : ar ? 'شهرياً' : 'a month'; });
     };
     box.querySelectorAll<HTMLElement>('[data-cycle]').forEach((b) => b.addEventListener('click', () => { cycle = b.dataset.cycle as 'month' | 'year'; paint(); }));
     fetch(`${box.dataset.api}/v1/plans?edition=${box.dataset.pricing}`).then((r) => r.json()).then(({ plans }) => {
       for (const p of plans ?? []) { const b = box.querySelector<HTMLElement>(`[data-plan="${p.id}"] .pr-price b`); if (b) { b.dataset.m = String(p.priceMonth); b.dataset.y = String(p.priceYear); } }
+      paint();
+    }).catch(() => {});
+    if (box.querySelector('[data-addon]')) fetch(`${box.dataset.api}/v1/plans/addons?edition=${box.dataset.pricing}`).then((r) => r.json()).then(({ addons }) => {
+      for (const x of addons ?? []) { const b = box.querySelector<HTMLElement>(`[data-addon="${x.id}"] b[data-m]`); if (b) { b.dataset.m = String(x.priceMonth); b.dataset.y = String(x.priceYear); } }
       paint();
     }).catch(() => {});
   }
@@ -118,4 +148,21 @@ const studio = `${studioUrl(lang)}?from=systems&edition=${edition}`;
   .pr-main:hover { filter: brightness(1.07); }
   .pr-alt { border: 1px solid var(--line-strong); }
   .dark .pr-alt { border-color: rgb(255 255 255 / .22); color: #fff; }
+  /* the add-ons, under the plans */
+  .pr-add { margin-top: 3rem; padding-top: 2.4rem; border-top: 1px solid var(--line); }
+  .dark .pr-add { border-color: rgb(255 255 255 / .08); }
+  .pr-add-t { font-size: 1.5rem; font-weight: 650; letter-spacing: -.01em; }
+  .pr-add-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: .8rem; margin-top: 1.4rem; }
+  .pr-addon { display: flex; gap: .9rem; padding: 1.1rem 1.2rem; border-radius: 1.2rem; background: var(--surface); border: 1px solid var(--line); }
+  .dark .pr-addon { background: #17191E; border-color: rgb(255 255 255 / .08); }
+  .pr-ai { flex: none; display: grid; place-items: center; width: 2.4rem; height: 2.4rem; border-radius: .8rem; color: #fff; }
+  .pr-ai svg { width: 1.2rem; height: 1.2rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .k-web .pr-ai { background: linear-gradient(145deg, #5EC8F2, #1F5FBF); } .k-con .pr-ai { background: linear-gradient(145deg, #3DDC84, #128C4A); } .k-studio .pr-ai { background: linear-gradient(145deg, #C08BF0, #6B3FA0); }
+  .pr-addon h4 { font-weight: 600; }
+  .pr-addon-p { margin-top: .15rem; display: flex; flex-wrap: wrap; align-items: baseline; gap: .3rem; }
+  .pr-addon-p b { font-size: 1.25rem; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .pr-addon-p span, .pr-addon-p small { color: var(--muted); font-size: .82rem; }
+  .pr-top { flex-basis: 100%; margin-top: -.15rem; }
+  .pr-addon-d { margin-top: .4rem; font-size: .88rem; line-height: 1.5; color: var(--fg-2); }
+  .dark .pr-addon-d { color: #B4B8C0; }
 </style>
