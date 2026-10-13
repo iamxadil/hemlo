@@ -28,11 +28,13 @@ const WebsitePage = lazy(() => site().then((m) => ({ default: m.Site })));
 const WEBSITE: Page = { path: 'website', icon: 'globe', need: 'website.manage', view: WebsitePage, gapBefore: true };
 
 // ---- Hemlo Connect: WhatsApp inbox, assistant and automations (real estate first; its own chunk) ----
-const ConnectPage = lazy(() => import('./connect').then((m) => ({ default: m.Connect })));
+const connect = () => import('./connect');
+const ConnectPage = lazy(() => connect().then((m) => ({ default: m.Connect })));
 const CONNECT: Page = { path: 'connect', icon: 'wa', need: 'leads.read', view: ConnectPage, label: (t) => t.nav.connect };
 
 // ---- Hemlo AI Studio: marketing from the agency's listings (real estate; its own chunk). 'studio' is taken (adding a property) ----
-const StudioPage = lazy(() => import('./studio').then((m) => ({ default: m.Studio })));
+const studio = () => import('./studio');
+const StudioPage = lazy(() => studio().then((m) => ({ default: m.Studio })));
 const AI_STUDIO: Page = { path: 'marketing', icon: 'sparkle', need: 'listings.read', view: StudioPage, label: () => 'AI Studio' };
 
 export const STORE_PAGES: Page[] = [
@@ -131,3 +133,11 @@ export const DENTAL_PAGES: Page[] = [
   PLAN,
   { path: 'settings', icon: 'gear', need: null, label: (t) => t.settings.title, view: Settings },
 ];
+
+/** Once the first page is up and the device is idle, fetch the rest of this system's screens, so the next tap opens at
+ *  once instead of waiting on the network. Each loader is the same import the page uses (the browser keeps one copy). */
+export function preloadPages(kind: string | null) {
+  const jobs: (() => Promise<unknown>)[] = kind === 'realestate' ? [estate, connect, studio, site] : kind === 'gym' ? [gym] : kind === 'dental' ? [dental] : kind === 'school' ? [school] : [];
+  const run = () => jobs.forEach((j) => j().catch(() => {}));
+  if ('requestIdleCallback' in window) (window as any).requestIdleCallback(run, { timeout: 4000 }); else setTimeout(run, 1500);
+}

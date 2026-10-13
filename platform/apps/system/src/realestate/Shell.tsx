@@ -8,6 +8,8 @@ import { api } from '../lib/api';
 import { go, initials } from '../lib/app';
 import { locale } from '../lib/i18n';
 import { Icon, LangPick } from '../components/ui';
+import { Rail } from '../components/Rail';
+import { useInterface } from '../lib/interface';
 import type { Page } from '../pages';
 import { useR } from './i18n';
 import { HMark, Panel, RIcon, StatusPill } from './ui';
@@ -15,51 +17,11 @@ import { fmt, price, titleOf, localPhone, ago, useSetup } from './data';
 import { LeadForm } from './Leads';
 import { ViewingForm } from './Agenda';
 import { OwnerForm } from './Owners';
+import { PRODUCTS, Products } from '../components/Products';
 import './re.css';
 
 const PRIMARY = ['today', 'properties', 'leads', 'agenda', 'deals'];
 const PHONE = ['today', 'properties', 'leads', 'agenda'];
-/** Hemlo's own products sit apart from the agency's daily pages: their own colour, a line on what they do, and where the agency stands. */
-const PRODUCTS = ['connect', 'marketing', 'website'];
-const PW = {
-  ar: { group: 'منتجات Hemlo', connect: ['Connect', 'واتساب ومساعد ذكي'], marketing: ['AI Studio', 'تسويق بالذكاء الاصطناعي'], website: ['Website', 'موقع وكالتك على الإنترنت'], on: 'مفعّل', new: 'جديد', add: 'أضِف' },
-  en: { group: 'Hemlo products', connect: ['Connect', 'WhatsApp and an AI assistant'], marketing: ['AI Studio', 'Marketing by AI'], website: ['Website', 'Your agency online'], on: 'On', new: 'New', add: 'Add' },
-  ckb: { group: 'بەرهەمەکانی Hemlo', connect: ['Connect', 'واتساپ و یاریدەدەری زیرەک'], marketing: ['AI Studio', 'بازاڕکردن بە زیرەکی دەستکرد'], website: ['Website', 'ئاژانسەکەت لەسەر ئینتەرنێت'], on: 'چالاکە', new: 'نوێ', add: 'زیادکردن' },
-} as const;
-
-/** Where the agency stands with each product, from the add-ons it has (no answer yet: no badge). */
-function useProductState(lang: string) {
-  const q = useQuery<{ addons: any[] }>({ queryKey: ['billing-addons'], queryFn: () => api('/v1/billing/addons'), staleTime: 60_000, retry: false });
-  const w = PW[lang as keyof typeof PW] ?? PW.ar;
-  const on = (code: string) => !!q.data?.addons.some((x) => x.code === code && (x.entitlement?.active || x.included));
-  const badge: Record<string, [string, boolean]> = {};
-  if (q.data) {
-    const tier = on('ai-studio') ? 'Studio' : on('connect-pro') ? 'Pro' : 'Basic';
-    badge.connect = [tier, tier !== 'Basic'];
-    badge.marketing = on('ai-studio') ? [w.on, true] : [w.new, false];
-    badge.website = on('website') ? [w.on, true] : [w.add, false];
-  }
-  return { w, badge };
-}
-
-function Products({ pages, onPage, phone, onPick }: { pages: Page[]; onPage(p: Page): boolean; phone?: boolean; onPick?(): void }) {
-  const { lang } = useR();
-  const { w, badge } = useProductState(lang);
-  const list = PRODUCTS.map((path) => pages.find((p) => p.path === path)).filter(Boolean) as Page[];
-  if (!list.length) return null;
-  return (
-    <div className={`re-pro${phone ? ' phone' : ''}`}>
-      <p className="re-pro-h"><HMark className="re-pro-m" />{w.group}</p>
-      {list.map((p) => { const [name, sub] = (w as any)[p.path] as [string, string]; const b = badge[p.path]; return (
-        <a key={p.path} className={`re-pro-i ${p.path}`} href={`#/${p.path}`} onClick={onPick} aria-current={onPage(p) ? 'page' : undefined}>
-          <span className="re-pro-t"><Icon n={p.icon} /></span>
-          <span className="re-pro-x"><b>{name}</b><small>{sub}</small></span>
-          {b && <span className={`re-pro-b${b[1] ? ' on' : ''}`}>{b[0]}</span>}
-        </a>
-      ); })}
-    </div>
-  );
-}
 type Add = null | 'menu' | 'lead' | 'viewing' | 'owner';
 
 export function ReShell({ pages, current, label, banner, signOut, signOutLabel, orgs, choose }: {
@@ -84,6 +46,7 @@ export function ReShell({ pages, current, label, banner, signOut, signOutLabel, 
   const secondary = pages.filter((p) => !PRIMARY.includes(p.path) && !PRODUCTS.includes(p.path) && !p.hidden && p.path !== 'more');
   const parent: Record<string, string> = { property: 'properties', studio: 'properties', lead: 'leads' };
   const onPage = (p: Page) => p.path === current.path || parent[current.path] === p.path;
+  const ui = useInterface();
   const View = current.view;
   const hour = Number(new Intl.DateTimeFormat('en-GB', { hour: 'numeric', hour12: false, timeZone: 'Asia/Baghdad' }).format(new Date()));
   const greet = hour >= 5 && hour < 12 ? r.shell.morning : hour >= 12 && hour < 17 ? r.shell.afternoon : r.shell.evening;
@@ -93,6 +56,7 @@ export function ReShell({ pages, current, label, banner, signOut, signOutLabel, 
 
   return (
     <div className="ref">
+      {ui.sidebar === 'rail' && <Rail pages={pages} current={current} label={label} primary={PRIMARY} onPage={onPage} signOut={signOut} signOutLabel={signOutLabel} orgs={orgs} choose={choose} />}
       <aside className="re-side" aria-label={r.shell.agency}>
         <a className="re-brand" href="#/today" title={sys.business.name}><HMark className="re-h" /><span className="re-brand-t"><b>Hemlo</b><small>{sys.business.name}</small></span></a>
         <nav className="grid gap-0.5">
@@ -138,7 +102,7 @@ export function ReShell({ pages, current, label, banner, signOut, signOutLabel, 
           ] as const).filter((x) => x[3]).map(([k, icon, text, , run]) => (
             <button key={k} className="re-menu-item" onClick={run}><span className="ic"><RIcon n={icon} /></span>{text}</button>
           ))}
-          <div className="md:hidden"><Products pages={pages} onPage={onPage} phone onPick={() => setAdd(null)} /></div>
+          <div className="md:hidden"><Products pages={pages} onPage={onPage} paper onPick={() => setAdd(null)} /></div>
           <div className="re-side-sep" style={{ background: 'var(--line)' }} />
           {secondary.map((p) => <a key={p.path} className="re-menu-item md:hidden" href={`#/${p.path}`} onClick={() => setAdd(null)}><span className="ic" style={{ background: 'var(--sunken)', color: 'var(--fg-2)' }}><Icon n={p.icon} /></span>{label(p)}</a>)}
         </Panel>

@@ -7,6 +7,8 @@ import { api } from '../lib/api';
 import { go, initials } from '../lib/app';
 import { locale } from '../lib/i18n';
 import { Icon, LangPick } from '../components/ui';
+import { Rail } from '../components/Rail';
+import { useInterface } from '../lib/interface';
 import type { Page } from '../pages';
 import { useD } from './i18n';
 import { useSetup, type PatientCard } from './data';
@@ -44,6 +46,7 @@ export function DentalShell({ pages, current, label, banner, signOut, signOutLab
   const primary = pages.filter((p) => PRIMARY.includes(p.path));
   const secondary = pages.filter((p) => !PRIMARY.includes(p.path) && !p.hidden && p.path !== 'more');
   const onPage = (p: Page) => p.path === current.path || (current.path === 'patient' && p.path === 'patients');
+  const ui = useInterface();
   const View = current.view;
   const dateLine = new Intl.DateTimeFormat(lang === 'ckb' ? 'ar-IQ-u-nu-latn' : locale(lang), { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Asia/Baghdad' }).format(new Date());
   const setup = useSetup();
@@ -61,6 +64,7 @@ export function DentalShell({ pages, current, label, banner, signOut, signOutLab
 
   return (
     <div className="clinic">
+      {ui.sidebar === 'rail' && <Rail pages={pages} current={current} label={label} primary={PRIMARY} onPage={onPage} signOut={signOut} signOutLabel={signOutLabel} orgs={orgs} choose={choose} />}
       <aside className="c-side" aria-label={d.shell.clinic}>
         <a className="c-brand" href="#/today" title={sys.business.name}>
           <HMark className="c-h" />

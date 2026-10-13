@@ -8,6 +8,8 @@ import { api } from '../lib/api';
 import { go, initials } from '../lib/app';
 import { locale } from '../lib/i18n';
 import { Icon, LangPick } from '../components/ui';
+import { Rail } from '../components/Rail';
+import { useInterface } from '../lib/interface';
 import type { Page } from '../pages';
 import { useG } from './i18n';
 import { Face, HMark, MemberPicker, Panel, StatePill } from './ui';
@@ -45,6 +47,7 @@ export function GymShell({ pages, current, label, banner, signOut, signOutLabel,
   const primary = pages.filter((p) => PRIMARY.includes(p.path));
   const secondary = pages.filter((p) => !PRIMARY.includes(p.path) && !p.hidden && p.path !== 'more');
   const onPage = (p: Page) => p.path === current.path || (current.path === 'member' && p.path === 'members');
+  const ui = useInterface();
   const View = current.view;
   const dateLine = new Intl.DateTimeFormat(lang === 'ckb' ? 'ar-IQ-u-nu-latn' : locale(lang), { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Asia/Baghdad' }).format(new Date());
   const hour = Number(new Intl.DateTimeFormat('en-GB', { hour: 'numeric', hour12: false, timeZone: 'Asia/Baghdad' }).format(new Date()));
@@ -57,6 +60,7 @@ export function GymShell({ pages, current, label, banner, signOut, signOutLabel,
 
   return (
     <div className="gymf">
+      {ui.sidebar === 'rail' && <Rail pages={pages} current={current} label={label} primary={PRIMARY} onPage={onPage} signOut={signOut} signOutLabel={signOutLabel} orgs={orgs} choose={choose} />}
       <aside className="gy-side" aria-label={g.shell.gym}>
         <a className="gy-brand" href="#/desk" title={sys.business.name}>
           <HMark className="gy-h" />

@@ -1,5 +1,5 @@
 // App-wide context: language, copy, the business and what I may do in it, formatting, toasts, and routing.
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, startTransition, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { STRINGS, fill, locale as localeOf, readLang, rtl, type Lang, type Strings } from './i18n';
 import { ApiError, type SysMe } from './api';
 
@@ -52,7 +52,8 @@ export function AppProvider({ lang, setLang, me, sys, children }: { lang: Lang; 
 export function useRoute() {
   const read = () => { const [p, q] = (location.hash.slice(2) || '').split('?'); return { path: p, params: new URLSearchParams(q) }; };
   const [r, setR] = useState(read);
-  useEffect(() => { const on = () => setR(read()); window.addEventListener('hashchange', on); return () => window.removeEventListener('hashchange', on); }, []);
+  // a transition: the page on screen stays until the next one is ready (no skeleton flash between pages)
+  useEffect(() => { const on = () => startTransition(() => setR(read())); window.addEventListener('hashchange', on); return () => window.removeEventListener('hashchange', on); }, []);
   return r;
 }
 export const go = (hash: string) => { location.hash = hash; };
