@@ -323,7 +323,7 @@ export function adminPricingRoutes(d: Deps) {
     const amount = price * periods;
     if (!Number.isSafeInteger(amount) || Number(b.amount) !== amount) throw new HttpError(400, 'PAYMENT_AMOUNT_MISMATCH');
     const sub = await subscriptionOf(d.db, request.organizationId);
-    if (sub.edition !== request.edition || !['trial', 'active', 'grace'].includes(sub.status)) throw new HttpError(409, 'CORE_SUBSCRIPTION_REQUIRED');
+    if (sub.edition !== request.edition || !['trial', 'active', 'grace', 'free'].includes(sub.status)) throw new HttpError(409, 'CORE_SUBSCRIPTION_REQUIRED');
     const current = await withOrg(d.db, request.organizationId, async (tx) => (await tx.select().from(hemloAddonEntitlement)
       .where(and(eq(hemloAddonEntitlement.organizationId, request.organizationId), eq(hemloAddonEntitlement.addonId, request.addonId))))[0] ?? null);
     const now = new Date();

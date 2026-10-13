@@ -60,7 +60,7 @@ export function PlanPage() {
   const priceOf = (x: Plan) => (cycle === 'year' ? x.priceYear : x.priceMonth);
   const addonPrice = cycle === 'year' ? website?.priceYear : website?.priceMonth;
   const corePrice = current ? (s.price != null && s.billing === cycle && current.id === s.planId ? s.price : priceOf(current)) : null;
-  const canRequestAddon = owner && !!website?.configured && !website.entitlement?.active && !pendingAddon && ['trial', 'active', 'grace'].includes(s.status);
+  const canRequestAddon = owner && !!website?.configured && !website.entitlement?.active && !pendingAddon && ['trial', 'active', 'grace', 'free'].includes(s.status);
   const limits = s.limits ?? {};
   const keys = (['users', 'devices', 'dentists', 'members'] as const).filter((k) => limits[k] != null || (k === 'members' && sys.business.kind === 'gym') || (k === 'dentists' && sys.business.kind === 'dental'));
   const head = s.status === 'trial' ? fill(p.trialHead, { n: num(s.daysLeft ?? 0), plan: name(s.plan?.name) })

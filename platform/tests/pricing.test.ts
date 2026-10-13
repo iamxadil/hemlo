@@ -200,3 +200,19 @@ describe('when a payment is due', () => {
     expect((await shop.post('/v1/sys/products', { name: 'Sugar', price: 1000 })).status).toBe(201);
   });
 });
+
+describe('a shop from before plans (no subscription row: the free arrangement)', () => {
+  it('can ask for Hemlo Website, have it confirmed, and switch its site on', async () => {
+    const owner = new Browser(t.app);
+    await signInEmail(owner, 'first-shop@example.com');
+    const org = await createOrg(owner, "Jasper's Market");
+    await owner.post('/v1/auth/organization/set-active', { organizationId: org.id });
+    expect((await owner.get('/v1/billing/subscription')).json.subscription?.status ?? (await owner.get('/v1/sys/me')).json.subscription.status).toBe('free');
+    const asked = await owner.post('/v1/billing/addons/website/request', { billing: 'month' });
+    expect(asked.status).toBe(201);
+    const done = await founder.req('PATCH', `/v1/admin/addon-requests/${asked.json.request.id}`, { action: 'activate', amount: asked.json.request.price, method: 'cash' });
+    expect(done.status).toBe(201);
+    expect(done.json.entitlement).toMatchObject({ status: 'active', edition: 'store' });
+    expect((await owner.post('/v1/web/site/enable')).status).toBe(200);
+  });
+});

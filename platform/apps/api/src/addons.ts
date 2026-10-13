@@ -35,7 +35,8 @@ export function forEdition<T extends Offer | null | undefined>(o: T, edition: st
 const LEGACY: Record<string, string[]> = { 'web-connect': ['website', 'connect-pro', 'connect'] };
 const includesOf = (o: Offer) => (o.includes?.length ? o.includes : LEGACY[o.code] ?? []);
 export const isFree = (o: Offer | null | undefined) => !!o && o.priceMonth === 0;
-const live = (sub: Sub) => sub.status === 'trial' || sub.status === 'active' || sub.status === 'grace';
+// a shop on the founders' free arrangement (from before plans; no subscription row) is a live customer too
+const live = (sub: Sub) => sub.status === 'trial' || sub.status === 'active' || sub.status === 'grace' || sub.status === 'free';
 const fits = (o: Offer | null, sub: Sub) => !!o && o.active && live(sub) && o.compatibleEditions.includes(sub.edition);
 /** Bought (an active, paid-up entitlement), or free with the System (no entitlement needed). */
 const isActive = (offer: Offer | null, ent: Ent | null, sub: Sub) => fits(offer, sub) && (isFree(offer)
