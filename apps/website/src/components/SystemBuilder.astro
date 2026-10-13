@@ -69,7 +69,7 @@ const SHOP_C = ar ? {
   url: 'nafha.hemlohq.com', tiles: [['عنبر الليل', '85,000'], ['ورد الطائف', '65,000'], ['صندوق هدية', '150,000']],
   webToast: 'طلب جديد من موقعك', conToast: 'رُدّ خلال ٣ ثوانٍ', agency: 'نفحة', mono: 'ن',
   q: 'عندكم عطر عنبر الليل؟ وكم سعره؟', a: 'نعم متوفر بـ 85,000 د.ع. تقدر تطلبه من موقعنا والدفع عند الاستلام، ويوصلك اليوم داخل بغداد.',
-  sample: 'جرّب المتجر التجريبي', form: { ...BASE.form, business: 'اسم المتجر' },
+  sample: 'شاهد متجراً نموذجياً', form: { ...BASE.form, business: 'اسم المتجر' },
 } : {
   sys: { kind: 'Your system', name: 'Hemlo Stores', line: 'The till, stock, the debt book and orders, in one place.', always: 'Always on', plan: 'Plan' },
   web: { kind: 'Add-on', line: 'Your shop online: your products and prices, a cart and cash on delivery, and the orders arrive in your system.' },
@@ -78,11 +78,11 @@ const SHOP_C = ar ? {
   url: 'nafha.hemlohq.com', tiles: [['Amber Night', '85,000'], ['Taif Rose', '65,000'], ['Gift box', '150,000']],
   webToast: 'New order from your site', conToast: 'Replied in 3 s', agency: 'Nafha', mono: 'N',
   q: 'Do you have Amber Night? How much is it?', a: 'Yes, it’s in stock at 85,000 IQD. You can order it on our website with cash on delivery, and it reaches you today in Baghdad.',
-  sample: 'Try the demo shop', form: { ...BASE.form, business: 'Shop name' },
+  sample: 'See a sample shop', form: { ...BASE.form, business: 'Shop name' },
 };
 const C = shop ? { ...BASE, ...SHOP_C } : { ...BASE, mono: ar ? 'ن' : 'N' };
 const nf = new Intl.NumberFormat('en-US');
-const sampleHref = shop ? `${SYSTEM_URL}?demo=1&lang=${lang}` : ar ? 'https://business.hemlohq.com/s/sample' : 'https://business.hemlohq.com/s/sample?lang=en';
+const sampleHref = shop ? `https://business.hemlohq.com/s/sample-shop${ar ? '' : '?lang=en'}` : ar ? 'https://business.hemlohq.com/s/sample' : 'https://business.hemlohq.com/s/sample?lang=en';
 const tileImg = shop ? ['/images/stores/shop/amber.webp', '/images/stores/shop/rose.webp', '/images/stores/shop/gift-box.webp'] : ['villa-3', 'apartment-1', 'villa-4'].map((x) => `/images/realestate/sample/${x}.webp`);
 const DATA = { plans: PLANS, price: PRICE, names: { web: 'Website', basic: 'Connect Basic', pro: 'Connect Pro', studio: 'AI Studio' }, free: C.con.free };
 const plus = (n: number) => (n ? `+${nf.format(n)}` : C.con.free);

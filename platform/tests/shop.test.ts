@@ -166,3 +166,29 @@ describe('Hemlo Connect in a shop', () => {
     expect(sent.json.message.body).toContain('6,000 IQD');
   });
 });
+
+describe('the public sample shop (sample-shop)', () => {
+  const sample = { 'x-hemlo-site': 'sample-shop', host: 'sample-shop.hemlohq.com' };
+  it('is a whole shop from its own list: home, a category, a product, the bag, a checkout that stores nothing', async () => {
+    const pub = new Browser(t.app);
+    const home = String((await pub.get('/v1/web/pub?lang=en', sample)).json);
+    expect(home).toContain('Sample shop');
+    expect(home).toContain('Nafha Noir');
+    expect(home).toContain('data-flow');
+    const cat = String((await pub.get(`/v1/web/pub/products?c=${encodeURIComponent('Gifts')}&lang=en`, sample)).json);
+    expect(cat).toContain('Nafha Discovery Set');
+    expect(cat).not.toContain('Nafha Noir</a>');
+    expect(cat).toContain('Body Care'); // every category stays in the catalogue's links
+    const page = await pub.get('/v1/web/pub/products/amber-dusk?lang=en', sample);
+    expect(page.status).toBe(200);
+    expect(String(page.json)).toContain('85,000'); // its old price, struck through
+    const q = await pub.post('/v1/web/pub/cart/quote', { lines: [{ id: 'n-amber-dusk', qty: 2 }], delivery: 'delivery', lang: 'en' }, sample);
+    expect(q.json).toMatchObject({ subtotal: 144000, fee: 0, total: 144000, ok: true });
+    const before = (await withSystem(t.db, (tx) => tx.select().from(shopOrder))).length;
+    const placed = await pub.post('/v1/web/pub/checkout', { lines: [{ id: 'n-amber-dusk', qty: 1 }], name: 'Noor', phone: '07701234567', delivery: 'delivery', city: 'Baghdad', address: 'x' }, sample);
+    expect(placed.status).toBe(201);
+    expect((await withSystem(t.db, (tx) => tx.select().from(shopOrder))).length).toBe(before);
+    expect((await pub.get(`/v1/web/pub/order/${placed.json.code}?lang=en`, sample)).status).toBe(200);
+    expect((await pub.get('/v1/web/pub/order/somethingelse1', sample)).status).toBe(404);
+  });
+});

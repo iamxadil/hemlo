@@ -8,7 +8,8 @@ import { hemloSubscription, hemloAddonEntitlement } from '@hemlo/db/schema';
 import { newId } from '@hemlo/core';
 import { setup, Browser, signInEmail, createOrg } from '../tests/helpers';
 
-const PORT = Number(process.env.PORT ?? 8798), ORIGIN = `http://localhost:${PORT}`, SUB = 'nafha';
+const PORT = Number(process.env.PORT ?? 8798), ORIGIN = `http://localhost:${PORT}`, SUB = process.env.SITE ?? 'nafha';
+const DEMO = new URL('../apps/system/public/', import.meta.url);
 const PHOTOS = new URL('../../apps/demo-store/dist/photos/', import.meta.url);
 
 const t = await setup({ SYSTEM_URL: ORIGIN, API_URL: ORIGIN, BUSINESS_CREATION: 'open' });
@@ -47,6 +48,8 @@ for (const [file, name, category, price, stock, description] of items) {
   const r = await owner.post('/v1/sys/products', { name, category, price, stock, lowStock: 4, online: true, imageId: cover, photoIds, description: description ?? null });
   if (r.status !== 201) throw new Error(`product ${file}: ${r.status} ${JSON.stringify(r.json)}`);
 }
+// the public sample (sample-shop) is rendered from its own list, not from a site in the database
+if (SUB !== 'sample-shop') {
 await owner.post('/v1/web/site/enable');
 const put = await owner.put('/v1/web/site', {
   subdomain: SUB, name: { ar: 'نفحة', en: 'Nafha' },
@@ -59,9 +62,12 @@ const put = await owner.put('/v1/web/site', {
 if (put.status !== 200) throw new Error(`site: ${put.status} ${JSON.stringify(put.json)}`);
 const pub = await owner.post('/v1/web/site/publish');
 if (pub.status !== 200) throw new Error(`publish: ${pub.status} ${JSON.stringify(pub.json)}`);
+}
 
 createServer(async (req, res) => {
   const u = new URL(req.url!, ORIGIN);
+  // the sample shop's photos live with the system app (/demo/shop/…), as they do in production
+  if (u.pathname.startsWith('/demo/')) { try { res.writeHead(200, { 'content-type': 'image/webp' }); res.end(await readFile(new URL('.' + u.pathname, DEMO))); } catch { res.writeHead(404); res.end(); } return; }
   const chunks: Buffer[] = [];
   for await (const c of req) chunks.push(c as Buffer);
   // the photos' own links (/v1/files/…) go to the API as they are; everything else is the shop's site

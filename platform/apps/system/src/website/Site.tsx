@@ -15,8 +15,9 @@ const t2 = (x: Two | undefined, l: 'ar' | 'en') => x?.[l] ?? '';
 const L = (l: 'ar' | 'en') => (l === 'ar' ? 'العربية' : 'English');
 
 export function Site() {
-  const { w, toast, err, lang, money } = useW();
+  const { w, toast, err, lang, money, sys } = useW();
   const q = useSite();
+  const sampleKind = sys.business.kind;
   const qc = useQueryClient();
   const refresh = () => qc.invalidateQueries({ queryKey: ['web-site'] });
   const enable = useMutation({ mutationFn: () => api('/v1/web/site/enable', { body: {} }), onSuccess: () => { toast(w.saved); refresh(); }, onError: (e) => toast(err(e), 'bad') });
@@ -25,11 +26,11 @@ export function Site() {
   if (!q.data) return <Empty icon="globe" text={err(q.error)} />;
   const { site, offer, entitlement, request } = q.data;
   const addCopy = lang === 'en' ? {
-    intro: 'Extend your Hemlo Real Estate workspace', body: 'Create your own branded business website, connected directly to your Hemlo workspace.',
+    intro: 'Put your business online', body: sys.business.kind === 'realestate' ? 'Create your own branded website, connected directly to your Hemlo workspace: every property you publish appears on it.' : 'Your own online shop, connected directly to your Hemlo workspace: your products, a cart, and orders with cash on delivery.',
     price: 'Hemlo Website', unconfigured: 'Price is being configured. Activation is not available yet.', pending: 'Your activation request is waiting for Hemlo to confirm it.',
     activate: 'Request activation', plan: 'View add-ons and pricing', paused: 'Website access is inactive. Review the add-on in billing to reactivate it.',
   } : {
-    intro: 'وسّع مساحة عمل Hemlo Real Estate', body: 'أنشئ موقعاً تجارياً بعلامتك، متصلاً مباشرة بمساحة عمل Hemlo.',
+    intro: 'ضع عملك على الإنترنت', body: sys.business.kind === 'realestate' ? 'أنشئ موقعاً بعلامتك، متصلاً مباشرة بمساحة عمل Hemlo: كل عقار تنشره يظهر عليه.' : 'متجرك على الإنترنت، متصل مباشرة بمساحة عمل Hemlo: منتجاتك، وسلة، وطلبات بالدفع عند الاستلام.',
     price: 'Hemlo Website', unconfigured: 'السعر قيد الإعداد، والتفعيل غير متاح بعد.', pending: 'طلب التفعيل ينتظر تأكيد Hemlo.',
     activate: 'اطلب التفعيل', plan: 'عرض الإضافات والأسعار', paused: 'الوصول إلى الموقع غير نشط. راجع الإضافة في الفوترة لإعادة تفعيلها.',
   };
@@ -48,7 +49,7 @@ export function Site() {
         </div>
         <div className="flex flex-wrap justify-center gap-2">
           <button className="btn btn-accent" onClick={() => go('/plan')}><Icon n="sparkle" />{addCopy.plan}</button>
-          <a className="btn btn-secondary" href={SAMPLE_SITE(lang)} target="_blank" rel="noopener">{lang === 'en' ? 'See a sample site' : lang === 'ckb' ? 'ماڵپەڕێکی نموونە ببینە' : 'شاهد موقعاً نموذجياً'}</a>
+          <a className="btn btn-secondary" href={SAMPLE_SITE(lang, sampleKind)} target="_blank" rel="noopener">{lang === 'en' ? 'See a sample site' : lang === 'ckb' ? 'ماڵپەڕێکی نموونە ببینە' : 'شاهد موقعاً نموذجياً'}</a>
         </div>
       </div>
     </div>

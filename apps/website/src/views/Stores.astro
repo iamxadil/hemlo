@@ -42,8 +42,8 @@ const S = {
 }[lang];
 // everything connected: the shop's online store, WhatsApp and its system as one (Hemlo Website + Hemlo Connect)
 const CONN = lang === 'ar'
-  ? { eyebrow: 'جديد للمتاجر', title: 'متجرك على الإنترنت، وواتساب، ونظامك. وحدة واحدة.', sub: 'تابِع طلباً واحداً من متجرك على الإنترنت حتى يصبح بيعاً: هاتف الزبون في جهة، ونظامك في الجهة الأخرى. المخزون والأسعار والطلبات والرسائل، كلها من المكان نفسه. اضغط أي فصل لتنتقل إليه.', cta: 'أضف Website وConnect لمتجرك' }
-  : { eyebrow: 'New for shops', title: 'Your online shop, WhatsApp and your system. One unit.', sub: 'Follow one order from your online shop until it becomes a sale: the customer’s phone on one side, your system on the other. Stock, prices, orders and messages, all from the same place. Tap any chapter to jump to it.', cta: 'Add Website and Connect to your shop' };
+  ? { eyebrow: 'جديد للمتاجر', title: 'متجرك على الإنترنت، وواتساب، ونظامك. وحدة واحدة.', sub: 'تابِع طلباً واحداً من متجرك على الإنترنت حتى يصبح بيعاً: هاتف الزبون في جهة، ونظامك في الجهة الأخرى. المخزون والأسعار والطلبات والرسائل، كلها من المكان نفسه. اضغط أي فصل لتنتقل إليه.', cta: 'أضف Website وConnect لمتجرك', sample: 'شاهد متجراً نموذجياً' }
+  : { eyebrow: 'New for shops', title: 'Your online shop, WhatsApp and your system. One unit.', sub: 'Follow one order from your online shop until it becomes a sale: the customer’s phone on one side, your system on the other. Stock, prices, orders and messages, all from the same place. Tap any chapter to jump to it.', cta: 'Add Website and Connect to your shop', sample: 'See a sample shop' };
 ---
 <Base lang={lang} page="stores" title={S.title} description={s.sub}>
   <div class="st" style={`--c:${b.color};--cd:${b.dark};--t:${b.tint};--td:${b.tintDark}`}>
@@ -108,7 +108,8 @@ const CONN = lang === 'ar'
         <p class="reveal mt-4 max-w-2xl text-lead text-fg-2">{CONN.sub}</p>
       </div>
       <div class="reveal cx-stage"><ConnectedStory lang={lang} kind="store" /></div>
-      <p class="reveal cx-cta"><a class="btn btn-primary" href={`${href(lang, 'systems')}#addons`}>{CONN.cta}<span class="arr" aria-hidden="true">→</span></a></p>
+      <p class="reveal cx-cta"><a class="btn btn-primary" href={`${href(lang, 'systems')}#addons`}>{CONN.cta}<span class="arr" aria-hidden="true">→</span></a>
+        <a class="link-arrow" href={`https://business.hemlohq.com/s/sample-shop${lang === 'ar' ? '' : '?lang=en'}`} target="_blank" rel="noopener">{CONN.sample} <span class="arr">→</span></a></p>
     </section>
 
     <!-- the film: a minute of the real demo shop (loads only when played) -->
@@ -338,6 +339,6 @@ const CONN = lang === 'ar'
   .cx-new { padding: .3rem .8rem; border-radius: 999px; background: #A8532E; color: #fff; font-size: .85rem; font-weight: 600; }
   @media (prefers-color-scheme: dark) { .cx-new { background: #E08A62; color: #0B1019; } }
   .cx-stage { margin-top: clamp(2rem, 5vw, 3.4rem); }
-  .cx-cta { display: flex; justify-content: center; margin-top: 2.4rem; }
+  .cx-cta { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 1.4rem; margin-top: 2.4rem; }
   :global(html[dir="rtl"]) .cx-cta .arr { display: inline-block; transform: scaleX(-1); }
 </style>

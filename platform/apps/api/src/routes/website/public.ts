@@ -16,15 +16,17 @@ import { W, pick, webFrame, waHref, telHref, moneyIqd, sectionHeading, inquiryDi
 import { designFor } from './designs';
 import { actor } from '../sys-common';
 import { onInquiry, onOrder, connectWhatsapp } from '../../connect/core';
-import { shopItems, shopOrderByCode, shopProductPage } from './shop-data';
+import { shopItems, shopOrderByCode, shopProductPage, shopCategories } from './shop-data';
 import { shopChrome, shopFooter, shopHeader, shopProduct as shopProductHtml } from './shop';
 import { cartIn, placeOrder, priceCart } from '../shop/cart';
 import { HttpError } from '../../principal';
 import type { AppEnv, Deps } from '../../types';
 
 const RESERVED = new Set(['www', 'api', 'app', 'admin', 'account', 'studio', 'mail', 'ftp', 'cdn', 'static', 'assets', 'demo', 'test', 'systems', 'tools', 'business']);
+const isSample = (sub: string) => sub === SAMPLE_SUB || sub === SAMPLE_SHOP_SUB;
 import { paras, strOf, itemsOf, field, initials, STATUS, LINE, propHref, factsOf, langQ, type Ctx, type Two } from './context';
 import { SAMPLE_SUB, sampleSite, sampleListings, sampleProperty } from './sample';
+import { SAMPLE_SHOP_SUB, SAMPLE_ORDER, sampleShopSite, sampleShopItems, sampleShopProduct, sampleShopQuote, sampleShopOrder } from './sample-shop';
 import { WEB_FONTS } from './fonts.generated';
 
 /** The buttons a page offers, from the site's contact details and its CTA switches. */
@@ -253,7 +255,7 @@ ${wa ? `<a class="btn wa" style="max-width:320px;margin:0 auto" href="${attr(waH
   const PROPERTIES_PAGE = { id: 'public-properties', slug: 'properties', kind: 'listings', title: { ar: 'عقاراتنا', en: 'Our properties' }, sections: [{ id: 'public-listings', type: 'listings', title: { ar: 'العقارات', en: 'Properties' } }], seo: {} };
   const langOf = (c: Context, config: any): Lang => (c.req.query('lang') === 'en' ? 'en' : c.req.query('lang') === 'ar' ? 'ar' : config?.lang === 'en' ? 'en' : 'ar');
   /** A business's own site (the database), or the public sample (sample.ts): both go through the same rendering. */
-  const siteFor = async (sub: string, lang: Lang) => (sub === SAMPLE_SUB ? sampleSite(lang) : await siteRow(sub));
+  const siteFor = async (sub: string, lang: Lang) => (sub === SAMPLE_SUB ? sampleSite(lang) : sub === SAMPLE_SHOP_SUB ? sampleShopSite(lang, photosAt()) : await siteRow(sub));
   const validSub = (sub: string) => !!sub && !RESERVED.has(sub) && /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/.test(sub);
 
   // a shop's own pages: the catalogue, the checkout and an order (not stored pages: every shop has them)
@@ -273,7 +275,7 @@ ${wa ? `<a class="btn wa" style="max-width:320px;margin:0 auto" href="${attr(waH
   async function serve(c: Context, slug: string, filters: WebsiteListingFilter = {}, draft?: any, order?: string) {
     const sub = draft ? (draft.subdomain ?? 'site') : subOf(c);
     if (!draft && !validSub(sub)) return html(messagePage('ar', null, 'notFound', null), 404, 'no-store');
-    const sample = !draft && sub === SAMPLE_SUB;
+    const sample = !draft && isSample(sub);
     const site: any = draft ?? await siteFor(sub, c.req.query('lang') === 'en' ? 'en' : 'ar');
     const config = (site?.publishedSnapshot ?? site)!;
     const lang = langOf(c, config);
@@ -298,10 +300,13 @@ ${wa ? `<a class="btn wa" style="max-width:320px;margin:0 auto" href="${attr(waH
     const built = sample ? (() => {
       const page = pageOf(config.pages);
       if (!page) return null;
-      const cs = config.settings.contact;
+      const cs = config.settings.contact, shop = site.vertical === 'store';
+      if (shop && slug === 'order' && order !== SAMPLE_ORDER) return null;
       return { pages: config.pages, page, name: pick(config.name, lang), tagline: pick(config.tagline, lang), about: config.about, logo: null,
-        contact: { phone: cs.phone, whatsapp: cs.whatsapp, email: cs.email, address: cs.address, mapUrl: null }, products: [],
-        listings: needsListings(page) ? sampleListings(lang, photosAt(), origin, slug === 'properties' ? filters : {}) : [] };
+        contact: { phone: cs.phone, whatsapp: cs.whatsapp, email: cs.email, address: cs.address, mapUrl: null },
+        products: shop && needsListings(page) ? sampleShopItems(lang, photosAt(), ownFilters) : [], allCats: shop && slug === 'products' ? [...new Set(sampleShopItems(lang, photosAt()).map((p) => p.category!))] : undefined,
+        order: shop && slug === 'order' ? sampleShopOrder(lang, photosAt()) : null,
+        listings: !shop && needsListings(page) ? sampleListings(lang, photosAt(), origin, slug === 'properties' ? filters : {}) : [] };
     })() : await withOrg(d.db, site.organizationId, async (tx) => {
       const pages = site.publishedSnapshot?.pages ?? await tx.select().from(webPage).where(and(eq(webPage.organizationId, site.organizationId), eq(webPage.websiteId, site.id))).orderBy(asc(webPage.sort), asc(webPage.createdAt));
       const page: any = pageOf(pages);
@@ -316,7 +321,8 @@ ${wa ? `<a class="btn wa" style="max-width:320px;margin:0 auto" href="${attr(waH
       const content = needsListings(page) ? await adapter.load(tx, d, site.organizationId, lang, origin, ownFilters) : { listings: [] as WebsiteListing[] };
       const theOrder = slug === 'order' && order ? await shopOrderByCode(tx, d, site.organizationId, order) : null;
       if (slug === 'order' && !theOrder) return null;
-      return { pages, page, name: pick(config.name, lang) || o?.name || 'Hemlo', tagline: pick(config.tagline, lang), about: config.about, logo, contact, products: content.products ?? [], listings: content.listings, order: theOrder };
+      const allCats = site.vertical === 'store' && slug === 'products' ? await shopCategories(tx, site.organizationId) : undefined;
+      return { pages, page, name: pick(config.name, lang) || o?.name || 'Hemlo', tagline: pick(config.tagline, lang), about: config.about, logo, contact, products: content.products ?? [], listings: content.listings, order: theOrder, allCats };
     });
     if (!built) return html(messagePage(lang, site.theme, 'notFound', site.settings?.contact?.whatsapp ?? null), 404, 'no-store');
 
@@ -324,6 +330,7 @@ ${wa ? `<a class="btn wa" style="max-width:320px;margin:0 auto" href="${attr(waH
     const basePath = new URL(origin).pathname.replace(/\/$/, '');
     const ctx: Ctx = { d, org: site.organizationId, site: publishedSite, lang, origin, t, basePath, pageSlug: slug, filters, logo: built.logo, name: built.name, tagline: built.tagline,
       contact: built.contact, products: built.products, listings: built.listings, n: 0, onPhoto: false, design, pages: built.pages, sample, order: (built as any).order ?? null };
+    (ctx as any).allCats = (built as any).allCats;
     const other: Lang = lang === 'ar' ? 'en' : 'ar';
     const altHref = `${origin}/${slug}${other === (config.lang === 'en' ? 'en' : 'ar') ? '' : `?lang=${other}`}`;
     const content = (built.page.sections ?? []).filter((sec: any) => !sec.hidden).map((sec: any, i: number) => sectionHtml(ctx, sec, i === 0)).join('');
@@ -343,7 +350,7 @@ ${wa ? `<a class="btn wa" style="max-width:320px;margin:0 auto" href="${attr(waH
     const robots = draft || sample || seo.noindex || ((slug === 'properties' || slug === 'products') && Object.keys(filters).length > 0) ? 'noindex' : 'index';
     // in the preview, links stay put (it is a picture of the site) and fonts come from the API's own address
     const still = `document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a,form button[type=submit]');if(a){e.preventDefault()}},true);document.addEventListener('submit',function(e){e.preventDefault()},true);`;
-    return html(webFrame({ lang, title, description, canonical, alt: altHref, image: built.listings[0]?.cover ?? null, robots, theme: config.theme, body,
+    return html(webFrame({ lang, title, description, canonical, alt: altHref, image: built.listings[0]?.cover ?? built.products[0]?.image ?? null, robots, theme: config.theme, body,
       bodyClass: [ctx.onPhoto ? 'on-photo' : '', bar ? 'has-bar' : ''].join(' ').trim() || undefined, script: draft ? script + still : script, jsonld, design,
       fontBase: draft ? `${d.env.API_URL ?? ''}/v1/web/pub/_hemlo/fonts` : `${basePath}/_hemlo/fonts` }), 200, draft || slug === 'order' ? 'no-store' : undefined);
   }
@@ -352,6 +359,7 @@ ${wa ? `<a class="btn wa" style="max-width:320px;margin:0 auto" href="${attr(waH
     const sub = subOf(c);
     if (!validSub(sub)) return html(messagePage('ar', null, 'notFound', null), 404, 'no-store');
     const sample = sub === SAMPLE_SUB;
+    if (sub === SAMPLE_SHOP_SUB) return html(messagePage('ar', null, 'notFound', null), 404, 'no-store');
     const site: any = await siteFor(sub, c.req.query('lang') === 'en' ? 'en' : 'ar');
     const config = (site?.publishedSnapshot ?? site)!;
     const lang = langOf(c, config);
@@ -417,6 +425,7 @@ ${wa ? `<a class="btn wa" style="max-width:320px;margin:0 auto" href="${attr(waH
 
   /** A shop's product page: photos, price, a quantity and "add to bag", and more from the shop. */
   async function serveShopProduct(c: Context, slug: string) {
+    if (subOf(c) === SAMPLE_SHOP_SUB) return serveSampleProduct(c, slug);
     const live = await liveShop(c);
     const lang0: Lang = c.req.query('lang') === 'en' ? 'en' : 'ar';
     if (!live) return html(messagePage(lang0, null, 'notFound', null), 404, 'no-store');
@@ -449,6 +458,26 @@ ${wa ? `<a class="btn wa" style="max-width:320px;margin:0 auto" href="${attr(waH
     return html(webFrame({ lang, title: `${p.name} · ${data.name}`, description: (p.description ?? `${p.name} · ${data.name}`).slice(0, 300), canonical, alt: altHref, image: p.photos[0] ?? null,
       robots: 'index', theme: config.theme, body, bodyClass: bar ? 'has-bar' : undefined,
       script: INQUIRY_SCRIPT({ send: t.send, sending: t.sending, badPhone: t.badPhone, failed: t.failed, page: `product:${slug}`, endpoint: `${basePath}/inquiry` }), jsonld, design, fontBase: `${basePath}/_hemlo/fonts` }), 200);
+  }
+
+  /** The sample shop's product page: the same renderer, from the sample's list. */
+  function serveSampleProduct(c: Context, slug: string) {
+    const config = sampleShopSite('ar', photosAt()) as any, lang = langOf(c, config);
+    const site = sampleShopSite(lang, photosAt()) as any, at = photosAt();
+    const p = sampleShopProduct(lang, at, slug);
+    if (!p) return html(messagePage(lang, null, 'notFound', null), 404, 'no-store');
+    const origin = originOf(c, SAMPLE_SHOP_SUB), design = designFor('store'), basePath = new URL(origin).pathname.replace(/\/$/, '');
+    const pool = sampleShopItems(lang, at);
+    const similar = [...pool.filter((x) => x.category === p.category), ...pool].filter((x, i, all) => x.id !== p.id && all.findIndex((y) => y.id === x.id) === i).slice(0, 4);
+    const cs = site.settings.contact, t = W[lang], name = pick(site.name, lang);
+    const ctx: Ctx = { d, org: 'sample-shop', site, lang, origin, t, basePath, pageSlug: `product:${slug}`, filters: {}, logo: null, name, tagline: pick(site.tagline, lang),
+      contact: { phone: cs.phone, whatsapp: cs.whatsapp, email: cs.email, address: cs.address, mapUrl: null }, products: pool, listings: [], n: 0, onPhoto: false, design, pages: site.pages, sample: true };
+    const canonical = `${origin}/products/${encodeURIComponent(slug)}`;
+    const other: Lang = lang === 'ar' ? 'en' : 'ar', altHref = `${canonical}${other === 'ar' ? '' : '?lang=en'}`;
+    const { main, bar } = shopProductHtml(ctx, p, similar, canonical);
+    const body = `${shopHeader(ctx, 'products', altHref)}${main}${shopFooter(ctx)}${bar}${shopChrome(ctx, altHref)}`;
+    return html(webFrame({ lang, title: `${p.name} · ${name}`, description: (p.description ?? p.name).slice(0, 300), canonical, alt: altHref, image: p.photos[0] ?? null,
+      robots: 'noindex', theme: site.theme, body, bodyClass: bar ? 'has-bar' : undefined, design, fontBase: `${basePath}/_hemlo/fonts` }), 200);
   }
 
   /** The owner's live preview of their site as it is now, published or not (the dashboard draws it in a frame). */
@@ -499,6 +528,11 @@ ${wa ? `<a class="btn wa" style="max-width:320px;margin:0 auto" href="${attr(waH
 
   /** The bag priced by the shop (today's prices, what's in stock, the delivery fee): the browser never decides a price. */
   r.post('/cart/quote', async (c) => {
+    if (subOf(c) === SAMPLE_SHOP_SUB) {
+      const b = await c.req.json<any>().catch(() => ({}));
+      try { return c.json(sampleShopQuote(b.lang === 'en' || c.req.query('lang') === 'en' ? 'en' : 'ar', photosAt(), cartIn(b.lines), { city: b.city, delivery: b.delivery }), 200, { 'cache-control': 'no-store' }); }
+      catch (e) { return c.json({ error: e instanceof HttpError ? e.code : 'BAD_CART' }, 400); }
+    }
     const live = await liveShop(c);
     if (!live) return c.json({ error: 'NOT_FOUND' }, 404);
     const b = await c.req.json<any>().catch(() => ({}));
@@ -511,6 +545,7 @@ ${wa ? `<a class="btn wa" style="max-width:320px;margin:0 auto" href="${attr(waH
 
   /** An order: priced again by the shop, filed in its System, and the customer hears on WhatsApp (Hemlo Connect). */
   r.post('/checkout', async (c) => {
+    if (subOf(c) === SAMPLE_SHOP_SUB) return c.json({ code: SAMPLE_ORDER, number: 1024 }, 201); // the sample shows the flow; nothing is stored
     const live = await liveShop(c);
     if (!live) return c.json({ error: 'NOT_FOUND' }, 404);
     const b = await c.req.json<any>().catch(() => ({}));
@@ -537,7 +572,7 @@ ${wa ? `<a class="btn wa" style="max-width:320px;margin:0 auto" href="${attr(waH
   /** A visitor's inquiry: name, phone, a note. Becomes (or updates) a lead in the business's own book. */
   r.post('/inquiry', async (c) => {
     const sub = subOf(c);
-    if (sub === SAMPLE_SUB) return c.json({ ok: true }, 201); // the sample shows the flow; nothing is stored
+    if (isSample(sub)) return c.json({ ok: true }, 201); // the sample shows the flow; nothing is stored
     const site = await siteRow(sub);
     if (!site || site.status !== 'published') return c.json({ error: 'NOT_FOUND' }, 404);
     if (!(await addonEntitlement(d.db, site.organizationId, 'website')).active) return c.json({ error: 'NOT_FOUND' }, 404);

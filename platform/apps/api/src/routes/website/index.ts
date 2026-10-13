@@ -17,7 +17,7 @@ import type { AppEnv, Deps } from '../../types';
 
 export const WEB_THEMES = ['classic', 'modern', 'minimal', 'bold'] as const;
 export const WEB_SECTION_TYPES = ['hero', 'about', 'products', 'listings', 'services', 'gallery', 'team', 'faq', 'hours', 'testimonials', 'contact', 'cta'] as const;
-const RESERVED_SUBDOMAINS = ['www', 'api', 'app', 'admin', 'account', 'studio', 'mail', 'ftp', 'cdn', 'static', 'assets', 'demo', 'test', 'systems', 'tools', 'business', 'sample'];
+const RESERVED_SUBDOMAINS = ['www', 'api', 'app', 'admin', 'account', 'studio', 'mail', 'ftp', 'cdn', 'static', 'assets', 'demo', 'test', 'systems', 'tools', 'business', 'sample', 'sample-shop'];
 const WEBSITE_DOMAIN = 'hemlohq.com';
 
 type Two = { ar?: string; en?: string };

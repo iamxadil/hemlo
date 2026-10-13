@@ -10,8 +10,8 @@ import { customerByPhone } from '../../connect/store';
 import type { Deps } from '../../types';
 import type { WebsiteAdapter, WebsiteListingFilter } from './adapters';
 
-export type ShopItem = { id: string; slug: string; name: string; category: string | null; price: number; image: string | null; image2: string | null; unit: string; stock: 'in' | 'low' | 'out'; fresh: boolean };
-export type ShopProductPage = ShopItem & { description: string | null; photos: string[] };
+export type ShopItem = { id: string; slug: string; name: string; category: string | null; price: number; image: string | null; image2: string | null; unit: string; was?: number | null; size?: string | null; stock: 'in' | 'low' | 'out'; fresh: boolean };
+export type ShopProductPage = ShopItem & { description: string | null; photos: string[]; notes?: string[] };
 export type ShopOrderView = {
   number: number; code: string; status: string; name: string; delivery: string; city: string | null; area: string | null; address: string | null;
   subtotal: number; deliveryFee: number; total: number; createdAt: Date; lines: { name: string; qty: number; price: number; total: number; image: string | null }[];
@@ -28,6 +28,12 @@ async function asItems(deps: Deps, org: string, rows: any[]): Promise<ShopItem[]
     id: p.id, slug: p.slug, name: p.name, category: p.category, price: p.price, unit: p.unit, stock: stockOf(p),
     image: p.imageId ? await fileUrl(deps.env, org, p.imageId) : null, image2: p.photoIds?.[0] ? await fileUrl(deps.env, org, p.photoIds[0]) : null, fresh: Date.now() - +p.createdAt < 14 * 86400_000,
   })));
+}
+
+/** Every category the shop shows online (the catalogue lists them all, even while one is chosen). */
+export async function shopCategories(tx: Database, org: string) {
+  const rows = await tx.selectDistinct({ c: sysProduct.category }).from(sysProduct).where(and(eq(sysProduct.organizationId, org), eq(sysProduct.online, true), isNull(sysProduct.archivedAt), isNotNull(sysProduct.category))).limit(40);
+  return rows.map((r) => r.c!).filter(Boolean).sort((a, b) => a.localeCompare(b));
 }
 
 /** The shop's products on its site, by a word, a category and an order (the newest first by default). */
