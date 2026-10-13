@@ -23,10 +23,56 @@ export const sysProduct = pgTable('sys_product', {
   packPrice: integer('pack_price'),                        // price for a whole carton
   scaleCode: text('scale_code'),                           // the item code a label scale prints in its barcodes
   imageId: text('image_id'),                               // a sys_file (purpose 'product')
+  // the online shop (Website add-on): shown there or not, its address, a few words, more photos
+  online: boolean('online').notNull().default(false),
+  slug: text('slug'),
+  description: text('description'),
+  photoIds: jsonb('photo_ids').$type<string[]>().notNull().default([]),
   archivedAt: at('archived_at'),
   createdAt: at('created_at').notNull().defaultNow(),
   updatedAt: at('updated_at').notNull().defaultNow(),
-}, (t) => [index('sys_product_org').on(t.organizationId), uniqueIndex('sys_product_barcode').on(t.organizationId, t.barcode), uniqueIndex('sys_product_pack_barcode').on(t.organizationId, t.packBarcode)]);
+}, (t) => [index('sys_product_org').on(t.organizationId), uniqueIndex('sys_product_barcode').on(t.organizationId, t.barcode), uniqueIndex('sys_product_pack_barcode').on(t.organizationId, t.packBarcode),
+  uniqueIndex('sys_product_slug').on(t.organizationId, t.slug)]);
+
+/** An order from the online shop: what was asked for, where it goes, and where it stands. It becomes a sale (stock
+ *  out, profit counted) when it's delivered and paid; a customer follows it with its code (/order/<code>). */
+export const shopOrder = pgTable('shop_order', {
+  id: text('id').primaryKey(),
+  organizationId: text('organization_id').notNull(),
+  number: integer('number').notNull(),
+  code: text('code').notNull(),                            // the customer's link to follow it (unguessable)
+  status: text('status').notNull().default('new'),         // new | confirmed | ready | out | delivered | canceled
+  name: text('name').notNull(),
+  phone: text('phone').notNull(),
+  delivery: text('delivery').notNull().default('delivery'), // delivery | pickup
+  city: text('city'),
+  area: text('area'),
+  address: text('address'),
+  note: text('note'),
+  subtotal: integer('subtotal').notNull(),
+  deliveryFee: integer('delivery_fee').notNull().default(0),
+  total: integer('total').notNull(),
+  payment: text('payment').notNull().default('cod'),       // cod (cash on delivery or at pickup)
+  lang: text('lang').notNull().default('ar'),
+  customerId: text('customer_id'),
+  saleId: text('sale_id'),
+  cancelReason: text('cancel_reason'),
+  createdAt: at('created_at').notNull().defaultNow(),
+  updatedAt: at('updated_at').notNull().defaultNow(),
+  confirmedAt: at('confirmed_at'),
+  deliveredAt: at('delivered_at'),
+}, (t) => [index('shop_order_org_time').on(t.organizationId, t.createdAt), uniqueIndex('shop_order_number').on(t.organizationId, t.number), uniqueIndex('shop_order_code').on(t.code)]);
+
+export const shopOrderLine = pgTable('shop_order_line', {
+  id: text('id').primaryKey(),
+  organizationId: text('organization_id').notNull(),
+  orderId: text('order_id').notNull(),
+  productId: text('product_id'),
+  name: text('name').notNull(),                            // as it was when ordered
+  qty: qty('qty').notNull(),
+  price: integer('price').notNull(),
+  total: integer('total').notNull(),
+}, (t) => [index('shop_order_line_order').on(t.orderId)]);
 
 /** A customer of the business. balance > 0 means they owe the shop (the debt book, دفتر الديون). */
 export const sysCustomer = pgTable('sys_customer', {
@@ -301,6 +347,8 @@ export const aiUsage = pgTable('ai_usage', {
   ms: integer('ms').notNull().default(0),
   ok: boolean('ok').notNull(),
   counted: boolean('counted').notNull().default(true),     // counts toward the monthly allowance (samples don't)
+  kind: text('kind').notNull().default('text'),            // text | image | video (images and video are priced and capped apart)
+  units: integer('units').notNull().default(1),
   createdAt: at('created_at').notNull().defaultNow(),
 }, (t) => [index('ai_usage_org_month').on(t.organizationId, t.createdAt)]);
 

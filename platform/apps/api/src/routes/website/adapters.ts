@@ -1,6 +1,6 @@
 // The shared Website renderer depends on this narrow vertical boundary. Adapters return explicit public DTOs;
 // database rows, tenant IDs, internal notes and private relationships never cross into the renderer.
-import { and, desc, eq, gte, ilike, inArray, isNotNull, isNull, lte, or, type SQL } from 'drizzle-orm';
+import { and, desc, eq, gte, ilike, inArray, isNotNull, isNull, lte, or, sql, type SQL } from 'drizzle-orm';
 import { newId } from '@hemlo/core';
 import type { Database } from '@hemlo/db';
 import { reLead, reLeadProperty, reProperty } from '@hemlo/db/schema';
@@ -9,13 +9,16 @@ import { HttpError } from '../../principal';
 import { withCovers, PUBLIC_STATUSES } from '../realestate/properties';
 import { activity, coverFirst, photosOf, priceText } from '../realestate/common';
 import type { Lang } from './theme';
+import { storeWebsiteAdapter, type ShopItem } from './shop-data';
 
 export type WebsiteListing = {
   slug: string; title: string; area: string | null; city: string | null; type: string; purpose: string; status: string;
   price: string; bedrooms: number | null; bathrooms: number | null; size: number | null; cover: string | null; href: string;
+  /** listed in the last two weeks */
+  fresh: boolean;
 };
 export type WebsiteInquiry = { organizationId: string; name: string; phone: string; email: string | null; message: string | null; lang: string; page?: string; propertySlug?: string };
-export type WebsiteListingFilter = { q?: string; purpose?: string; type?: string; city?: string; area?: string; currency?: string; min?: number; max?: number };
+export type WebsiteListingFilter = { category?: string; q?: string; purpose?: string; type?: string; city?: string; area?: string; place?: string; currency?: string; min?: number; max?: number; sort?: 'new' | 'price-asc' | 'price-desc'; limit?: number };
 export type WebsiteProperty = {
   slug: string; title: string; type: string; purpose: string; status: string; price: string; currency: string; negotiable: boolean;
   city: string | null; area: string | null; size: number | null; land: number | null; bedrooms: number | null; bathrooms: number | null;
@@ -31,10 +34,11 @@ export interface WebsiteAdapter {
   publicProjection: readonly string[];
   /** Source mutations that change a rendered page; the API uses the shared short cache policy. */
   refreshOn: readonly string[];
-  load(tx: Database, deps: Deps, organizationId: string, lang: Lang, origin: string, filter?: WebsiteListingFilter): Promise<{ listings: WebsiteListing[] }>;
+  load(tx: Database, deps: Deps, organizationId: string, lang: Lang, origin: string, filter?: WebsiteListingFilter): Promise<{ listings: WebsiteListing[]; products?: ShopItem[] }>;
   loadProperty(tx: Database, deps: Deps, organizationId: string, lang: Lang, slug: string): Promise<WebsiteProperty | null>;
   sitemapSlugs(tx: Database): Promise<string[]>;
-  createInquiry(tx: Database, input: WebsiteInquiry): Promise<void>;
+  /** Files the inquiry; says who it came from and what about, so Connect can answer on WhatsApp. */
+  createInquiry(tx: Database, input: WebsiteInquiry): Promise<{ leadId: string; about: string | null }>;
 }
 
 export const realEstateWebsiteAdapter: WebsiteAdapter = {
@@ -48,6 +52,7 @@ export const realEstateWebsiteAdapter: WebsiteAdapter = {
     if (filter.type) where.push(eq(reProperty.type, filter.type));
     if (filter.city) where.push(ilike(reProperty.city, `%${filter.city}%`));
     if (filter.area) where.push(ilike(reProperty.area, `%${filter.area}%`));
+    if (filter.place) where.push(or(ilike(reProperty.area, `%${filter.place}%`), ilike(reProperty.city, `%${filter.place}%`))!);
     if (filter.q) {
       const term = `%${filter.q.replace(/[%_]/g, '')}%`;
       where.push(or(ilike(reProperty.title, term), ilike(reProperty.titleEn, term), ilike(reProperty.area, term), ilike(reProperty.city, term))!);
@@ -60,12 +65,15 @@ export const realEstateWebsiteAdapter: WebsiteAdapter = {
       type: reProperty.type, purpose: reProperty.purpose, status: reProperty.status, publishedAt: reProperty.publishedAt, price: reProperty.price,
       currency: reProperty.currency, rentPeriod: reProperty.rentPeriod, bedrooms: reProperty.bedrooms, bathrooms: reProperty.bathrooms,
       size: reProperty.size, coverId: reProperty.coverId,
-    }).from(reProperty).where(and(...where)).orderBy(desc(reProperty.publishedAt)).limit(36);
+    }).from(reProperty).where(and(...where))
+      .orderBy(...(filter.sort === 'price-asc' ? [sql`${reProperty.price} asc nulls last`] : filter.sort === 'price-desc' ? [sql`${reProperty.price} desc nulls last`] : []), desc(reProperty.publishedAt))
+      .limit(Math.min(filter.limit ?? 36, 60));
     const cards = await withCovers(deps, tx, organizationId, rows);
     return { listings: cards.map((p) => ({
       slug: p.slug, title: lang === 'en' && p.titleEn ? p.titleEn : p.title, area: p.area, city: p.city, type: p.type, purpose: p.purpose, status: p.status,
       price: priceText(p.price == null ? null : Number(p.price), p.currency, lang, p.purpose === 'rent' ? p.rentPeriod : null),
       bedrooms: p.bedrooms, bathrooms: p.bathrooms, size: p.size, cover: p.cover ?? null, href: `${origin}/properties/${encodeURIComponent(p.slug)}`,
+      fresh: !!p.publishedAt && Date.now() - +p.publishedAt < 14 * 86400_000,
     })) };
   },
   async loadProperty(tx, deps, organizationId, lang, slug) {
@@ -95,7 +103,7 @@ export const realEstateWebsiteAdapter: WebsiteAdapter = {
     return rows.map((x) => x.slug);
   },
   async createInquiry(tx, input) {
-    const [property] = input.propertySlug ? await tx.select({ id: reProperty.id, purpose: reProperty.purpose, type: reProperty.type, area: reProperty.area, city: reProperty.city })
+    const [property] = input.propertySlug ? await tx.select({ id: reProperty.id, title: reProperty.title, titleEn: reProperty.titleEn, purpose: reProperty.purpose, type: reProperty.type, area: reProperty.area, city: reProperty.city })
       .from(reProperty).where(and(eq(reProperty.organizationId, input.organizationId), eq(reProperty.slug, input.propertySlug), isNotNull(reProperty.publishedAt), inArray(reProperty.status, PUBLIC_STATUSES))).limit(1) : [];
     if (input.propertySlug && !property) throw new HttpError(404, 'PROPERTY_UNAVAILABLE');
     const [lead] = await tx.select({ id: reLead.id, notes: reLead.notes, status: reLead.status }).from(reLead)
@@ -117,8 +125,9 @@ export const realEstateWebsiteAdapter: WebsiteAdapter = {
       await tx.insert(reLeadProperty).values({ id: newId(), organizationId: input.organizationId, leadId, propertyId, status: 'opened', opens: 1, lastOpenAt: now }).onConflictDoNothing();
     }
     await activity(tx, input.organizationId, 'lead.inquiry', { leadId, ...(propertyId ? { propertyId } : {}) }, { source: 'website', page: input.page ?? 'home' });
+    return { leadId, about: property ? (input.lang === 'en' ? property.titleEn || property.title : property.title) : null };
   },
 };
 
-const adapters: Readonly<Record<string, WebsiteAdapter>> = { realestate: realEstateWebsiteAdapter };
+const adapters: Readonly<Record<string, WebsiteAdapter>> = { realestate: realEstateWebsiteAdapter, store: storeWebsiteAdapter };
 export const websiteAdapterFor = (edition: string): WebsiteAdapter | null => adapters[edition] ?? null;

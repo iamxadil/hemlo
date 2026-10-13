@@ -31,8 +31,40 @@ function productInput(b: any, partial = false) {
   if (b.packPrice !== undefined) out.packPrice = iqd(b.packPrice, 'BAD_PRICE', { allowNull: true });
   if (b.scaleCode !== undefined) out.scaleCode = b.scaleCode == null || b.scaleCode === '' ? null : /^\d{1,6}$/.test(String(b.scaleCode)) ? String(Number(b.scaleCode)) : bad('BAD_SCALE_CODE');
   if (out.packSize === null) { out.packBarcode = null; out.packPrice = null; }
+  // the online shop (Website add-on): shown there or not, and a few words for its page
+  if (b.online !== undefined) out.online = !!b.online;
+  if (b.description !== undefined) out.description = text(b.description, 2000, 'BAD_TEXT');
   return out;
 }
+/** A product's photos, like a shop's: the cover (imageId: the one the till, the lists and the shop's cards show) and up to
+ *  seven more, in order, for its page (photoIds). Every one is a sys_file of purpose 'product' tied to the product. */
+export const MAX_PRODUCT_PHOTOS = 8;
+function photoList(v: unknown): string[] {
+  if (!Array.isArray(v) || v.some((x) => typeof x !== 'string')) bad('BAD_FILE');
+  const list = [...new Set(v as string[])];
+  if (list.length > MAX_PRODUCT_PHOTOS - 1) bad('TOO_MANY_PHOTOS');
+  return list;
+}
+/** Settle a product's photos after an edit: claim the new ones, and delete the ones no longer used. */
+async function settlePhotos(d: Deps, tx: Database, productId: string, cur: { imageId: string | null; photoIds: string[] } | null, b: any) {
+  const cover: string | null = b.imageId !== undefined ? (b.imageId || null) : cur?.imageId ?? null;
+  const extra = (b.photoIds !== undefined ? photoList(b.photoIds) : cur?.photoIds ?? []).filter((x) => x !== cover);
+  const next = [...(cover ? [cover] : []), ...extra];
+  if (next.length) await claimFiles(tx, next, 'product', productId);
+  const gone = [...(cur?.imageId ? [cur.imageId] : []), ...(cur?.photoIds ?? [])].filter((x) => !next.includes(x));
+  if (gone.length) await dropFiles(d, tx, and(inArray(sysFile.id, gone)));
+  return { imageId: cover, photoIds: extra };
+}
+/** A product as the app sees it: its cover's link, and every photo's link in order. */
+async function productOut(d: Deps, org: string, p: any) {
+  const ids: string[] = [...(p.imageId ? [p.imageId] : []), ...(p.photoIds ?? [])];
+  const photos = await Promise.all(ids.map(async (id) => ({ id, url: await fileUrl(d.env, org, id) })));
+  return { ...p, imageUrl: photos[0]?.url ?? null, photos };
+}
+
+/** A product's address in the online shop: its name (any script) and a few letters of its id, so two never clash. */
+export const productSlug = (name: string, id: string) =>
+  `${name.toLowerCase().normalize('NFKC').replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'item'}-${id.replace(/[^a-z0-9]/gi, '').slice(-5).toLowerCase()}`;
 
 /** A code scanned at the till must point at one thing: no product's barcode may equal another's carton barcode. */
 async function checkBarcodes(tx: Database, id: string | null, codes: (string | null | undefined)[]) {
@@ -73,6 +105,7 @@ export function systemsRoutes(d: Deps) {
       ['students.read', 'students', 'read'], ['students.create', 'students', 'create'], ['students.update', 'students', 'update'], ['attendance.take', 'attendance', 'take'], ['attendance.read', 'attendance', 'read'],
       ['fees.read', 'fees', 'read'], ['fees.collect', 'fees', 'collect'], ['fees.manage', 'fees', 'manage'], ['school.configure', 'school', 'configure'],
       ['website.manage', 'website', 'manage'],
+      ['connect.read', 'connect', 'read'], ['connect.reply', 'connect', 'reply'], ['connect.configure', 'connect', 'configure'], ['orders.read', 'orders', 'read'], ['orders.manage', 'orders', 'manage'],
     ] as const).map(([k, res, act]) => [k, may(p, res, act)]));
     const member = a.userId ? await findMember(d, a.organizationId, { userId: a.userId }) : null;
     const logo = await inOrg(a, (tx) => logoUrl(d, tx, a.organizationId));
@@ -86,7 +119,7 @@ export function systemsRoutes(d: Deps) {
     const archived = c.req.query('archived') === '1';
     const rows = await inOrg(a, (tx) => tx.select().from(sysProduct).where(archived ? undefined : isNull(sysProduct.archivedAt)).orderBy(sysProduct.name));
     const canCost = may(a.principal, 'products', 'manage') || may(a.principal, 'reports', 'read');
-    const withImage = await Promise.all(rows.map(async (x) => ({ ...(canCost ? x : { ...x, cost: null }), imageUrl: await fileUrl(d.env, a.organizationId, x.imageId) })));
+    const withImage = await Promise.all(rows.map((x) => productOut(d, a.organizationId, canCost ? x : { ...x, cost: null })));
     return c.json({ products: withImage });
   });
 
@@ -100,12 +133,12 @@ export function systemsRoutes(d: Deps) {
       const product = await inOrg(a, async (tx) => {
         await checkBarcodes(tx, null, [input.barcode, input.packBarcode]);
         const id = newId();
-        const imageId = b.imageId ? (await claimFiles(tx, [b.imageId], 'product', id))[0].id : null;
-        const [row] = await tx.insert(sysProduct).values({ id, organizationId: a.organizationId, ...input, imageId, stock } as any).returning();
+        const photos = await settlePhotos(d, tx, id, null, b);
+        const [row] = await tx.insert(sysProduct).values({ id, organizationId: a.organizationId, ...input, ...photos, stock, slug: productSlug(input.name!, id) } as any).returning();
         if (stock) await tx.insert(sysStockMove).values({ id: newId(), organizationId: a.organizationId, productId: row.id, kind: 'count', qty: stock, stock, cost: row.cost, userId: a.userId, note: 'opening stock' });
         return row;
       });
-      return c.json({ product: { ...product, imageUrl: await fileUrl(d.env, a.organizationId, product.imageId) } }, 201);
+      return c.json({ product: await productOut(d, a.organizationId, product) }, 201);
     } catch (e) { if (barcodeTaken(e)) throw new HttpError(409, 'BARCODE_TAKEN'); throw e; }
   });
 
@@ -118,14 +151,11 @@ export function systemsRoutes(d: Deps) {
         const [cur] = await tx.select().from(sysProduct).where(eq(sysProduct.id, c.req.param('id')));
         if (!cur) throw new HttpError(404, 'NOT_FOUND');
         await checkBarcodes(tx, cur.id, [input.barcode !== undefined ? input.barcode : cur.barcode, input.packBarcode !== undefined ? input.packBarcode : cur.packBarcode]);
-        if (b.imageId !== undefined) { // a new photo, or none; the old one is deleted
-          const next = b.imageId ? (await claimFiles(tx, [b.imageId], 'product', cur.id))[0].id : null;
-          if (cur.imageId && cur.imageId !== next) await dropFiles(d, tx, and(eq(sysFile.id, cur.imageId)));
-          (input as any).imageId = next;
-        }
+        if (b.imageId !== undefined || b.photoIds !== undefined) Object.assign(input, await settlePhotos(d, tx, cur.id, cur, b)); // the old ones no longer used are deleted
+        if (!cur.slug) (input as any).slug = productSlug(input.name ?? cur.name, cur.id);
         return tx.update(sysProduct).set({ ...input, updatedAt: new Date() }).where(eq(sysProduct.id, cur.id)).returning();
       });
-      return c.json({ product: { ...row, imageUrl: await fileUrl(d.env, a.organizationId, row.imageId) } });
+      return c.json({ product: await productOut(d, a.organizationId, row) });
     } catch (e) { if (barcodeTaken(e)) throw new HttpError(409, 'BARCODE_TAKEN'); throw e; }
   });
 

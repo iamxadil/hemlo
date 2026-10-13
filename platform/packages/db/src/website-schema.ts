@@ -24,6 +24,18 @@ export type WebSettings = {
   nav?: { label: { ar?: string; en?: string }; href: string }[];
   footer?: { ar?: string; en?: string };
   cta?: { whatsapp?: boolean; phone?: boolean; inquiry?: boolean };
+  /** A shop's checkout (read live: a change applies at once, no publishing): delivery, its fee, pickup, the smallest order. */
+  shop?: WebShop;
+};
+export type WebShop = {
+  delivery?: boolean;                 // delivers (default on)
+  pickup?: boolean;                   // the customer may collect it
+  fee?: number;                       // delivery fee, IQD (default 0)
+  fees?: { city: string; fee: number }[]; // a different fee for some cities (Baghdad 5,000; others 8,000…)
+  freeOver?: number | null;           // free delivery from this order total
+  minOrder?: number | null;
+  cities?: string[];                  // where it delivers (empty: anywhere)
+  note?: { ar?: string; en?: string }; // a line on the checkout (delivery times…)
 };
 export type WebPublishedSnapshot = {
   lang: 'ar' | 'en'; name: { ar?: string; en?: string }; tagline: { ar?: string; en?: string }; about: { ar?: string; en?: string };

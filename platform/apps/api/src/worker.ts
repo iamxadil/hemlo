@@ -14,7 +14,9 @@ import { r2Store, type FileStore } from './files';
 import { engineFrom } from './ai/engine';
 import { screenOrg } from './routes/dental/screen';
 import { doorOrg } from './routes/gym/door';
-import { websitePathRoute } from './website-routing';
+import { websitePathRoute, businessRootRedirect } from './website-routing';
+import { tick as connectTick } from './connect/core';
+import { createNotifier } from '@hemlo/notify';
 export { ScreenHub } from './screen-hub';
 import type { Env } from './types';
 
@@ -41,7 +43,17 @@ const db = new Proxy({} as Database, {
   },
 });
 
-const build = (env: WorkerEnv) => createApp({ db, env, files: filesOf(env), ai: engineFrom(env), screens: screensOf(env), waitUntil: (p) => scope.getStore()?.ctx.waitUntil(p) }).app;
+/** Work after the response (Connect's replies): its own database connection, so it may outlive the request's. */
+const laterOf = (env: WorkerEnv) => (task: () => Promise<void>) => {
+  const ctx = scope.getStore()?.ctx, url = env.HYPERDRIVE?.connectionString ?? env.DATABASE_URL;
+  if (!ctx || !url) { void task().catch(() => {}); return; }
+  const own = createPostgresDb(url, 1);
+  ctx.waitUntil(scope.run({ db: own, ctx }, async () => {
+    try { await task(); } catch (e) { console.error('[later]', e instanceof Error ? e.message : e); }
+    finally { await (own as any).$client?.end?.({ timeout: 5 }).catch(() => {}); }
+  }));
+};
+const build = (env: WorkerEnv) => createApp({ db, env, files: filesOf(env), ai: engineFrom(env), screens: screensOf(env), waitUntil: (p) => scope.getStore()?.ctx.waitUntil(p), later: laterOf(env) }).app;
 let app: ReturnType<typeof createApp>['app'] | null = (() => { try { return build(startupEnv as unknown as WorkerEnv); } catch { return null; } })();
 
 export default {
@@ -62,6 +74,8 @@ export default {
       return Response.redirect(url, 301);
     }
     if (existingApps[host]) return existingApps[host].fetch(request);
+    const root = businessRootRedirect(host, new URL(request.url).pathname, new URL(request.url).search);
+    if (root) return Response.redirect(root, 302);
     const url = env.HYPERDRIVE?.connectionString ?? env.DATABASE_URL;
     if (!url) return new Response('Database not configured', { status: 503 });
     app ??= build(env);
@@ -80,7 +94,7 @@ export default {
         const rewritten = new Request(url.toString(), { method: request.method, headers, body: request.body, redirect: 'manual' });
         return await scope.run({ db: requestDb, ctx }, () => app!.fetch(rewritten, env, ctx));
       }
-      const INFRA = ['api', 'www', 'account', 'admin', 'system', 'studio', 'tools', 'demo'];
+      const INFRA = ['api', 'www', 'account', 'admin', 'system', 'studio', 'tools', 'demo', 'business'];
       const bare = host.endsWith('.hemlo.site') ? host.slice(0, -'.hemlo.site'.length)
         : host.endsWith('.hemlohq.com') ? host.slice(0, -'.hemlohq.com'.length) : null;
       const sub = bare && !INFRA.includes(bare) ? bare : null;
@@ -107,12 +121,19 @@ export default {
     }
   },
 
-  /** Every 6 hours (wrangler.jsonc triggers): demo shops older than a day, and images never attached, are deleted. */
-  async scheduled(_event: ScheduledEvent, env: WorkerEnv, ctx: ExecutionContext) {
+  /** wrangler.jsonc triggers. Every 6 hours: demo shops older than a day, and images never attached, are deleted.
+   *  Every hour: Hemlo Connect's automations (one small query when no business uses Connect). */
+  async scheduled(event: ScheduledEvent, env: WorkerEnv, ctx: ExecutionContext) {
     const url = env.HYPERDRIVE?.connectionString ?? env.DATABASE_URL;
     if (!url) return;
     const db = createPostgresDb(url);
     try {
+      if (event.cron === '7 * * * *') {
+        app ??= build(env);
+        const deps = { db, env, files: filesOf(env), ai: engineFrom(env), notifier: createNotifier(env) } as any;
+        console.log('[connect]', await scope.run({ db, ctx }, () => connectTick(deps)));
+        return;
+      }
       console.log('[demo purge]', await purgeDemos(db, undefined, filesOf(env)));
       console.log('[orphan images]', await purgeOrphanFiles(db, filesOf(env)));
     }

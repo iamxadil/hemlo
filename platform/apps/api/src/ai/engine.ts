@@ -16,6 +16,8 @@ export type AskJson = {
   maxTokens?: number;
 };
 export type JsonResult<T> = { data: T; model: string; inputTokens: number; outputTokens: number; costMicros: number };
+/** A picture made from words: its bytes, and what it cost (the route's price per image; 0 when none was entered). */
+export type ImageResult = { bytes: Uint8Array; mime: string; model: string; costMicros: number };
 export interface Engine {
   /** the provider ('workers-ai', 'claude', 'openrouter'…), shown and recorded */
   name: string;
@@ -24,6 +26,9 @@ export interface Engine {
   /** costs money per call (the monthly AI budget guards these); the free ones don't */
   paid?: boolean;
   json<T>(req: AskJson): Promise<JsonResult<T>>;
+  /** Engines whose model draws pictures. (No engine makes video yet: a video provider needs its own adapter.) */
+  image?(prompt: string): Promise<ImageResult>;
+  video?(prompt: string): Promise<{ url: string; model: string; costMicros: number }>;
 }
 export class AiError extends Error {}
 
@@ -40,9 +45,23 @@ export function parseJson<T>(raw: unknown): T {
 type WorkersAiBinding = { run(model: string, input: Record<string, unknown>): Promise<any> };
 const WORKERS_MODEL = '@cf/meta/llama-4-scout-17b-16e-instruct';
 
-export function workersAi(binding: WorkersAiBinding, model = WORKERS_MODEL): Engine {
+const b64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+async function bytesOf(out: any): Promise<Uint8Array> {
+  if (out instanceof Uint8Array) return out;
+  if (out instanceof ArrayBuffer) return new Uint8Array(out);
+  if (out && typeof out.getReader === 'function') return new Uint8Array(await new Response(out).arrayBuffer());
+  if (typeof out?.image === 'string') return b64(out.image);
+  throw new AiError('NO_IMAGE');
+}
+const mimeOf = (b: Uint8Array) => (b[0] === 0x89 ? 'image/png' : b[0] === 0xff ? 'image/jpeg' : b[0] === 0x52 ? 'image/webp' : 'image/png');
+
+export function workersAi(binding: WorkersAiBinding, model = WORKERS_MODEL, each?: number | null): Engine {
   return {
-    name: 'workers-ai', model, paid: false,
+    name: 'workers-ai', model, paid: !!each,
+    async image(prompt: string) {
+      const bytes = await bytesOf(await binding.run(model, { prompt: prompt.slice(0, 2000) }));
+      return { bytes, mime: mimeOf(bytes), model, costMicros: each ? Math.round(each * 1_000_000) : 0 };
+    },
     async json<T>(req: AskJson) {
       const content = req.image ? [{ type: 'text', text: req.text }, { type: 'image_url', image_url: { url: req.image } }] : req.text;
       const out = await binding.run(model, {
@@ -94,7 +113,7 @@ export function claude(apiKey: string, model = CLAUDE_MODEL, price: { input: num
 
 // ---------- any OpenAI-compatible service (OpenAI, OpenRouter, Gemini, Groq, …) ----------
 export type CompatOptions = { name: string; baseUrl: string; apiKey: string; model: string; headers?: Record<string, string>; paid: boolean;
-  price?: { input: number; output: number } | null; fetch?: typeof fetch };
+  price?: { input: number; output: number } | null; each?: number | null; fetch?: typeof fetch };
 
 /** Chat completions with a JSON schema. A service that doesn't take the schema gets a plain "JSON object" request, with the
  *  shape written into the instructions. OpenRouter reports what each call cost; for the others, the route's price. */
@@ -113,6 +132,19 @@ export function openaiCompat(o: CompatOptions): Engine {
   };
   return {
     name: o.name, model: o.model, paid: o.paid,
+    /** The OpenAI-style images endpoint (OpenAI and services that copy it). Whether a model draws is the provider's to say. */
+    async image(prompt: string) {
+      const res = await call(`${o.baseUrl.replace(/\/+$/, '')}/images/generations`, { method: 'POST', headers: { authorization: `Bearer ${o.apiKey}`, 'content-type': 'application/json', ...(o.headers ?? {}) },
+        body: JSON.stringify({ model: o.model, prompt: prompt.slice(0, 4000), n: 1, size: '1024x1024' }), signal: AbortSignal.timeout(120_000) });
+      if (!res.ok) throw new AiError(`HTTP_${res.status}: ${(await res.text()).slice(0, 300)}`);
+      const out: any = await res.json();
+      const item = out?.data?.[0];
+      let bytes: Uint8Array;
+      if (item?.b64_json) bytes = b64(item.b64_json);
+      else if (item?.url) { const r = await call(item.url, { signal: AbortSignal.timeout(60_000) }); if (!r.ok) throw new AiError('NO_IMAGE'); bytes = new Uint8Array(await r.arrayBuffer()); }
+      else throw new AiError('NO_IMAGE');
+      return { bytes, mime: mimeOf(bytes), model: out?.model ?? o.model, costMicros: o.each ? Math.round(o.each * 1_000_000) : 0 };
+    },
     async json<T>(req: AskJson) {
       let res = await send(req, true);
       if (res.status === 400 || res.status === 422) { await res.body?.cancel(); res = await send(req, false); } // no JSON-schema support: ask for a JSON object
@@ -132,6 +164,10 @@ export function withFallback(first: Engine, second: Engine | undefined): Engine 
   if (!second) return first;
   return {
     name: first.name, model: first.model, paid: first.paid || second.paid,
+    ...(first.image || second.image ? { async image(prompt: string) {
+      if (!first.image) return second.image!(prompt);
+      try { return await first.image(prompt); } catch (e) { if (!second.image) throw e; console.error('[ai] image falling back', first.name, e instanceof Error ? e.message : e); return second.image(prompt); }
+    } } : {}),
     async json<T>(req: AskJson) {
       try { return await first.json<T>(req); }
       catch (e) { if (e instanceof AiError && e.message === 'REFUSED') throw e; console.error('[ai] falling back', first.name, e instanceof Error ? e.message : e); return second.json<T>(req); }

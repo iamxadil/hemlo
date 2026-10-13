@@ -1,0 +1,16 @@
+---
+// Hemlo's product badge: the Hemlo lockup, a hairline, and the product ("Website" by default, or "Connect"), in a pill.
+// The Website one signs every customer site.
+import { LOCKUP_PATHS, LOCKUP_VIEWBOX } from '../brand/brand';
+interface Props { size?: 'sm' | 'lg'; tone?: 'light' | 'ink'; label?: string; class?: string; }
+const { size = 'sm', tone = 'light', label = 'Website', class: cls = '' } = Astro.props;
+---
+<span class:list={['hw', size === 'lg' && 'lg', tone === 'ink' && 'ink', cls]} aria-label={`Hemlo ${label}`}>
+  <svg class="hw-lock" viewBox={LOCKUP_VIEWBOX} aria-hidden="true">{LOCKUP_PATHS.map((d) => <path d={d} fill="currentColor" />)}</svg><i></i><span>{label}</span>
+</span>
+<style is:global>
+.hw{display:inline-flex;align-items:center;gap:9px;height:32px;padding:0 14px;border-radius:999px;background:#fff;color:#0E1420;box-shadow:inset 0 0 0 1px rgba(14,20,32,.12),0 1px 2px rgba(14,20,32,.06);font-family:"Poppins","Vazirmatn",ui-sans-serif,system-ui,sans-serif;font-size:13px;font-weight:500;letter-spacing:-.01em;line-height:1;white-space:nowrap;direction:ltr}
+.hw .hw-lock{display:block;height:12px;width:auto;transform:translateY(.5px)}.hw i{width:1px;height:14px;background:currentColor;opacity:.22}
+.hw.ink{background:#0E1420;color:#F4F1EA;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 6px 16px -8px rgba(14,20,32,.5)}
+.hw.lg{height:40px;padding:0 18px;gap:11px;font-size:15px}.hw.lg .hw-lock{height:15px}.hw.lg i{height:17px}
+</style>

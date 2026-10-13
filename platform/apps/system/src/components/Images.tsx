@@ -112,3 +112,52 @@ export function Lightbox({ url, onClose }: { url: string; onClose(): void }) {
     document.body,
   );
 }
+
+/**
+ * A product's photos, like an online shop's: the first is the cover (on the till, the lists and the shop's cards), the
+ * rest show on its page. Add several at once, drag to reorder, make any one the cover, remove. Saved with the product.
+ */
+export function PhotoGallery({ files, onChange, max = 8, words }: {
+  files: UploadedFile[]; onChange(f: UploadedFile[]): void; max?: number;
+  words: { title: string; hint: string; cover: string; makeCover: string; add: string; count: string };
+}) {
+  const { t } = useApp();
+  const { send, busy } = useUpload('product');
+  const [view, setView] = useState<string | null>(null);
+  const [drag, setDrag] = useState<number | null>(null);
+  const latest = useRef(files); latest.current = files;
+  const add = () => picker(async (list) => {
+    for (const f of list.slice(0, Math.max(0, max - latest.current.length))) {
+      const up = await send(f);
+      if (up) onChange([...latest.current, up]);
+    }
+  }, true);
+  const move = (from: number, to: number) => {
+    if (from === to) return;
+    const next = [...latest.current]; const [x] = next.splice(from, 1); next.splice(to, 0, x); onChange(next);
+  };
+  return (
+    <section className="pgal">
+      <div className="pgal-head"><b>{words.title}</b><small>{words.count.replace('{n}', String(files.length)).replace('{max}', String(max))}</small></div>
+      <p className="sub">{words.hint}</p>
+      <div className="pgal-grid">
+        {files.map((f, i) => (
+          <span key={f.id} className={`pgal-item${i === 0 ? ' cover' : ''}${drag === i ? ' dragging' : ''}`} draggable
+            onDragStart={(e) => { setDrag(i); e.dataTransfer.effectAllowed = 'move'; }} onDragEnd={() => setDrag(null)}
+            onDragOver={(e) => { e.preventDefault(); if (drag != null && drag !== i) { move(drag, i); setDrag(i); } }}>
+            <button type="button" className="pgal-img" onClick={() => setView(f.url)} aria-label={t.images.view}>{f.url && <img src={f.url} alt="" loading="lazy" draggable={false} />}</button>
+            {i === 0 ? <span className="pgal-badge">{words.cover}</span>
+              : <button type="button" className="pgal-cover" onClick={() => move(i, 0)}>{words.makeCover}</button>}
+            <button type="button" className="pgal-x" onClick={() => onChange(latest.current.filter((x) => x.id !== f.id))} aria-label={t.images.remove}><Icon n="close" /></button>
+          </span>
+        ))}
+        {files.length < max && (
+          <button type="button" className={`pgal-add${files.length ? '' : ' first'}`} onClick={add} disabled={busy}>
+            {busy ? <span className="spinner" /> : <><Icon n="camera" /><small>{words.add}</small></>}
+          </button>
+        )}
+      </div>
+      {view && <Lightbox url={view} onClose={() => setView(null)} />}
+    </section>
+  );
+}

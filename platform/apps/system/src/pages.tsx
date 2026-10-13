@@ -27,6 +27,23 @@ const site = () => import('./website');
 const WebsitePage = lazy(() => site().then((m) => ({ default: m.Site })));
 const WEBSITE: Page = { path: 'website', icon: 'globe', need: 'website.manage', view: WebsitePage, gapBefore: true };
 
+// ---- Hemlo Connect: WhatsApp inbox, assistant and automations (real estate first; its own chunk) ----
+const connect = () => import('./connect');
+const ConnectPage = lazy(() => connect().then((m) => ({ default: m.Connect })));
+const CONNECT: Page = { path: 'connect', icon: 'wa', need: 'leads.read', view: ConnectPage, label: (t) => t.nav.connect };
+
+// ---- Hemlo AI Studio: marketing from the agency's listings (real estate; its own chunk). 'studio' is taken (adding a property) ----
+const studio = () => import('./studio');
+const StudioPage = lazy(() => studio().then((m) => ({ default: m.Studio })));
+const AI_STUDIO: Page = { path: 'marketing', icon: 'sparkle', need: 'listings.read', view: StudioPage, label: () => 'AI Studio' };
+
+// ---- the online shop's orders (a store with Hemlo Website): its own small chunk ----
+const OrdersPage = lazy(() => import('./views/Orders').then((m) => ({ default: m.Orders })));
+const ORDERS: Page = { path: 'orders', icon: 'truck', need: 'orders.read', view: OrdersPage, label: (t) => t.nav.orders };
+/** Connect in a shop: the shared connect permission (an agency reads it through its leads). */
+const SHOP_CONNECT: Page = { ...CONNECT, need: 'connect.read' };
+const SHOP_STUDIO: Page = { ...AI_STUDIO, need: 'products.manage' };
+
 export const STORE_PAGES: Page[] = [
   { path: 'home', icon: 'home', need: 'reports.read', tab: true, view: Home },
   { path: 'sell', icon: 'sell', need: 'sales.create', tab: true, view: Sell },
@@ -36,6 +53,10 @@ export const STORE_PAGES: Page[] = [
   { path: 'purchases', icon: 'truck', need: 'purchases.read', label: (t) => t.purchases.title, view: Purchases, gapBefore: true },
   { path: 'expenses', icon: 'wallet', need: 'expenses.read', label: (t) => t.expenses.title, view: Expenses },
   { path: 'shifts', icon: 'drawer', need: 'reports.read', label: (t) => t.drawer.history, view: Shifts },
+  ORDERS,
+  SHOP_CONNECT,
+  SHOP_STUDIO,
+  WEBSITE,
   PLAN,
   { path: 'settings', icon: 'gear', need: null, label: (t) => t.settings.title, view: Settings },
 ];
@@ -82,6 +103,8 @@ export const RE_PAGES: Page[] = [
   { path: 'map', icon: 'globe', need: 'listings.read', view: R('MapView'), label: rl('map') },
   { path: 'reports', icon: 'chart', need: 'reports.read', view: R('Reports'), label: rl('reports') },
   { path: 'agency', icon: 'gear', need: 'agency.configure', view: R('Setup'), label: rl('agency') },
+  CONNECT,
+  AI_STUDIO,
   WEBSITE,
   PLAN,
   { path: 'settings', icon: 'gear', need: null, label: (t) => t.settings.title, view: Settings },
@@ -121,3 +144,11 @@ export const DENTAL_PAGES: Page[] = [
   PLAN,
   { path: 'settings', icon: 'gear', need: null, label: (t) => t.settings.title, view: Settings },
 ];
+
+/** Once the first page is up and the device is idle, fetch the rest of this system's screens, so the next tap opens at
+ *  once instead of waiting on the network. Each loader is the same import the page uses (the browser keeps one copy). */
+export function preloadPages(kind: string | null) {
+  const jobs: (() => Promise<unknown>)[] = kind === 'realestate' ? [estate, connect, studio, site] : !kind || kind === 'store' ? [connect, studio, site] : kind === 'gym' ? [gym] : kind === 'dental' ? [dental] : kind === 'school' ? [school] : [];
+  const run = () => jobs.forEach((j) => j().catch(() => {}));
+  if ('requestIdleCallback' in window) (window as any).requestIdleCallback(run, { timeout: 4000 }); else setTimeout(run, 1500);
+}

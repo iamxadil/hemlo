@@ -5,8 +5,10 @@
 import Base from '../layouts/Base.astro';
 import Mark from '../components/Mark.astro';
 import Compare from '../components/Compare.astro';
+import HwBadge from '../components/HwBadge.astro';
+import SystemBuilder from '../components/SystemBuilder.astro';
 import { BRANCH } from '../brand/brand';
-import { t, href, EMAIL, SYSTEM_URL, type Lang } from '../i18n/strings';
+import { t, href, EMAIL, SYSTEM_URL, API_URL, type Lang } from '../i18n/strings';
 interface Props { lang: Lang; }
 const { lang } = Astro.props;
 const ar = lang === 'ar';
@@ -43,21 +45,24 @@ const L = L2({ open: 'صفحة النظام', demo: 'جرّبه الآن', ask: 
 
 // ---------- the hero: "what does your business do?" → that system, working, in three short scenes ----------
 const H = L2({
-  eyebrow: 'هيملو · الأنظمة', title: ['أدِر عملك كله', 'من مكان واحد.'],
+  eyebrow: 'هيملو · الأنظمة', title: ['أدِر عملك كله', 'من مكان واحد.'], news: ['جديد', 'Website وConnect وAI Studio، الآن للعقارات والمتاجر'],
   sub: 'اختر ما تعمله وشاهد يوماً يمرّ. بالعربي، بالدينار، ويعمل حين ينقطع الإنترنت. ويقرأ حتى فواتير مورّديك عنك.',
   pick: 'ماذا يعمل عملك؟', play: 'تشغيل', pause: 'إيقاف مؤقت', step: 'الخطوة',
 }, {
-  eyebrow: 'Hemlo Systems', title: ['Run your whole business', 'from one place.'],
+  eyebrow: 'Hemlo Systems', title: ['Run your whole business', 'from one place.'], news: ['New', 'Website, Connect and AI Studio, now for Real Estate and Stores'],
   sub: 'Pick what you do and watch a day go by. In Arabic, in dinars, still working when the internet drops. It even reads your supplier’s invoices for you.',
   pick: 'What does your business do?', play: 'Play', pause: 'Pause', step: 'Step',
 });
-type Scene = { title: string; line: string; ai?: 'live' | 'soon' };
+type Scene = { title: string; line: string; ai?: 'live' | 'soon'; addon?: 'web' | 'con' | 'studio' };
 const TRADES = [
   { kind: 'stores', color: '#A8532E', title: L2('متجر أو ماركت', 'Shop or market'), need: L2('أبيع بضاعة على الكاونتر', 'I sell products at a counter'), demo: SYS.stores.demo!, page: SYS.stores.page!,
     scenes: [
       { title: L2('صوّر فاتورة المورّد', 'Photograph the supplier’s invoice'), line: L2('يقرؤها هيملو ويملأ البضاعة والأسعار والمورّد. تلقي نظرة، وتحفظ.', 'Hemlo reads it and fills in the products, prices and supplier. You glance, and save.') },
       { title: L2('بِع بضغطة', 'Sell with a beep'), line: L2('باركود القطعة والكارتون والميزان. المخزون والربح والصندوق تتحدث وحدها.', 'Piece, carton and scale barcodes. Stock, profit and the drawer update themselves.') },
       { title: L2('اسأل محلك', 'Ask your shop'), line: L2('اكتبها كما تقولها: «شكد ربحت اليوم؟» والجواب من أرقامك أنت.', 'Type it the way you’d say it. The answer comes from your own numbers.') },
+      { addon: 'web', title: L2('متجرك على الإنترنت', 'Your shop, online'), line: L2('منتجاتك بأسعارها ومخزونها على موقعك. يطلب الزبون بالدفع عند الاستلام، ويصلك الطلب في النظام.', 'Your products, prices and stock on your own site. Customers order with cash on delivery, and the order lands in your system.') },
+      { addon: 'con', title: L2('واتساب يرد ويتابع', 'WhatsApp answers and follows up'), line: L2('يصل الزبون تحديث طلبه، ويجيب المساعد عن سؤاله من منتجاتك وأسعارك. ويذكّر بالديون بلطف.', 'The customer gets their order’s updates, and the assistant answers from your products and prices. It reminds debts gently, too.') },
+      { addon: 'studio', title: L2('تسويق يكتب نفسه', 'Marketing that writes itself'), line: L2('حملة لواتساب وإنستغرام بالعربي والإنكليزي من منتجاتك، بلا عروض مخترعة.', 'A campaign for WhatsApp and Instagram, in Arabic and English, from your products, with no invented offers.') },
     ] as Scene[] },
   { kind: 'dental', color: '#B38B3A', title: L2('عيادة أسنان', 'Dental clinic'), need: L2('أستقبل المرضى بمواعيد', 'I see patients by appointment'), demo: SYS.dental.demo!, page: SYS.dental.page!,
     scenes: [
@@ -77,6 +82,9 @@ TRADES.push({ kind: 'realestate', color: '#1F6F5C', title: L2('مكتب عقار
     { title: L2('أرسل العقار على واتساب', 'Send the property on WhatsApp'), line: L2('صفحة أنيقة باسم مكتبك، وتعرف متى فتحها الزبون.', 'A beautiful page in your agency’s name, and you see when the customer opens it.') },
     { title: L2('من يريده، ولماذا', 'Who wants it, and why'), line: L2('هيملو يطابق زبائنك مع العقار ويشرح السبب: السعر، المنطقة، الغرف.', 'Hemlo matches your leads to the property and explains why: price, area, bedrooms.') },
     { title: L2('من العرض إلى العمولة', 'From the offer to the commission'), line: L2('العروض والردود على خط واحد. أغلق الصفقة، فتُحسب العمولة وحدها.', 'Offers and counters on one line. Close the deal and the commission counts itself.') },
+    { addon: 'web', title: L2('موقع مكتبك، يملأ نفسه', 'Your office’s site, filling itself'), line: L2('كل عقار تنشره يظهر على موقعك بصوره وسعره. ومن يستفسر يصبح زبوناً في نظامك.', 'Every property you publish appears on your site with its photos and price. Whoever asks becomes a lead in your system.') },
+    { addon: 'con', title: L2('رد خلال ثوانٍ، ومعاينة محجوزة', 'A reply in seconds, a viewing booked'), line: L2('يجيب المساعد على واتساب من عقاراتك الحقيقية، ويحجز المعاينة، ويذكّر بها قبل يوم.', 'The assistant answers on WhatsApp from your real listings, books the viewing, and reminds them the day before.') },
+    { addon: 'studio', title: L2('حملة لكل عقار', 'A campaign for every property'), line: L2('نصوص لواتساب وإنستغرام وفيسبوك بالعربي والإنكليزي، من بيانات العقار فقط.', 'Copy for WhatsApp, Instagram and Facebook, in Arabic and English, from the property’s facts only.') },
   ] as Scene[] });
 const SC = {
   inv: L2([['بيبسي 330 مل · كارتون', '×3', '30,000'], ['ماء 500 مل · كارتون', '×5', '12,000'], ['سكر 1 كغ', '×20', '23,000'], ['شيبس ليز · كارتون', '×2', '19,200']], [['Pepsi 330ml · carton', '×3', '30,000'], ['Water 500ml · carton', '×5', '12,000'], ['Sugar 1kg', '×20', '23,000'], ['Lay’s chips · carton', '×2', '19,200']]),
@@ -96,6 +104,21 @@ const SC = {
   rSend: L2('أرسل', 'Send'),
   rDeal: L2([['سعر الطلب', '$345,000'], ['عرض المشتري', '$300,000'], ['ردّ المالك', '$335,000'], ['السعر المتفق عليه', '$318,000']], [['Asking', '$345,000'], ['Buyer’s offer', '$300,000'], ['Owner’s counter', '$335,000'], ['Agreed', '$318,000']]),
   rClosed: L2('أُغلقت الصفقة · العمولة', 'Deal closed · commission'),
+  // the add-ons, in each live system's own words
+  add: L2('أضف لهذا النظام', 'Plug into this system'), soon: L2('قريباً', 'Soon'), live: L2('متاح', 'Live'),
+  sUrl: 'nafha.hemlohq.com', sTiles: L2([['عنبر الليل', '85,000'], ['ورد الطائف', '65,000'], ['صندوق هدية', '150,000']], [['Amber Night', '85,000'], ['Taif Rose', '65,000'], ['Gift box', '150,000']]),
+  sOrder: L2('طلب جديد #24 · 235,000 د.ع', 'New order #24 · 235,000 IQD'), sCod: L2('الدفع عند الاستلام', 'Cash on delivery'),
+  sWa: L2([['them', 'مرحباً أحمد، معك نفحة. طلبك رقم 24 خرج للتوصيل وسيصلك قريباً.'], ['me', 'عندكم بعد عنبر الليل؟ أريد واحد ثاني هدية'], ['ai', 'نعم متوفر بـ 85,000 د.ع. أضفته لطلبك؟ يصلك معه اليوم.']],
+    [['them', 'Hi Ahmed, this is Nafha. Your order #24 is on its way to you.'], ['me', 'Do you still have Amber Night? I want another as a gift'], ['ai', 'Yes, in stock at 85,000 IQD. Shall I add it to your order? It comes with it today.']]),
+  sCamp: L2({ h: 'عطر يليق بكل لقاء', p: 'عنبر الليل: دفء العنبر مع لمسة فانيلا، يدوم من الصباح حتى المساء. اطلبه الآن والدفع عند الاستلام.', tags: ['عطور', 'هدايا', 'بغداد'] },
+    { h: 'A scent for every meeting', p: 'Amber Night: warm amber with a touch of vanilla, from morning to evening. Order now, pay on delivery.', tags: ['perfume', 'gifts', 'baghdad'] }),
+  rUrl: 'nakheel.hemlohq.com', rInq: L2('استفسار جديد · أحمد · فيلا دريم ستي', 'New inquiry · Ahmed · Dream City villa'),
+  rWa: L2([['me', 'هل فيلا دريم ستي ما زالت متاحة؟'], ['ai', 'نعم متاحة: 4 غرف وحديقة، $265,000. هل يناسبك السبت الساعة 5 للمعاينة؟'], ['me', 'السبت يناسبني 👍']],
+    [['me', 'Is the Dream City villa still available?'], ['ai', 'Yes: 4 bedrooms and a garden, $265,000. Would Saturday at 5 suit a viewing?'], ['me', 'Saturday works 👍']]),
+  rBooked: L2('معاينة محجوزة · السبت 5 م', 'Viewing booked · Sat 5 PM'),
+  rCamp: L2({ h: 'بيت بحديقة في دريم ستي', p: '4 غرف نوم وحديقة خاصة تطل عليها غرفة المعيشة. $265,000. احجز معاينتك هذا الأسبوع.', tags: ['أربيل', 'فلل', 'عقارات'] },
+    { h: 'A home with a garden in Dream City', p: '4 bedrooms and a private garden the living room opens onto. $265,000. Book your viewing this week.', tags: ['erbil', 'villas', 'realestate'] }),
+  campBy: L2('✦ AI Studio · من بيانات العقار', '✦ AI Studio · from the facts'), campByShop: L2('✦ AI Studio · من بيانات المنتج', '✦ AI Studio · from the product'),
   tvName: L2('نور ا.', 'Noor A.'), tvGo: L2('يُرجى التوجّه إلى', 'Please go to'), tvChair: L2('كرسي 1', 'Chair 1'),
 };
 
@@ -112,6 +135,54 @@ const HOW = L2({
 const HELPER = L2(
   { lead: 'ومعه مساعد هادئ.', body: 'يقرأ فواتير المورّدين، ويجيب عن أسئلتك عن أرقامك. هو يكتب المسودة، وأنت تقرّر. ويصل قريباً إلى العيادات أيضاً.' },
   { lead: 'And a quiet helper.', body: 'It reads supplier invoices and answers questions about your numbers. It drafts; you decide. Clinics get theirs soon.' });
+// ---------- the add-ons, as part of the system: Hemlo Website and Hemlo Connect plug into Hemlo Systems ----------
+// Prices are the builder's (components/SystemBuilder.astro), read from the API.
+const ADD = L2({
+  eyebrow: 'ابنِ Hemlo لعملك', live: 'الآن للعقارات والمتاجر · والبقية تباعاً',
+  title: ['أي نظام من Hemlo.', 'وأضف ما يحتاجه.'],
+  sub: 'Website يضع عملك على الإنترنت، وConnect يرد على واتساب ويتابع عنك، وAI Studio يسوّق لك. تتّصل كلها بنظامك وتعمل من سجلاته نفسها، فلا شيء يُكتب مرتين. اختر نظامك، وفعّل ما تريد، وشاهد ما يتغيّر.',
+  pick: 'نظامك', systems: [['realestate', 'العقارات'], ['store', 'المتاجر']],
+  roadmap: 'أين وصلت الإضافات', rows: [['العقارات', 1], ['المتاجر', 1], ['العيادات', 0], ['الأندية', 0], ['المدارس', 0]] as [string, number][],
+  trustTitle: 'تثق بها، ويثق بها زبائنك',
+  trust: [['lock', 'عنوان خاص وآمن', 'باسم عملك على hemlohq.com، ومشفّر بـ HTTPS.'], ['wa', 'واتساب الرسمي', 'عبر منصة واتساب للأعمال من Meta: لا حظر، ولا تطبيقات وسيطة.'], ['spark', 'ذكاء لا يخترع', 'المساعد يرد من منتجاتك أو عقاراتك فقط، ولا يذكر سعراً لم تضعه.'], ['shield', 'بياناتك تبقى لك', 'كل شيء في نظامك، ويستطيع أي زبون إيقاف الرسائل بكلمة.']],
+  more: 'العيادات والأندية والمدارس تأتي تباعاً.', soon: 'قريباً', on: 'متاح الآن',
+}, {
+  eyebrow: 'Build your Hemlo', live: 'Now for Real Estate and Stores · the rest are next',
+  title: ['Any Hemlo system.', 'Add what it needs.'],
+  sub: 'Website puts your business online, Connect answers and follows up on WhatsApp, and AI Studio markets for you. They plug into your system and work from its own records, so nothing is typed twice. Pick your system, switch on what you want, and watch what changes.',
+  pick: 'Your system', systems: [['realestate', 'Real estate'], ['store', 'Stores']],
+  roadmap: 'Where the add-ons are', rows: [['Real estate', 1], ['Stores', 1], ['Clinics', 0], ['Gyms', 0], ['Schools', 0]] as [string, number][],
+  trustTitle: 'You can trust them, and so can your clients',
+  trust: [['lock', 'Your own secure address', 'yourname.hemlohq.com, encrypted with HTTPS.'], ['wa', 'Official WhatsApp', 'Through Meta’s WhatsApp Business Platform: no bans, no middlemen.'], ['spark', 'AI that doesn’t invent', 'The assistant answers only from your own products or listings, and never quotes a price you didn’t set.'], ['shield', 'Your data stays yours', 'It all lives in your system, and any customer can stop messages with one word.']],
+  more: 'Clinics, gyms and schools are next.', soon: 'Soon', on: 'Live now',
+});
+// ---------- what agencies ask before they buy the add-ons ----------
+const FAQ = L2({ title: 'أسئلة قبل الاشتراك', items: [
+  ['هل أحتاج رقم واتساب جديداً؟', 'الأفضل رقم مخصّص لعملك. قاعدة Meta: الرقم المستخدم الآن في تطبيق واتساب على الموبايل يجب أن يُحذف منه أولاً قبل ربطه، لذلك يختار أغلب أصحاب الأعمال شريحة جديدة لـ Connect ويبقون أرقامهم الشخصية كما هي.'],
+  ['هل يمكن أن يُحظر رقمي؟', 'Connect يعمل عبر منصة واتساب للأعمال الرسمية من Meta، لا عبر تطبيقات وسيطة. الحظر يأتي عادة من الرسائل المزعجة، وConnect لا يراسل تلقائياً إلا من كتب لك أو وافق على العروض، ويوقف الرسائل فوراً لمن يكتب «إيقاف».'],
+  ['هل رسائل واتساب عليّ؟', 'لا شيء عليك: رسائل واتساب مشمولة في خطتك وتدفعها Hemlo. الرصيد الشهري يكفي المحادثات اليومية والتذكيرات والتنبيهات المفيدة؛ أما الحملات الترويجية الكبيرة فلها حصة منه، لأن Meta تسعّر الرسالة الترويجية أعلى بكثير.'],
+  ['هل يخترع المساعد الذكي أسعاراً أو وعوداً؟', 'لا. يرد من منتجاتك أو عقاراتك المنشورة فقط، والأسعار والروابط تضيفها Hemlo من نظامك لا الذكاء الاصطناعي، وأي رد فيه رقم لم يُعطَ له لا يُرسل. وتستطيع إيقافه بزر واحد.'],
+  ['وإن أراد الزبون أن يكلّم شخصاً؟', 'يحوّل المساعد المحادثة إلى «تنتظرك» ويُبلّغ الموظف المسؤول عن الزبون، ويتوقف عن الرد فيها حتى تعيدها إليه.'],
+  ['هل أحتاج Hemlo Website لأستخدم Connect؟', 'لا، كل إضافة تعمل وحدها. لكن معاً يكتمل الطريق: كل استفسار أو طلب من موقعك يصله رد على واتساب خلال ثوانٍ، ويُسجَّل في نظامك.'],
+  ['هل أستطيع التجربة قبل الدفع؟', 'نعم. في نظامك وضع تجربة لـ Connect تكتب فيه كأنك زبون وترى كيف يرد، ولا تخرج أي رسالة. ولـ Website موقع نموذجي حي تفتحه الآن.'],
+  ['كيف أدفع، وهل أستطيع الإلغاء؟', 'شهرياً أو سنوياً (شهران مجاناً)، بـ FIB أو زين كاش أو نقداً أو بتحويل. وتلغي متى شئت من صفحة «الخطة»، ويبقى المدفوع فعّالاً حتى نهاية مدته.'],
+] }, { title: 'Questions before you subscribe', items: [
+  ['Do I need a new WhatsApp number?', 'A number dedicated to your business is best. Meta’s rule: a number currently used in the WhatsApp app on a phone has to be removed from it before it can be connected, so most businesses get a new SIM for Connect and keep their personal numbers as they are.'],
+  ['Can my number get banned?', 'Connect runs on Meta’s official WhatsApp Business Platform, not on unofficial apps. Bans usually come from spam, and Connect only messages people who wrote to you or agreed to offers, and stops at once for anyone who writes “stop”.'],
+  ['Do I pay for WhatsApp messages?', 'Nothing for you: WhatsApp messaging is included in your plan, and Hemlo pays for it. The monthly allowance covers everyday conversations, reminders and useful alerts; big promotional blasts get a share of it, because Meta prices a promotional message far higher.'],
+  ['Does the AI assistant make up prices or promises?', 'No. It answers only from your own products or published listings; prices and links are added by Hemlo from your system, not by the AI, and any reply with a number it wasn’t given is not sent. And one switch turns it off.'],
+  ['What if a customer wants to talk to a person?', 'The assistant moves the chat to “Waiting on you”, tells the agent who looks after that customer, and stays quiet there until you hand it back.'],
+  ['Do I need Hemlo Website to use Connect?', 'No, each works on its own. Together the path is complete: every inquiry or order from your website gets a WhatsApp reply within seconds, and lands in your system.'],
+  ['Can I try before paying?', 'Yes. Your system has a Connect sandbox where you write as a customer and watch it answer, with no message leaving Hemlo. And Website has a live sample site you can open now.'],
+  ['How do I pay, and can I cancel?', 'Monthly or yearly (two months free), by FIB, Zain Cash, cash or transfer. Cancel any time from the Plan page; what you paid for stays on until its end.'],
+] });
+const TRUST_ICON: Record<string, string> = {
+  lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+  spark: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/>',
+  shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/>',
+  wa: '<path d="M3 21l1.65-4.94A9 9 0 1 1 7.9 19.3L3 21Z"/><path d="M9 10c.5 2 2 3.5 4 4l1.2-1.2a1 1 0 0 1 1-.25l1.8.6"/>',
+};
 const END = L2(
   { title: 'نظام لمهنتك، لا العكس.', sub: 'المتاجر والعيادات والأندية الرياضية ومكاتب العقارات متاحة الآن. ولكل مهنة أخرى، أخبرنا كيف يسير عملك ونبني إصدارها.' },
   { title: 'A system for your trade, not the other way round.', sub: 'Shops, clinics, gyms and real estate offices are live now. For any other trade, tell us how your work runs and we’ll build its edition.' });
@@ -125,7 +196,8 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
       <div class="hx-glow" aria-hidden="true"></div>
       <div class="wrap hx-grid">
         <div class="hx-copy">
-          <p class="font-medium accent rise">{H.eyebrow}</p>
+          <a class="hx-news rise" href="#addons"><span class="n">{H.news[0]}</span><span class="t">{H.news[1]}</span><span class="arr" aria-hidden="true">→</span></a>
+          <p class="mt-5 font-medium accent rise">{H.eyebrow}</p>
           <h1 class="mt-5 text-[clamp(2.3rem,4.6vw,3.9rem)] font-semibold leading-[1.05] tracking-tight rise rise-2"><span class="block">{H.title[0]}</span><span class="block hx-acc">{H.title[1]}</span></h1>
           <p class="mt-6 max-w-xl text-lead text-fg-2 rise rise-3">{H.sub}</p>
           <p class="mt-9 text-sm font-semibold text-fg-2 rise rise-4">{H.pick}</p>
@@ -134,7 +206,7 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
             {TRADES.map((x, i) => (
               <button type="button" role="tab" aria-selected={i === 0 ? 'true' : 'false'} data-pick={x.kind} style={`--k:${x.color}`}>
                 <span class="hx-n" aria-hidden="true">{ar ? '١٢٣٤٥'[i] : `0${i + 1}`}</span>
-                <span class="hx-t"><b>{x.title}</b><span>{x.need}</span></span>
+                <span class="hx-t"><b>{x.title}{x.scenes.some((sc) => sc.addon) && <span class="hx-plus">+ Website · Connect</span>}</b><span>{x.need}</span></span>
                 <svg class="hx-ch" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" /></svg>
               </button>
             ))}
@@ -180,6 +252,21 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
                     <p class="bubble q">{SC.q}</p>
                     <div class="bubble a"><p>{SC.a[0]} <b dir="ltr">{SC.a[1]}</b> {SC.a[2]} <b dir="ltr">{SC.a[3]}</b> {SC.a[4]}</p></div>
                   </div>
+                  <!-- + Website · the online shop, and an order arriving -->
+                  <div class="sc sc-site" data-scene="3" data-addon="web">
+                    <div class="site"><p class="site-bar"><i></i><i></i><i></i><span dir="ltr">{SC.sUrl}</span></p>
+                      <div class="site-grid">{SC.sTiles.map(([n, p], i) => <div class="st" style={`--i:${i}`}><span class="ph" style={`background-image:url(/images/stores/shop/${['amber', 'rose', 'gift-box'][i]}.webp)`}></span><b>{n}</b><em dir="ltr">{p}</em><span class="plus">+</span></div>)}</div>
+                      <p class="site-cod">{SC.sCod}</p></div>
+                    <p class="toast"><span class="ok">✓</span>{SC.sOrder}</p>
+                  </div>
+                  <!-- + Connect · WhatsApp: the order's update, and the assistant -->
+                  <div class="sc sc-wa" data-scene="4" data-addon="con">
+                    <div class="wchat">{SC.sWa.map(([who, t], i) => <p class:list={['wb', who]} style={`--i:${i}`}>{who === 'ai' && <span class="by">✦ Connect</span>}{t}</p>)}</div>
+                  </div>
+                  <!-- + AI Studio · a campaign from the product -->
+                  <div class="sc sc-camp" data-scene="5" data-addon="studio">
+                    <div class="camp"><span class="cimg" style="background-image:url(/images/stores/shop/amber.webp)"></span><div class="ct"><small>{SC.campByShop}</small><b>{SC.sCamp.h}</b><p>{SC.sCamp.p}</p><span class="tags">{SC.sCamp.tags.map((x) => <i>#{x}</i>)}</span></div></div>
+                  </div>
                 </> : x.kind === 'realestate' ? <>
                   <!-- 1 · the property, sent on WhatsApp, and opened -->
                   <div class="sc sc-rwa" data-scene="0">
@@ -201,6 +288,20 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
                       <ul>{SC.rDeal.map(([k, v], i) => <li style={`--i:${i}`}><span class:list={['rdot', `rd${i}`]} aria-hidden="true"></span><span class="flex-1">{k}</span><b dir="ltr">{v}</b></li>)}</ul>
                       <p class="till-total rclosed"><span>{SC.rClosed}</span><b dir="ltr">$6,360</b></p>
                     </div>
+                  </div>
+                  <!-- + Website · the office's site, and an inquiry -->
+                  <div class="sc sc-site" data-scene="3" data-addon="web">
+                    <div class="site"><p class="site-bar"><i></i><i></i><i></i><span dir="ltr">{SC.rUrl}</span></p>
+                      <div class="site-grid">{[['villa-3', '$265,000'], ['apartment-1', '$900'], ['villa-4', '$410,000']].map(([img, p], i) => <div class="st" style={`--i:${i}`}><span class="ph" style={`background-image:url(/images/realestate/sample/${img}.webp)`}></span><b>{SC.rTitle.split(' ').slice(0, 2).join(' ')}</b><em dir="ltr">{p}</em></div>)}</div></div>
+                    <p class="toast"><span class="ok">✓</span>{SC.rInq}</p>
+                  </div>
+                  <!-- + Connect · the reply, and the viewing -->
+                  <div class="sc sc-wa" data-scene="4" data-addon="con">
+                    <div class="wchat">{SC.rWa.map(([who, t], i) => <p class:list={['wb', who]} style={`--i:${i}`}>{who === 'ai' && <span class="by">✦ Connect</span>}{t}</p>)}<p class="wbook" style="--i:3">{SC.rBooked}</p></div>
+                  </div>
+                  <!-- + AI Studio · a campaign from the property -->
+                  <div class="sc sc-camp" data-scene="5" data-addon="studio">
+                    <div class="camp"><span class="cimg" style="background-image:url(/images/realestate/sample/villa-3.webp)"></span><div class="ct"><small>{SC.campBy}</small><b>{SC.rCamp.h}</b><p>{SC.rCamp.p}</p><span class="tags">{SC.rCamp.tags.map((x) => <i>#{x}</i>)}</span></div></div>
                   </div>
                 </> : x.kind === 'gym' ? <>
                   <!-- 1 · the desk: a scan, and the pass -->
@@ -237,10 +338,17 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
                   </div>
                 </>}
               </div>
+              <div class="hx-add" role="group" aria-label={SC.add}>
+                <span class="hx-add-k">{SC.add}</span>
+                {([['web', 'Website', 'globe'], ['con', 'Connect', 'wa'], ['studio', 'AI Studio', 'spark']] as const).map(([k, label, ic]) => {
+                  const at = x.scenes.findIndex((sc) => sc.addon === k);
+                  return <button type="button" class:list={['hx-chip', `c-${k}`]} data-jump={at} disabled={at < 0} aria-pressed="false"><span class="ci" aria-hidden="true"><svg viewBox="0 0 24 24" set:html={TRUST_ICON[ic]} /></span><b>{label}</b><small>{at < 0 ? SC.soon : SC.live}</small></button>;
+                })}
+              </div>
               <div class="hx-caps">
                 {x.scenes.map((sc, i) => (
                   <div class="hx-cap" data-cap={i} hidden={i !== 0}>
-                    <p class="hx-cap-k">{ar ? `الخطوة ${num(i)} من ٣` : `Step ${i + 1} of 3`}</p><p class="hx-cap-t">{sc.title}</p>
+                    <p class="hx-cap-k">{sc.addon ? `Hemlo ${sc.addon === 'web' ? 'Website' : sc.addon === 'con' ? 'Connect' : 'AI Studio'}` : ar ? `الخطوة ${num(i)} من ${'٣٤٥٦'[x.scenes.length - 3]}` : `Step ${i + 1} of ${x.scenes.length}`}</p><p class="hx-cap-t">{sc.title}</p>
                     <p class="hx-cap-l">{sc.line}</p>
                   </div>
                 ))}
@@ -264,6 +372,41 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
         ))}
       </ol>
       <p class="reveal helper"><span class="spark" aria-hidden="true">✦</span><span><b>{HELPER.lead}</b> {HELPER.body}</span></p>
+    </section>
+
+    <!-- one system, and what plugs into it: Hemlo Website and Hemlo Connect are part of Hemlo Systems, not other branches -->
+    <section class="wrap border-t border-line py-20 sm:py-28 web" id="addons">
+      <div class="web-head">
+        <p class="reveal web-eyebrow"><span class="web-tag">{ADD.eyebrow}</span><span class="web-live"><span class="dot" aria-hidden="true"></span>{ADD.live}</span></p>
+        <h2 class="reveal mt-5 text-[clamp(2rem,4.2vw,3.3rem)] font-semibold leading-[1.08] tracking-tight"><span class="block">{ADD.title[0]}</span><span class="block web-acc">{ADD.title[1]}</span></h2>
+        <p class="reveal mt-5 text-lead text-fg-2">{ADD.sub}</p>
+      </div>
+
+      <!-- pick the system; the builder is that system's -->
+      <div class="reveal mt-9 add-pick" role="tablist" aria-label={ADD.pick} data-addpick>
+        <span class="k">{ADD.pick}</span>
+        {ADD.systems.map(([k, label], i) => <button type="button" role="tab" aria-selected={i === 0 ? 'true' : 'false'} data-sys={k}>{label}</button>)}
+      </div>
+      <div class="reveal mt-6" data-addfor="realestate"><SystemBuilder lang={lang} system="realestate" /></div>
+      <div class="reveal mt-6" data-addfor="store" hidden><SystemBuilder lang={lang} system="store" /></div>
+
+      <!-- where the add-ons are: two systems now, every system in time -->
+      <div class="reveal roadmap"><p class="text-sm font-semibold text-fg-2">{ADD.roadmap}</p>
+        <ul>{ADD.rows.map(([name, on]) => <li class:list={[on && 'on']}><b>{name}</b><span class="rm-chips">{['Website', 'Connect', 'AI Studio'].map((x) => <i>{x}</i>)}</span><span class="rm-st">{on ? ADD.on : ADD.soon}</span></li>)}</ul>
+      </div>
+
+      <!-- why they can be trusted: four plain facts -->
+      <div class="reveal web-trust">
+        <p class="text-sm font-semibold text-fg-2">{ADD.trustTitle}</p>
+        <ul>{ADD.trust.map(([i, h, p]) => <li><span class="ti" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" set:html={TRUST_ICON[i]} /></span><span><b>{h}</b><span>{p}</span></span></li>)}</ul>
+        <p class="mt-4 text-sm text-fg-2">{ADD.more}</p>
+      </div>
+
+      <!-- the questions agencies ask before they subscribe -->
+      <div class="reveal faq" id="faq">
+        <h3 class="text-[clamp(1.4rem,2.6vw,1.9rem)] font-semibold tracking-tight">{FAQ.title}</h3>
+        <div class="faq-list">{FAQ.items.map(([q, a]) => <details><summary><span>{q}</span><i aria-hidden="true"></i></summary><p>{a}</p></details>)}</div>
+      </div>
     </section>
 
     <!-- a system, or a website built for you? the difference at a glance -->
@@ -345,6 +488,7 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
       st.querySelector<HTMLElement>(`[data-scene="${step}"]`)!.classList.add('on');
       st.querySelectorAll<HTMLElement>('[data-cap]').forEach((el) => { el.hidden = Number(el.dataset.cap) !== step; });
       st.querySelectorAll<HTMLElement>('[data-step]').forEach((el) => { const k = Number(el.dataset.step); el.setAttribute('aria-selected', String(k === step)); el.classList.toggle('done', k < step); });
+      st.querySelectorAll<HTMLElement>('[data-jump]').forEach((el) => el.setAttribute('aria-pressed', String(Number(el.dataset.jump) === step)));
       schedule();
     };
     const schedule = () => {
@@ -366,6 +510,8 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
     place(); document.fonts?.ready.then(place); addEventListener('resize', place);
     root.querySelectorAll<HTMLElement>('[data-pick]').forEach((b) => b.addEventListener('click', () => pickTrade(b.dataset.pick!)));
     root.querySelectorAll<HTMLElement>('[data-step]').forEach((b) => b.addEventListener('click', () => show(Number(b.dataset.step))));
+    // the add-on rail: a chip jumps to its scene; the playing scene's add-on lights its chip
+    root.querySelectorAll<HTMLButtonElement>('[data-jump]').forEach((b) => b.addEventListener('click', () => { if (!b.disabled) show(Number(b.dataset.jump)); }));
     const side = root.querySelector<HTMLElement>('.hx-side')!;
     const hold = (on: boolean) => () => { held = on; schedule(); };
     side.addEventListener('pointerenter', hold(true)); side.addEventListener('pointerleave', hold(false));
@@ -378,6 +524,14 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
     stop = () => { clearTimeout(timer); io.disconnect(); document.removeEventListener('visibilitychange', vis); removeEventListener('resize', place); };
   };
   document.addEventListener('astro:page-load', init);
+  // the add-ons' system switch: the builder for that system
+  document.addEventListener('astro:page-load', () => {
+    const pick = document.querySelector<HTMLElement>('[data-addpick]');
+    pick?.querySelectorAll<HTMLButtonElement>('[data-sys]').forEach((b) => b.addEventListener('click', () => {
+      pick.querySelectorAll('[data-sys]').forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+      document.querySelectorAll<HTMLElement>('[data-addfor]').forEach((x) => { x.hidden = x.dataset.addfor !== b.dataset.sys; });
+    }));
+  });
   document.addEventListener('astro:before-swap', () => { stop?.(); stop = null; });
 </script>
 
@@ -596,11 +750,117 @@ const num = (i: number) => (ar ? '١٢٣٤٥٦٧٨٩'[i] : String(i + 1));
   @keyframes ring { from { transform: scale(.6); opacity: .8; } to { transform: scale(2.4); opacity: 0; } }
   .on .tv > :not(.ring) { animation: pop .5s var(--out) both .3s; }
 
+  /* the announcement above the title */
+  .hx-news { display: inline-flex; align-items: center; gap: .6rem; max-width: 100%; padding: .3rem .9rem .3rem .3rem; border-radius: 999px; background: var(--surface); box-shadow: 0 0 0 1px var(--line), 0 8px 20px -14px rgb(14 20 32 / .3); font-size: .86rem; color: var(--fg); transition: box-shadow .2s ease; }
+  :global(html[dir="rtl"]) .hx-news { padding: .3rem .3rem .3rem .9rem; }
+  .hx-news .n { padding: .2rem .6rem; border-radius: 999px; background: var(--acc); color: #fff; font-size: .74rem; font-weight: 700; transition: background-color .5s ease; }
+  .hx-news { border-radius: 1.4rem; }
+  .hx-news .t { min-width: 0; font-weight: 500; line-height: 1.35; }
+  :global(html[dir="rtl"]) .hx-news .arr { transform: scaleX(-1); }
+  @media (hover: hover) and (pointer: fine) { .hx-news:hover { box-shadow: 0 0 0 1px var(--line-strong), 0 10px 24px -14px rgb(14 20 32 / .35); } }
+  .hx-plus { display: inline-block; margin-inline-start: .5rem; padding: .05rem .45rem; border-radius: 999px; background: color-mix(in oklab, var(--k) 12%, transparent); color: var(--k); font-size: .68rem; font-weight: 600; vertical-align: .15em; letter-spacing: 0; }
+  /* the add-on rail under each system's screen */
+  .hx-add { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; padding: .75rem 1rem; border-top: 1px solid var(--line); background: color-mix(in oklab, var(--acc) 3%, var(--surface)); }
+  .hx-add-k { font-size: .74rem; font-weight: 600; color: var(--muted); margin-inline-end: .25rem; }
+  .hx-chip { display: inline-flex; align-items: center; gap: .4rem; height: 2.1rem; padding: 0 .7rem 0 .35rem; border-radius: 999px; background: var(--surface); box-shadow: 0 0 0 1px var(--line); font-size: .8rem; color: var(--fg); transition: box-shadow .2s ease, background-color .2s ease, transform .16s var(--out); }
+  :global(html[dir="rtl"]) .hx-chip { padding: 0 .35rem 0 .7rem; }
+  .hx-chip .ci { display: grid; place-items: center; width: 1.45rem; height: 1.45rem; border-radius: 999px; color: #fff; }
+  .hx-chip .ci svg { width: .85rem; height: .85rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .c-web .ci { background: linear-gradient(145deg, #5EC8F2, #1F5FBF); } .c-con .ci { background: linear-gradient(145deg, #3DDC84, #128C4A); } .c-studio .ci { background: linear-gradient(145deg, #C08BF0, #6B3FA0); }
+  .hx-chip b { font-weight: 600; } .hx-chip small { font-size: .68rem; color: var(--muted); }
+  .hx-chip:not(:disabled):active { transform: scale(.96); }
+  .hx-chip[aria-pressed="true"] { box-shadow: 0 0 0 1.5px var(--acc), 0 8px 18px -12px color-mix(in oklab, var(--acc) 60%, transparent); }
+  .hx-chip:disabled { opacity: .55; cursor: default; } .hx-chip:disabled .ci { filter: grayscale(.8); }
+  @media (hover: hover) and (pointer: fine) { .hx-chip:not(:disabled):hover { box-shadow: 0 0 0 1px var(--line-strong); } .hx-chip[aria-pressed="true"]:hover { box-shadow: 0 0 0 1.5px var(--acc); } }
+  /* + Website: a small site, its products, and the order (or the inquiry) arriving */
+  .sc-site { align-content: center; gap: .8rem; }
+  .site { width: min(25rem, 100%); border-radius: .9rem; overflow: hidden; background: var(--surface); box-shadow: 0 0 0 1px var(--line), 0 18px 36px -22px rgb(14 20 32 / .4); }
+  .site-bar { display: flex; align-items: center; gap: .3rem; padding: .45rem .7rem; border-bottom: 1px solid var(--line); font-size: .7rem; color: var(--muted); }
+  .site-bar i { width: .45rem; height: .45rem; border-radius: 50%; background: var(--line-strong); } .site-bar span { margin-inline-start: .5rem; }
+  .site-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; padding: .7rem; }
+  .st { position: relative; display: grid; gap: .15rem; font-size: .72rem; }
+  .st .ph { aspect-ratio: 1; border-radius: .55rem; background: var(--sunken) center / cover; }
+  .st b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .st em { font-style: normal; color: var(--fg-2); font-variant-numeric: tabular-nums; }
+  .st .plus { position: absolute; top: calc(100% - 2.6rem); inset-inline-end: .25rem; display: grid; place-items: center; width: 1.3rem; height: 1.3rem; border-radius: 50%; background: var(--fg); color: var(--canvas); font-size: .8rem; font-weight: 700; }
+  .on .st { animation: pop .4s var(--out) both; animation-delay: calc(.2s + var(--i) * .12s); }
+  .site-cod { padding: 0 .7rem .6rem; font-size: .7rem; color: var(--muted); }
+  .toast { display: inline-flex; align-items: center; gap: .5rem; padding: .5rem .85rem; border-radius: 999px; background: var(--fg); color: var(--canvas); font-size: .8rem; font-weight: 600; box-shadow: 0 14px 30px -14px rgb(14 20 32 / .5); }
+  .toast .ok { background: color-mix(in oklab, #3DDC84 30%, transparent); color: #3DDC84; }
+  .on .toast { animation: pop .45s var(--out) both 1.6s; }
+  /* + Connect: WhatsApp, one message at a time */
+  .wchat { width: min(22rem, 100%); display: grid; gap: .45rem; padding: .9rem; border-radius: 1.1rem; background: #E9E4DA; }
+  @media (prefers-color-scheme: dark) { .wchat { background: #1E2420; } }
+  .wb { max-width: 86%; margin: 0; padding: .5rem .7rem; border-radius: .8rem; font-size: .8rem; line-height: 1.45; color: #0E1420; box-shadow: 0 1px 0 rgb(0 0 0 / .06); }
+  .wb.me { justify-self: end; background: #D9FDD3; border-end-end-radius: .25rem; }
+  .wb.them, .wb.ai { justify-self: start; background: #fff; border-end-start-radius: .25rem; }
+  .wb .by { display: block; margin-bottom: .2rem; font-size: .68rem; font-weight: 700; color: #128C4A; }
+  .wbook { justify-self: center; margin: .2rem 0 0; padding: .3rem .8rem; border-radius: 999px; background: color-mix(in oklab, #128C4A 16%, var(--surface)); color: #128C4A; font-size: .74rem; font-weight: 600; }
+  .on .wb, .on .wbook { animation: pop .4s var(--out) both; animation-delay: calc(.3s + var(--i) * .9s); }
+  /* + AI Studio: a post, written from the facts */
+  .camp { display: grid; grid-template-columns: 8rem minmax(0, 1fr); width: min(26rem, 100%); border-radius: 1rem; overflow: hidden; background: var(--surface); box-shadow: 0 0 0 1px var(--line), 0 18px 36px -22px rgb(14 20 32 / .4); }
+  .cimg { background: var(--sunken) center / cover; min-height: 9rem; }
+  .ct { display: grid; align-content: start; gap: .3rem; padding: .8rem .9rem; font-size: .8rem; }
+  .ct small { color: #6B3FA0; font-weight: 700; font-size: .68rem; } @media (prefers-color-scheme: dark) { .ct small { color: #C08BF0; } }
+  .ct b { font-size: .95rem; font-weight: 650; line-height: 1.3; } .ct p { color: var(--fg-2); line-height: 1.5; }
+  .tags { display: flex; flex-wrap: wrap; gap: .3rem; } .tags i { font-style: normal; font-size: .7rem; color: #6B3FA0; } @media (prefers-color-scheme: dark) { .tags i { color: #C08BF0; } }
+  .on .camp { animation: pop .5s var(--out) both .2s; } .on .ct > * { animation: pop .45s var(--out) both; } .on .ct > :nth-child(2) { animation-delay: .7s; } .on .ct > :nth-child(3) { animation-delay: 1.1s; } .on .ct > :nth-child(4) { animation-delay: 1.5s; }
+  @media (max-width: 520px) { .camp { grid-template-columns: 1fr; } .cimg { min-height: 6rem; } .site-grid { gap: .35rem; padding: .5rem; } }
+
+  /* the add-ons section: which system's builder, and where the add-ons are */
+  .add-pick { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .3rem; padding: .3rem; border-radius: 999px; background: var(--sunken); }
+  .add-pick .k { padding: 0 .7rem; font-size: .82rem; font-weight: 600; color: var(--muted); }
+  .add-pick button { height: 2.4rem; padding: 0 1.1rem; border-radius: 999px; font-size: .92rem; font-weight: 500; color: var(--fg-2); transition: background-color .2s, color .2s, box-shadow .2s; }
+  .add-pick button[aria-selected="true"] { background: var(--surface); color: var(--fg); box-shadow: 0 1px 2px rgb(14 20 32 / .08), 0 0 0 1px var(--line); }
+  .roadmap { margin-top: 2.6rem; }
+  .roadmap ul { display: grid; margin-top: .9rem; border: 1px solid var(--line); border-radius: 1.1rem; overflow: hidden; }
+  .roadmap li { display: grid; grid-template-columns: minmax(7rem, 12rem) minmax(0, 1fr) auto; align-items: center; gap: .8rem; padding: .8rem 1.1rem; border-top: 1px solid var(--line); background: var(--surface); }
+  .roadmap li:first-child { border-top: 0; }
+  .roadmap b { font-weight: 600; }
+  .rm-chips { display: flex; flex-wrap: wrap; gap: .35rem; } .rm-chips i { font-style: normal; padding: .2rem .6rem; border-radius: 999px; background: var(--sunken); color: var(--muted); font-size: .76rem; }
+  .roadmap li.on .rm-chips i { background: color-mix(in oklab, var(--re) 12%, transparent); color: var(--re); }
+  .rm-st { font-size: .78rem; font-weight: 600; color: var(--muted); } .roadmap li.on .rm-st { color: var(--re); }
+  @media (max-width: 560px) { .roadmap li { grid-template-columns: 1fr auto; } .rm-chips { grid-column: 1 / -1; grid-row: 2; } }
+
   /* ---------- how it works, and the quiet helper ---------- */
   .helper { display: flex; gap: .75rem; align-items: baseline; max-width: 46rem; margin-top: 2.5rem; padding-top: 1.4rem; border-top: 1px solid var(--line); color: var(--fg-2); line-height: 1.6; }
   .helper b { color: var(--fg); font-weight: 600; }
   .helper .spark { color: var(--c); font-size: 1.1rem; }
   @media (prefers-color-scheme: dark) { .helper .spark { color: var(--cd); } }
+  /* ---------- Hemlo Website: what it is, what it looks like, how it works, what it costs ---------- */
+  .web { --re: #1F6F5C; --re-soft: color-mix(in oklab, #1F6F5C 10%, transparent); --wa: #1FA855; }
+  @media (prefers-color-scheme: dark) { .web { --re: #5FBF9F; --re-soft: color-mix(in oklab, #5FBF9F 14%, transparent); --wa: #3CCB75; } }
+  .web-head { max-width: 46rem; }
+  .web-eyebrow { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .9rem; font-size: .88rem; }
+  .web-tag { padding: .28rem .7rem; border-radius: 999px; border: 1px solid var(--line-strong); font-weight: 500; color: var(--fg); }
+  .web-live { display: inline-flex; align-items: center; gap: .55rem; color: var(--fg-2); }
+  .web-live .dot, .web-live .dot::after { background: var(--re); }
+  .web-acc { color: var(--re); }
+
+  /* why it can be trusted */
+  .web-trust { margin-top: 2.6rem; }
+  .web-trust ul { display: grid; gap: 1px; margin-top: 1rem; border: 1px solid var(--line); border-radius: 1.2rem; overflow: hidden; background: var(--line); }
+  @media (min-width: 720px) { .web-trust ul { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1100px) { .web-trust ul { grid-template-columns: repeat(4, 1fr); } }
+  .web-trust li { display: flex; gap: .9rem; align-items: flex-start; padding: 1.2rem 1.25rem; background: var(--surface); }
+  .web-trust .ti { display: grid; place-items: center; flex: none; width: 2.4rem; height: 2.4rem; border-radius: .7rem; background: #0E1420; color: #F4F1EA; }
+  .web-trust .ti svg { width: 1.15rem; height: 1.15rem; }
+  .web-trust li > span:last-child { display: grid; gap: .2rem; }
+  .web-trust b { font-weight: 600; font-size: .98rem; }
+  .web-trust li > span:last-child > span { color: var(--fg-2); font-size: .9rem; line-height: 1.5; }
+
+  /* the questions */
+  .faq { margin-top: 4rem; }
+  .faq-list { margin-top: 1.4rem; border-top: 1px solid var(--line); }
+  .faq details { border-bottom: 1px solid var(--line); }
+  .faq summary { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.15rem 0; cursor: pointer; list-style: none; font-weight: 600; font-size: 1.05rem; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary i { position: relative; flex: none; width: 1.6rem; height: 1.6rem; border-radius: 50%; background: var(--sunken); }
+  .faq summary i::before, .faq summary i::after { content: ""; position: absolute; inset: 50% auto auto 50%; width: .7rem; height: 1.6px; background: var(--fg-2); translate: -50% -50%; transition: rotate .25s ease; }
+  .faq summary i::after { rotate: 90deg; }
+  .faq details[open] summary i::after { rotate: 0deg; }
+  .faq summary:hover span { color: var(--re); }
+  .faq details p { max-width: 52rem; padding: 0 0 1.3rem; color: var(--fg-2); line-height: 1.7; }
+
   .how3 { display: grid; gap: 2rem; }
   @media (min-width: 860px) { .how3 { grid-template-columns: repeat(3, 1fr); } }
   .how3 li { padding-top: 1.2rem; border-top: 2px solid var(--line); }

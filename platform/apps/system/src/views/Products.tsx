@@ -6,7 +6,7 @@ import { useApp, useRoute, go, fill } from '../lib/app';
 import { DinarInput, Empty, Icon, Money, Sheet, toLatin } from '../components/ui';
 import { useProducts } from './Sell';
 import { Importer } from '../components/Importer';
-import { ImagePick } from '../components/Images';
+import { PhotoGallery, Lightbox } from '../components/Images';
 import type { UploadedFile } from '../lib/api';
 
 const Thumb = ({ p }: { p: Product }) => <span className={`thumb${p.imageUrl ? ' img' : ''}`}>{p.imageUrl ? <img src={p.imageUrl} alt="" loading="lazy" /> : p.name.slice(0, 1)}</span>;
@@ -62,21 +62,30 @@ export function Products() {
   );
 }
 
+/** The online shop's words for a product (a store with Hemlo Website), and its photos. */
+const SHOP_W = {
+  ar: { photos: 'صور المنتج', photosHint: 'الأولى هي الغلاف: تظهر في شاشة البيع وفي متجرك. أضف زوايا وتفاصيل وعبوة، واسحب لترتيبها.', cover: 'الغلاف', makeCover: 'اجعلها الغلاف', addPhotos: 'أضف صوراً', count: '{n} من {max}', online: 'اعرضه في متجرك على الإنترنت', onlineHint: 'يظهر في موقعك بصورته وسعره، ويطلبه الزبون بالدفع عند الاستلام.', desc: 'وصف قصير', descHint: 'الحجم، المكونات، لمن يناسب…' },
+  en: { photos: 'Product photos', photosHint: 'The first is the cover: it shows on the Sell screen and in your shop. Add angles, details and the packaging; drag to reorder.', cover: 'Cover', makeCover: 'Make cover', addPhotos: 'Add photos', count: '{n} of {max}', online: 'Show it in your online shop', onlineHint: 'It appears on your website with its photo and price, and customers order it with cash on delivery.', desc: 'A short description', descHint: 'Size, ingredients, who it suits…' },
+  ckb: { photos: 'وێنەکانی کاڵا', photosHint: 'یەکەمیان بەرگە: لە شاشەی فرۆشتن و لە دوکانەکەتدا دەردەکەوێت. گۆشە و وردەکاری و قوتووەکە زیاد بکە؛ بۆ ڕیزکردن ڕایبکێشە.', cover: 'بەرگ', makeCover: 'بیکە بە بەرگ', addPhotos: 'وێنە زیاد بکە', count: '{n} لە {max}', online: 'لە دوکانە ئۆنلاینەکەتدا پیشانی بدە', onlineHint: 'بە وێنە و نرخەکەیەوە لە ماڵپەڕەکەتدا دەردەکەوێت، و کڕیار بە پارەدان لە کاتی وەرگرتن داوای دەکات.', desc: 'وەسفێکی کورت', descHint: 'قەبارە، پێکهاتە، بۆ کێ دەگونجێت…' },
+};
+
 function ProductForm({ product, onClose }: { product?: Product; onClose(): void }) {
-  const { t, toast, errorText } = useApp();
+  const { t, toast, errorText, lang, sys } = useApp();
+  const shopW = SHOP_W[lang] ?? SHOP_W.ar, isShop = !sys.business.kind || sys.business.kind === 'store';
   const qc = useQueryClient();
   const [f, setF] = useState({ name: product?.name ?? '', barcode: product?.barcode ?? '', category: product?.category ?? '', unit: product?.unit ?? 'piece',
     price: product?.price ?? null as number | null, cost: product?.cost ?? null as number | null, stock: '', lowStock: product?.lowStock != null ? String(product.lowStock) : '', trackStock: product?.trackStock ?? true,
-    packSize: product?.packSize ? String(product.packSize) : '', packBarcode: product?.packBarcode ?? '', packPrice: product?.packPrice ?? null as number | null, scaleCode: product?.scaleCode ?? '' });
+    packSize: product?.packSize ? String(product.packSize) : '', packBarcode: product?.packBarcode ?? '', packPrice: product?.packPrice ?? null as number | null, scaleCode: product?.scaleCode ?? '', online: !!(product as any)?.online, description: (product as any)?.description ?? '' });
   const [showPack, setShowPack] = useState(!!product?.packSize);
-  const [image, setImage] = useState<{ id: string | null; url: string | null; changed: boolean }>({ id: product?.imageId ?? null, url: product?.imageUrl ?? null, changed: false });
+  // the photos, the cover first; sent only when changed
+  const [photos, setPhotos] = useState<{ list: UploadedFile[]; changed: boolean }>({ list: product?.photos?.length ? product.photos.map((x) => ({ ...x, width: 0, height: 0 }) as UploadedFile) : product?.imageId ? [{ id: product.imageId, url: product.imageUrl ?? null, width: 0, height: 0 } as UploadedFile] : [], changed: false });
   const [error, setError] = useState('');
   const set = (k: string, v: unknown) => setF((x) => ({ ...x, [k]: v }));
   const save = useMutation({
     mutationFn: () => {
       const body = { name: f.name, barcode: toLatin(f.barcode) || null, category: f.category || null, unit: f.unit, price: f.price, cost: f.cost, lowStock: f.lowStock ? Number(toLatin(f.lowStock)) : null, trackStock: f.trackStock,
         packSize: f.packSize ? Number(toLatin(f.packSize)) : null, packBarcode: f.packSize ? toLatin(f.packBarcode) || null : null, packPrice: f.packSize ? f.packPrice : null,
-        scaleCode: toLatin(f.scaleCode).replace(/\D/g, '') || null, ...(image.changed ? { imageId: image.id } : {}) };
+        scaleCode: toLatin(f.scaleCode).replace(/\D/g, '') || null, ...(photos.changed ? { imageId: photos.list[0]?.id ?? null, photoIds: photos.list.slice(1).map((x) => x.id) } : {}), ...(isShop ? { online: f.online, description: f.description.trim() || null } : {}) };
       return product ? api(`/v1/sys/products/${product.id}`, { method: 'PATCH', body }) : api('/v1/sys/products', { body: { ...body, stock: f.stock ? Number(toLatin(f.stock)) : 0 } });
     },
     onSuccess: (r: any) => { qc.invalidateQueries({ queryKey: ['products'] }); toast(t.products.saved); product ? onClose() : go(`#/products?id=${r.product.id}`); },
@@ -86,8 +95,8 @@ function ProductForm({ product, onClose }: { product?: Product; onClose(): void 
   return (
     <Sheet title={product ? t.products.edit : t.products.add} onClose={onClose}
       footer={<button className="btn btn-accent justify-center" disabled={!f.name.trim() || f.price == null || save.isPending} onClick={() => save.mutate()}>{t.products.save}</button>}>
-      <ImagePick purpose="product" url={image.url} label={t.images.product} hint={t.images.productHint}
-        onChange={(up: UploadedFile | null) => setImage({ id: up?.id ?? null, url: up?.url ?? null, changed: true })} />
+      <PhotoGallery files={photos.list} onChange={(list) => setPhotos({ list, changed: true })}
+        words={{ title: shopW.photos, hint: shopW.photosHint, cover: shopW.cover, makeCover: shopW.makeCover, add: shopW.addPhotos, count: shopW.count }} />
       <label className="field">{t.products.name}<input className="input" autoFocus value={f.name} onChange={(e) => set('name', e.target.value)} /></label>
       <label className="field">{t.products.barcode}{opt}<div className="search"><Icon n="scan" /><input className="input" dir="ltr" inputMode="numeric" placeholder={t.products.barcodeHint} value={f.barcode}
         onChange={(e) => set('barcode', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()} /></div></label>
@@ -108,6 +117,11 @@ function ProductForm({ product, onClose }: { product?: Product; onClose(): void 
         {!product && <label className="field">{t.products.stock}<input className="input" dir="ltr" inputMode="decimal" value={f.stock} onChange={(e) => set('stock', e.target.value)} placeholder="0" /></label>}
         <label className="field">{t.products.lowStock}{opt}<input className="input" dir="ltr" inputMode="decimal" value={f.lowStock} onChange={(e) => set('lowStock', e.target.value)} placeholder="0" /></label>
       </div>}
+      {isShop && <section className="grid gap-3 rounded-2xl border border-[var(--line)] p-3">
+        <label className="flex items-start gap-3"><input type="checkbox" className="mt-1 h-4 w-4 accent-[var(--accent)]" checked={f.online} onChange={(e) => set('online', e.target.checked)} />
+          <span><b className="block font-medium">{shopW.online}</b><span className="sub">{shopW.onlineHint}</span></span></label>
+        {f.online && <label className="field">{shopW.desc}{opt}<textarea className="input" rows={3} maxLength={2000} placeholder={shopW.descHint} value={f.description} onChange={(e) => set('description', e.target.value)} /></label>}
+      </section>}
       {(f.unit === 'kg' || f.unit === 'g') && <label className="field">{t.tillSettings.scaleCode}{opt}<input className="input" dir="ltr" inputMode="numeric" placeholder="00042" value={f.scaleCode} onChange={(e) => set('scaleCode', e.target.value)} /><small>{t.tillSettings.scaleHint}</small></label>}
       {!showPack ? <button className="link-arrow justify-self-start text-sm" onClick={() => setShowPack(true)}>+ {t.pack.section}</button> : (
         <section className="grid gap-3 rounded-2xl border border-[var(--line)] p-3">
@@ -128,6 +142,7 @@ function ProductSheet({ product: p, onClose }: { product: Product; onClose(): vo
   const { t, can, qty, dateTime, toast, errorText } = useApp();
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
+  const [view, setView] = useState<string | null>(null);
   const [kind, setKind] = useState<'receive' | 'count' | 'damage'>('receive');
   const [n, setN] = useState(''); const [cost, setCost] = useState<number | null>(null);
   const [byPack, setByPack] = useState(false);
@@ -150,6 +165,8 @@ function ProductSheet({ product: p, onClose }: { product: Product; onClose(): vo
         <button className="btn btn-secondary justify-center" onClick={() => setEditing(true)}><Icon n="edit" className="h-4 w-4" />{t.products.edit}</button>
         <button className="btn btn-danger justify-center" onClick={() => (confirm ? archive.mutate() : (setConfirm(true), setTimeout(() => setConfirm(false), 3000)))}>{confirm ? t.products.archiveConfirm : t.products.archive}</button>
       </div>}>
+      {(p.photos?.length ?? 0) > 1 && <div className="pgal-strip">{p.photos!.map((x) => <button key={x.id} type="button" onClick={() => setView(x.url)} aria-label={t.images.view}>{x.url && <img src={x.url} alt="" loading="lazy" />}</button>)}</div>}
+      {view && <Lightbox url={view} onClose={() => setView(null)} />}
       <div className="grid grid-cols-3 gap-2 text-center">
         <div className="panel p-3"><p className="sub">{t.products.price}</p><b className="text-lg"><Money v={p.price} /></b></div>
         <div className="panel p-3"><p className="sub">{t.products.cost}</p><b className="text-lg"><Money v={p.cost} /></b></div>

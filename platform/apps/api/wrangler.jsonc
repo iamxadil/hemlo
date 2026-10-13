@@ -24,7 +24,7 @@
   "observability": { "enabled": true },
   // hourly: delete demo shops older than 24 hours (src/worker.ts scheduled)
   // demo clean-up every 6 hours (hourly kept waking the free-plan database for nothing)
-  "triggers": { "crons": ["17 */6 * * *"] },
+  "triggers": { "crons": ["17 */6 * * *", "7 * * * *"] }, // 6-hourly clean-up; hourly Hemlo Connect automations
   // Create with: npx wrangler hyperdrive create hemlo-db --connection-string="postgres://…neon…"
   // then paste the id here.
   // run next to the database (Neon via Hyperdrive): one hop from the visitor, then fast queries, instead of many slow ones

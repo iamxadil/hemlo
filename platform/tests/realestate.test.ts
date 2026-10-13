@@ -460,6 +460,38 @@ describe('the demo agency', () => {
     expect(String(page.json)).toContain('Villa with a garden in Dream City');
     expect((await v.post('/v1/demo/end', {}, auth)).status).toBe(204);
   });
+
+  it('comes with Website and AI Studio (with Connect Pro) on, to use rather than to buy, and none of it reaches the public', async () => {
+    const v = new Browser(t.app);
+    const auth = { authorization: `Bearer ${(await v.post('/v1/demo/start', { lang: 'en', kind: 'realestate' })).json.token}` };
+    const web = (await v.get('/v1/web/site', auth)).json;
+    expect(web.entitlement.active).toBe(true);
+    expect(web.site).toMatchObject({ vertical: 'realestate', status: 'setup' });
+    expect(web.site.name.en).toBe('Al-Waha Real Estate');
+    expect(web.pages.length).toBeGreaterThan(2);
+    expect((await v.req('PUT', '/v1/web/site', { tagline: { en: 'Homes in Erbil' } }, auth)).status).toBe(200); // shaping it works
+    expect((await v.post('/v1/web/site/publish', {}, auth)).status).toBe(403);                            // going live does not
+    const cx = (await v.get('/v1/connect', auth)).json;
+    expect(cx).toMatchObject({ plan: 'ai-studio', canConfigure: true, channel: { provider: 'sandbox' }, ai: { open: true } });
+    expect((await v.get('/v1/studio', auth)).json).toMatchObject({ active: true, allowance: { copy: 10, images: 2, videos: 0 } }); // a demo's own small allowance
+    const inbox = (await v.get('/v1/connect/conversations', auth)).json.conversations;
+    expect(inbox.length).toBe(5);
+    expect(inbox.some((c: any) => c.unread > 0)).toBe(true);
+    expect((await v.post('/v1/connect/channel/meta', { phoneNumberId: '12345', wabaId: '12345', token: 'x'.repeat(30) }, auth)).status).toBe(403);
+    // in a demo, choosing a plan or an add-on switches it on at once (nothing to pay, no request for Hemlo's team)
+    const pro = await v.post('/v1/billing/addons/connect-pro/cancel-request', {}, auth);
+    expect(pro.json).toMatchObject({ activated: false });
+    expect((await v.post('/v1/billing/addons/ai-studio/cancel-request', {}, auth)).status).toBe(201);
+    expect((await v.get('/v1/connect', auth)).json.plan).toBe('connect'); // back to Basic
+    expect((await v.post('/v1/billing/addons/connect-pro/request', { billing: 'month' }, auth)).json).toMatchObject({ activated: true });
+    expect((await v.get('/v1/connect', auth)).json.plan).toBe('connect-pro');
+    expect((await v.post('/v1/billing/addons/connect/request', {}, auth)).json.error).toBe('ADDON_INCLUDED');
+    const office = (await v.get('/v1/billing', auth)).json.plans.find((p: any) => p.code === 'office');
+    expect((await v.post('/v1/billing/request', { planId: office.id, billing: 'month' }, auth)).json).toMatchObject({ activated: true });
+    expect((await v.get('/v1/billing', auth)).json.subscription).toMatchObject({ status: 'active', planId: office.id });
+    expect((await v.post('/v1/billing/request', { planId: null }, auth)).json.error).toBe('NOT_IN_DEMO'); // Enterprise is a conversation
+    expect((await v.post('/v1/demo/end', {}, auth)).status).toBe(204); // and leaving takes all of it with it
+  });
 });
 
 describe('many demo agencies', () => {

@@ -51,6 +51,11 @@ export const statements = {
   school: ['configure'],
   // Website add-on: set the site up, edit its pages and look, and publish it (one shared resource for every edition)
   website: ['manage'],
+  // Hemlo Connect in a shop (or any system without leads): the WhatsApp inbox, replying, and its set-up; an agency keeps
+  // its leads and agency permissions for the same screens
+  connect: ['read', 'reply', 'configure'],
+  // the online shop's orders (Website add-on): see them, and move them along (confirm, out for delivery, delivered)
+  orders: ['read', 'manage'],
 } as const;
 
 export type Resource = keyof typeof statements;
@@ -70,7 +75,7 @@ export const ROLE_PERMISSIONS = {
     members: ['create', 'read', 'update'], checkin: ['create'], memberships: ['sell', 'manage'], training: ['read', 'write'],
     listings: ['create', 'read', 'update', 'publish', 'archive'], leads: ['create', 'read', 'read-all', 'update', 'assign'], viewings: ['read', 'manage'], deals: ['read', 'manage'], commission: ['read', 'manage'],
     students: ['create', 'read', 'update'], attendance: ['take', 'read'], fees: ['read', 'collect', 'manage'],
-    website: ['manage'],
+    website: ['manage'], connect: ['read', 'reply', 'configure'], orders: ['read', 'manage'],
   },
   // the school's teachers: their classes' students and the roll call; no money
   teacher: { students: ['read'], attendance: ['take', 'read'] },
@@ -87,14 +92,14 @@ export const ROLE_PERMISSIONS = {
   receptionist: { patients: ['create', 'read', 'update'], appointments: ['read', 'manage'], customers: ['create', 'read', 'update'], sales: ['create', 'read'], lab: ['read'], stock: ['read'],
     members: ['create', 'read', 'update'], checkin: ['create'], memberships: ['sell'], training: ['read'],
     listings: ['read'], leads: ['create', 'read', 'read-all', 'update', 'assign'], viewings: ['read', 'manage'],
-    students: ['create', 'read', 'update'], attendance: ['read'], fees: ['read', 'collect'] },
+    students: ['create', 'read', 'update'], attendance: ['read'], fees: ['read', 'collect'], connect: ['read', 'reply'] },
   // the gym's coaches: their members, the door, measurements, sessions and classes; no money
   trainer: { members: ['read', 'update'], checkin: ['create'], training: ['read', 'write'], stock: ['read'] },
-  cashier: { customers: ['create', 'read'], sales: ['create', 'read'], stock: ['read'], jobs: ['read'], members: ['read'], checkin: ['create'] },
+  cashier: { customers: ['create', 'read'], sales: ['create', 'read'], stock: ['read'], jobs: ['read'], members: ['read'], checkin: ['create'], connect: ['read', 'reply'], orders: ['read', 'manage'] },
   technician: { customers: ['read'], jobs: ['read', 'update-own'], parts: ['use'], stock: ['read'] },
   accountant: { sales: ['read'], reports: ['read', 'export'], customers: ['read'], stock: ['read'], purchases: ['read'], expenses: ['read'], patients: ['read'], lab: ['read'], members: ['read'], training: ['read'],
-    listings: ['read'], deals: ['read'], commission: ['read', 'manage'], students: ['read'], attendance: ['read'], fees: ['read', 'collect', 'manage'] },
-  viewer: { customers: ['read'], sales: ['read'], stock: ['read'], jobs: ['read'], reports: ['read'], members: ['read'], listings: ['read'], students: ['read'], attendance: ['read'] },
+    listings: ['read'], deals: ['read'], commission: ['read', 'manage'], students: ['read'], attendance: ['read'], fees: ['read', 'collect', 'manage'], orders: ['read'] },
+  viewer: { customers: ['read'], sales: ['read'], stock: ['read'], jobs: ['read'], reports: ['read'], members: ['read'], listings: ['read'], students: ['read'], attendance: ['read'], orders: ['read'] },
 } satisfies Record<string, Permissions>;
 
 export type RoleName = keyof typeof ROLE_PERMISSIONS;
@@ -117,6 +122,7 @@ export const roles = Object.fromEntries(Object.entries(ROLE_PERMISSIONS).map(([n
 /** What a shared counter device may do, whatever the unlocked person's role (the rest needs their own phone). */
 export const COUNTER_ALLOWED: Permissions = {
   customers: ['create', 'read', 'update'], sales: ['create', 'read'], stock: ['read'], jobs: ['create', 'read', 'update', 'update-own'], parts: ['use'],
+  orders: ['read', 'manage'], connect: ['read', 'reply'],
   // a clinic's shared device (reception, or chair-side): the unlocked person's role still decides the rest
   patients: ['create', 'read', 'update'], clinical: ['read', 'write'], appointments: ['read', 'manage'], lab: ['read', 'manage'],
   // the gym's front desk (or a coach's tablet)

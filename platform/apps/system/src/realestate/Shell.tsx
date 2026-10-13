@@ -8,6 +8,8 @@ import { api } from '../lib/api';
 import { go, initials } from '../lib/app';
 import { locale } from '../lib/i18n';
 import { Icon, LangPick } from '../components/ui';
+import { Rail } from '../components/Rail';
+import { useInterface } from '../lib/interface';
 import type { Page } from '../pages';
 import { useR } from './i18n';
 import { HMark, Panel, RIcon, StatusPill } from './ui';
@@ -15,6 +17,7 @@ import { fmt, price, titleOf, localPhone, ago, useSetup } from './data';
 import { LeadForm } from './Leads';
 import { ViewingForm } from './Agenda';
 import { OwnerForm } from './Owners';
+import { PRODUCTS, Products } from '../components/Products';
 import './re.css';
 
 const PRIMARY = ['today', 'properties', 'leads', 'agenda', 'deals'];
@@ -40,9 +43,10 @@ export function ReShell({ pages, current, label, banner, signOut, signOutLabel, 
 
   const notices = useQuery<{ notices: any[]; unread: number }>({ queryKey: ['re-notices'], queryFn: () => api('/v1/re/notices'), refetchInterval: 60_000, staleTime: 30_000 });
   const primary = pages.filter((p) => PRIMARY.includes(p.path));
-  const secondary = pages.filter((p) => !PRIMARY.includes(p.path) && !p.hidden && p.path !== 'more');
+  const secondary = pages.filter((p) => !PRIMARY.includes(p.path) && !PRODUCTS.includes(p.path) && !p.hidden && p.path !== 'more');
   const parent: Record<string, string> = { property: 'properties', studio: 'properties', lead: 'leads' };
   const onPage = (p: Page) => p.path === current.path || parent[current.path] === p.path;
+  const ui = useInterface();
   const View = current.view;
   const hour = Number(new Intl.DateTimeFormat('en-GB', { hour: 'numeric', hour12: false, timeZone: 'Asia/Baghdad' }).format(new Date()));
   const greet = hour >= 5 && hour < 12 ? r.shell.morning : hour >= 12 && hour < 17 ? r.shell.afternoon : r.shell.evening;
@@ -52,6 +56,7 @@ export function ReShell({ pages, current, label, banner, signOut, signOutLabel, 
 
   return (
     <div className="ref">
+      {ui.sidebar === 'rail' && <Rail pages={pages} current={current} label={label} primary={PRIMARY} onPage={onPage} signOut={signOut} signOutLabel={signOutLabel} orgs={orgs} choose={choose} />}
       <aside className="re-side" aria-label={r.shell.agency}>
         <a className="re-brand" href="#/today" title={sys.business.name}><HMark className="re-h" /><span className="re-brand-t"><b>Hemlo</b><small>{sys.business.name}</small></span></a>
         <nav className="grid gap-0.5">
@@ -59,6 +64,7 @@ export function ReShell({ pages, current, label, banner, signOut, signOutLabel, 
           <div className="re-side-sep" />
           {secondary.filter((p) => p.path !== 'settings' && p.path !== 'plan').map((p) => <a key={p.path} className="re-nav" href={`#/${p.path}`} aria-current={onPage(p) ? 'page' : undefined}><Icon n={p.icon} /><span>{label(p)}</span></a>)}
         </nav>
+        <Products pages={pages} onPage={onPage} />
         <div className="re-side-foot">
           {secondary.filter((p) => p.path === 'settings' || p.path === 'plan').map((p) => <a key={p.path} className="re-nav" href={`#/${p.path}`} aria-current={onPage(p) ? 'page' : undefined}><Icon n={p.icon} /><span>{label(p)}</span></a>)}
           <button className="re-nav" onClick={() => setMore(true)}><span className="re-av" style={{ width: '1.6rem', height: '1.6rem', fontSize: '.7rem', background: 'rgb(255 255 255 / .1)' }}>{initials(me.user.name)}</span><span className="truncate">{me.user.name}</span></button>
@@ -85,7 +91,7 @@ export function ReShell({ pages, current, label, banner, signOut, signOutLabel, 
       </nav>
       {/* phones: "more" lives in the menu behind the avatar-less dock; a long press is not discoverable, so it's on the Today page too */}
 
-      {find && <Finder onClose={() => setFind(false)} pages={[...primary, ...secondary]} label={label} />}
+      {find && <Finder onClose={() => setFind(false)} pages={[...primary, ...pages.filter((p) => PRODUCTS.includes(p.path)), ...secondary]} label={label} />}
       {add === 'menu' && (
         <Panel onClose={() => setAdd(null)}>
           {([
@@ -96,6 +102,7 @@ export function ReShell({ pages, current, label, banner, signOut, signOutLabel, 
           ] as const).filter((x) => x[3]).map(([k, icon, text, , run]) => (
             <button key={k} className="re-menu-item" onClick={run}><span className="ic"><RIcon n={icon} /></span>{text}</button>
           ))}
+          <div className="md:hidden"><Products pages={pages} onPage={onPage} paper onPick={() => setAdd(null)} /></div>
           <div className="re-side-sep" style={{ background: 'var(--line)' }} />
           {secondary.map((p) => <a key={p.path} className="re-menu-item md:hidden" href={`#/${p.path}`} onClick={() => setAdd(null)}><span className="ic" style={{ background: 'var(--sunken)', color: 'var(--fg-2)' }}><Icon n={p.icon} /></span>{label(p)}</a>)}
         </Panel>

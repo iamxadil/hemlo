@@ -7,21 +7,22 @@ import { api } from '../lib/api';
 import { useApp, fill } from '../lib/app';
 import { Icon, Money, Sheet } from '../components/ui';
 import { ImpactCard } from '../components/Impact';
+import { HwBadge } from '../components/HwBadge';
 
 type Words = { ar: string; en: string; ckb?: string };
 type Plan = { id: string; code: string; name: Words; tagline: Words | null; priceMonth: number; priceYear: number; limits: Record<string, number | undefined>; popular: boolean };
 type Addon = { id: string; code: string; name: Words; description: Words; priceMonth: number | null; priceYear: number | null; configured: boolean; entitlement: any };
 const STUDIO = 'https://studio.hemlohq.com';
 const addonCopy = (lang: string) => lang === 'ar' ? {
-  optional: 'إضافة اختيارية', title: 'وسّع مساحة عمل Hemlo Real Estate', body: 'أنشئ موقعاً تجارياً بعلامتك، متصلاً مباشرة بمساحة عمل Hemlo.', core: 'النظام الأساسي', addon: 'Hemlo Website', total: 'الإجمالي الدوري التقديري',
+  optional: 'إضافة اختيارية', title: 'موقع لعملك، متصل بـ Hemlo', body: 'أنشئ موقعاً تجارياً بعلامتك، متصلاً مباشرة بمساحة عمل Hemlo.', core: 'النظام الأساسي', addon: 'Hemlo Website', total: 'الإجمالي الدوري التقديري',
   unconfigured: 'لم يُحدّد سعر Hemlo Website بعد. يمكنك الاطلاع على الإضافة، وسيظهر طلب التفعيل عند إعداد السعر.', unconfiguredShort: 'السعر قيد الإعداد', request: 'اطلب تفعيل الموقع', pending: 'طلب التفعيل ينتظر تأكيد Hemlo.', active: 'مفعّل', cancel: 'اطلب الإلغاء', cancelPending: 'طلب الإلغاء ينتظر المراجعة.',
   confirm: 'سيتواصل معك Hemlo لتأكيد الدفع اليدوي. يبدأ الوصول بعد التأكيد فقط.', cancelConfirm: 'سيراجع فريق Hemlo طلب الإلغاء ويتواصل معك بشأن موعده.', confirmAction: 'تأكيد الطلب', manual: 'الدفع يدوي بعد مراجعة Hemlo للطلب.', sent: 'وصل طلب الإضافة، والتفعيل بانتظار تأكيد Hemlo.',
 } : lang === 'ckb' ? {
-  optional: 'زیادکراوی ئارەزوومەندانە', title: 'شوێنی کاری Hemlo Real Estate فراوان بکە', body: 'ماڵپەڕێکی پیشەیی بە ناوی بازرگانی خۆت دروست بکە، ڕاستەوخۆ پەیوەست بە شوێنی کاری Hemlo.', core: 'سیستەمی بنەڕەتی', addon: 'Hemlo Website', total: 'کۆی دووبارەبوونەوەی خەمڵێنراو',
+  optional: 'زیادکراوی ئارەزوومەندانە', title: 'ماڵپەڕێک بۆ کارەکەت، پەیوەست بە Hemlo', body: 'ماڵپەڕێکی پیشەیی بە ناوی بازرگانی خۆت دروست بکە، ڕاستەوخۆ پەیوەست بە شوێنی کاری Hemlo.', core: 'سیستەمی بنەڕەتی', addon: 'Hemlo Website', total: 'کۆی دووبارەبوونەوەی خەمڵێنراو',
   unconfigured: 'نرخی Hemlo Website هێشتا دیاری نەکراوە. دوای دانانی نرخ، داوای چالاککردن بەردەست دەبێت.', unconfiguredShort: 'نرخ لە ئامادەکردندایە', request: 'داوای چالاککردنی ماڵپەڕ بکە', pending: 'داواکاری چالاککردن چاوەڕێی پشتڕاستکردنەوەی Hemlo دەکات.', active: 'چالاکە', cancel: 'داوای هەڵوەشاندنەوە بکە', cancelPending: 'داواکاری هەڵوەشاندنەوە چاوەڕێی پێداچوونەوەیە.',
   confirm: 'Hemlo پەیوەندیت پێوە دەکات بۆ پشتڕاستکردنەوەی پارەدانی دەستی. دەستڕاگەیشتن تەنها دوای پشتڕاستکردنەوە دەست پێدەکات.', cancelConfirm: 'تیمی Hemlo داواکاری هەڵوەشاندنەوەکەت پێداچوونەوەی بۆ دەکات و کاتی جێبەجێکردنت پێ دەڵێت.', confirmAction: 'داواکاری پشتڕاست بکەرەوە', manual: 'پارەدان دەستییە و دوای پێداچوونەوەی Hemlo ئەنجام دەدرێت.', sent: 'داواکاری زیادکراوەکەت گەیشت؛ چالاککردن چاوەڕێی پشتڕاستکردنەوەی Hemlo دەکات.',
 } : {
-  optional: 'Optional add-on', title: 'Extend your Hemlo Real Estate workspace', body: 'Create your own branded business website, connected directly to your Hemlo workspace.', core: 'Core system', addon: 'Hemlo Website', total: 'Estimated recurring total',
+  optional: 'Optional add-on', title: 'A website for your business, connected to Hemlo', body: 'Create your own branded business website, connected directly to your Hemlo workspace.', core: 'Core system', addon: 'Hemlo Website', total: 'Estimated recurring total',
   unconfigured: 'Hemlo Website pricing is not configured yet. Activation will appear here once pricing is set.', unconfiguredShort: 'Price being configured', request: 'Request Website activation', pending: 'Activation is pending Hemlo confirmation.', active: 'Active', cancel: 'Request cancellation', cancelPending: 'Cancellation is pending review.',
   confirm: 'Hemlo will contact you to confirm manual payment. Access starts only after confirmation.', cancelConfirm: 'Hemlo will review your cancellation request and confirm its timing with you.', confirmAction: 'Confirm request', manual: 'Payment is handled manually after Hemlo reviews the request.', sent: 'Add-on request received. Activation is pending Hemlo confirmation.',
 };
@@ -38,12 +39,12 @@ export function PlanPage() {
   const [addonAction, setAddonAction] = useState<'activate' | 'cancel' | null>(null);
   const ask = useMutation({
     mutationFn: () => api('/v1/billing/request', { body: { planId: asking === 'enterprise' ? null : asking?.id, billing: cycle, message: note || undefined } }),
-    onSuccess: () => { setAsking(null); setNote(''); qc.invalidateQueries({ queryKey: ['billing'] }); toast(p.sent); },
+    onSuccess: (r: any) => { setAsking(null); setNote(''); if (r?.activated) { toast(t.errors.demoOn); void qc.invalidateQueries(); return; } qc.invalidateQueries({ queryKey: ['billing'] }); toast(p.sent); },
     onError: (e) => toast(errorText(e), 'bad'),
   });
   const askAddon = useMutation({
     mutationFn: () => api(`/v1/billing/addons/website/${addonAction === 'cancel' ? 'cancel-request' : 'request'}`, { body: { billing: cycle } }),
-    onSuccess: () => { setAddonAction(null); qc.invalidateQueries({ queryKey: ['billing-addons'] }); qc.invalidateQueries({ queryKey: ['web-site'] }); toast(addonCopy(lang).sent); },
+    onSuccess: (r: any) => { setAddonAction(null); if (r && r.request === null) { toast(r.activated ? t.errors.demoOn : t.errors.demoOff); void qc.invalidateQueries(); return; } qc.invalidateQueries({ queryKey: ['billing-addons'] }); qc.invalidateQueries({ queryKey: ['web-site'] }); toast(addonCopy(lang).sent); },
     onError: (e) => toast(errorText(e), 'bad'),
   });
   if (!q.data) return <div className="grid gap-4"><div className="skeleton h-32" /><div className="skeleton h-72" /></div>;
@@ -52,6 +53,8 @@ export function PlanPage() {
   const current = plans.find((x) => x.id === s.planId || x.id === s.plan?.id);
   const addonData = aq.data as { addons?: Addon[]; requests?: any[] } | undefined;
   const website = addonData?.addons?.find((x) => x.code === 'website');
+  const connectOffer = addonData?.addons?.find((x) => x.code === 'connect-pro') ?? addonData?.addons?.find((x) => x.code === 'connect');
+  const connectOn = !!addonData?.addons?.some((x: any) => (x.code.startsWith('connect') || x.code === 'ai-studio') && (x.entitlement?.active || x.included));
   const pendingAddon = addonData?.requests?.find((x) => x.addonId === website?.id && x.status === 'new');
   const websiteCopy = addonCopy(lang);
   const priceOf = (x: Plan) => (cycle === 'year' ? x.priceYear : x.priceMonth);
@@ -130,10 +133,20 @@ export function PlanPage() {
             <a className="link-arrow justify-self-center text-sm" href={`${STUDIO}${lang === 'en' ? '/en' : ''}/?from=systems&edition=${sys.business.kind ?? 'store'}`} target="_blank" rel="noopener">{p.studio} →</a>
           </article>
         </div>
+        {connectOffer && (
+          <section className="panel flex flex-wrap items-center justify-between gap-4 border border-[var(--line)] p-5 sm:p-6">
+            <div className="grid gap-2">
+              <div className="flex flex-wrap items-center gap-2"><HwBadge label="Connect" /><span className="sec-t !mb-0">{websiteCopy.optional}</span>
+                {connectOn && <span className="pill ok"><Icon n="check" className="h-4 w-4" />{websiteCopy.active}</span>}</div>
+              <p className="sub max-w-2xl">{name(connectOffer.description)}</p>
+            </div>
+            <a className="btn btn-secondary btn-sm" href="#/connect"><Icon n="wa" />{lang === 'en' ? (connectOn ? 'Open Connect' : 'See plans') : connectOn ? 'افتح Connect' : 'شاهد الخطط'}</a>
+          </section>
+        )}
         {aq.isLoading ? <div className="skeleton h-36" /> : website && (
           <section className="panel grid gap-4 border border-[var(--line)] p-5 sm:p-6" aria-labelledby="website-addon-title">
             <div className="grid gap-1">
-              <p className="sec-t !mb-0">{websiteCopy.optional}</p>
+              <div className="flex flex-wrap items-center gap-2"><HwBadge /><span className="sec-t !mb-0">{websiteCopy.optional}</span></div>
               <h3 id="website-addon-title" className="text-lg font-semibold">{websiteCopy.title}</h3>
               <p className="sub max-w-2xl">{name(website.description) || websiteCopy.body}</p>
             </div>

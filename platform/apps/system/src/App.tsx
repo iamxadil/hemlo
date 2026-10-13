@@ -10,6 +10,8 @@ import { DrawerButton } from './components/Drawer';
 import { More } from './views/More';
 import { STORE_PAGES, DENTAL_PAGES, GYM_PAGES, RE_PAGES, SCHOOL_PAGES, type Page } from './pages';
 import { productPath, readTrade, rememberTrade, type Trade } from './lib/trade';
+import { Rail } from './components/Rail';
+import { useInterface } from './lib/interface';
 
 const Start = lazy(() => import('./dental/Start').then((x) => ({ default: x.Start })));
 const StoreStart = lazy(() => import('./views/StoreStart').then((x) => ({ default: x.StoreStart })));
@@ -210,6 +212,7 @@ function Shell({ orgs, choose }: { orgs: any[]; choose(id: string): Promise<void
   };
   const label = (p: Page) => (p.label ? p.label(t) : (t.nav as any)[p.path] as string);
   const View = current.view;
+  const ui = useInterface();
   const sideLinks = pages.filter((p) => p.path !== 'more' && p.path !== 'settings' && !p.hidden);
   const tabs = [...pages.filter((p) => p.tab).slice(0, 4), pages.find((p) => p.path === 'more')!];
   const moreLinks = pages.filter((p) => !p.tab && !p.hidden && p.path !== 'more');
@@ -252,6 +255,8 @@ function Shell({ orgs, choose }: { orgs: any[]; choose(id: string): Promise<void
 
   return (
     <div className="shell">
+      {ui.sidebar === 'rail' && <Rail pages={pages} current={current} label={label} primary={pages.filter((p) => p.tab).map((p) => p.path)} onPage={(p) => p.path === current.path}
+        signOut={signOut} signOutLabel={counter ? `${t.counter.lock} · ${me.user.name}` : sys.business.demo ? t.demo.exit : t.nav.signOut} orgs={counter ? [] : orgs} choose={choose} />}
       <aside className="side">
         <Logo className="logo" />
         {orgs.length > 1 && !counter ? (

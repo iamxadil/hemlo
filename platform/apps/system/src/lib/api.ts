@@ -106,7 +106,7 @@ export async function remembered<T>(key: string, fn: () => Promise<T>): Promise<
 }
 
 // ---- types (what the API returns) ----
-export interface Product { id: string; name: string; barcode: string | null; category: string | null; unit: string; price: number; cost: number | null; stock: number; lowStock: number | null; trackStock: boolean; packSize: number | null; packBarcode: string | null; packPrice: number | null; scaleCode?: string | null; imageId?: string | null; imageUrl?: string | null }
+export interface Product { id: string; name: string; barcode: string | null; category: string | null; unit: string; price: number; cost: number | null; stock: number; lowStock: number | null; trackStock: boolean; packSize: number | null; packBarcode: string | null; packPrice: number | null; scaleCode?: string | null; imageId?: string | null; imageUrl?: string | null; photoIds?: string[]; photos?: { id: string; url: string | null }[]; online?: boolean; description?: string | null; slug?: string | null }
 export interface Customer { id: string; name: string; phone: string | null; note: string | null; balance: number }
 export interface Sale { returned?: number; id: string; number: number; createdAt: string; customerId: string | null; customerName?: string | null; subtotal: number; discount: number; total: number; paid: number; due: number; method: string; cost: number | null; note: string | null; voidedAt: string | null; userId: string | null }
 export interface SaleLine { id: string; productId: string | null; name: string; qty: number; price: number; total: number; packSize?: number | null; baseQty?: number | null; returnedQty?: number }
@@ -129,3 +129,11 @@ export const outbox = {
   },
 };
 export const newClientId = () => (crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+
+/** A page of HTML from the API (the website preview), signed in the same way as every other call. */
+export async function apiHtml(path: string, signal?: AbortSignal): Promise<string> {
+  const { headers, credentials } = whoHeaders();
+  const res = await fetch(API + path, { credentials, headers, signal });
+  if (!res.ok) throw new ApiError(res.status, 'PREVIEW');
+  return res.text();
+}

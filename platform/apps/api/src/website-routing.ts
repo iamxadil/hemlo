@@ -13,3 +13,10 @@ export function websitePathRoute(hostname: string, pathname: string):
   const tail = parts.slice(2);
   return { siteSlug, apiPath: `/v1/web/pub${tail.length ? `/${tail.join('/')}` : ''}`, siteBase: `/s/${encodeURIComponent(siteSlug)}` };
 }
+
+/** business.hemlohq.com on its own is not a site: it shows what a Hemlo Website is, the live sample (keeping ?lang). */
+export function businessRootRedirect(hostname: string, pathname: string, search: string): string | null {
+  if (hostname.toLowerCase() !== 'business.hemlohq.com' || (pathname !== '/' && pathname !== '')) return null;
+  const lang = new URLSearchParams(search).get('lang');
+  return `https://business.hemlohq.com/s/sample${lang === 'en' ? '?lang=en' : ''}`;
+}

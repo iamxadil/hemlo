@@ -1,0 +1,488 @@
+---
+// "Build your Hemlo", for one system (an agency's, a shop's; more as the add-ons reach them): the system first, always on, and the add-ons that plug into it. Switch Website or Connect on and
+// watch it attach to the system and start working (the system itself gains a line for it), while the month's total
+// counts to its new figure. Connect comes in three tiers: Basic (free with the system), Pro (the AI assistant) and AI Studio
+// (marketing). One request for the whole setup. Prices come from the API (as the pricing cards do), with today's list as the fallback.
+// Plain CSS transitions driven by data attributes on the root, one small script; reduced motion keeps only fades.
+import Mark from './Mark.astro';
+import HwBadge from './HwBadge.astro';
+import { API_URL, SYSTEM_URL, type Lang } from '../i18n/strings';
+interface Props { lang: Lang; system?: 'realestate' | 'store' }
+const { lang, system = 'realestate' } = Astro.props;
+const shop = system === 'store';
+const ar = lang === 'ar';
+
+// ---- prices: the API's, or the list as of October 2026 ----
+type Price = { code: string; name: Record<string, string>; priceMonth: number };
+let plans: Price[] = [], addons: Price[] = [];
+try {
+  const [p, a] = await Promise.all([`/v1/plans?edition=${system}`, `/v1/plans/addons?edition=${system}`].map((u) => fetch(API_URL + u, { signal: AbortSignal.timeout(6000) }).then((r) => r.json())));
+  plans = p.plans ?? []; addons = a.addons ?? [];
+} catch { /* the fallback below */ }
+const PLAN_FALLBACK = shop ? [['starter', 'البداية', 'Starter', 15000], ['growth', 'النمو', 'Growth', 29000], ['business', 'الأعمال', 'Business', 49000]] as const
+  : [['office', 'المكتب', 'Office', 40000], ['agency', 'الوكالة', 'Agency', 69000], ['group', 'المجموعة', 'Group', 129000]] as const;
+const PLANS = plans.length ? plans.map((p) => ({ code: p.code, name: p.name[lang] ?? p.name.en, price: p.priceMonth }))
+  : PLAN_FALLBACK.map(([code, a, e, price]) => ({ code, name: ar ? a : e, price }));
+const addon = (code: string, fb: number) => addons.find((x) => x.code === code)?.priceMonth ?? fb;
+const PRICE = { web: addon('website', 10000), basic: addon('connect', 0), pro: addon('connect-pro', shop ? 25000 : 35000), studio: addon('ai-studio', shop ? 35000 : 50000) };
+const start = Math.max(0, PLANS.findIndex((p) => p.code === (shop ? 'growth' : 'agency')));
+
+const BASE = ar ? {
+  sys: { kind: 'نظامك', name: 'Hemlo العقارات', line: 'العقارات والزبائن والمعاينات والصفقات، في مكان واحد.', always: 'يعمل دائماً', plan: 'الخطة' },
+  web: { kind: 'إضافة', line: 'عقاراتك على موقعك الخاص، محدّثة وحدها.' },
+  con: { kind: 'مع نظامك', line: 'واتساب يرد ويذكّر ويتابع عنك. الرسائل مشمولة.', basic: 'Basic', pro: 'Pro', studio: 'AI Studio', free: 'مجاني',
+    notes: { basic: 'مجاني مع نظامك: صندوق المحادثات، والتذكيرات، وتنبيهات العقارات الجديدة', pro: 'مساعد ذكي يرد من عقاراتك ويحجز المعاينات', studio: 'كل ما في Pro، وحملات تسويقية وتصاميم وخطة محتوى بالذكاء الاصطناعي' } },
+  on: 'مفعّل', add: 'أضف',
+  total: 'شهرك', per: 'د.ع / شهرياً',
+  trial: 'نظامك مجاني ٣٠ يوماً. الدفع شهرياً أو سنوياً (شهران مجاناً).', cta: 'ابدأ بهذا الإعداد', ctaShort: 'ابدأ', sample: 'شاهد موقعاً نموذجياً',
+  already: 'مشترك في Hemlo؟ فعّل الإضافات من صفحة «الخطة» في نظامك.',
+  stats: [['٢٤', 'عقاراً'], ['٧', 'زبائن جدد'], ['٣', 'معاينات اليوم']], webStat: ['١٢٨', 'زيارة لموقعك اليوم'], conStat: ['٤٢', 'رداً على واتساب'],
+  url: 'nakheel.hemlohq.com', tiles: [['فيلا · دريم ستي', '$265,000'], ['شقة · عنكاوة', '$900'], ['بيت · المنصور', '$410,000']],
+  webToast: 'نُشر على موقعك', conToast: 'رُدّ خلال ٣ ثوانٍ', agency: 'دار النخيل', online: 'متصل',
+  q: 'هل فيلا دريم ستي ما زالت متاحة؟', a: 'نعم! ٤ غرف وحديقة، $265,000. هل يناسبك السبت الساعة ٥ للمعاينة؟', tagBasic: 'رد سريع', tagPro: '✦ المساعد · ٢٤ ساعة',
+  ghostWeb: '+ Website', ghostCon: '+ Connect',
+  form: { title: 'ابدأ مع Hemlo', sub: 'اترك رقمك، ويتصل بك فريق Hemlo خلال يوم عمل ليجهّزه معك.', name: 'اسمك', business: 'اسم المكتب', phone: 'رقم الهاتف', city: 'المدينة',
+    send: 'أرسل الطلب', sending: 'يُرسل…', done: 'وصل طلبك. سنتصل بك قريباً.', failed: 'لم يُرسل. تأكد من الرقم وحاول مجدداً.', close: 'إغلاق' },
+} : {
+  sys: { kind: 'Your system', name: 'Hemlo Real Estate', line: 'Properties, leads, viewings and deals, in one place.', always: 'Always on', plan: 'Plan' },
+  web: { kind: 'Add-on', line: 'Your properties on your own site, updated by themselves.' },
+  con: { kind: 'With your system', line: 'WhatsApp that answers, reminds and follows up for you. Messaging included.', basic: 'Basic', pro: 'Pro', studio: 'AI Studio', free: 'Free',
+    notes: { basic: 'Free with your system: the team inbox, reminders, and new-listing alerts', pro: 'An AI assistant that answers from your listings and books viewings', studio: 'Everything in Pro, plus AI campaigns, post designs and a content plan' } },
+  on: 'On', add: 'Add',
+  total: 'Your month', per: 'IQD / month',
+  trial: 'Your system is free for 30 days. Pay monthly or yearly (two months free).', cta: 'Start with this setup', ctaShort: 'Start', sample: 'See a sample site',
+  already: 'Already on Hemlo? Switch add-ons on from the Plan page in your system.',
+  stats: [['24', 'properties'], ['7', 'new leads'], ['3', 'viewings today']], webStat: ['128', 'visits to your site today'], conStat: ['42', 'WhatsApp replies'],
+  url: 'nakheel.hemlohq.com', tiles: [['Villa · Dream City', '$265,000'], ['Flat · Ankawa', '$900'], ['House · Mansour', '$410,000']],
+  webToast: 'Published on your site', conToast: 'Replied in 3 s', agency: 'Nakheel', online: 'online',
+  q: 'Is the Dream City villa still available?', a: 'Yes! 4 bedrooms and a garden, $265,000. Would Saturday at 5 suit a viewing?', tagBasic: 'Quick reply', tagPro: '✦ Assistant · 24/7',
+  ghostWeb: '+ Website', ghostCon: '+ Connect',
+  form: { title: 'Start with Hemlo', sub: 'Leave your number, and Hemlo’s team will call within a working day to set it up with you.', name: 'Your name', business: 'Office name', phone: 'Phone number', city: 'City',
+    send: 'Send', sending: 'Sending…', done: 'Got it. We’ll call you soon.', failed: 'Not sent. Check the number and try again.', close: 'Close' },
+};
+// a shop's words, laid over the agency's
+const SHOP_C = ar ? {
+  sys: { kind: 'نظامك', name: 'Hemlo المتاجر', line: 'الكاشير والبضاعة ودفتر الديون والطلبات، في مكان واحد.', always: 'يعمل دائماً', plan: 'الخطة' },
+  web: { kind: 'إضافة', line: 'متجرك على الإنترنت: منتجاتك وأسعارك، سلة ودفع عند الاستلام، والطلبات تصلك في النظام.' },
+  con: { ...BASE.con, notes: { basic: 'مجاني مع نظامك: صندوق المحادثات، وتحديثات الطلبات، وتذكير الديون', pro: 'مساعد ذكي يرد من منتجاتك وأسعارك ومخزونك', studio: 'كل ما في Pro، وحملات تسويقية وتصاميم وخطة محتوى من منتجاتك' } },
+  stats: [['٤٣', 'منتجاً'], ['٣٣', 'فاتورة اليوم'], ['٥', 'ديون مستحقة']], webStat: ['٦', 'طلبات من موقعك اليوم'], conStat: ['٣١', 'رداً على واتساب'],
+  url: 'nafha.hemlohq.com', tiles: [['عنبر الليل', '85,000'], ['ورد الطائف', '65,000'], ['صندوق هدية', '150,000']],
+  webToast: 'طلب جديد من موقعك', conToast: 'رُدّ خلال ٣ ثوانٍ', agency: 'نفحة', mono: 'ن',
+  q: 'عندكم عطر عنبر الليل؟ وكم سعره؟', a: 'نعم متوفر بـ 85,000 د.ع. تقدر تطلبه من موقعنا والدفع عند الاستلام، ويوصلك اليوم داخل بغداد.',
+  sample: 'شاهد متجراً نموذجياً', form: { ...BASE.form, business: 'اسم المتجر' },
+} : {
+  sys: { kind: 'Your system', name: 'Hemlo Stores', line: 'The till, stock, the debt book and orders, in one place.', always: 'Always on', plan: 'Plan' },
+  web: { kind: 'Add-on', line: 'Your shop online: your products and prices, a cart and cash on delivery, and the orders arrive in your system.' },
+  con: { ...BASE.con, notes: { basic: 'Free with your system: the team inbox, order updates and debt reminders', pro: 'An AI assistant that answers from your products, prices and stock', studio: 'Everything in Pro, plus AI campaigns, post designs and a content plan from your products' } },
+  stats: [['43', 'products'], ['33', 'receipts today'], ['5', 'debts due']], webStat: ['6', 'orders from your site today'], conStat: ['31', 'WhatsApp replies'],
+  url: 'nafha.hemlohq.com', tiles: [['Amber Night', '85,000'], ['Taif Rose', '65,000'], ['Gift box', '150,000']],
+  webToast: 'New order from your site', conToast: 'Replied in 3 s', agency: 'Nafha', mono: 'N',
+  q: 'Do you have Amber Night? How much is it?', a: 'Yes, it’s in stock at 85,000 IQD. You can order it on our website with cash on delivery, and it reaches you today in Baghdad.',
+  sample: 'See a sample shop', form: { ...BASE.form, business: 'Shop name' },
+};
+const C = shop ? { ...BASE, ...SHOP_C } : { ...BASE, mono: ar ? 'ن' : 'N' };
+const nf = new Intl.NumberFormat('en-US');
+const sampleHref = shop ? `https://business.hemlohq.com/s/sample-shop${ar ? '' : '?lang=en'}` : ar ? 'https://business.hemlohq.com/s/sample' : 'https://business.hemlohq.com/s/sample?lang=en';
+const tileImg = shop ? ['/images/stores/shop/amber.webp', '/images/stores/shop/rose.webp', '/images/stores/shop/gift-box.webp'] : ['villa-3', 'apartment-1', 'villa-4'].map((x) => `/images/realestate/sample/${x}.webp`);
+const DATA = { plans: PLANS, price: PRICE, names: { web: 'Website', basic: 'Connect Basic', pro: 'Connect Pro', studio: 'AI Studio' }, free: C.con.free };
+const plus = (n: number) => (n ? `+${nf.format(n)}` : C.con.free);
+---
+<div class:list={['sb', shop && 'is-shop']} data-sb data-ed={system} data-web="off" data-con="off" data-tier="basic" data-api={API_URL} data-lang={lang} data-model={JSON.stringify(DATA)} data-notes={JSON.stringify(C.con.notes)}>
+  <div class="sb-grid">
+
+    <!-- the picture: the system in the middle; what's switched on plugs into it and starts working -->
+    <div class="sb-stage" aria-hidden="true">
+      <svg class="sb-wires" viewBox="0 0 600 460" preserveAspectRatio="none">
+        <g class="w" data-w="web"><path class="base" d="M150 168 C150 196 196 196 196 222" pathLength="100" /><path class="live" d="M150 168 C150 196 196 196 196 222" pathLength="100" /><path class="pulse" d="M196 222 C196 196 150 196 150 168" pathLength="100" /></g>
+        <g class="w" data-w="con"><path class="base" d="M406 300 C424 300 420 262 436 262" pathLength="100" /><path class="live" d="M406 300 C424 300 420 262 436 262" pathLength="100" /><path class="pulse" d="M406 300 C424 300 420 262 436 262" pathLength="100" /></g>
+      </svg>
+
+      <!-- the website -->
+      <button type="button" class="sb-ghost g-web" data-toggle="web" tabindex="-1"><span>{C.ghostWeb}</span></button>
+      <div class="sb-web">
+        <div class="bar"><i></i><i></i><i></i><span class="u" dir="ltr">{C.url}</span></div>
+        <div class="tiles">{C.tiles.map(([n, p], i) => <div class="tile" style={`--i:${i}`}><span class="ph" style={`background-image:url(${tileImg[i]})`}></span><b>{n}</b><em dir="ltr">{p}</em></div>)}</div>
+        <span class="toast"><i>✓</i>{C.webToast}</span>
+      </div>
+
+      <!-- the system: always there -->
+      <div class="sb-sys">
+        <div class="hd"><span class="mk"><Mark /></span><span><b>{C.sys.name}</b><small data-plan-name>{PLANS[start]?.name}</small></span><span class="live"><i></i></span></div>
+        <ul>
+          {C.stats.map(([v, l]) => <li><b>{v}</b><span>{l}</span></li>)}
+          <li class="add a-web"><b>{C.webStat[0]}</b><span>{C.webStat[1]}</span></li>
+          <li class="add a-con"><b>{C.conStat[0]}</b><span>{C.conStat[1]}</span></li>
+        </ul>
+      </div>
+
+      <!-- WhatsApp -->
+      <button type="button" class="sb-ghost g-con" data-toggle="con" tabindex="-1"><span>{C.ghostCon}</span></button>
+      <div class="sb-phone">
+        <div class="scr">
+          <div class="wa"><span class="av">{C.mono}</span><span><b>{C.agency}</b><small>{C.online}</small></span></div>
+          <div class="chat">
+            <p class="b me">{C.q}</p>
+            <p class="b typing"><i></i><i></i><i></i></p>
+            <p class="b them"><span class="tag"><span class="t-basic">{C.tagBasic}</span><span class="t-pro">{C.tagPro}</span></span>{C.a}</p>
+          </div>
+        </div>
+        <span class="toast"><i>✓</i>{C.conToast}</span>
+      </div>
+    </div>
+
+    <!-- the choices -->
+    <div class="sb-ctl">
+      <div class="layer sys-l">
+        <div class="lh"><span class="lk">{C.sys.kind}</span><span class="always"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg>{C.sys.always}</span></div>
+        <p class="ln"><b>{C.sys.name}</b></p><p class="ld">{C.sys.line}</p>
+        <div class="seg" role="radiogroup" aria-label={C.sys.plan}>
+          {PLANS.map((p, i) => <button type="button" role="radio" data-plan={i} aria-checked={i === start ? 'true' : 'false'}><b>{p.name}</b><small dir="ltr">{nf.format(p.price)}</small></button>)}
+        </div>
+      </div>
+
+      <div class="layer" data-layer="web">
+        <div class="lh"><span class="lk">{C.web.kind}</span><button type="button" class="sw" role="switch" aria-checked="false" data-toggle="web" aria-label="Hemlo Website"><i></i></button></div>
+        <p class="ln"><HwBadge /><span class="pr" dir="ltr">+{nf.format(PRICE.web)}</span></p><p class="ld">{C.web.line}</p>
+        <div class="mini mini-web" aria-hidden="true"><div class="mini-in"><div class="mbox"><div class="mbar"><span class="u" dir="ltr">{C.url}</span></div><div class="tiles">{C.tiles.map(([n, p], i) => <div class="tile" style={`--i:${i}`}><span class="ph" style={`background-image:url(${tileImg[i]})`}></span><b>{n}</b><em dir="ltr">{p}</em></div>)}</div></div><p class="mnote"><i>✓</i>{C.webToast}</p></div></div>
+      </div>
+
+      <div class="layer" data-layer="con">
+        <div class="lh"><span class="lk">{C.con.kind}</span><button type="button" class="sw" role="switch" aria-checked="false" data-toggle="con" aria-label="Hemlo Connect"><i></i></button></div>
+        <p class="ln"><HwBadge label="Connect" /><span class="pr" dir="auto" data-con-price>{plus(PRICE.basic)}</span></p><p class="ld">{C.con.line}</p>
+        <div class="tier"><div class="tier-in">
+          <div class="seg three" role="radiogroup" aria-label="Connect">
+            {(['basic', 'pro', 'studio'] as const).map((k, i) => <button type="button" role="radio" data-tier={k} aria-checked={i === 0 ? 'true' : 'false'}><b>{C.con[k]}</b><small dir="auto">{PRICE[k] ? nf.format(PRICE[k]) : C.con.free}</small></button>)}
+          </div>
+          <p class="pro-note" data-tier-note>{C.con.notes.basic}</p>
+        </div></div>
+        <div class="mini mini-con" aria-hidden="true"><div class="mini-in"><div class="mchat">
+          <p class="b me">{C.q}</p><p class="b typing"><i></i><i></i><i></i></p>
+          <p class="b them"><span class="tag"><span class="t-basic">{C.tagBasic}</span><span class="t-pro">{C.tagPro}</span></span>{C.a}</p>
+        </div><p class="mnote"><i>✓</i>{C.conToast}</p></div></div>
+      </div>
+
+      <div class="sb-total">
+        <p class="tl">{C.total}</p>
+        <p class="tv"><b data-total dir="ltr">{nf.format(PLANS[start]?.price ?? 0)}</b><span>{C.per}</span></p>
+        <p class="tb" data-breakdown dir="auto"></p>
+        <button type="button" class="btn btn-primary sb-go" data-start aria-label={C.cta}><span class="full">{C.cta}</span><span class="short">{C.ctaShort}</span><span class="arr" aria-hidden="true">→</span></button>
+        <p class="tnote">{C.trial} <a class="link-quiet" href={sampleHref} target="_blank" rel="noopener">{C.sample}</a></p>
+        <p class="tnote">{C.already}</p>
+      </div>
+      <p class="sb-notes">{C.trial} <a class="link-quiet" href={sampleHref} target="_blank" rel="noopener">{C.sample}</a><br />{C.already}</p>
+    </div>
+  </div>
+
+  <dialog class="sbd" data-sbd>
+    <form method="dialog" class="sbd-x"><button aria-label={C.form.close}>✕</button></form>
+    <h3>{C.form.title}</h3><p class="sbd-sub">{C.form.sub}</p>
+    <p class="sbd-sum" data-summary></p>
+    <form class="sbd-f" data-sb-form>
+      <input type="text" name="website" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true" />
+      <div class="two"><label>{C.form.name}<input name="name" required maxlength="80" autocomplete="name" /></label><label>{C.form.business}<input name="business" required maxlength="100" autocomplete="organization" /></label></div>
+      <div class="two"><label>{C.form.phone}<input name="phone" required inputmode="tel" dir="ltr" placeholder="07xx xxx xxxx" autocomplete="tel" /></label><label>{C.form.city}<input name="city" maxlength="60" /></label></div>
+      <button class="btn btn-primary sbd-send" data-label={C.form.send} data-sending={C.form.sending}>{C.form.send}</button>
+      <p class="sbd-msg" data-ok={C.form.done} data-bad={C.form.failed} aria-live="polite"></p>
+    </form>
+  </dialog>
+</div>
+
+<script>
+  type Tier = 'basic' | 'pro' | 'studio';
+  type Model = { plans: { code: string; name: string; price: number }[]; price: { web: number; basic: number; pro: number; studio: number }; names: Record<string, string>; free: string };
+  for (const root of document.querySelectorAll<HTMLElement>('[data-sb]')) {
+    const M: Model = JSON.parse(root.dataset.model!);
+    const nf = new Intl.NumberFormat('en-US');
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const $ = <T extends Element = HTMLElement>(s: string) => root.querySelector<T>(s)!;
+    const planBtns = [...root.querySelectorAll<HTMLButtonElement>('[data-plan]')], tierBtns = [...root.querySelectorAll<HTMLButtonElement>('[data-tier]')].filter((b) => b.tagName === 'BUTTON');
+    let plan = planBtns.findIndex((b) => b.getAttribute('aria-checked') === 'true'), web = false, con = false, tier: Tier = 'basic', shown = M.plans[plan]?.price ?? 0, raf = 0;
+    const notes = JSON.parse(root.dataset.notes ?? '{}') as Record<Tier, string>;
+    const plus = (n: number) => (n ? `+${nf.format(n)}` : M.free);
+
+    // live prices, in case they changed after the page was built
+    fetch(`${root.dataset.api}/v1/plans?edition=${root.dataset.ed}`).then((r) => r.json()).then(({ plans }) => {
+      for (const p of plans ?? []) { const i = M.plans.findIndex((x) => x.code === p.code); if (i >= 0) M.plans[i].price = p.priceMonth; }
+      planBtns.forEach((b, i) => { const s = b.querySelector('small'); if (s) s.textContent = nf.format(M.plans[i].price); }); render();
+    }).catch(() => {});
+    fetch(`${root.dataset.api}/v1/plans/addons?edition=${root.dataset.ed}`).then((r) => r.json()).then(({ addons }) => {
+      const code: Record<string, keyof Model['price']> = { website: 'web', connect: 'basic', 'connect-pro': 'pro', 'ai-studio': 'studio' };
+      for (const a of addons ?? []) if (code[a.code] && a.priceMonth != null) M.price[code[a.code]] = a.priceMonth;
+      tierBtns.forEach((b) => { const s = b.querySelector('small'); if (s) s.textContent = M.price[b.dataset.tier as Tier] ? nf.format(M.price[b.dataset.tier as Tier]) : M.free; }); render();
+    }).catch(() => {});
+
+    const total = () => {
+      const base = M.plans[plan]?.price ?? 0, w = web ? M.price.web : 0, c = con ? M.price[tier] : 0;
+      return { base, w, c, sum: base + w + c };
+    };
+    const count = (to: number) => {
+      cancelAnimationFrame(raf);
+      const el = $('[data-total]'), from = shown, t0 = performance.now(), dur = still ? 0 : 520;
+      const step = (t: number) => {
+        const k = dur ? Math.min(1, (t - t0) / dur) : 1, e = 1 - Math.pow(1 - k, 3);
+        shown = Math.round(from + (to - from) * e); el.textContent = nf.format(shown);
+        if (k < 1) raf = requestAnimationFrame(step);
+      };
+      raf = requestAnimationFrame(step);
+    };
+    const summary = () => {
+      const t = total(), parts = [`${M.plans[plan].name} ${nf.format(t.base)}`];
+      if (web) parts.push(`${M.names.web} ${nf.format(t.w)}`);
+      if (con) parts.push(`${M.names[tier]} ${t.c ? nf.format(t.c) : M.free}`);
+      return { t, parts };
+    };
+    const render = () => {
+      const { t, parts } = summary();
+      Object.assign(root.dataset, { web: web ? 'on' : 'off', con: con ? 'on' : 'off', tier });
+      planBtns.forEach((b, i) => b.setAttribute('aria-checked', String(i === plan)));
+      tierBtns.forEach((b) => b.setAttribute('aria-checked', String(b.dataset.tier === tier)));
+      $('[data-tier-note]').textContent = notes[tier] ?? '';
+      root.querySelectorAll<HTMLElement>('[role="switch"]').forEach((s) => s.setAttribute('aria-checked', String(s.dataset.toggle === 'web' ? web : con)));
+      $('[data-plan-name]').textContent = M.plans[plan].name;
+      $('[data-con-price]').textContent = plus(M.price[tier]);
+      const bd = $('[data-breakdown]'); bd.replaceChildren(...parts.flatMap((x, i) => { const el = document.createElement('bdi'); el.textContent = x; return i ? [document.createTextNode('  +  '), el] : [el]; }));
+      count(t.sum);
+    };
+    root.querySelectorAll<HTMLElement>('[data-toggle]').forEach((b) => b.addEventListener('click', () => { if (b.dataset.toggle === 'web') web = !web; else con = !con; navigator.vibrate?.(8); render(); }));
+    planBtns.forEach((b, i) => b.addEventListener('click', () => { plan = i; render(); }));
+    tierBtns.forEach((b) => b.addEventListener('click', () => { tier = b.dataset.tier as Tier; render(); }));
+    // arrow keys move within each radio group
+    root.querySelectorAll<HTMLElement>('[role="radiogroup"]').forEach((g) => g.addEventListener('keydown', (e) => {
+      const k = (e as KeyboardEvent).key, items = [...g.querySelectorAll<HTMLButtonElement>('[role="radio"]')], i = items.indexOf(document.activeElement as HTMLButtonElement);
+      if (i < 0 || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(k)) return;
+      e.preventDefault(); const rtl = getComputedStyle(g).direction === 'rtl', fwd = k === 'ArrowDown' || k === (rtl ? 'ArrowLeft' : 'ArrowRight');
+      const n = items[(i + (fwd ? 1 : -1) + items.length) % items.length]; n.focus(); n.click();
+    }));
+    render();
+
+    // one request for the whole setup: lands in Hemlo's admin with the setup written into it
+    const dlg = $<HTMLDialogElement>('[data-sbd]'), f = dlg.querySelector<HTMLFormElement>('[data-sb-form]')!, msg = f.querySelector<HTMLElement>('.sbd-msg')!, btn = f.querySelector<HTMLButtonElement>('.sbd-send')!;
+    $('[data-start]').addEventListener('click', () => {
+      const { t, parts } = summary();
+      $('[data-summary]').textContent = `${parts.join(' + ')} = ${nf.format(t.sum)} IQD`;
+      msg.textContent = ''; msg.className = 'sbd-msg'; dlg.showModal();
+    });
+    dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+    f.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const v = Object.fromEntries(new FormData(f)) as Record<string, string>;
+      // the paid Connect tier if there is one (the full setup is in the note), else the Website, else Basic
+      const interest = con && tier !== 'basic' ? (tier === 'pro' ? 'connect-pro' : 'ai-studio') : web ? 'website' : con ? 'connect' : undefined;
+      btn.disabled = true; btn.textContent = btn.dataset.sending!;
+      try {
+        const res = await fetch(`${root.dataset.api}/v1/early-access`, { method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ ...v, kind: root.dataset.ed === 'store' ? 'store' : 'realestate', interest, note: `[Setup] ${$('[data-summary]').textContent}`, locale: root.dataset.lang }) });
+        if (!res.ok) throw new Error();
+        msg.textContent = msg.dataset.ok!; msg.className = 'sbd-msg is-ok'; f.reset();
+      } catch { msg.textContent = msg.dataset.bad!; msg.className = 'sbd-msg is-bad'; }
+      finally { btn.disabled = false; btn.textContent = btn.dataset.label!; }
+    });
+  }
+</script>
+
+<style>
+  .sb { --re: #1F6F5C; --wa: #1FA855; --ink: #0E1420; --e: cubic-bezier(.23, 1, .32, 1); --e2: cubic-bezier(.77, 0, .175, 1); }
+  @media (prefers-color-scheme: dark) { .sb { --re: #5FBF9F; --wa: #3CCB75; } }
+  /* a shop's builder wears the shops' colour */
+  .sb.is-shop { --re: #A8532E; }
+  @media (prefers-color-scheme: dark) { .sb.is-shop { --re: #E08A62; } }
+  .sb-grid { display: grid; gap: 1.5rem; align-items: stretch; }
+  @media (min-width: 980px) { .sb-grid { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 2rem; } }
+
+  /* ---------- the picture ---------- */
+  .sb-stage { position: relative; container-type: inline-size; aspect-ratio: 600 / 460; border-radius: 1.6rem; overflow: hidden; isolation: isolate;
+    background: var(--surface); border: 1px solid var(--line);
+    background-image: radial-gradient(circle, color-mix(in oklab, var(--fg) 8%, transparent) 1px, transparent 1px); background-size: 18px 18px; }
+  @media (min-width: 980px) { .sb-stage { position: sticky; top: 6rem; align-self: start; } }
+  .sb-stage > * { font-size: 2.15cqw; }
+  .sb-wires { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+  :global(html[dir="rtl"]) .sb-wires { transform: scaleX(-1); }
+  .w path { fill: none; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+  .w .base { stroke: var(--line-strong); stroke-width: 1.5; stroke-dasharray: 2 4; }
+  .w .live { stroke: var(--re); stroke-width: 2.5; stroke-dasharray: 100; stroke-dashoffset: 100; transition: stroke-dashoffset .8s var(--e2); }
+  .w[data-w="con"] .live { stroke: var(--wa); }
+  .w .pulse { stroke: #fff; stroke-width: 3.5; stroke-dasharray: 8 92; stroke-dashoffset: 100; opacity: 0; }
+  .sb[data-web="on"] [data-w="web"] .live, .sb[data-con="on"] [data-w="con"] .live { stroke-dashoffset: 0; }
+  .sb[data-web="on"] [data-w="web"] .pulse, .sb[data-con="on"] [data-w="con"] .pulse { opacity: .9; animation: sb-flow 2.2s linear .9s infinite; }
+  @keyframes sb-flow { to { stroke-dashoffset: 0; } }
+
+  /* positions, as parts of the stage (600 × 460) */
+  .sb-web, .g-web { position: absolute; inset-inline-start: 3%; top: 4.5%; width: 44%; height: 32%; }
+  .sb-sys { position: absolute; inset-inline-start: 14%; top: 48%; width: 54%; }
+  .sb-phone, .g-con { position: absolute; inset-inline-start: 72.5%; top: 5%; width: 24.5%; aspect-ratio: 9 / 18.5; }
+
+  /* the ghosts: where an add-on would go */
+  .sb-ghost { display: grid; place-items: center; border-radius: 1em; border: 1.5px dashed var(--line-strong); background: color-mix(in oklab, var(--surface) 70%, transparent); color: var(--muted); font-size: 1.05em; font-weight: 500; cursor: pointer;
+    transition: opacity .35s ease, transform .5s var(--e), border-color .2s, color .2s; }
+  .g-con { border-radius: 1.8em; }
+  @media (hover: hover) and (pointer: fine) { .sb-ghost:hover { border-color: var(--re); color: var(--re); transform: scale(1.015); } }
+  .sb[data-web="on"] .g-web, .sb[data-con="on"] .g-con { opacity: 0; transform: scale(.96); pointer-events: none; }
+
+  /* the system: dark, steady, always there */
+  .sb-sys { padding: 1em 1.1em; border-radius: 1.1em; background: var(--ink); color: #F4F1EA; box-shadow: 0 2em 3.6em -1.8em rgb(14 20 32 / .65), inset 0 1px 0 rgb(255 255 255 / .07); }
+  @media (prefers-color-scheme: dark) { .sb-sys { box-shadow: 0 0 0 1px rgb(255 255 255 / .08), 0 2em 3.6em -1.8em rgb(0 0 0 / .8); } }
+  .sb-sys .hd { display: flex; align-items: center; gap: .7em; padding-bottom: .8em; border-bottom: 1px solid rgb(255 255 255 / .1); }
+  .sb-sys .mk { display: grid; place-items: center; flex: none; width: 2.2em; height: 2.2em; padding: .45em; border-radius: .6em; background: rgb(255 255 255 / .08); color: #5FBF9F; }
+  .sb-sys .mk :global(svg) { width: 100%; height: auto; }
+  .sb-sys .hd b { display: block; font-weight: 600; font-size: 1.05em; } .sb-sys .hd small { display: block; font-size: .85em; opacity: .62; }
+  .sb-sys .live { margin-inline-start: auto; width: .6em; height: .6em; border-radius: 50%; background: #4ADE80; box-shadow: 0 0 0 .3em rgb(74 222 128 / .18); }
+  .sb-sys ul { display: grid; margin-top: .4em; }
+  .sb-sys li { display: flex; align-items: baseline; gap: .6em; padding: .42em 0; font-size: .95em; }
+  .sb-sys li b { min-width: 2.4em; font-weight: 600; font-variant-numeric: tabular-nums; } .sb-sys li span { opacity: .7; }
+  /* the system gains a line for each add-on: it is the same system, now doing more */
+  .sb-sys li.add { display: grid; grid-template-rows: 0fr; padding: 0; opacity: 0; transition: grid-template-rows .6s var(--e), opacity .4s ease, padding .6s var(--e); }
+  .sb-sys li.add > * { overflow: hidden; }
+  .sb-sys li.add { grid-template-columns: auto 1fr; column-gap: .6em; }
+  .sb[data-web="on"] .a-web, .sb[data-con="on"] .a-con { grid-template-rows: 1fr; padding: .42em 0; opacity: 1; transition-delay: .55s; }
+  .a-web b { color: #5FBF9F; } .a-con b { color: #4ADE80; }
+
+  /* the website */
+  .sb-web { display: flex; flex-direction: column; border-radius: .9em; background: var(--surface); box-shadow: 0 0 0 1px var(--line), 0 1.6em 3em -1.8em rgb(14 20 32 / .4); overflow: hidden;
+    opacity: 0; transform: translateY(.8em) scale(.97); transition: opacity .45s ease, transform .7s var(--e); }
+  .sb[data-web="on"] .sb-web { opacity: 1; transform: none; }
+  .sb-web .bar { display: flex; align-items: center; gap: .3em; padding: .5em .7em; border-bottom: 1px solid var(--line); background: var(--sunken); }
+  .sb-web .bar i { width: .45em; height: .45em; border-radius: 50%; background: var(--line-strong); }
+  .sb-web .u { margin-inline: auto; padding: .15em .7em; border-radius: 999px; background: var(--surface); font-size: .78em; color: var(--fg-2); }
+  .tiles { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: .5em; padding: .6em; }
+  .tile { display: grid; align-content: start; gap: .2em; opacity: 0; transform: translateY(.5em); transition: opacity .4s ease, transform .6s var(--e); }
+  .tile .ph { aspect-ratio: 4 / 3; border-radius: .4em; background: var(--sunken) center / cover; }
+  .tile b { font-size: .7em; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .tile em { font-style: normal; font-size: .72em; font-weight: 600; color: var(--re); }
+  .sb[data-web="on"] .tile { opacity: 1; transform: none; transition-delay: calc(.7s + var(--i) * .12s); }
+
+  /* the phone */
+  .sb-phone { padding: .35em; border-radius: 1.9em; background: var(--ink); box-shadow: 0 1.8em 3em -1.6em rgb(14 20 32 / .6);
+    opacity: 0; transform: translateY(.8em) scale(.97); transition: opacity .45s ease, transform .7s var(--e); }
+  .sb[data-con="on"] .sb-phone { opacity: 1; transform: none; }
+  .scr { display: flex; flex-direction: column; height: 100%; border-radius: 1.6em; overflow: hidden; background: #EFEAE2; color: #0E1420; }
+  .wa { display: flex; align-items: center; gap: .45em; padding: 1.4em .7em .55em; background: #F0F2F0; }
+  .wa .av { display: grid; place-items: center; width: 1.7em; height: 1.7em; border-radius: 50%; background: #0E1420; color: #F4F1EA; font-size: .78em; }
+  .wa b { display: block; font-size: .78em; font-weight: 600; } .wa small { display: block; font-size: .64em; color: var(--wa); }
+  .chat { position: relative; flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: .4em; padding: .6em .5em 1em; }
+  .b { margin: 0; max-width: 88%; padding: .45em .6em; border-radius: .8em; font-size: .7em; line-height: 1.4; box-shadow: 0 1px 0 rgb(0 0 0 / .06); opacity: 0; transform: translateY(.5em); }
+  .b.me { align-self: flex-end; background: #D9FDD3; border-end-end-radius: .2em; }
+  .b.them { align-self: flex-start; background: #fff; border-end-start-radius: .2em; }
+  .b.typing { position: absolute; inset-inline-start: .5em; bottom: 1em; display: flex; gap: .25em; align-self: flex-start; background: #fff; }
+  .b.typing i { width: .38em; height: .38em; border-radius: 50%; background: #9AA0A6; animation: sb-dot 1s ease-in-out infinite; } .b.typing i:nth-child(2) { animation-delay: .15s } .b.typing i:nth-child(3) { animation-delay: .3s }
+  @keyframes sb-dot { 50% { transform: translateY(-.15em); opacity: 1; } 0%, 100% { opacity: .4; } }
+  .tag { display: block; margin-bottom: .2em; font-size: .85em; font-weight: 700; color: var(--re); } .t-pro { display: none; color: #6E4A86; }
+  .sb:is([data-tier="pro"], [data-tier="studio"]) .t-basic { display: none; } .sb:is([data-tier="pro"], [data-tier="studio"]) .t-pro { display: inline; }
+  .sb[data-con="on"] .b.me { opacity: 1; transform: none; transition: opacity .4s ease .7s, transform .6s var(--e) .7s; }
+  .sb[data-con="on"] .b.typing { animation: sb-typing 1.3s ease 1.2s both; }
+  @keyframes sb-typing { 0%, 100% { opacity: 0; } 15%, 85% { opacity: 1; } }
+  .sb[data-con="on"] .b.them { opacity: 1; transform: none; transition: opacity .4s ease 2.5s, transform .6s var(--e) 2.5s; }
+
+  /* what just happened, said once */
+  .toast { position: absolute; z-index: 2; display: inline-flex; align-items: center; gap: .4em; white-space: nowrap; padding: .35em .7em; border-radius: 999px; background: var(--ink); color: #F4F1EA; font-size: .78em; font-weight: 500;
+    box-shadow: 0 .8em 1.6em -.8em rgb(14 20 32 / .6); opacity: 0; transform: translateY(.4em); pointer-events: none; }
+  .toast i { font-style: normal; color: #4ADE80; }
+  .sb-web .toast { inset-inline-end: .6em; bottom: .6em; }
+  .sb-phone .toast { inset-inline-end: 0; top: 100%; margin-top: .6em; }
+  .sb[data-web="on"] .sb-web .toast { animation: sb-toast 3.2s ease 1.3s both; }
+  .sb[data-con="on"] .sb-phone .toast { animation: sb-toast 3.2s ease 3s both; }
+  @keyframes sb-toast { 0% { opacity: 0; transform: translateY(.4em); } 12%, 82% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+
+  /* ---------- the choices ---------- */
+  .sb-ctl { display: grid; gap: .7rem; align-content: start; }
+  .layer { padding: 1.05rem 1.15rem 1.15rem; border-radius: 1.15rem; border: 1px solid var(--line); background: var(--surface); transition: border-color .3s ease, box-shadow .4s ease, background-color .3s ease; }
+  .layer.sys-l { background: var(--sunken); }
+  .sb[data-web="on"] [data-layer="web"] { border-color: color-mix(in oklab, var(--re) 45%, var(--line)); box-shadow: 0 0 0 3px color-mix(in oklab, var(--re) 10%, transparent); }
+  .sb[data-con="on"] [data-layer="con"] { border-color: color-mix(in oklab, var(--wa) 45%, var(--line)); box-shadow: 0 0 0 3px color-mix(in oklab, var(--wa) 10%, transparent); }
+  .lh { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .lk { font-size: .78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; } :global(html[lang="ar"]) .lk { text-transform: none; letter-spacing: 0; font-size: .85rem; }
+  .always { display: inline-flex; align-items: center; gap: .35rem; font-size: .8rem; font-weight: 500; color: var(--fg-2); }
+  .always svg { width: .95rem; height: .95rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+  .ln { display: flex; align-items: center; justify-content: space-between; gap: .8rem; margin-top: .55rem; }
+  .ln b { font-size: 1.12rem; font-weight: 600; letter-spacing: -.01em; }
+  .pr { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--fg-2); transition: color .3s; }
+  .sb[data-web="on"] [data-layer="web"] .pr { color: var(--re); } .sb[data-con="on"] [data-layer="con"] .pr { color: var(--wa); }
+  .ld { margin-top: .35rem; font-size: .92rem; line-height: 1.5; color: var(--fg-2); }
+  /* the switch */
+  .sw { position: relative; flex: none; width: 2.75rem; height: 1.6rem; border-radius: 999px; background: var(--line-strong); cursor: pointer; transition: background-color .3s ease; }
+  .sw i { position: absolute; top: .2rem; inset-inline-start: .2rem; width: 1.2rem; height: 1.2rem; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgb(0 0 0 / .25); transition: transform .4s var(--e); }
+  .sw[aria-checked="true"] { background: var(--re); } [data-layer="con"] .sw[aria-checked="true"] { background: var(--wa); }
+  .sw[aria-checked="true"] i { transform: translateX(1.15rem); } :global(html[dir="rtl"]) .sw[aria-checked="true"] i { transform: translateX(-1.15rem); }
+  .sw:active i { width: 1.4rem; }
+  .sw:focus-visible, .seg button:focus-visible { outline: 2px solid var(--re); outline-offset: 2px; }
+  /* segmented choices */
+  .seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .25rem; margin-top: .85rem; padding: .25rem; border-radius: .9rem; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+  .seg.two, .seg.three { grid-template-columns: 1fr 1fr; background: var(--sunken); box-shadow: none; }
+  .seg.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .seg button { display: grid; gap: .05rem; padding: .5rem .4rem; border-radius: .7rem; cursor: pointer; transition: background-color .25s ease, box-shadow .25s ease, color .25s ease; }
+  .seg button b { font-size: .9rem; font-weight: 600; } .seg button small { font-size: .78rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .seg button[aria-checked="true"] { background: var(--ink); color: #F4F1EA; box-shadow: 0 6px 14px -8px rgb(14 20 32 / .6); }
+  .seg button[aria-checked="true"] small { color: rgb(244 241 234 / .7); }
+  @media (prefers-color-scheme: dark) { .seg button[aria-checked="true"] { background: #F2F1EC; color: #0B0F16; } .seg button[aria-checked="true"] small { color: #4B5563; } }
+  /* Connect's two tiers open under it once it's on */
+  .tier { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .5s var(--e); }
+  .tier-in { overflow: hidden; }
+  .sb[data-con="on"] .tier { grid-template-rows: 1fr; }
+  .pro-note { margin-top: .5rem; font-size: .82rem; color: #6E4A86; opacity: .5; transition: opacity .3s; } .sb:is([data-tier="pro"], [data-tier="studio"]) .pro-note { opacity: 1; }
+  @media (prefers-color-scheme: dark) { .pro-note { color: #C4A6DB; } }
+
+  /* the month */
+  .sb-total { margin-top: .4rem; padding: 1.3rem 1.2rem 1.2rem; border-radius: 1.15rem; background: var(--ink); color: #F4F1EA;
+    background-image: radial-gradient(80% 120% at 100% 0%, color-mix(in oklab, #1F6F5C 40%, transparent), transparent 60%); }
+  .tl { font-size: .85rem; opacity: .7; }
+  .tv { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem; margin-top: .2rem; }
+  .tv b { font-size: clamp(2.3rem, 4.4vw, 3rem); font-weight: 600; letter-spacing: -.03em; line-height: 1.05; font-variant-numeric: tabular-nums; }
+  .tv span { opacity: .7; }
+  .tb { margin-top: .4rem; font-size: .84rem; opacity: .7; line-height: 1.5; min-height: 1.3em; }
+  @keyframes sb-in { from { opacity: 0; transform: translateY(4px); } }
+  .sb-go { display: flex; justify-content: center; width: 100%; margin-top: 1.1rem; background: #F4F1EA; color: #0E1420; }
+  .sb-go:hover { opacity: .92; } .sb-go .short { display: none; }
+  :global(html[dir="rtl"]) .sb-go .arr { display: inline-block; transform: scaleX(-1); }
+  .tnote { margin-top: .75rem; font-size: .82rem; line-height: 1.55; opacity: .75; }
+  .tnote :global(a) { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+
+  /* the request */
+  .sbd { margin: auto; inset: 0; width: min(32rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); overflow: auto; padding: 1.8rem; border: 0; border-radius: 1.4rem; background: var(--surface); color: var(--fg); box-shadow: 0 40px 90px -30px rgb(14 20 32 / .5); }
+  .sbd::backdrop { background: rgb(14 20 32 / .45); backdrop-filter: blur(4px); }
+  .sbd-x { position: absolute; inset-inline-end: 1rem; top: 1rem; } .sbd-x button { width: 2.2rem; height: 2.2rem; border-radius: 50%; background: var(--sunken); color: var(--fg-2); }
+  .sbd h3 { font-size: 1.3rem; font-weight: 600; padding-inline-end: 2.5rem; } .sbd-sub { margin-top: .4rem; color: var(--fg-2); line-height: 1.55; }
+  .sbd-sum { margin-top: 1rem; padding: .75rem .9rem; border-radius: .8rem; background: var(--sunken); font-size: .9rem; font-weight: 500; font-variant-numeric: tabular-nums; direction: ltr; text-align: start; }
+  :global(html[dir="rtl"]) .sbd-sum { text-align: end; }
+  .sbd-f { display: grid; gap: .9rem; margin-top: 1.1rem; }
+  .sbd-f label { display: grid; gap: .35rem; font-size: .88rem; font-weight: 500; }
+  .sbd-f input { width: 100%; padding: .65rem .8rem; border-radius: .7rem; border: 1px solid var(--line-strong); background: var(--canvas); color: var(--fg); font: inherit; }
+  .sbd-f input:focus { outline: none; border-color: var(--fg-2); }
+  .sbd-f .two { display: grid; gap: .9rem; } @media (min-width: 520px) { .sbd-f .two { grid-template-columns: 1fr 1fr; } }
+  .sbd-f .hp { position: absolute; inset-inline-start: -9999px; width: 1px; height: 1px; opacity: 0; }
+  .sbd-send { justify-content: center; }
+  .sbd-msg { font-size: .9rem; min-height: 1.2em; line-height: 1.5; } .sbd-msg.is-ok { color: #1E8E5A; } .sbd-msg.is-bad { color: #B42318; }
+
+  /* ---------- a phone: no picture; each add-on shows itself working in its own card, and the month floats under the thumb ---------- */
+  .mini, .sb-notes { display: none; }
+  @media (max-width: 760px) {
+    .sb-stage { display: none; }
+    .mini { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .6s var(--e); }
+    .mini-in { min-height: 0; overflow: hidden; }
+    .sb[data-web="on"] .mini-web, .sb[data-con="on"] .mini-con { grid-template-rows: 1fr; }
+    .mbox { margin-top: .9rem; border-radius: .85rem; overflow: hidden; background: var(--canvas); box-shadow: inset 0 0 0 1px var(--line); font-size: 15px; }
+    .mbar { display: flex; justify-content: center; padding: .45rem; border-bottom: 1px solid var(--line); background: var(--sunken); }
+    .mbar .u { padding: .12rem .7rem; border-radius: 999px; background: var(--surface); font-size: .72rem; color: var(--fg-2); }
+    .mbox .tiles { padding: .55rem; gap: .45rem; }
+    .mchat { position: relative; display: flex; flex-direction: column; gap: .4rem; min-height: 9.5rem; margin-top: .9rem; padding: .8rem .7rem 1rem; border-radius: .85rem; background: #EFEAE2; color: #0E1420; font-size: 18px; }
+    .mchat .b.typing { bottom: 1rem; inset-inline-start: .7rem; }
+    .mnote { display: inline-flex; align-items: center; gap: .4rem; margin-top: .6rem; font-size: .8rem; font-weight: 500; color: var(--fg-2); opacity: 0; transform: translateY(.3rem); }
+    .mnote i { font-style: normal; color: #1E8E5A; }
+    .sb[data-web="on"] .mini-web .mnote { opacity: 1; transform: none; transition: opacity .4s ease 1.2s, transform .5s var(--e) 1.2s; }
+    .sb[data-con="on"] .mini-con .mnote { opacity: 1; transform: none; transition: opacity .4s ease 2.9s, transform .5s var(--e) 2.9s; }
+    /* the month, floating while the choices are on screen */
+    .sb-total { position: sticky; bottom: calc(.7rem + env(safe-area-inset-bottom)); z-index: 5; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: .9rem;
+      margin-top: .2rem; padding: .75rem .8rem .75rem 1.05rem; border-radius: 1.2rem; box-shadow: 0 20px 44px -18px rgb(14 20 32 / .65); }
+    :global(html[dir="rtl"]) .sb-total { padding: .75rem 1.05rem .75rem .8rem; }
+    .sb-total > * { grid-column: 1; }
+    .sb-total .tl { font-size: .72rem; }
+    .sb-total .tv { margin: 0; gap: .35rem; flex-wrap: nowrap; white-space: nowrap; } .sb-total .tv b { font-size: 1.65rem; } .sb-total .tv span { font-size: .72rem; }
+    .sb-total .tb, .sb-total .tnote { display: none; }
+    .sb-total .sb-go .full { display: none; } .sb-total .sb-go .short { display: inline; }
+    .sb-total .sb-go { grid-column: 2; grid-row: 1 / span 2; width: auto; margin: 0; padding: .8rem 1.2rem; font-size: .95rem; white-space: nowrap; }
+    .sb-notes { display: block; margin-top: .9rem; font-size: .85rem; line-height: 1.6; color: var(--fg-2); }
+    .sb-ctl { gap: .6rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sb *, .sb *::before { animation: none !important; transition-property: opacity, background-color, color, border-color !important; transition-duration: .25s !important; transition-delay: 0s !important; }
+    .sb .sb-web, .sb .sb-phone, .sb .tile, .sb .b { transform: none !important; }
+    .sb .b.typing { display: none; } .sb .w .pulse { opacity: 0 !important; }
+  }
+</style>

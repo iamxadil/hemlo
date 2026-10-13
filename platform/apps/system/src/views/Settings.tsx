@@ -7,6 +7,7 @@ import { useApp } from '../lib/app';
 import { Icon } from '../components/ui';
 import { printerPrefs, choosePrinter, printDirect, openDrawer, directSupported } from '../lib/escpos';
 import { ImagePick } from '../components/Images';
+import { Appearance } from './Appearance';
 
 const MANAGERS = ['owner', 'admin', 'manager'];
 
@@ -20,6 +21,7 @@ export function Settings() {
         <p className="sec-t">{t.settings.language}</p>
         <div className="seg">{LANGS.map(({ id: l, name }) => <button key={l} aria-pressed={lang === l} onClick={() => setLang(l)}>{name}</button>)}</div>
       </section>
+      <Appearance />
       {!counter && sys.role?.split(',').some((r) => r === 'owner' || r === 'admin') && <LogoSettings />}
       <PrinterSettings />
       {!counter && sys.role?.split(',').some((r) => r === 'owner' || r === 'admin') && <AiSettings />}

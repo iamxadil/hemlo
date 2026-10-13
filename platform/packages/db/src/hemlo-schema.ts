@@ -203,7 +203,19 @@ export const hemloPlanRequest = pgTable('hemlo_plan_request', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [index('hemlo_plan_request_org').on(t.organizationId, t.status)]);
 
-/** Optional capability sold alongside a core System plan. A nullable price means the offer is not configured yet. */
+/** What an add-on allows, per month unless named otherwise. A missing number means none (0), never "unlimited".
+ *  ai*: the WhatsApp assistant and the agent's AI tools (Connect Pro and up), counted by Baghdad day, week (from Saturday)
+ *  and month. wa*: WhatsApp messaging Hemlo pays for, in IQD at the rates in hemlo_setting "costs"; waMarketingPct caps
+ *  the share promotional templates may use. sendsDay: automatic messages a day. studioMonth, imagesMonth, videosMonth, mediaIqd: AI Studio. */
+export type AddonLimits = {
+  aiDay?: number; aiWeek?: number; aiMonth?: number;
+  waIqd?: number; waMarketingPct?: number; sendsDay?: number;
+  studioMonth?: number; imagesMonth?: number; videosMonth?: number; mediaIqd?: number;
+};
+export const ADDON_LIMIT_KEYS = ['aiDay', 'aiWeek', 'aiMonth', 'waIqd', 'waMarketingPct', 'sendsDay', 'studioMonth', 'imagesMonth', 'videosMonth', 'mediaIqd'] as const;
+
+/** Optional capability sold alongside a core System plan. A nullable price means the offer is not configured yet; a price
+ *  of 0 means it comes with the System (no request, no payment). "includes" lists the add-ons it switches on too. */
 export const hemloAddon = pgTable('hemlo_addon', {
   id: text('id').primaryKey(),
   code: text('code').notNull().unique(),
@@ -214,6 +226,28 @@ export const hemloAddon = pgTable('hemlo_addon', {
   priceYear: integer('price_year'),
   public: boolean('public').notNull().default(true),
   active: boolean('active').notNull().default(true),
+  limits: jsonb('limits').$type<AddonLimits>().notNull().default({}),
+  includes: jsonb('includes').$type<string[]>().notNull().default([]),
+  sort: integer('sort').notNull().default(0),
+  /** Per system: its own price, allowances and words (a shop pays less than an agency); what's not set is the row's own. */
+  editions: jsonb('editions').$type<Record<string, AddonEdition>>().notNull().default({}),
+  updatedBy: text('updated_by'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+export type AddonEdition = { priceMonth?: number | null; priceYear?: number | null; limits?: AddonLimits; name?: Words; description?: Words };
+
+/** What things cost Hemlo, entered by the team (never guessed in code): the dollar rate, WhatsApp's rates per country and
+ *  category, each business's share of the running costs, and a monthly ceiling on image and video generation. */
+export type CostSettings = {
+  usdIqd?: number | null;
+  waRates?: Record<string, { marketing?: number; utility?: number; service?: number }>; // IQD per message; 'IQ', … and 'other'
+  infraIqd?: number | null;          // each business's monthly share of servers, database, email…
+  mediaBudgetUsd?: number | null;    // Hemlo-wide, per month, for images and video
+  marginTarget?: number | null;      // percent
+};
+export const hemloSetting = pgTable('hemlo_setting', {
+  key: text('key').primaryKey(),
+  value: jsonb('value').$type<Record<string, unknown>>().notNull().default({}),
   updatedBy: text('updated_by'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
@@ -283,7 +317,8 @@ export const hemloAiProvider = pgTable('hemlo_ai_provider', {
 /** Which model does one AI job in one system ('gym:members', 'store:invoice'…), and what to fall back on if it fails.
  *  No row: the default engine. Prices (US$ per million tokens) only where the provider doesn't report the cost itself. */
 export const hemloAiRoute = pgTable('hemlo_ai_route', {
-  id: text('id').primaryKey(),                         // '{edition}:{feature}'
+  id: text('id').primaryKey(),                         // '{edition}:{feature}', or 'org:{organization}:{feature}' for one business
+  organizationId: text('organization_id'),             // set: this business's own choice, over its edition's
   edition: text('edition').notNull(),
   feature: text('feature').notNull(),
   provider: text('provider').notNull(),

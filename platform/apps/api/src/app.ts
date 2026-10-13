@@ -17,6 +17,7 @@ import { demoRoutes } from './routes/demo';
 import { sysFileRoutes, publicFileRoutes } from './routes/files';
 import type { FileStore } from './files';
 import { subscriptionGuard } from './subscription';
+import { shopRoutes } from './routes/shop/orders';
 import { aiRoutes } from './routes/ai';
 import { impactRoutes } from './routes/impact';
 import { storeStartRoutes } from './routes/store-start';
@@ -29,6 +30,8 @@ import { reRoutes } from './routes/realestate';
 import { schoolRoutes } from './routes/school';
 import { webRoutes } from './routes/website';
 import { webPublicRoutes } from './routes/website/public';
+import { connectRoutes } from './connect/routes';
+import { studioRoutes } from './routes/studio';
 import type { AppEnv, Deps, Env } from './types';
 
 const originAllowed = (origin: string, patterns: string[]) =>
@@ -38,10 +41,10 @@ const originAllowed = (origin: string, patterns: string[]) =>
     try { const u = new URL(origin); return u.protocol === `${scheme}:` && u.hostname.endsWith(host.replace('*', '')); } catch { return false; }
   });
 
-export function createApp(opts: { db: Database; env: Env; waitUntil?: (p: Promise<unknown>) => void; files?: FileStore; ai?: Engine; screens?: Deps['screens'] }) {
+export function createApp(opts: { db: Database; env: Env; waitUntil?: (p: Promise<unknown>) => void; files?: FileStore; ai?: Engine; screens?: Deps['screens']; later?: Deps['later']; wa?: Deps['wa'] }) {
   const notifier = createNotifier(opts.env);
   const auth = createAuth({ db: opts.db, env: opts.env, notifier, waitUntil: opts.waitUntil });
-  const deps: Deps = { db: opts.db, auth, env: opts.env, notifier, files: opts.files, ai: opts.ai, screens: opts.screens };
+  const deps: Deps = { db: opts.db, auth, env: opts.env, notifier, files: opts.files, ai: opts.ai, screens: opts.screens, later: opts.later, wa: opts.wa };
   const trusted = opts.env.TRUSTED_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean);
   const prod = opts.env.API_URL.startsWith('https://');
 
@@ -119,7 +122,12 @@ export function createApp(opts: { db: Database; env: Env; waitUntil?: (p: Promis
   v1.use('/sch/*', async (c, next) => (/\/sch\/(start$|pub\/)/.test(c.req.path) ? next() : subscriptionGuard(c, next)));
   v1.route('/sch', schoolRoutes(deps));
   v1.route('/web/pub', webPublicRoutes(deps)); // the public site (business.hemlo.site): no sign-in, read-only + inquiries
-  v1.route('/web', webRoutes(deps));           // the Website add-on: one public site per business
+  v1.route('/web', webRoutes(deps));
+  v1.route('/connect', connectRoutes(deps));   // Hemlo Connect: WhatsApp inbox, assistant, automations (+ the webhook at /connect/hook)           // the Website add-on: one public site per business
+  v1.use('/shop/*', subscriptionGuard);
+  v1.route('/shop', shopRoutes(deps));     // the online shop's orders and checkout rules (a store with Hemlo Website)
+  v1.use('/studio/*', subscriptionGuard);
+  v1.route('/studio', studioRoutes(deps));  // Hemlo AI Studio: campaigns, content plans, post images (realestate)
   v1.route('/sys/ai', aiRoutes(deps));
   v1.route('/sys', impactRoutes(deps));      // reminders sent, and what came back after them
   v1.route('/sys/files', sysFileRoutes(deps));

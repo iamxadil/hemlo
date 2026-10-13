@@ -13,6 +13,7 @@ import { loadStaff, fromRow, type Staff } from '../staff';
 import { collectUsage } from './admin-usage';
 import { adminPricingRoutes } from './pricing';
 import { adminAiRoutes } from './admin-ai';
+import { adminCostRoutes } from './admin-costs';
 import { plansOf } from '../subscription';
 import type { AppEnv, Deps } from '../types';
 
@@ -65,6 +66,10 @@ export function adminRoutes(d: Deps) {
       q(sql`select to_char(date_trunc('day', created_at), 'YYYY-MM-DD') as day, count(*)::int as n from "user" where created_at > now() - interval '30 days' and email not like '%@demo.hemlohq.invalid' group by 1`),
       s.permissions.includes('requests.view') ? d.db.select().from(earlyAccess).orderBy(desc(earlyAccess.createdAt)).limit(6) : Promise.resolve([]),
     ]);
+    // what waits in billing: plan requests, and add-on requests (a business asking for Hemlo Website), each a decision
+    const waiting = s.permissions.includes('usage.view') ? rowsOf(await withSystem(d.db, (tx) => tx.execute(sql`select
+        (select count(*)::int from hemlo_plan_request where status = 'new') as plans,
+        (select count(*)::int from hemlo_addon_request where status = 'new') as addons`)))[0] : null;
     const days = Array.from({ length: 30 }, (_, i) => new Date(Date.now() - (29 - i) * 86400_000).toISOString().slice(0, 10));
     const series = (rows: any[]) => days.map((day) => ({ day, n: rows.find((x) => x.day === day)?.n ?? 0 }));
     const status = Object.fromEntries(STATUSES.map((st) => [st, byStatus.find((x) => x.status === st)?.n ?? 0]));
@@ -73,6 +78,7 @@ export function adminRoutes(d: Deps) {
       users: users[0], businesses: businesses[0], activeUsers7: active[0]?.n ?? 0,
       series: { requests: series(reqDays), users: series(userDays) },
       latest: latest.map((x) => publicRequest(x, s)),
+      waiting: waiting ? { plans: waiting.plans ?? 0, addons: waiting.addons ?? 0 } : null,
     });
   });
 
@@ -212,6 +218,7 @@ export function adminRoutes(d: Deps) {
   // ---- pricing: plans, payments, plan requests, the money ----
   r.route('/', adminPricingRoutes(d));
   r.route('/', adminAiRoutes(d));
+  r.route('/', adminCostRoutes(d));
 
   // ---- activity: what the team did ----
   r.get('/activity', async (c) => {

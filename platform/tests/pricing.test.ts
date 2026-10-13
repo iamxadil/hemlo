@@ -106,12 +106,18 @@ describe('asking for a plan, paying, and the admin side', () => {
 });
 
 describe('optional add-ons', () => {
-  it('keeps an unconfigured price non-purchasable, then activates only after staff confirms the catalog amount', async () => {
+  it('launches at its list price, keeps an unconfigured price non-purchasable, and activates only after staff confirms the catalog amount', async () => {
     const offers = (await new Browser(t.app).get('/v1/plans/addons?edition=realestate')).json.addons;
-    expect(offers).toHaveLength(1);
-    expect(offers[0]).toMatchObject({ code: 'website', configured: false, priceMonth: null, priceYear: null });
-    expect((await new Browser(t.app).get('/v1/plans/addons?edition=store')).json.addons).toEqual([]);
-    expect((await shop.post('/v1/billing/addons/website/request')).status).toBe(403);
+    // in order: Website, then Connect's tiers (Basic free with the System, Pro, AI Studio); the old bundle is retired
+    expect(offers.map((x: any) => [x.code, x.priceMonth, x.priceYear, x.free])).toEqual([['website', 10000, 100000, false], ['connect', 0, 0, true], ['connect-pro', 35000, 350000, false], ['ai-studio', 50000, 500000, false]]);
+    await founder.req('PATCH', '/v1/admin/addons/website', { priceMonth: null, priceYear: null });
+    expect((await new Browser(t.app).get('/v1/plans/addons?edition=realestate')).json.addons.find((x: any) => x.code === 'website')).toMatchObject({ configured: false, priceMonth: null });
+    // a shop sees the same add-ons at its own prices (each system's override), with its own words
+    const shopOffers = (await new Browser(t.app).get('/v1/plans/addons?edition=store')).json.addons;
+    expect(shopOffers.map((x: any) => [x.code, x.priceMonth, x.priceYear, x.free])).toEqual([['website', 10000, 100000, false], ['connect', 0, 0, true], ['connect-pro', 25000, 250000, false], ['ai-studio', 35000, 350000, false]]);
+    expect(shopOffers.find((x: any) => x.code === 'connect-pro').description.en).toMatch(/products, prices and stock/);
+    // the shop's own price stands when the agencies' is cleared: a shop may ask for its Website
+    expect((await shop.post('/v1/billing/addons/website/request')).status).toBe(201);
 
     const owner = new Browser(t.app);
     await signInEmail(owner, 'website-buyer@example.com');
@@ -125,6 +131,9 @@ describe('optional add-ons', () => {
     expect(requested.status).toBe(201);
     expect(requested.json.status).toBe('pending');
     expect((await owner.post('/v1/web/site/enable')).status).toBe(402);
+    // the request waits for a person at Hemlo: the admin overview says so until it is decided
+    const waitingBefore = (await founder.req('GET', '/v1/admin/overview')).json.waiting.addons;
+    expect(waitingBefore).toBeGreaterThan(0);
 
     const requestId = requested.json.request.id;
     const denied = await founder.req('PATCH', `/v1/admin/addon-requests/${requestId}`, { action: 'activate', amount: 1, method: 'cash' });
@@ -132,16 +141,43 @@ describe('optional add-ons', () => {
     const activated = await founder.req('PATCH', `/v1/admin/addon-requests/${requestId}`, { action: 'activate', amount: 12000, method: 'cash', reference: 'RECEIPT-1' });
     expect(activated.status).toBe(201);
     expect(activated.json.entitlement).toMatchObject({ status: 'active', price: 12000, billing: 'month', edition: 'realestate' });
-    expect((await owner.get('/v1/billing/addons')).json.addons[0].entitlement.active).toBe(true);
+    expect((await founder.req('GET', '/v1/admin/overview')).json.waiting.addons).toBe(waitingBefore - 1);
+    const mine = async (code: string) => (await owner.get('/v1/billing/addons')).json.addons.find((x: any) => x.code === code);
+    expect((await mine('website')).entitlement.active).toBe(true);
+    expect((await mine('connect')).entitlement).toBeNull(); // one add-on's entitlement is never shown on another
+    expect(await mine('connect')).toMatchObject({ free: true, included: true }); // Basic: free with the System, nothing to ask for
     expect((await owner.post('/v1/web/site/enable')).status).toBe(200);
     await owner.put('/v1/web/site', { settings: { contact: { whatsapp: '07701234567' } } });
     expect((await owner.post('/v1/web/site/publish')).status).toBe(200);
     const cancel = await owner.post('/v1/billing/addons/website/cancel-request');
     expect(cancel.status).toBe(201);
-    expect((await owner.get('/v1/billing/addons')).json.addons[0].entitlement.active).toBe(true);
+    expect((await mine('website')).entitlement.active).toBe(true);
     const canceled = await founder.req('PATCH', `/v1/admin/addon-requests/${cancel.json.request.id}`, { action: 'cancel' });
     expect(canceled.json.entitlement.status).toBe('canceled');
     expect((await owner.post('/v1/web/site/publish')).status).toBe(402);
+
+    // Connect's tiers: Basic is free (nothing to ask for); Pro, then AI Studio, each ending the one below
+    const approve = async (code: string, amount: number) => {
+      const req = await owner.post(`/v1/billing/addons/${code}/request`, { billing: 'month' });
+      expect(req.status).toBe(201);
+      return founder.req('PATCH', `/v1/admin/addon-requests/${req.json.request.id}`, { action: 'activate', amount, method: 'cash' });
+    };
+    expect((await owner.get('/v1/connect')).json.plan).toBe('connect');
+    expect((await owner.post('/v1/billing/addons/connect/request', { billing: 'month' })).json.error).toBe('ADDON_INCLUDED');
+    expect((await approve('connect-pro', 35000)).status).toBe(201);
+    expect((await mine('connect-pro')).entitlement.active).toBe(true);
+    expect(await mine('connect')).toMatchObject({ included: true, via: 'connect-pro' });
+    expect((await owner.get('/v1/connect')).json.plan).toBe('connect-pro');
+
+    expect((await approve('ai-studio', 50000)).status).toBe(201);
+    expect((await sys(`select status from hemlo_addon_entitlement where organization_id = $1 and addon_id = 'connect-pro'`, [org.id]))[0].status).toBe('canceled');
+    expect((await mine('connect-pro')).entitlement).toMatchObject({ addonId: 'ai-studio', active: true }); // on, through AI Studio
+    const c = (await owner.get('/v1/connect')).json;
+    expect(c.plan).toBe('ai-studio');
+    expect(c.ai).toMatchObject({ open: true, limits: { day: 60, week: 300, month: 1000 } });
+    expect((await owner.post('/v1/billing/addons/connect-pro/request', { billing: 'month' })).json.error).toBe('ADDON_ALREADY_ACTIVE');
+    expect((await owner.get('/v1/studio')).json).toMatchObject({ active: true, allowance: { copy: 200, images: 60, videos: 0 }, tools: { copy: true, image: false, video: false } });
+    expect((await owner.post('/v1/web/site/publish')).status).toBe(402); // the website was canceled, and nothing brings it back
   });
 });
 

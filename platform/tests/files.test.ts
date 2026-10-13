@@ -90,6 +90,28 @@ describe('product photos', () => {
     await owner.req('PATCH', `/v1/sys/products/${created.json.product.id}`, { imageId: null });
     expect((await owner.get('/v1/sys/products')).json.products.find((p: any) => p.name === 'Pepsi').imageUrl).toBeNull();
   });
+
+  it('a gallery, like a shop: a cover and more photos, reordered, the dropped ones deleted', async () => {
+    const [a, b, c] = [(await owner.upload('/v1/sys/files?purpose=product', PNG)).json.file, (await owner.upload('/v1/sys/files?purpose=product', PNG)).json.file,
+      (await owner.upload('/v1/sys/files?purpose=product', JPEG, 'image/jpeg')).json.file];
+    const made = (await owner.post('/v1/sys/products', { name: 'Amber', price: 85000, imageId: a.id, photoIds: [b.id, c.id] })).json.product;
+    expect(made.photos.map((x: any) => x.id)).toEqual([a.id, b.id, c.id]);
+    expect(made.imageUrl).toContain(a.id);
+
+    // c becomes the cover, a moves into the gallery, b is dropped (and deleted)
+    const before = t.files.size();
+    const moved = (await owner.req('PATCH', `/v1/sys/products/${made.id}`, { imageId: c.id, photoIds: [a.id] })).json.product;
+    expect(moved.photos.map((x: any) => x.id)).toEqual([c.id, a.id]);
+    expect(t.files.size()).toBe(before - 1);
+    expect(await system('select id from sys_file where id = $1', [b.id])).toHaveLength(0);
+
+    // the cover twice is kept once; another shop's photo is refused; at most eight
+    expect((await owner.req('PATCH', `/v1/sys/products/${made.id}`, { photoIds: [c.id, a.id] })).json.product.photoIds).toEqual([a.id]);
+    const theirs = (await other.upload('/v1/sys/files?purpose=product', PNG)).json.file;
+    expect((await owner.req('PATCH', `/v1/sys/products/${made.id}`, { photoIds: [theirs.id] })).json.error).toBe('BAD_FILE');
+    await other.del(`/v1/sys/files/${theirs.id}`);
+    expect((await owner.req('PATCH', `/v1/sys/products/${made.id}`, { photoIds: Array.from({ length: 8 }, (_, i) => `x${i}`) })).json.error).toBe('TOO_MANY_PHOTOS');
+  });
 });
 
 describe('photos on purchases and expenses', () => {

@@ -12,11 +12,12 @@ import { actor, bad, text, type Actor } from '../sys-common';
 import { subscriptionOf } from '../../subscription';
 import { addonEntitlement, requireAddon } from '../../addons';
 import { settingsOf } from '../realestate/common';
+import { shopIn } from '../shop/orders';
 import type { AppEnv, Deps } from '../../types';
 
 export const WEB_THEMES = ['classic', 'modern', 'minimal', 'bold'] as const;
 export const WEB_SECTION_TYPES = ['hero', 'about', 'products', 'listings', 'services', 'gallery', 'team', 'faq', 'hours', 'testimonials', 'contact', 'cta'] as const;
-const RESERVED_SUBDOMAINS = ['www', 'api', 'app', 'admin', 'account', 'studio', 'mail', 'ftp', 'cdn', 'static', 'assets', 'demo', 'test', 'systems', 'tools'];
+const RESERVED_SUBDOMAINS = ['www', 'api', 'app', 'admin', 'account', 'studio', 'mail', 'ftp', 'cdn', 'static', 'assets', 'demo', 'test', 'systems', 'tools', 'business', 'sample', 'sample-shop'];
 const WEBSITE_DOMAIN = 'hemlohq.com';
 
 type Two = { ar?: string; en?: string };
@@ -80,8 +81,10 @@ const slugIn = (v: unknown): string => {
   return /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/.test(s) ? s : bad('BAD_SLUG');
 };
 const kindIn = (v: unknown): string => ((WEB_PAGE_KINDS as readonly string[]).includes(v as string) ? (v as string) : 'custom');
+/** "agency", "agency.hemlohq.com" or "https://agency.hemlohq.com/" all mean the same address: keep the name. */
+export const subdomainName = (v: unknown) => String(v ?? '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/\.hemlohq\.com$/, '');
 const subdomainIn = (v: unknown): string => {
-  const s = String(v ?? '').trim().toLowerCase();
+  const s = subdomainName(v);
   if (!/^[a-z0-9](?:[a-z0-9-]{1,28}[a-z0-9])?$/.test(s) || RESERVED_SUBDOMAINS.includes(s)) bad('BAD_SUBDOMAIN');
   return s;
 };
@@ -91,14 +94,15 @@ const siteUrl = (subdomain: string | null, _base: string) => {
   return `https://${subdomain}.${WEBSITE_DOMAIN}`;
 };
 
-/** The starter site for a new business: a home page that leads with what they sell, plus about and contact. */
-function starterPages(vertical: string, name: Two) {
+/** The starter site for a new business: a home page that leads with what they sell, plus about and contact.
+ *  The hero carries no words of its own: it shows the site's name and tagline, so it follows them when they change. */
+export function starterPages(vertical: string, _name: Two) {
   const aboutTitle = { ar: 'من نحن', en: 'About us' }, contactTitle = { ar: 'تواصل معنا', en: 'Contact' };
   const lead = vertical === 'realestate' ? { type: 'listings', title: { ar: 'عقاراتنا', en: 'Our properties' } }
     : vertical === 'store' ? { type: 'products', title: { ar: 'منتجاتنا', en: 'Our products' } }
     : { type: 'services', title: { ar: 'خدماتنا', en: 'Our services' } };
   return [
-    { slug: '', kind: 'home', title: { ar: 'الرئيسية', en: 'Home' }, sort: 0, sections: [{ id: newId(), type: 'hero', title: name }, { id: newId(), ...lead }, { id: newId(), type: 'about', title: aboutTitle }, { id: newId(), type: 'contact', title: contactTitle }] },
+    { slug: '', kind: 'home', title: { ar: 'الرئيسية', en: 'Home' }, sort: 0, sections: [{ id: newId(), type: 'hero' }, { id: newId(), ...lead }, { id: newId(), type: 'about', title: aboutTitle }, { id: newId(), type: 'contact', title: contactTitle }] },
     { slug: 'about', kind: 'about', title: aboutTitle, sort: 1, sections: [{ id: newId(), type: 'about', title: aboutTitle }] },
     { slug: 'contact', kind: 'contact', title: contactTitle, sort: 2, sections: [{ id: newId(), type: 'contact', title: contactTitle }] },
   ];
@@ -114,6 +118,11 @@ export function webRoutes(d: Deps) {
   async function orgFace(org: string) {
     const [o] = await withSystem(d.db, (tx) => tx.select({ slug: organization.slug, name: organization.name }).from(organization).where(eq(organization.id, org)));
     return o ?? null;
+  }
+  /** A demo's site stays a preview: it never goes live on a public address. */
+  async function demoOrg(org: string) {
+    const [o] = await withSystem(d.db, (tx) => tx.select({ metadata: organization.metadata }).from(organization).where(eq(organization.id, org)));
+    return /"demo":true/.test(String(o?.metadata ?? ''));
   }
   async function siteOf(a: Actor) {
     const [site] = await inWeb(a, (tx) => tx.select().from(webSite).where(eq(webSite.organizationId, a.organizationId)));
@@ -172,7 +181,8 @@ export function webRoutes(d: Deps) {
   r.put('/site', async (c) => {
     const a = actor(c, 'website', 'manage');
     await requireAddon(d.db, a.organizationId, 'website');
-    if (!(await siteOf(a))) throw new HttpError(404, 'SITE_NOT_FOUND');
+    const before = await siteOf(a);
+    if (!before) throw new HttpError(404, 'SITE_NOT_FOUND');
     const b = await c.req.json<Record<string, any>>().catch(() => ({} as Record<string, any>));
     const set: Record<string, unknown> = { updatedAt: new Date() };
     if (b.lang !== undefined) set.lang = ['ar', 'en'].includes(b.lang) ? b.lang : bad('BAD_LANG');
@@ -180,7 +190,8 @@ export function webRoutes(d: Deps) {
     if (b.tagline !== undefined) set.tagline = two(b.tagline, 160);
     if (b.about !== undefined) set.about = two(b.about);
     if (b.theme !== undefined) set.theme = themeIn(b.theme);
-    if (b.settings !== undefined) set.settings = settingsIn(b.settings);
+    // a shop's checkout rules ride along: kept as they are unless they were sent (then checked like everything else)
+    if (b.settings !== undefined) set.settings = { ...settingsIn(b.settings), ...(b.settings?.shop ? { shop: shopIn(b.settings.shop) } : before.settings?.shop ? { shop: before.settings.shop } : {}) };
     if (b.logoId !== undefined) set.logoId = b.logoId || null;
     if (b.faviconId !== undefined) set.faviconId = b.faviconId || null;
     if (b.subdomain !== undefined) set.subdomain = b.subdomain ? subdomainIn(b.subdomain) : null;
@@ -196,6 +207,7 @@ export function webRoutes(d: Deps) {
   r.post('/site/publish', async (c) => {
     const a = actor(c, 'website', 'manage');
     await requireAddon(d.db, a.organizationId, 'website');
+    if (await demoOrg(a.organizationId)) throw new HttpError(403, 'NOT_IN_DEMO');
     const site = await siteOf(a);
     if (!site) throw new HttpError(404, 'SITE_NOT_FOUND');
     const [row] = await inWeb(a, async (tx) => {

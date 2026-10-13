@@ -1,17 +1,23 @@
 ---
+import ConnectedStory from '../components/ConnectedStory.astro';
 // Hemlo for real estate offices: emerald on warm paper, built around real screens of the demo agency (Al-Waha):
 // a property's own page sent on WhatsApp, the leads it matches and why, the day, the deal and the commission.
 // A 30-day free trial, or the demo agency in one tap.
 import Base from '../layouts/Base.astro';
 import Mark from '../components/Mark.astro';
 import Pricing from '../components/Pricing.astro';
-import { EMAIL, SYSTEM_URL, type Lang } from '../i18n/strings';
+import HwBadge from '../components/HwBadge.astro';
+import { API_URL, EMAIL, SYSTEM_URL, href, type Lang } from '../i18n/strings';
 interface Props { lang: Lang; }
 const { lang } = Astro.props;
 const ar = lang === 'ar';
 const start = `${SYSTEM_URL}?start=realestate&lang=${lang}`;
 const demo = `${SYSTEM_URL}?demo=realestate&lang=${lang}`;
 const mail = `mailto:${EMAIL}?subject=${encodeURIComponent('Hemlo Real Estate')}`;
+// the Website add-on's price, from the API (admin → Billing → Add-ons), with today's list as the fallback
+let webPrice = 10000;
+try { const a = await fetch(`${API_URL}/v1/plans/addons?edition=realestate`, { signal: AbortSignal.timeout(6000) }).then((r) => r.json()); webPrice = a.addons?.find((x: any) => x.code === 'website')?.priceMonth ?? webPrice; } catch { /* the fallback */ }
+const webPriceText = new Intl.NumberFormat('en-US').format(webPrice);
 const num = (i: number) => (ar ? '١٢٣٤٥'[i] : String(i + 1));
 // real screenshots of the demo agency, per language (apps/demo-store/scripts/re-marketing.ts)
 const img = (name: string, w: number) => `/images/realestate/${name}-${lang}-${w}.webp`;
@@ -138,6 +144,10 @@ const S = ar ? {
   endTitle: 'Open your agency on Hemlo today.', endSub: 'Thirty days free, with everything. No card, no commitment.',
 };
 const fmax = V.funnel[0][1];
+// everything connected: the agency's website, WhatsApp and its system as one (Hemlo Website + Hemlo Connect)
+const CONN = lang === 'ar'
+  ? { eyebrow: 'متصل بالكامل', title: 'موقعك وواتساب ونظامك، وحدة واحدة.', sub: 'تابِع زبوناً واحداً من موقعك إلى معاينة محجوزة: هاتفه في جهة، ونظامك في الجهة الأخرى. لا نسخ ولا لصق، ولا رسالة تضيع. اضغط أي فصل لتنتقل إليه.', cta: 'أضف Website وConnect' }
+  : { eyebrow: 'Fully connected', title: 'Your website, WhatsApp and system, one unit.', sub: 'Follow one customer from your website to a booked viewing: their phone on one side, your system on the other. No copying, no pasting, no message lost. Tap any chapter to jump to it.', cta: 'Add Website and Connect' };
 ---
 <Base lang={lang} page="realestate" title={S.title} description={S.sub}>
   <div class="re">
@@ -176,6 +186,18 @@ const fmax = V.funnel[0][1];
         </div>
       </section>
     ))}
+
+
+    <!-- everything connected: one customer's story across the website, WhatsApp and this system -->
+    <section class="wrap border-t border-line py-24 sm:py-32" id="connected">
+      <div class="cx-head">
+        <p class="reveal cx-eyebrow"><span class="cx-new">{CONN.eyebrow}</span><HwBadge /><HwBadge label="Connect" /></p>
+        <h2 class="reveal mt-5 text-[clamp(2rem,4.2vw,3.3rem)] font-semibold leading-[1.08] tracking-tight">{CONN.title}</h2>
+        <p class="reveal mt-4 max-w-2xl text-lead text-fg-2">{CONN.sub}</p>
+      </div>
+      <div class="reveal cx-stage"><ConnectedStory lang={lang} kind="realestate" /></div>
+      <p class="reveal cx-cta"><a class="btn btn-primary" href={`${href(lang, 'systems')}#addons`}>{CONN.cta}<span class="arr" aria-hidden="true">→</span></a></p>
+    </section>
 
     <section id="features" class="scroll-mt-24 wrap border-t border-line py-24 sm:py-32">
       <div class="feat-head">
@@ -239,6 +261,19 @@ const fmax = V.funnel[0][1];
 
     <Pricing lang={lang} edition="realestate" color="#1F6F5C" />
 
+    <!-- the add-on on top of this system: Hemlo Website (price: hemlo_addon, admin → Billing → Add-ons) -->
+    <section class="wrap pb-16 sm:pb-24">
+      <a class="reveal re-addon" href={ar ? 'https://business.hemlohq.com/s/sample' : 'https://business.hemlohq.com/s/sample?lang=en'} target="_blank" rel="noopener">
+        <img src="/images/realestate/sample/hero.webp" width="1400" height="933" alt="" loading="lazy" decoding="async" />
+        <div class="re-addon-t">
+          <p class="flex flex-wrap items-center gap-2 text-sm"><HwBadge /><span class="opacity-80">{ar ? 'إضافة' : 'Add-on'}</span></p>
+          <p class="mt-2 text-xl font-semibold sm:text-2xl">{ar ? 'موقع لمكتبك على عنوانه الخاص، يعرض عقاراتك من هذا النظام مباشرة.' : 'Your office’s own website, showing your properties straight from this system.'}</p>
+          <p class="mt-3 text-sm opacity-80">{ar ? `${webPriceText} د.ع شهرياً فوق خطتك · شاهد موقعاً نموذجياً` : `${webPriceText} IQD a month on top of your plan · See a sample site`} <span class="arr" aria-hidden="true">→</span></p>
+        </div>
+      </a>
+      <p class="mt-4 text-sm text-fg-2"><a class="link-quiet" href={ar ? '/systems/#addons' : '/en/systems/#addons'}>{ar ? 'كيف تعمل الإضافات' : 'How add-ons work'}</a></p>
+    </section>
+
     <section class="wrap pb-24 sm:pb-32">
       <div class="reveal end relative overflow-hidden rounded-[2rem] p-10 sm:p-16">
         <Mark class="end-mark" />
@@ -257,6 +292,15 @@ const fmax = V.funnel[0][1];
 </Base>
 
 <style>
+  .re-addon { position: relative; display: grid; align-items: end; min-height: 19rem; overflow: hidden; border-radius: 1.5rem; color: #fff; isolation: isolate; }
+  .re-addon img { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; transition: transform 1.4s cubic-bezier(.22,.7,.18,1); }
+  .re-addon::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(14,13,11,0) 20%, rgba(14,13,11,.75) 100%); }
+  .re-addon:hover img { transform: scale(1.035); }
+  .re-addon-t { max-width: 40rem; padding: 2rem; }
+  .re-addon .arr { display: inline-block; transition: transform .45s cubic-bezier(.22,.7,.18,1); }
+  .re-addon:hover .arr { transform: translateX(4px); }
+  :global(html[dir=rtl]) .re-addon .arr { transform: scaleX(-1); }
+  :global(html[dir=rtl]) .re-addon:hover .arr { transform: scaleX(-1) translateX(4px); }
   /* Hemlo for real estate: emerald on warm paper. The hero, the property page's story and the end sit on a deep
      green ink, like the app's rail; the rest stays on Hemlo's paper so the screenshots read clearly. */
   .re { --em: #1F6F5C; --em-l: #5CC4A2; --ink: #0E1A16; --ink-2: #15241F; --ease: cubic-bezier(.23, 1, .32, 1); }
@@ -379,4 +423,13 @@ const fmax = V.funnel[0][1];
   .end { background: radial-gradient(60% 90% at 100% 0%, rgb(92 196 162 / .22), transparent 70%), var(--ink); }
   .end :global(.end-mark) { position: absolute; inset-inline-end: -2rem; bottom: -3rem; height: 20rem; width: auto; color: var(--em-l); opacity: .12; }
   @media (prefers-reduced-motion: reduce) { .dot::after, .float { animation: none; } }
+
+  /* everything connected (components/ConnectedStory.astro) */
+  .cx-head { display: grid; justify-items: center; text-align: center; }
+  .cx-eyebrow { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: .5rem; }
+  .cx-new { padding: .3rem .8rem; border-radius: 999px; background: #1F6F5C; color: #fff; font-size: .85rem; font-weight: 600; }
+  @media (prefers-color-scheme: dark) { .cx-new { background: #5FBF9F; color: #0B1019; } }
+  .cx-stage { margin-top: clamp(2rem, 5vw, 3.4rem); }
+  .cx-cta { display: flex; justify-content: center; margin-top: 2.4rem; }
+  :global(html[dir="rtl"]) .cx-cta .arr { display: inline-block; transform: scaleX(-1); }
 </style>

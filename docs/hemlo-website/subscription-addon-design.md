@@ -19,7 +19,7 @@ All tenant tables use forced RLS and `withOrg()` access. Catalog reads and Hemlo
 
 The Website catalog is seeded with `code = website`, initially compatible only with `realestate`. That is the only edition currently configured for purchase. Existing inline store rendering does not make Store a compatible product: the offer stays unavailable there until a safe, complete Store adapter is approved. Dental, Gym and School remain unavailable as well.
 
-The seed has null monthly and annual prices. Hemlo can set prices in the admin API (`PATCH /v1/admin/addons/website`) after reviewing the actual price. There is no customer purchase button while either period is unconfigured. Compatible editions and public/active status can be managed in the same central record.
+The launch price is 15,000 IQD a month or 150,000 IQD a year (ten months, like the core plans), set by migration `0022_website_price.sql` only where no price was set yet. Hemlo changes it in admin → Billing → Add-ons (or `PATCH /v1/admin/addons/website`). Clearing either period makes the offer unconfigured again, and there is no customer purchase button while it is. Compatible editions and public/active status are managed in the same place.
 
 ## Activation and cancellation
 
@@ -36,7 +36,7 @@ Activation and use also require the core subscription to remain in trial/active/
 
 The public catalog (`GET /v1/plans/addons?edition=…`) and workspace billing response (`GET /v1/billing/addons`) return prices from `hemlo_addon`. Client totals are display estimates only. Requests send only a billing-period choice, never an amount; the server loads and snapshots the trusted value. Staff confirmation rejects a receipt amount that does not match the snapshot multiplied by confirmed periods.
 
-No definitive Website price is set in the repository. The current offer is explicitly unconfigured until Hemlo staff supplies one.
+The launch price (15,000 / 150,000 IQD) is the catalog default; staff can change it at any time and existing entitlements keep their agreed price.
 
 ## Authorization boundaries
 
@@ -57,7 +57,7 @@ No definitive Website price is set in the repository. The current offer is expli
 ## Explicit limitations
 
 - There is no automated payment gateway or automatic renewal. The customer is told that Hemlo confirms manual payment.
-- The add-on catalog has an administrator API but does not yet have a visual admin form.
+- Staff handle the catalog and the open requests in admin → Billing → Add-ons: set prices and compatible systems, record a payment to activate (the amount is the request's snapshot × periods), dismiss, or confirm a cancellation.
 - Price changes affect new requests; existing entitlements retain their agreed price snapshot.
 - Website compatibility is intentionally limited to Real Estate. Other integrations should be enabled only after their adapter and public-data behavior are complete.
 - Custom-domain verification, DNS provisioning and SSL issuance are not available in the current deployment workflow. The shared routed business hostname is used for customer Websites.

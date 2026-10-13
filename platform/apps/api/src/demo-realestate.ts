@@ -10,7 +10,9 @@ import type { Database } from '@hemlo/db';
 import {
   sysSettings, reSettings, reAgent, reOwner, reProperty, reMedia, reLead, reLeadProperty, reCollection, reCollectionItem, reViewing, reFollowup,
   reDeal, reOffer, rePayment, reActivity, reStat, reNotice, reContract, sysSequence,
+  hemloSubscription, hemloAddonEntitlement, webSite, webPage, connectChannel, connectRecipe, connectConversation, connectMessage,
 } from '@hemlo/db/schema';
+import { starterPages } from './routes/website';
 import { contractDraft } from './routes/realestate/contracts';
 import { insertAll, rng, type Batch } from './demo-data';
 import { newSlug, token } from './routes/realestate/common';
@@ -25,10 +27,10 @@ const ymd = (days: number) => new Date(Date.now() + 3 * HOUR + days * DAY).toISO
 // public links are random for every demo (they're unique across Hemlo: many visitors' demos live side by side)
 
 // [key, type, purpose, status, title ar, title en, area, city, price, currency, size, land, beds, baths, floors, parking, year, furnished, condition, features, photos, owner index, days listed, extra]
-type P = [string, string, 'sale' | 'rent', string, string, string, string, string, number | null, 'USD' | 'IQD', number | null, number | null, number | null, number | null, number | null, number | null, number | null, string | null, string | null, string[], string[], number, number, { rentPeriod?: string; published?: boolean; views?: number; desc?: [string, string]; lat?: number; lng?: number; exact?: boolean }?];
+export type DemoListing = [string, string, 'sale' | 'rent', string, string, string, string, string, number | null, 'USD' | 'IQD', number | null, number | null, number | null, number | null, number | null, number | null, number | null, string | null, string | null, string[], string[], number, number, { rentPeriod?: string; published?: boolean; views?: number; desc?: [string, string]; lat?: number; lng?: number; exact?: boolean }?];
 const NEAR: Record<string, [number, number]> = { 'Dream City': [36.2445, 43.9408], 'English Village': [36.2163, 43.9829], 'Italian Village': [36.2311, 43.9935], 'Empire World': [36.2057, 43.9668],
   Gulan: [36.1985, 44.0073], Ankawa: [36.2316, 43.9962], '100m Street': [36.1781, 44.0292], Kasnazan: [36.2528, 44.1498], Shaqlawa: [36.4052, 44.3218], Zayouna: [33.3204, 44.4532], Mansour: [33.3149, 44.3456] };
-const LISTINGS: P[] = [
+export const LISTINGS: DemoListing[] = [
   ['dream', 'villa', 'sale', 'available', 'فيلا بحديقة في دريم ستي', 'Villa with a garden in Dream City', 'Dream City', 'Erbil', 185000, 'USD', 320, 400, 4, 3, 2, 2, 2019, 'semi', 'excellent',
     ['garden', 'garage', 'generator', 'central_ac', 'title_deed'], ['villa-1', 'living-1', 'kitchen-2', 'bedroom-3', 'bath-3', 'garden-3'], 0, 18,
     { views: 380, lat: 36.2063, lng: 43.9611, desc: ['فيلا عائلية على طابقين في دريم ستي، بحديقة أمامية وكراج لسيارتين. المطبخ مجدّد بالكامل، والصالة واسعة ومضيئة.\n\nأربع غرف نوم، منها غرفة رئيسية بحمّام خاص، وخط مولدة وتكييف مركزي. الطابو صرف وجاهز للتنازل.', 'A two-storey family villa in Dream City with a front garden and a garage for two cars. The kitchen is fully renovated and the living room is wide and bright.\n\nFour bedrooms, including a main bedroom with its own bathroom, a generator line and central air conditioning. Clear title deed, ready to transfer.'] }],
@@ -83,7 +85,12 @@ const LEADS: L[] = [
   ['نادية فاضل', 'Nadia Fadhil', '+9647722334455', 'website', 'sale', ['villa'], ['Dream City'], 160000, 200000, 4, 280, 'won', 30],
 ];
 
-export async function seedDemoRealEstate(tx: Database, org: string, userId: string, memberId: string, lang: Lang, first: Batch[] = [], systemUrl = PHOTOS_AT) {
+/** The demo agency comes with its add-ons already on (Website and AI Studio, which includes Connect Pro), so a visitor uses them instead of being
+ *  asked to subscribe: a trial on the edition's plan, the add-ons' entitlements, a site ready to shape, and WhatsApp in the
+ *  sandbox (nothing leaves Hemlo) with a few days of conversations tied to the agency's own leads. */
+export type DemoAddons = { grants?: { id: string; price: number }[]; subdomain?: string };
+
+export async function seedDemoRealEstate(tx: Database, org: string, userId: string, memberId: string, lang: Lang, first: Batch[] = [], systemUrl = PHOTOS_AT, addons: DemoAddons = {}) {
   const PHOTOS = `${systemUrl.replace(/\/$/, '')}/demo/re/`;
   const L = (ar: string, en: string) => (lang === 'ar' ? ar : en);
   const r = rng(20261007);
@@ -221,8 +228,11 @@ export async function seedDemoRealEstate(tx: Database, org: string, userId: stri
     { id: newId(), organizationId: org, kind: 'offer', agentId: me, dealId: omarDeal.id, propertyId: byKey.english.id, detail: { amount: 318000, currency: 'USD' }, createdAt: at(-1, 18) },
   ];
 
+  const extra = addOns(org, userId, lang, L, addons, { layla, ahmed, omar, sara }, byKey);
+
   await insertAll(tx, [
     ...first,
+    ...extra,
     [sysSettings, [{ organizationId: org }]],
     [reSettings, [{ organizationId: org, phone: '+9647501234567', whatsapp: '+9647501234567', email: 'hello@alwaha.example', city: L('أربيل', 'Erbil'), currency: 'USD', usdRate: 1450, defaultCommission: 200,
       about: { ar: 'مكتب عقاري في أربيل منذ 2012: بيع وإيجار الفلل والشقق والأراضي.', en: 'An Erbil property agency since 2012: villas, apartments and land, for sale and rent.' } }]],
@@ -233,4 +243,71 @@ export async function seedDemoRealEstate(tx: Database, org: string, userId: stri
     [sysSequence, [{ organizationId: org, name: 're_property', value: 4810 + LISTINGS.length }, { organizationId: org, name: 're_contract', value: 3 }]],
   ]);
   return { listings: props.length, leads: leads.length };
+}
+
+// ------------------------------------------------------------------------------------------- the add-ons, switched on
+function addOns(org: string, userId: string, lang: Lang, L: (ar: string, en: string) => string, x: DemoAddons, who: Record<'layla' | 'ahmed' | 'omar' | 'sara', any>, byKey: Record<string, any>): Batch[] {
+  if (!x.grants?.length) return [];
+  const usd = (n: number) => `$${n.toLocaleString('en-US')}`;
+  const name = { ar: DEMO_AGENCY.ar.name, en: DEMO_AGENCY.en.name };
+  const site = { id: newId(), organizationId: org, vertical: 'realestate', status: 'setup', lang, name, subdomain: x.subdomain ?? null, createdBy: userId,
+    tagline: { ar: 'بيوت أربيل وبغداد، مختارة بعناية منذ 2012', en: 'Homes in Erbil and Baghdad, chosen with care since 2012' },
+    about: { ar: 'مكتب عقاري عائلي في أربيل. نبيع ونؤجّر الفلل والشقق والأراضي، ونرافقك من أول زيارة حتى توقيع العقد.', en: 'A family agency in Erbil. We sell and let villas, apartments and land, and stay with you from the first viewing to the signed contract.' },
+    theme: { preset: 'classic', accent: '#1F6F5C' },
+    settings: { contact: { phone: '+9647501234567', whatsapp: '+9647501234567', email: 'hello@alwaha.example', address: L('أربيل، شارع 100، بناية الواحة', 'Erbil, 100m Street, Al-Waha building') }, cta: { whatsapp: true, phone: true, inquiry: true } },
+    createdAt: at(-2, 11), updatedAt: at(-2, 12) };
+  const pages = starterPages('realestate', name).map((p) => ({ id: newId(), organizationId: org, websiteId: site.id, createdBy: userId, ...p }));
+
+  // WhatsApp: who wrote and who answered (a customer, the assistant, an automation, or the agent herself)
+  const convs: any[] = [], msgs: any[] = [];
+  type M = [by: 'customer' | 'ai' | 'automation' | 'agent', text: string, minutes: number, recipe?: string];
+  const chat = (phone: string, nm: string, lead: any, days: number, hour: number, lines: M[], o: { unread?: number; handoff?: boolean } = {}) => {
+    const id = newId(), start = +at(days, hour); let last = new Date(start), lastIn: Date | null = null;
+    for (const [by, text, min, recipe] of lines) {
+      last = new Date(start + min * 60_000);
+      if (by === 'customer') lastIn = last;
+      msgs.push({ id: newId(), organizationId: org, conversationId: id, direction: by === 'customer' ? 'in' : 'out', author: by, userId: by === 'agent' ? userId : null,
+        kind: recipe ? 'template' : 'text', body: text, recipe: recipe ?? null, status: by === 'customer' ? 'received' : 'read', createdAt: last });
+    }
+    convs.push({ id, organizationId: org, phone, name: nm, leadId: lead?.id ?? null, agentId: lead?.agentId ?? null, handoff: !!o.handoff, unread: o.unread ?? 0,
+      lastMessageAt: last, lastInboundAt: lastIn, preview: lines[lines.length - 1][1].slice(0, 120), createdAt: new Date(start) });
+  };
+  const flat = byKey['ankawa-flat'], villa = byKey['ankawa-villa'], view = byKey['empire-flat'], dream = byKey.gulan;
+  // a minute ago-ish: today, a couple of hours before now (Baghdad), so it sits at the top of the inbox
+  const nowH = Math.max(1, Math.floor(((Date.now() + 3 * HOUR) % DAY) / HOUR) - 1);
+  chat('+9647715550199', L('مصطفى رعد', 'Mustafa Raad'), null, 0, nowH, [
+    ['customer', L('مرحبا، عندكم فيلا مفروشة للإيجار في عنكاوة؟', 'Hi, do you have a furnished villa for rent in Ankawa?'), 0],
+    ['ai', L(`أهلاً بك. نعم، لدينا ${villa.title} (#${villa.ref}): 4 غرف نوم، 280 م²، مفروشة بالكامل، بـ ${usd(2200)} شهرياً. هل تحب أن نرتّب لك موعد زيارة؟`,
+      `Hello! Yes, we have a furnished villa for rent in Ankawa (#${villa.ref}): 4 bedrooms, 280 m², ${usd(2200)} a month. Would you like us to arrange a viewing?`), 0.2],
+    ['customer', L('ممكن بعد بكرة العصر؟', 'Could I see it the day after tomorrow, in the afternoon?'), 3],
+  ], { unread: 1 });
+  chat(who.layla.phone, who.layla.name, who.layla, 0, Math.min(nowH, 9), [
+    ['customer', `Hello, I saw the apartment in Ankawa on your website (#${flat.ref}). Is it still available? Could I see it tomorrow evening?`, 0],
+    ['ai', `Hello Layla! Yes, it is available: 2 bedrooms, 120 m², furnished, ${usd(750)} a month. I've passed your request for tomorrow evening to the agent, who will confirm the time with you shortly.`, 0.3],
+    ['agent', 'Hi Layla, tomorrow at 6 pm works. See you at the building entrance 🙂', 25],
+    ['customer', 'Perfect, thank you!', 31],
+  ]);
+  chat(who.ahmed.phone, who.ahmed.name, who.ahmed, -1, 18, [
+    ['automation', L(`تذكير: موعد زيارتك لـ ${dream.title} غداً الساعة 5 عصراً. للتأكيد أرسل "نعم".`, `Reminder: your viewing of the new-build villa in Gulan is tomorrow at 5 pm. Reply "yes" to confirm.`), 0, 'viewing_reminder'],
+    ['customer', L('نعم، وستأتي زوجتي معي إن أمكن', 'Yes, and my wife will come along if that is all right'), 12],
+    ['agent', L('أكيد، أهلاً وسهلاً بكما', 'Of course, you are both very welcome'), 20],
+  ]);
+  chat(who.omar.phone, who.omar.name, who.omar, -1, 20, [
+    ['customer', L('هل 318 ألف هو آخر سعر من المالك؟', "Is 318k the owner's final price?"), 0],
+    ['agent', L('تكلمت معه اليوم، وسأعود إليك صباح الغد بالجواب.', "I spoke with him today, and I'll come back to you tomorrow morning with his answer."), 14],
+  ], { handoff: true });
+  chat(who.sara.phone, who.sara.name, who.sara, -3, 11, [
+    ['automation', L(`عقار جديد يناسب طلبك: ${view.title}، 180 م²، ${usd(165000)}.`, `A new home that matches your search: an apartment with a view in Empire World, 180 m², ${usd(165000)}.`), 0, 'new_listing'],
+    ['customer', L('جميلة! فيها مصعد؟', 'Lovely! Does it have a lift?'), 40],
+    ['ai', L('نعم، في البناية مصعد ومولّد وحراسة، والشقة بإطلالة مفتوحة. هل تحبين زيارتها هذا الأسبوع؟', 'Yes: the building has a lift, a generator and security, and the flat has an open view. Would you like to see it this week?'), 40.3],
+  ]);
+
+  const recipes = ['instant_reply', 'viewing_reminder', 'viewing_followup', 'new_listing', 'owner_report'].map((key) => ({ organizationId: org, key, enabled: true, settings: {} }));
+  return [
+    [hemloSubscription, [{ organizationId: org, edition: 'realestate', status: 'trial', trialEndsAt: at(30) }]],
+    [hemloAddonEntitlement, x.grants.map((g) => ({ id: newId(), organizationId: org, addonId: g.id, edition: 'realestate', status: 'active', billing: 'month', price: g.price, updatedBy: 'demo' }))],
+    [webSite, [site]], [webPage, pages],
+    [connectChannel, [{ organizationId: org, provider: 'sandbox', status: 'connected', ai: true, persona: { hours: L('السبت إلى الخميس، 9 صباحاً إلى 7 مساءً', 'Saturday to Thursday, 9 am to 7 pm') }, connectedAt: at(-6, 10) }]],
+    [connectRecipe, recipes], [connectConversation, convs], [connectMessage, msgs],
+  ];
 }

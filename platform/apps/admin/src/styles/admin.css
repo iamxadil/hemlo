@@ -65,6 +65,8 @@ body { font-feature-settings: "tnum" 1; }
   .kpi .delta { font-size: .8rem; color: var(--muted); margin-top: .35rem; }
   .kpi.attention { border-color: color-mix(in oklab, #B38B3A 55%, var(--line)); background: color-mix(in oklab, #B38B3A 7%, var(--surface)); }
   .kpi.attention .value { color: var(--gold); }
+  .waiting { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; border-color: color-mix(in oklab, #B38B3A 55%, var(--line)); background: color-mix(in oklab, #B38B3A 7%, var(--surface)); }
+  .waiting:hover { border-color: #B38B3A; }
   .icon-btn { display: inline-grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: .65rem; color: var(--fg-2); transition: background-color .15s; }
   .icon-btn:hover { background: var(--sunken); color: var(--fg); }
   .icon-btn svg { width: 1.15rem; height: 1.15rem; }
