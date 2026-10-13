@@ -10,7 +10,7 @@ import { customerByPhone } from '../../connect/store';
 import type { Deps } from '../../types';
 import type { WebsiteAdapter, WebsiteListingFilter } from './adapters';
 
-export type ShopItem = { id: string; slug: string; name: string; category: string | null; price: number; image: string | null; unit: string; stock: 'in' | 'low' | 'out'; fresh: boolean };
+export type ShopItem = { id: string; slug: string; name: string; category: string | null; price: number; image: string | null; image2: string | null; unit: string; stock: 'in' | 'low' | 'out'; fresh: boolean };
 export type ShopProductPage = ShopItem & { description: string | null; photos: string[] };
 export type ShopOrderView = {
   number: number; code: string; status: string; name: string; delivery: string; city: string | null; area: string | null; address: string | null;
@@ -19,14 +19,14 @@ export type ShopOrderView = {
 
 const cols = {
   id: sysProduct.id, slug: sysProduct.slug, name: sysProduct.name, category: sysProduct.category, price: sysProduct.price, imageId: sysProduct.imageId, unit: sysProduct.unit,
-  stock: sysProduct.stock, lowStock: sysProduct.lowStock, trackStock: sysProduct.trackStock, createdAt: sysProduct.createdAt,
+  stock: sysProduct.stock, lowStock: sysProduct.lowStock, trackStock: sysProduct.trackStock, createdAt: sysProduct.createdAt, photoIds: sysProduct.photoIds,
 };
 const stockOf = (p: { trackStock: boolean; stock: number; lowStock: number | null }) =>
   (!p.trackStock ? 'in' as const : p.stock <= 0 ? 'out' as const : p.lowStock != null && p.stock <= p.lowStock ? 'low' as const : 'in' as const);
 async function asItems(deps: Deps, org: string, rows: any[]): Promise<ShopItem[]> {
   return Promise.all(rows.filter((p) => p.slug).map(async (p) => ({
     id: p.id, slug: p.slug, name: p.name, category: p.category, price: p.price, unit: p.unit, stock: stockOf(p),
-    image: p.imageId ? await fileUrl(deps.env, org, p.imageId) : null, fresh: Date.now() - +p.createdAt < 14 * 86400_000,
+    image: p.imageId ? await fileUrl(deps.env, org, p.imageId) : null, image2: p.photoIds?.[0] ? await fileUrl(deps.env, org, p.photoIds[0]) : null, fresh: Date.now() - +p.createdAt < 14 * 86400_000,
   })));
 }
 
@@ -41,7 +41,7 @@ export async function shopItems(tx: Database, deps: Deps, org: string, f: Websit
 }
 
 export async function shopProductPage(tx: Database, deps: Deps, org: string, slug: string): Promise<ShopProductPage | null> {
-  const [p] = await tx.select({ ...cols, description: sysProduct.description, photoIds: sysProduct.photoIds }).from(sysProduct)
+  const [p] = await tx.select({ ...cols, description: sysProduct.description }).from(sysProduct)
     .where(and(eq(sysProduct.organizationId, org), eq(sysProduct.slug, slug), eq(sysProduct.online, true), isNull(sysProduct.archivedAt))).limit(1);
   if (!p) return null;
   const [item] = await asItems(deps, org, [p]);

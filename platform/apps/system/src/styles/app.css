@@ -290,6 +290,30 @@ body { font-feature-settings: "tnum" 1; }
   .attach-x { position: absolute; top: -.4rem; inset-inline-end: -.4rem; width: 1.5rem; height: 1.5rem; border-radius: 999px; display: grid; place-items: center; background: var(--fg); color: var(--surface); box-shadow: 0 2px 6px rgba(0,0,0,.2); }
   .attach-x svg { width: .8rem; height: .8rem; }
   .rows .attach-thumb { width: 2.6rem; height: 2.6rem; border-radius: .55rem; }
+  /* a product's photos: the cover big, the rest beside it; drag to reorder */
+  .pgal { display: grid; gap: .35rem; }
+  .pgal-head { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; }
+  .pgal-head b { font-weight: 500; } .pgal-head small { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .pgal-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .5rem; margin-top: .4rem; }
+  .pgal-item { position: relative; aspect-ratio: 1; border-radius: .9rem; background: var(--sunken); box-shadow: 0 0 0 1px var(--line); cursor: grab; transition: transform .18s ease, opacity .18s ease; }
+  .pgal-item.cover { grid-column: span 2; grid-row: span 2; }
+  .pgal-item.dragging { opacity: .45; transform: scale(.96); }
+  .pgal-img { display: block; width: 100%; height: 100%; border-radius: inherit; overflow: hidden; }
+  .pgal-img img { width: 100%; height: 100%; object-fit: cover; }
+  .pgal-badge, .pgal-cover { position: absolute; inset-inline-start: .4rem; bottom: .4rem; padding: .15rem .5rem; border-radius: 999px; font-size: .68rem; font-weight: 600; }
+  .pgal-badge { background: var(--fg); color: var(--surface); }
+  .pgal-cover { background: color-mix(in oklab, var(--surface) 88%, transparent); color: var(--fg); box-shadow: 0 1px 3px rgba(0,0,0,.15); opacity: 0; transition: opacity .15s; }
+  .pgal-item:hover .pgal-cover, .pgal-item:focus-within .pgal-cover { opacity: 1; }
+  @media (hover: none) { .pgal-cover { opacity: 1; } }
+  .pgal-x { position: absolute; top: .3rem; inset-inline-end: .3rem; width: 1.6rem; height: 1.6rem; border-radius: 999px; display: grid; place-items: center; background: rgba(14, 20, 32, .6); color: #fff; backdrop-filter: blur(4px); }
+  .pgal-x svg { width: .8rem; height: .8rem; }
+  .pgal-add { aspect-ratio: 1; border-radius: .9rem; border: 1px dashed var(--line-strong); background: var(--sunken); color: var(--muted); display: grid; place-items: center; align-content: center; gap: .15rem; text-align: center; }
+  .pgal-add.first { grid-column: span 2; grid-row: span 2; }
+  .pgal-add:hover { border-color: var(--accent); color: var(--accent); }
+  .pgal-add svg { width: 1.4rem; height: 1.4rem; } .pgal-add small { font-size: .72rem; padding-inline: .3rem; }
+  .pgal-strip { display: flex; gap: .5rem; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: .2rem; }
+  .pgal-strip button { flex: 0 0 auto; width: 5.5rem; aspect-ratio: 1; border-radius: .8rem; overflow: hidden; scroll-snap-align: start; box-shadow: 0 0 0 1px var(--line); }
+  .pgal-strip img { width: 100%; height: 100%; object-fit: cover; }
   .lightbox { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 3.5rem 1rem; background: rgba(8, 10, 14, .88); backdrop-filter: blur(6px); }
   .lightbox img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: .5rem; box-shadow: 0 20px 60px rgba(0,0,0,.5); background: #fff; }
   .lightbox-x { position: absolute; top: 1rem; inset-inline-end: 1rem; width: 2.6rem; height: 2.6rem; border-radius: 999px; display: grid; place-items: center; background: rgba(255,255,255,.14); color: #fff; }
@@ -429,3 +453,5 @@ html[dir="rtl"] .impact-vs i { transform-origin: right; }
 .impact-banner .go { display: inline-flex; align-items: center; gap: .25rem; font-size: .8rem; color: var(--accent); white-space: nowrap; }
 .impact-banner .go svg { width: .9rem; height: .9rem; }
 @media (prefers-reduced-motion: reduce) { .impact-vs i { animation: none; } }
+/* "Make cover" sits as a bar along the tile's foot, so it never wraps on a phone's small tiles */
+.pgal-cover { inset-inline: 0; bottom: 0; border-radius: 0 0 .9rem .9rem; padding: .3rem .25rem; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: .66rem; box-shadow: none; backdrop-filter: blur(6px); }

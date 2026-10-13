@@ -33,11 +33,18 @@ const items: [string, string, string, number, number, string?][] = [
   ['gift-box', 'صندوق هدية · ثلاث عطور', 'هدايا', 150000, 5],
   ['discovery', 'مجموعة الاكتشاف', 'هدايا', 45000, 20],
 ];
-for (const [file, name, category, price, stock, description] of items) {
+// a few products with a whole gallery (the cover, then more), like a shop's
+const more: Record<string, string[]> = { amber: ['ember', 'cedar', 'musk'], 'hand-cream': ['hand-cream-2', 'cream', 'lotion'], 'gift-box': ['discovery', 'care-ritual'] };
+const send = async (file: string) => {
   const bytes = new Uint8Array(await readFile(new URL(`${file}-640.webp`, PHOTOS)));
   const up = await owner.upload('/v1/sys/files?purpose=product', bytes, 'image/webp');
   if (up.status !== 201) throw new Error(`upload ${file}: ${up.status} ${JSON.stringify(up.json)}`);
-  const r = await owner.post('/v1/sys/products', { name, category, price, stock, lowStock: 4, online: true, imageId: up.json.file?.id ?? up.json.id, description: description ?? null });
+  return up.json.file?.id ?? up.json.id;
+};
+for (const [file, name, category, price, stock, description] of items) {
+  const cover = await send(file), photoIds = [];
+  for (const x of more[file] ?? []) photoIds.push(await send(x));
+  const r = await owner.post('/v1/sys/products', { name, category, price, stock, lowStock: 4, online: true, imageId: cover, photoIds, description: description ?? null });
   if (r.status !== 201) throw new Error(`product ${file}: ${r.status} ${JSON.stringify(r.json)}`);
 }
 await owner.post('/v1/web/site/enable');

@@ -47,7 +47,7 @@ type Words = (typeof S)['ar'] | (typeof S)['en'];
 
 const P: Record<string, string> = {
   search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>', menu: '<path d="M4 9h16M4 15h16"/>', x: '<path d="M18 6 6 18M6 6l12 12"/>',
-  arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>', chev: '<path d="m9 6 6 6-6 6"/>',
+  arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>', chev: '<path d="m9 6 6 6-6 6"/>', chevl: '<path d="m15 6-6 6 6 6"/>',
   bag: '<path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>', plus: '<path d="M12 5v14M5 12h14"/>', minus: '<path d="M5 12h14"/>',
   truck: '<path d="M3 6h11v10H3zM14 9h4l3 3v4h-7"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/>', cash: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 10v4M18 10v4"/>',
   chat: '<path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-4-.9L3 20l1.1-4A8.4 8.4 0 0 1 3 11.5 8.5 8.5 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5Z"/>',
@@ -70,7 +70,7 @@ export function shopCard(ctx: Ctx, p: ShopItem, i: number) {
   const item = JSON.stringify({ id: p.id, slug: p.slug, name: p.name, price: p.price, image: p.image, unit: p.unit });
   const badge = out ? `<span class="ebadge soft">${esc(t.out)}</span>` : p.stock === 'low' ? `<span class="ebadge warn">${esc(t.low)}</span>` : p.fresh ? `<span class="ebadge new">${esc(t.isNew)}</span>` : '';
   return `<article class="scard erv${out ? ' is-out' : ''}" style="--i:${i % 4}" data-cat="${attr(p.category ?? '')}">
-<div class="scard-media">${p.image ? `<img src="${attr(p.image)}" alt="" loading="${i < 4 ? 'eager' : 'lazy'}" decoding="async">` : `<span class="scard-ph">${ic('box')}</span>`}${badge ? `<div class="scard-tags">${badge}</div>` : ''}</div>
+<div class="scard-media${p.image && p.image2 ? ' has-2' : ''}">${p.image ? `<img src="${attr(p.image)}" alt="" loading="${i < 4 ? 'eager' : 'lazy'}" decoding="async">${p.image2 ? `<img class="alt" src="${attr(p.image2)}" alt="" loading="lazy" decoding="async">` : ''}` : `<span class="scard-ph">${ic('box')}</span>`}${badge ? `<div class="scard-tags">${badge}</div>` : ''}</div>
 <div class="scard-body">${p.category ? `<small class="scard-cat">${esc(p.category)}</small>` : ''}<h3 class="scard-title"><a class="ecard-link" href="${attr(productHref(ctx, p.slug))}">${esc(p.name)}</a></h3>
 <div class="scard-foot"><p class="scard-price">${money(p.price, ctx.lang)}</p><button class="sadd" type="button" data-add="${attr(item)}"${out ? ' disabled' : ''} aria-label="${attr(`${t.add}: ${p.name}`)}">${ic('plus')}</button></div></div></article>`;
 }
@@ -229,7 +229,10 @@ export function shopProduct(ctx: Ctx, p: ShopProductPage, similar: ShopItem[], c
   const step = p.unit === 'piece' || p.unit === 'box' || p.unit === 'pack' ? 1 : 0.25;
   const wa = waFor(ctx, `${fill(t.waAsk, { what: p.name })}\n${canonical}`);
   const photos = p.photos.length ? p.photos : p.image ? [p.image] : [];
-  const gal = photos.length ? `<div class="spdp-gal"><div class="spdp-main"><img src="${attr(photos[0])}" alt="${attr(p.name)}" fetchpriority="high" decoding="async" data-main></div>${photos.length > 1 ? `<div class="spdp-thumbs">${photos.map((u, i) => `<button type="button" data-thumb="${attr(u)}"${i ? '' : ' aria-current="true"'}><img src="${attr(u)}" alt="" loading="lazy"></button>`).join('')}</div>` : ''}</div>`
+  const many = photos.length > 1;
+  const gal = photos.length ? `<div class="spdp-gal" data-pgal><div class="spdp-main"><div class="spdp-track" data-ptrack>${photos.map((u, i) => `<img src="${attr(u)}" alt="${attr(i ? `${p.name} ${i + 1}` : p.name)}" ${i ? 'loading="lazy"' : 'fetchpriority="high"'} decoding="async">`).join('')}</div>`
+    + (many ? `<button class="spdp-nav prev" type="button" data-pnav="-1" aria-label="‹">${ic('chevl', 'i dir')}</button><button class="spdp-nav next" type="button" data-pnav="1" aria-label="›">${ic('chev', 'i dir')}</button><span class="spdp-n num" dir="ltr" data-pn>1 / ${photos.length}</span>` : '') + `</div>`
+    + (many ? `<div class="spdp-thumbs">${photos.map((u, i) => `<button type="button" data-thumb="${i}"${i ? '' : ' aria-current="true"'} aria-label="${i + 1}"><img src="${attr(u)}" alt="" loading="lazy"></button>`).join('')}</div>` : '') + `</div>`
     : `<div class="spdp-gal"><div class="spdp-main ph">${ic('box', 'i lg')}</div></div>`;
   const state = out ? `<span class="ebadge soft">${esc(t.out)}</span>` : p.stock === 'low' ? `<span class="ebadge warn">${esc(t.low)}</span>` : '';
   const buy = `<aside class="ebuy spdp-buy">${p.category ? `<a class="scard-cat" href="${attr(href(ctx, `products?c=${encodeURIComponent(p.category)}`))}">${esc(p.category)}</a>` : ''}<h1 class="eh1">${esc(p.name)}</h1>
@@ -270,11 +273,15 @@ var bar=d.querySelector('[data-bar]');if(bar)bar.hidden=!bag.length;d.body.class
 var list=d.querySelector('[data-bag-list]');if(list){list.textContent='';bag.forEach(function(x){list.append(lineEl(x,true))});d.querySelector('[data-bag-empty]').hidden=!!bag.length;d.querySelector('[data-bag-foot]').hidden=!bag.length}
 if(co)quote()}
 function toast(m){var x=el('div','etoast',m);x.setAttribute('role','status');d.body.append(x);setTimeout(function(){x.classList.add('out');setTimeout(function(){x.remove()},400)},1600)}
+var tr=d.querySelector('[data-ptrack]');function curPhoto(){return tr?Math.round(Math.abs(tr.scrollLeft)/(tr.clientWidth||1)):0}
+function goPhoto(i){if(!tr)return;var n=tr.children.length;i=(i+n)%n;var rtl=getComputedStyle(tr).direction==='rtl';tr.scrollTo({left:(rtl?-1:1)*i*tr.clientWidth,behavior:'smooth'})}
+if(tr){var pnEl=d.querySelector('[data-pn]'),sync=function(){var i=curPhoto();if(pnEl)pnEl.textContent=(i+1)+' / '+tr.children.length;[].forEach.call(d.querySelectorAll('[data-thumb]'),function(x){if(+x.getAttribute('data-thumb')===i){x.setAttribute('aria-current','true');x.scrollIntoView({block:'nearest',inline:'nearest'})}else x.removeAttribute('aria-current')})},rt=0;tr.addEventListener('scroll',function(){cancelAnimationFrame(rt);rt=requestAnimationFrame(sync)},{passive:true});d.addEventListener('keydown',function(e){if(e.target&&/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;var rtl=getComputedStyle(tr).direction==='rtl';if(e.key==='ArrowRight')goPhoto(curPhoto()+(rtl?-1:1));if(e.key==='ArrowLeft')goPhoto(curPhoto()+(rtl?1:-1))})}
 var qty=d.querySelector('[data-qty]');if(qty){var st=+qty.getAttribute('data-step'),qi=qty.querySelector('[data-qty-in]');var val=function(){var n=parseFloat(String(qi.value).replace(',','.'));return n>0?n:st};qty.querySelector('[data-dec]').onclick=function(){qi.value=String(Math.max(st,r3(val()-st)))};qty.querySelector('[data-inc]').onclick=function(){qi.value=String(r3(val()+st))}}
 d.addEventListener('click',function(ev){var t=ev.target;if(!(t instanceof Element))return;var b=t.closest('[data-add]');if(b&&!b.disabled){ev.preventDefault();var it=JSON.parse(b.getAttribute('data-add'));var q=b.hasAttribute('data-with-qty')&&qi?(parseFloat(String(qi.value).replace(',','.'))||1):1;add(it,q);b.classList.remove('pop');void b.offsetWidth;b.classList.add('pop');if(navigator.vibrate)navigator.vibrate(8);toast(J.added);return}
 var o=t.closest('[data-open]');if(o){var dl=d.getElementById(o.getAttribute('data-open'));if(dl&&dl.showModal){dl.showModal();d.body.classList.add('e-lock')}return}
 var c=t.closest('[data-close]');if(c){var p=c.closest('dialog');if(p)p.close();return}
-var th=t.closest('[data-thumb]');if(th){var mi=d.querySelector('[data-main]');if(mi)mi.src=th.getAttribute('data-thumb');[].forEach.call(d.querySelectorAll('[data-thumb]'),function(x){x.removeAttribute('aria-current')});th.setAttribute('aria-current','true');return}
+var th=t.closest('[data-thumb]');if(th){goPhoto(+th.getAttribute('data-thumb'));return}
+var pn=t.closest('[data-pnav]');if(pn){goPhoto(curPhoto()+(+pn.getAttribute('data-pnav')));return}
 if(t.tagName==='DIALOG'&&t.classList.contains('esheet'))t.close()});
 [].forEach.call(d.querySelectorAll('dialog.esheet'),function(x){x.addEventListener('close',function(){d.body.classList.remove('e-lock')})});
 [].forEach.call(d.querySelectorAll('[data-autosubmit]'),function(s){s.addEventListener('change',function(){var f=s.form;if(f){if(f.requestSubmit)f.requestSubmit();else f.submit()}})});
@@ -329,6 +336,7 @@ export function shopCss(theme: WebTheme, fontBase: string) {
 .scard-tags{position:absolute;top:10px;inset-inline-start:10px;display:flex;gap:6px;pointer-events:none}
 .scard.is-out .scard-media img{filter:grayscale(.6);opacity:.7}
 @media (hover:hover) and (pointer:fine){.scard:hover .scard-media img{transform:scale(1.05)}}
+.scard-media img.alt{position:absolute;inset:0;opacity:0;transition:opacity .45s var(--e),transform 1s var(--e)}@media (hover:hover) and (pointer:fine){.scard:hover .scard-media.has-2 img.alt{opacity:1}}
 .scard-body{display:grid;gap:2px;padding:12px 2px 0}
 .scard-cat{font-size:12px;font-weight:500;color:var(--muted)}a.scard-cat:hover{color:var(--ink)}
 .scard-title{margin:0;font-size:14.5px;font-weight:500;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -343,9 +351,12 @@ export function shopCss(theme: WebTheme, fontBase: string) {
 .sfind-q .i{color:var(--muted)}.sfind-q input{flex:1;min-width:0;border:0;background:transparent;font:inherit;font-size:15px;color:var(--ink);outline:none}
 /* the product page */
 .spdp{display:grid;gap:26px;margin-top:16px}@media (min-width:960px){.spdp{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);grid-template-areas:"gal buy" "body buy";gap:0 44px;align-items:start}.spdp-gal{grid-area:gal}.spdp-buy{grid-area:buy}.spdp-body{grid-area:body;margin-top:24px}}
-.spdp-main{aspect-ratio:1;overflow:hidden;border-radius:24px;background:var(--surface)}.spdp-main img{width:100%;height:100%;object-fit:cover}.spdp-main.ph{display:grid;place-items:center;color:var(--muted)}
+.spdp-main{position:relative;aspect-ratio:1;overflow:hidden;border-radius:24px;background:var(--surface)}.spdp-main img{width:100%;height:100%;object-fit:cover}
+.spdp-track{display:flex;height:100%;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain}.spdp-track::-webkit-scrollbar{display:none}.spdp-track img{flex:0 0 100%;scroll-snap-align:start;scroll-snap-stop:always}
+.spdp-nav{position:absolute;top:50%;translate:0 -50%;display:grid;place-items:center;width:42px;height:42px;border-radius:999px;background:color-mix(in oklab,#fff 88%,transparent);color:#111;box-shadow:0 6px 18px -8px rgb(0 0 0/.35);backdrop-filter:blur(6px);opacity:0;transition:opacity .2s}.spdp-nav.prev{inset-inline-start:12px}.spdp-nav.next{inset-inline-end:12px}.spdp-main:hover .spdp-nav,.spdp-nav:focus-visible{opacity:1}@media (hover:none){.spdp-nav{display:none}}
+.spdp-n{position:absolute;bottom:12px;inset-inline-end:12px;padding:4px 10px;border-radius:999px;background:rgb(0 0 0/.55);color:#fff;font-size:12px;font-weight:600;backdrop-filter:blur(6px)}.spdp-main.ph{display:grid;place-items:center;color:var(--muted)}
 @media (max-width:640px){.spdp-main{margin-inline:-16px;border-radius:0}}
-.spdp-thumbs{display:flex;gap:8px;margin-top:10px}.spdp-thumbs button{width:76px;aspect-ratio:1;overflow:hidden;border-radius:12px;opacity:.6;box-shadow:0 0 0 2px transparent;transition:opacity .2s,box-shadow .2s}.spdp-thumbs button[aria-current]{opacity:1;box-shadow:0 0 0 2px var(--primary)}.spdp-thumbs img{width:100%;height:100%;object-fit:cover}
+.spdp-thumbs{display:flex;gap:8px;margin-top:10px;overflow-x:auto;scrollbar-width:none;padding:2px}.spdp-thumbs button{flex:0 0 auto}.spdp-thumbs button{width:76px;aspect-ratio:1;overflow:hidden;border-radius:12px;opacity:.6;box-shadow:0 0 0 2px transparent;transition:opacity .2s,box-shadow .2s}.spdp-thumbs button[aria-current]{opacity:1;box-shadow:0 0 0 2px var(--primary)}.spdp-thumbs img{width:100%;height:100%;object-fit:cover}
 .spdp-buy .eh1{font-size:clamp(26px,2.6vw,34px)}
 .sqty{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:14px;font-weight:500;color:var(--ink2)}
 .sqty-c{display:inline-flex;align-items:center;gap:2px;padding:4px;border-radius:14px;background:var(--surface)}.sqty-c button{display:grid;place-items:center;width:38px;height:38px;border-radius:10px;color:var(--ink);transition:background-color .2s,transform .16s var(--e)}
