@@ -1,14 +1,15 @@
 ---
 // How Hemlo Systems works with its add-ons, told as one customer's story on two screens at once: the customer's phone
-// (the agency's Hemlo Website, then WhatsApp through Hemlo Connect) and the agency's Hemlo system. Five chapters; each
+// (the business's Hemlo Website, then WhatsApp through Hemlo Connect) and the business's Hemlo system. An agency's story
+// (a property, a lead, a viewing) or a shop's (a product, an order, a delivery that becomes a sale). Five chapters; each
 // plays on its own while the section is on screen (its progress bar is the clock), and any chapter can be tapped.
 // Plain CSS transitions on transform and opacity, driven by one data attribute; no library, nothing runs off screen.
 // Reduced motion: no autoplay and no movement, only crossfades; the chapters are tapped.
 import type { Lang } from '../i18n/strings';
-interface Props { lang: Lang }
-const { lang } = Astro.props;
-const ar = lang === 'ar';
-const C = ar ? {
+interface Props { lang: Lang; kind?: 'realestate' | 'store' }
+const { lang, kind = 'realestate' } = Astro.props;
+const ar = lang === 'ar', shop = kind === 'store';
+const RE = ar ? {
   chapters: [
     ['تنشر العقار', 'تضيفه في نظامك وتضغط «على الموقع». يظهر على موقعك في اللحظة نفسها.'],
     ['يجده الزبون', 'من بحث جوجل أو رابط على واتساب. صور وسعر وتفاصيل، كلها من نظامك.'],
@@ -49,6 +50,52 @@ const C = ar ? {
   about: 'About this home', aboutLines: ['A private garden the living room opens onto.', 'An open kitchen, and parking for two.'], ask: 'Ask on WhatsApp', sent: 'Sent ✓',
   waName: 'Nakheel Real Estate', online: 'online', okSat: 'Saturday works 👍', booked: 'Booked ✓ Saturday, 5 PM. We’ll remind you on Friday.',
 };
+
+// a shop's story: the same two screens, its own five moments
+const SHOP_C = ar ? {
+  chapters: [
+    ['تضع المنتج على الإنترنت', 'تفعّل «على الموقع» في البضاعة. يظهر في متجرك على الإنترنت في اللحظة نفسها، بسعره ومخزونه.'],
+    ['يجده الزبون', 'من إنستغرام أو رابط على واتساب. صورة وسعر ووصف، كلها من نظامك.'],
+    ['يطلب، فيصل إليك', 'يضيفه للسلة ويطلب بالدفع عند الاستلام. يظهر الطلب في نظامك فوراً.'],
+    ['يُردّ عليه خلال ثوانٍ', 'يصله تحديث طلبه على واتساب، ويجيب Connect عن سؤاله من منتجاتك. وتتدخل متى شئت.'],
+    ['يُسلَّم، فيصبح بيعاً', 'حين يصل الطلب يُسجَّل بيعاً: يخرج من المخزون، ويُحسب الربح، ويدخل الصندوق.'],
+  ],
+  step: 'الفصل', live: 'مباشر', synced: ['على متجرك الآن', 'يتصفّح الآن', 'طلب جديد', 'ردّ Connect', 'صار بيعاً'],
+  sysTitle: 'هيملو · المتاجر', nav: ['اليوم', 'البضاعة', 'الطلبات', 'الرسائل', 'المبيعات'],
+  props: 'البضاعة', add: '+ منتج', onSite: 'على الموقع', draft: 'في المحل فقط', published: 'على الإنترنت', views: ['لا زيارات بعد', '٣ زيارات اليوم'],
+  rows: [['عنبر الليل · 100 مل', '85,000'], ['ورد الطائف · 50 مل', '65,000'], ['زيت عود · 3 مل', '120,000']],
+  leads: 'الطلبات', leadName: 'أحمد كريم', leadFrom: 'من موقعك · الآن', wants: ['عنبر الليل ×1', 'صندوق هدية ×1', 'الكرادة'], matches: '235,000 د.ع · عند الاستلام', newTag: 'جديد',
+  oldLeads: [['سارة محمود', 'طلب #23 · في الطريق'], ['كرار حسن', 'طلب #22 · سُلِّم']],
+  inbox: 'الرسائل · أحمد كريم', q: 'ممكن يوصل قبل الساعة ٦؟', a: 'أكيد. طلبك #24 خرج للتوصيل الآن، ويصلك قبل الخامسة. ستصلك رسالة حين يصل.', by: '✦ Connect · ٣ ثوانٍ', takeNote: 'أُجيب من طلبه ومنتجاتك. تستطيع التدخل في أي وقت.', take: 'تولَّ المحادثة',
+  cal: 'مبيعات اليوم', viewing: 'بيع · طلب #24 · 235,000', viewingSub: 'سُلِّم ٤:٥٠ م · نقداً', reminder: 'المخزون −1 · عنبر الليل', confirmed: 'الربح +46,000 ✓',
+  hours: ['٢ م', '٣ م', '٤ م', '٥ م'],
+  brand: 'نفحة', brandMono: 'ن', listing: 'عنبر الليل · 100 مل', where: 'عطور · نفحة', facts: 'متوفر · يصلك اليوم', newBadge: 'جديد',
+  about: 'عن العطر', aboutLines: ['عنبر دافئ مع لمسة فانيلا وخشب الصندل.', 'يدوم طويلاً على البشرة والملابس.'], ask: 'أضف للسلة · الدفع عند الاستلام', sent: 'وصل طلبك ✓',
+  waName: 'نفحة', online: 'متصل الآن', okSat: 'وصل الطلب، شكراً 🌹', booked: 'سعداء بخدمتك! سجّلنا الطلب ✓ ونراك قريباً.', price: '85,000 د.ع',
+} : {
+  chapters: [
+    ['You put a product online', 'Switch on “On website” in your stock. It’s in your online shop that same moment, with its price and stock.'],
+    ['A customer finds it', 'From Instagram or a link on WhatsApp. Photo, price, description, all from your system.'],
+    ['They order, and it lands with you', 'Into the bag, and ordered with cash on delivery. The order appears in your system at once.'],
+    ['They hear back in seconds', 'Their order’s update arrives on WhatsApp, and Connect answers their question from your products. Step in any time.'],
+    ['Delivered, it becomes a sale', 'When the order arrives it’s recorded as a sale: out of stock, profit counted, into the drawer.'],
+  ],
+  step: 'Chapter', live: 'Live', synced: ['In your online shop', 'Browsing now', 'New order', 'Connect replied', 'Became a sale'],
+  sysTitle: 'Hemlo · Stores', nav: ['Today', 'Stock', 'Orders', 'Inbox', 'Sales'],
+  props: 'Stock', add: '+ Product', onSite: 'On website', draft: 'In the shop', published: 'Online', views: ['No visits yet', '3 visits today'],
+  rows: [['Amber Night · 100 ml', '85,000'], ['Taif Rose · 50 ml', '65,000'], ['Oud oil · 3 ml', '120,000']],
+  leads: 'Orders', leadName: 'Ahmed Kareem', leadFrom: 'From your website · just now', wants: ['Amber Night ×1', 'Gift box ×1', 'Karrada'], matches: '235,000 IQD · cash on delivery', newTag: 'New',
+  oldLeads: [['Sara Mahmoud', 'Order #23 · on its way'], ['Karrar Hassan', 'Order #22 · delivered']],
+  inbox: 'Inbox · Ahmed Kareem', q: 'Could it come before 6?', a: 'Of course. Your order #24 is out for delivery now and will reach you before 5. You’ll get a message when it arrives.', by: '✦ Connect · 3 s', takeNote: 'Answered from his order and your products. Step in any time.', take: 'Take over',
+  cal: 'Today’s sales', viewing: 'Sale · order #24 · 235,000', viewingSub: 'Delivered 4:50 PM · cash', reminder: 'Stock −1 · Amber Night', confirmed: 'Profit +46,000 ✓',
+  hours: ['2 PM', '3 PM', '4 PM', '5 PM'],
+  brand: 'Nafha', brandMono: 'N', listing: 'Amber Night · 100 ml', where: 'Perfumes · Nafha', facts: 'In stock · arrives today', newBadge: 'New',
+  about: 'About this scent', aboutLines: ['Warm amber with vanilla and sandalwood.', 'It lasts on skin and clothes.'], ask: 'Add to bag · cash on delivery', sent: 'Order received ✓',
+  waName: 'Nafha', online: 'online', okSat: 'It arrived, thank you 🌹', booked: 'Glad to help! Your order is recorded ✓ See you soon.', price: '85,000 IQD',
+};
+const C = shop ? SHOP_C : { ...RE, price: '$265,000' };
+const IMG = shop ? { rows: ['/images/stores/shop/amber.webp', '/images/stores/shop/rose.webp', '/images/stores/shop/oud-oil.webp'], listing: '/images/stores/shop/amber.webp' }
+  : { rows: ['/images/realestate/sample/villa-3.webp', '/images/realestate/sample/apartment-1.webp', '/images/realestate/sample/villa-4.webp'], listing: '/images/realestate/sample/villa-3.webp' };
 const n = (i: number) => (ar ? '١٢٣٤٥'[i] : String(i + 1));
 // which screen leads each chapter (on a phone only that one is in front; on wide screens it is lifted a little)
 const FOCUS = ['sys', 'phone', 'sys', 'phone', 'sys'];
@@ -57,7 +104,7 @@ const SYS_VIEW = ['props', 'props', 'leads', 'inbox', 'cal'];
 const PH_VIEW = ['site', 'site', 'site', 'wa', 'wa'];
 const NAV_ON = [1, 1, 2, 3, 4];
 ---
-<div class="cs" data-cs data-step="0" data-focus="sys" data-sys="props" data-ph="site" data-nav="1"
+<div class:list={['cs', shop && 'is-shop']} data-cs data-step="0" data-focus="sys" data-sys="props" data-ph="site" data-nav="1"
      data-focusmap={FOCUS.join(',')} data-sysmap={SYS_VIEW.join(',')} data-phmap={PH_VIEW.join(',')} data-navmap={NAV_ON.join(',')}>
 
   <!-- the two screens -->
@@ -75,14 +122,14 @@ const NAV_ON = [1, 1, 2, 3, 4];
             <header><b>{C.props}</b><span class="btn-s">{C.add}</span></header>
             <ul class="rows">
               <li class="row hot">
-                <span class="thumb" style="background-image:url(/images/realestate/sample/villa-3.webp)"></span>
+                <span class="thumb" style={`background-image:url(${IMG.rows[0]})`}></span>
                 <span class="nm"><b>{C.rows[0][0]}</b><small><span class="seen0">{C.views[0]}</span><span class="seen1">👁 {C.views[1]}</span></small></span>
                 <span class="pr" dir="ltr">{C.rows[0][1]}</span>
                 <span class="tg"><span class="sw"><i></i></span><small>{C.onSite}</small></span>
                 <span class="st"><span class="d">{C.draft}</span><span class="p">{C.published}</span></span>
               </li>
-              <li class="row"><span class="thumb" style="background-image:url(/images/realestate/sample/apartment-1.webp)"></span><span class="nm"><b>{C.rows[1][0]}</b><small>👁 12</small></span><span class="pr" dir="ltr">{C.rows[1][1]}</span><span class="tg"><span class="sw on"><i></i></span><small>{C.onSite}</small></span><span class="st"><span class="p show">{C.published}</span></span></li>
-              <li class="row"><span class="thumb" style="background-image:url(/images/realestate/sample/villa-4.webp)"></span><span class="nm"><b>{C.rows[2][0]}</b><small>—</small></span><span class="pr" dir="ltr">{C.rows[2][1]}</span><span class="tg"><span class="sw"><i></i></span><small>{C.onSite}</small></span><span class="st"><span class="d show">{C.draft}</span></span></li>
+              <li class="row"><span class="thumb" style={`background-image:url(${IMG.rows[1]})`}></span><span class="nm"><b>{C.rows[1][0]}</b><small>👁 12</small></span><span class="pr" dir="ltr">{C.rows[1][1]}</span><span class="tg"><span class="sw on"><i></i></span><small>{C.onSite}</small></span><span class="st"><span class="p show">{C.published}</span></span></li>
+              <li class="row"><span class="thumb" style={`background-image:url(${IMG.rows[2]})`}></span><span class="nm"><b>{C.rows[2][0]}</b><small>—</small></span><span class="pr" dir="ltr">{C.rows[2][1]}</span><span class="tg"><span class="sw"><i></i></span><small>{C.onSite}</small></span><span class="st"><span class="d show">{C.draft}</span></span></li>
             </ul>
           </section>
 
@@ -125,13 +172,13 @@ const NAV_ON = [1, 1, 2, 3, 4];
         <div class="pv" data-pv="site">
           <div class="site-top"><span class="mono">{C.brandMono}</span><b>{C.brand}</b></div>
           <div class="site-scroll"><div class="in">
-            <figure><img src="/images/realestate/sample/villa-3.webp" alt="" loading="lazy" decoding="async" /><span class="nb">{C.newBadge}</span></figure>
+            <figure><img src={IMG.listing} alt="" loading="lazy" decoding="async" /><span class="nb">{C.newBadge}</span></figure>
             <p class="w">{C.where}</p>
             <p class="h">{C.listing}</p>
-            <p class="row2"><span>{C.facts}</span><b dir="ltr">$265,000</b></p>
+            <p class="row2"><span>{C.facts}</span><b dir="ltr">{C.price}</b></p>
             <div class="more"><p class="ab">{C.about}</p>{C.aboutLines.map((l) => <p class="l">{l}</p>)}</div>
           </div></div>
-          <div class="cta"><span class="ask"><svg viewBox="0 0 24 24"><path d="M3 21l1.65-4.94A9 9 0 1 1 7.9 19.3L3 21Z" /></svg>{C.ask}</span><span class="sent">{C.sent}</span></div>
+          <div class="cta"><span class="ask"><svg viewBox="0 0 24 24">{shop ? <><path d="M6 8h12l-1 12H7L6 8Z" /><path d="M9 8V6a3 3 0 0 1 6 0v2" /></> : <path d="M3 21l1.65-4.94A9 9 0 1 1 7.9 19.3L3 21Z" />}</svg>{C.ask}</span><span class="sent">{C.sent}</span></div>
         </div>
 
         <div class="pv" data-pv="wa">
@@ -207,6 +254,11 @@ const NAV_ON = [1, 1, 2, 3, 4];
     position: relative;
   }
   @media (prefers-color-scheme: dark) { .cs { --g: #5FBF9F; } }
+  /* a shop's story wears the shops' colour, and its button is the shop's ("add to bag"), not WhatsApp's */
+  .cs.is-shop { --g: #A8532E; }
+  @media (prefers-color-scheme: dark) { .cs.is-shop { --g: #E08A62; } }
+  .cs.is-shop .ask { background: var(--g); }
+  .cs.is-shop .nm small, .cs.is-shop .pr { font-variant-numeric: tabular-nums; }
 
   /* ---------- the stage: one container, so everything in it scales with its width ---------- */
   .cs-stage { position: relative; container-type: inline-size; aspect-ratio: 16 / 9.4; border-radius: 1.6rem; overflow: hidden; isolation: isolate;

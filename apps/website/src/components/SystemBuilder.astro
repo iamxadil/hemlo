@@ -1,31 +1,33 @@
 ---
-// "Build your Hemlo": the system first, always on, and the add-ons that plug into it. Switch Website or Connect on and
+// "Build your Hemlo", for one system (an agency's, a shop's; more as the add-ons reach them): the system first, always on, and the add-ons that plug into it. Switch Website or Connect on and
 // watch it attach to the system and start working (the system itself gains a line for it), while the month's total
 // counts to its new figure. Connect comes in three tiers: Basic (free with the system), Pro (the AI assistant) and AI Studio
 // (marketing). One request for the whole setup. Prices come from the API (as the pricing cards do), with today's list as the fallback.
 // Plain CSS transitions driven by data attributes on the root, one small script; reduced motion keeps only fades.
 import Mark from './Mark.astro';
 import HwBadge from './HwBadge.astro';
-import { API_URL, type Lang } from '../i18n/strings';
-interface Props { lang: Lang }
-const { lang } = Astro.props;
+import { API_URL, SYSTEM_URL, type Lang } from '../i18n/strings';
+interface Props { lang: Lang; system?: 'realestate' | 'store' }
+const { lang, system = 'realestate' } = Astro.props;
+const shop = system === 'store';
 const ar = lang === 'ar';
 
 // ---- prices: the API's, or the list as of October 2026 ----
 type Price = { code: string; name: Record<string, string>; priceMonth: number };
 let plans: Price[] = [], addons: Price[] = [];
 try {
-  const [p, a] = await Promise.all([`/v1/plans?edition=realestate`, `/v1/plans/addons?edition=realestate`].map((u) => fetch(API_URL + u, { signal: AbortSignal.timeout(6000) }).then((r) => r.json())));
+  const [p, a] = await Promise.all([`/v1/plans?edition=${system}`, `/v1/plans/addons?edition=${system}`].map((u) => fetch(API_URL + u, { signal: AbortSignal.timeout(6000) }).then((r) => r.json())));
   plans = p.plans ?? []; addons = a.addons ?? [];
 } catch { /* the fallback below */ }
-const PLAN_FALLBACK = [['office', 'المكتب', 'Office', 40000], ['agency', 'الوكالة', 'Agency', 69000], ['group', 'المجموعة', 'Group', 129000]] as const;
+const PLAN_FALLBACK = shop ? [['starter', 'البداية', 'Starter', 15000], ['growth', 'النمو', 'Growth', 29000], ['business', 'الأعمال', 'Business', 49000]] as const
+  : [['office', 'المكتب', 'Office', 40000], ['agency', 'الوكالة', 'Agency', 69000], ['group', 'المجموعة', 'Group', 129000]] as const;
 const PLANS = plans.length ? plans.map((p) => ({ code: p.code, name: p.name[lang] ?? p.name.en, price: p.priceMonth }))
   : PLAN_FALLBACK.map(([code, a, e, price]) => ({ code, name: ar ? a : e, price }));
 const addon = (code: string, fb: number) => addons.find((x) => x.code === code)?.priceMonth ?? fb;
-const PRICE = { web: addon('website', 10000), basic: addon('connect', 0), pro: addon('connect-pro', 35000), studio: addon('ai-studio', 50000) };
-const start = Math.max(0, PLANS.findIndex((p) => p.code === 'agency'));
+const PRICE = { web: addon('website', 10000), basic: addon('connect', 0), pro: addon('connect-pro', shop ? 25000 : 35000), studio: addon('ai-studio', shop ? 35000 : 50000) };
+const start = Math.max(0, PLANS.findIndex((p) => p.code === (shop ? 'growth' : 'agency')));
 
-const C = ar ? {
+const BASE = ar ? {
   sys: { kind: 'نظامك', name: 'Hemlo العقارات', line: 'العقارات والزبائن والمعاينات والصفقات، في مكان واحد.', always: 'يعمل دائماً', plan: 'الخطة' },
   web: { kind: 'إضافة', line: 'عقاراتك على موقعك الخاص، محدّثة وحدها.' },
   con: { kind: 'مع نظامك', line: 'واتساب يرد ويذكّر ويتابع عنك. الرسائل مشمولة.', basic: 'Basic', pro: 'Pro', studio: 'AI Studio', free: 'مجاني',
@@ -58,13 +60,34 @@ const C = ar ? {
   form: { title: 'Start with Hemlo', sub: 'Leave your number, and Hemlo’s team will call within a working day to set it up with you.', name: 'Your name', business: 'Office name', phone: 'Phone number', city: 'City',
     send: 'Send', sending: 'Sending…', done: 'Got it. We’ll call you soon.', failed: 'Not sent. Check the number and try again.', close: 'Close' },
 };
+// a shop's words, laid over the agency's
+const SHOP_C = ar ? {
+  sys: { kind: 'نظامك', name: 'Hemlo المتاجر', line: 'الكاشير والبضاعة ودفتر الديون والطلبات، في مكان واحد.', always: 'يعمل دائماً', plan: 'الخطة' },
+  web: { kind: 'إضافة', line: 'متجرك على الإنترنت: منتجاتك وأسعارك، سلة ودفع عند الاستلام، والطلبات تصلك في النظام.' },
+  con: { ...BASE.con, notes: { basic: 'مجاني مع نظامك: صندوق المحادثات، وتحديثات الطلبات، وتذكير الديون', pro: 'مساعد ذكي يرد من منتجاتك وأسعارك ومخزونك', studio: 'كل ما في Pro، وحملات تسويقية وتصاميم وخطة محتوى من منتجاتك' } },
+  stats: [['٤٣', 'منتجاً'], ['٣٣', 'فاتورة اليوم'], ['٥', 'ديون مستحقة']], webStat: ['٦', 'طلبات من موقعك اليوم'], conStat: ['٣١', 'رداً على واتساب'],
+  url: 'nafha.hemlohq.com', tiles: [['عنبر الليل', '85,000'], ['ورد الطائف', '65,000'], ['صندوق هدية', '150,000']],
+  webToast: 'طلب جديد من موقعك', conToast: 'رُدّ خلال ٣ ثوانٍ', agency: 'نفحة', mono: 'ن',
+  q: 'عندكم عطر عنبر الليل؟ وكم سعره؟', a: 'نعم متوفر بـ 85,000 د.ع. تقدر تطلبه من موقعنا والدفع عند الاستلام، ويوصلك اليوم داخل بغداد.',
+  sample: 'جرّب المتجر التجريبي', form: { ...BASE.form, business: 'اسم المتجر' },
+} : {
+  sys: { kind: 'Your system', name: 'Hemlo Stores', line: 'The till, stock, the debt book and orders, in one place.', always: 'Always on', plan: 'Plan' },
+  web: { kind: 'Add-on', line: 'Your shop online: your products and prices, a cart and cash on delivery, and the orders arrive in your system.' },
+  con: { ...BASE.con, notes: { basic: 'Free with your system: the team inbox, order updates and debt reminders', pro: 'An AI assistant that answers from your products, prices and stock', studio: 'Everything in Pro, plus AI campaigns, post designs and a content plan from your products' } },
+  stats: [['43', 'products'], ['33', 'receipts today'], ['5', 'debts due']], webStat: ['6', 'orders from your site today'], conStat: ['31', 'WhatsApp replies'],
+  url: 'nafha.hemlohq.com', tiles: [['Amber Night', '85,000'], ['Taif Rose', '65,000'], ['Gift box', '150,000']],
+  webToast: 'New order from your site', conToast: 'Replied in 3 s', agency: 'Nafha', mono: 'N',
+  q: 'Do you have Amber Night? How much is it?', a: 'Yes, it’s in stock at 85,000 IQD. You can order it on our website with cash on delivery, and it reaches you today in Baghdad.',
+  sample: 'Try the demo shop', form: { ...BASE.form, business: 'Shop name' },
+};
+const C = shop ? { ...BASE, ...SHOP_C } : { ...BASE, mono: ar ? 'ن' : 'N' };
 const nf = new Intl.NumberFormat('en-US');
-const sampleHref = ar ? 'https://business.hemlohq.com/s/sample' : 'https://business.hemlohq.com/s/sample?lang=en';
-const tileImg = ['villa-3', 'apartment-1', 'villa-4'];
+const sampleHref = shop ? `${SYSTEM_URL}?demo=1&lang=${lang}` : ar ? 'https://business.hemlohq.com/s/sample' : 'https://business.hemlohq.com/s/sample?lang=en';
+const tileImg = shop ? ['/images/stores/shop/amber.webp', '/images/stores/shop/rose.webp', '/images/stores/shop/gift-box.webp'] : ['villa-3', 'apartment-1', 'villa-4'].map((x) => `/images/realestate/sample/${x}.webp`);
 const DATA = { plans: PLANS, price: PRICE, names: { web: 'Website', basic: 'Connect Basic', pro: 'Connect Pro', studio: 'AI Studio' }, free: C.con.free };
 const plus = (n: number) => (n ? `+${nf.format(n)}` : C.con.free);
 ---
-<div class="sb" data-sb data-web="off" data-con="off" data-tier="basic" data-api={API_URL} data-lang={lang} data-model={JSON.stringify(DATA)} data-notes={JSON.stringify(C.con.notes)}>
+<div class:list={['sb', shop && 'is-shop']} data-sb data-ed={system} data-web="off" data-con="off" data-tier="basic" data-api={API_URL} data-lang={lang} data-model={JSON.stringify(DATA)} data-notes={JSON.stringify(C.con.notes)}>
   <div class="sb-grid">
 
     <!-- the picture: the system in the middle; what's switched on plugs into it and starts working -->
@@ -78,7 +101,7 @@ const plus = (n: number) => (n ? `+${nf.format(n)}` : C.con.free);
       <button type="button" class="sb-ghost g-web" data-toggle="web" tabindex="-1"><span>{C.ghostWeb}</span></button>
       <div class="sb-web">
         <div class="bar"><i></i><i></i><i></i><span class="u" dir="ltr">{C.url}</span></div>
-        <div class="tiles">{C.tiles.map(([n, p], i) => <div class="tile" style={`--i:${i}`}><span class="ph" style={`background-image:url(/images/realestate/sample/${tileImg[i]}.webp)`}></span><b>{n}</b><em dir="ltr">{p}</em></div>)}</div>
+        <div class="tiles">{C.tiles.map(([n, p], i) => <div class="tile" style={`--i:${i}`}><span class="ph" style={`background-image:url(${tileImg[i]})`}></span><b>{n}</b><em dir="ltr">{p}</em></div>)}</div>
         <span class="toast"><i>✓</i>{C.webToast}</span>
       </div>
 
@@ -96,7 +119,7 @@ const plus = (n: number) => (n ? `+${nf.format(n)}` : C.con.free);
       <button type="button" class="sb-ghost g-con" data-toggle="con" tabindex="-1"><span>{C.ghostCon}</span></button>
       <div class="sb-phone">
         <div class="scr">
-          <div class="wa"><span class="av">{ar ? 'ن' : 'N'}</span><span><b>{C.agency}</b><small>{C.online}</small></span></div>
+          <div class="wa"><span class="av">{C.mono}</span><span><b>{C.agency}</b><small>{C.online}</small></span></div>
           <div class="chat">
             <p class="b me">{C.q}</p>
             <p class="b typing"><i></i><i></i><i></i></p>
@@ -120,7 +143,7 @@ const plus = (n: number) => (n ? `+${nf.format(n)}` : C.con.free);
       <div class="layer" data-layer="web">
         <div class="lh"><span class="lk">{C.web.kind}</span><button type="button" class="sw" role="switch" aria-checked="false" data-toggle="web" aria-label="Hemlo Website"><i></i></button></div>
         <p class="ln"><HwBadge /><span class="pr" dir="ltr">+{nf.format(PRICE.web)}</span></p><p class="ld">{C.web.line}</p>
-        <div class="mini mini-web" aria-hidden="true"><div class="mini-in"><div class="mbox"><div class="mbar"><span class="u" dir="ltr">{C.url}</span></div><div class="tiles">{C.tiles.map(([n, p], i) => <div class="tile" style={`--i:${i}`}><span class="ph" style={`background-image:url(/images/realestate/sample/${tileImg[i]}.webp)`}></span><b>{n}</b><em dir="ltr">{p}</em></div>)}</div></div><p class="mnote"><i>✓</i>{C.webToast}</p></div></div>
+        <div class="mini mini-web" aria-hidden="true"><div class="mini-in"><div class="mbox"><div class="mbar"><span class="u" dir="ltr">{C.url}</span></div><div class="tiles">{C.tiles.map(([n, p], i) => <div class="tile" style={`--i:${i}`}><span class="ph" style={`background-image:url(${tileImg[i]})`}></span><b>{n}</b><em dir="ltr">{p}</em></div>)}</div></div><p class="mnote"><i>✓</i>{C.webToast}</p></div></div>
       </div>
 
       <div class="layer" data-layer="con">
@@ -178,11 +201,11 @@ const plus = (n: number) => (n ? `+${nf.format(n)}` : C.con.free);
     const plus = (n: number) => (n ? `+${nf.format(n)}` : M.free);
 
     // live prices, in case they changed after the page was built
-    fetch(`${root.dataset.api}/v1/plans?edition=realestate`).then((r) => r.json()).then(({ plans }) => {
+    fetch(`${root.dataset.api}/v1/plans?edition=${root.dataset.ed}`).then((r) => r.json()).then(({ plans }) => {
       for (const p of plans ?? []) { const i = M.plans.findIndex((x) => x.code === p.code); if (i >= 0) M.plans[i].price = p.priceMonth; }
       planBtns.forEach((b, i) => { const s = b.querySelector('small'); if (s) s.textContent = nf.format(M.plans[i].price); }); render();
     }).catch(() => {});
-    fetch(`${root.dataset.api}/v1/plans/addons?edition=realestate`).then((r) => r.json()).then(({ addons }) => {
+    fetch(`${root.dataset.api}/v1/plans/addons?edition=${root.dataset.ed}`).then((r) => r.json()).then(({ addons }) => {
       const code: Record<string, keyof Model['price']> = { website: 'web', connect: 'basic', 'connect-pro': 'pro', 'ai-studio': 'studio' };
       for (const a of addons ?? []) if (code[a.code] && a.priceMonth != null) M.price[code[a.code]] = a.priceMonth;
       tierBtns.forEach((b) => { const s = b.querySelector('small'); if (s) s.textContent = M.price[b.dataset.tier as Tier] ? nf.format(M.price[b.dataset.tier as Tier]) : M.free; }); render();
@@ -248,7 +271,7 @@ const plus = (n: number) => (n ? `+${nf.format(n)}` : C.con.free);
       btn.disabled = true; btn.textContent = btn.dataset.sending!;
       try {
         const res = await fetch(`${root.dataset.api}/v1/early-access`, { method: 'POST', headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ ...v, kind: 'realestate', interest, note: `[Setup] ${$('[data-summary]').textContent}`, locale: root.dataset.lang }) });
+          body: JSON.stringify({ ...v, kind: root.dataset.ed === 'store' ? 'store' : 'realestate', interest, note: `[Setup] ${$('[data-summary]').textContent}`, locale: root.dataset.lang }) });
         if (!res.ok) throw new Error();
         msg.textContent = msg.dataset.ok!; msg.className = 'sbd-msg is-ok'; f.reset();
       } catch { msg.textContent = msg.dataset.bad!; msg.className = 'sbd-msg is-bad'; }
@@ -260,6 +283,9 @@ const plus = (n: number) => (n ? `+${nf.format(n)}` : C.con.free);
 <style>
   .sb { --re: #1F6F5C; --wa: #1FA855; --ink: #0E1420; --e: cubic-bezier(.23, 1, .32, 1); --e2: cubic-bezier(.77, 0, .175, 1); }
   @media (prefers-color-scheme: dark) { .sb { --re: #5FBF9F; --wa: #3CCB75; } }
+  /* a shop's builder wears the shops' colour */
+  .sb.is-shop { --re: #A8532E; }
+  @media (prefers-color-scheme: dark) { .sb.is-shop { --re: #E08A62; } }
   .sb-grid { display: grid; gap: 1.5rem; align-items: stretch; }
   @media (min-width: 980px) { .sb-grid { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 2rem; } }
 
