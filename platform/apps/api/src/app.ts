@@ -17,6 +17,7 @@ import { demoRoutes } from './routes/demo';
 import { sysFileRoutes, publicFileRoutes } from './routes/files';
 import type { FileStore } from './files';
 import { subscriptionGuard } from './subscription';
+import { shopRoutes } from './routes/shop/orders';
 import { aiRoutes } from './routes/ai';
 import { impactRoutes } from './routes/impact';
 import { storeStartRoutes } from './routes/store-start';
@@ -123,6 +124,8 @@ export function createApp(opts: { db: Database; env: Env; waitUntil?: (p: Promis
   v1.route('/web/pub', webPublicRoutes(deps)); // the public site (business.hemlo.site): no sign-in, read-only + inquiries
   v1.route('/web', webRoutes(deps));
   v1.route('/connect', connectRoutes(deps));   // Hemlo Connect: WhatsApp inbox, assistant, automations (+ the webhook at /connect/hook)           // the Website add-on: one public site per business
+  v1.use('/shop/*', subscriptionGuard);
+  v1.route('/shop', shopRoutes(deps));     // the online shop's orders and checkout rules (a store with Hemlo Website)
   v1.use('/studio/*', subscriptionGuard);
   v1.route('/studio', studioRoutes(deps));  // Hemlo AI Studio: campaigns, content plans, post images (realestate)
   v1.route('/sys/ai', aiRoutes(deps));

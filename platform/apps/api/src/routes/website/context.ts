@@ -3,6 +3,7 @@
 // so a design never reaches into the database itself.
 import type { WebSection } from '@hemlo/db/schema';
 import type { WebsiteListing, WebsiteListingFilter } from './adapters';
+import type { ShopItem, ShopOrderView } from './shop-data';
 import { W, pick, esc, fill, type Lang } from './theme';
 import type { Deps } from '../../types';
 import type { Design } from './designs';
@@ -14,7 +15,9 @@ export type Ctx = {
   pageSlug: string; filters: WebsiteListingFilter;
   logo: string | null; name: string; tagline: string;
   contact: { phone: string | null; whatsapp: string | null; email: string | null; address: string | null; mapUrl: string | null };
-  products: { id: string; name: string; category: string | null; price: number; image: string | null }[];
+  products: ShopItem[];
+  /** a shop's order page: the order its code names */
+  order?: ShopOrderView | null;
   listings: WebsiteListing[];
   /** the running section number (01, 02…) and whether the page opens on a photograph */
   n: number; onPhoto: boolean;

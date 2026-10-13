@@ -8,8 +8,9 @@ import type { WebsiteListing, WebsiteProperty } from './adapters';
 import type { Ctx } from './context';
 import type { Lang } from './theme';
 import { estateCss, estateSection, estateHeader, estateFooter, estateChrome, estateBar, estateProperty, estateScript } from './estate';
+import { shopCss, shopSection, shopHeader, shopFooter, shopChrome, shopBar, shopScript } from './shop';
 
-export type DesignId = 'studio' | 'estate';
+export type DesignId = 'studio' | 'estate' | 'shop';
 export type Design = {
   id: DesignId;
   /** added after the shared stylesheet; `fontBase` is where this site's own fonts are served */
@@ -34,5 +35,8 @@ const estate: Design = {
   bar: estateBar, property: estateProperty, script: estateScript,
 };
 
-const DESIGNS: Record<string, Design> = { realestate: estate };
+/** A shop: an online store for its own products (shop.ts), with a bag, checkout and order tracking. */
+const shop: Design = { id: 'shop', css: shopCss, section: shopSection, header: shopHeader, footer: shopFooter, chrome: shopChrome, bar: shopBar, script: shopScript };
+
+const DESIGNS: Record<string, Design> = { realestate: estate, store: shop };
 export const designFor = (vertical: string): Design => DESIGNS[vertical] ?? studio;

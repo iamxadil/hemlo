@@ -12,6 +12,7 @@ import { actor, bad, text, type Actor } from '../sys-common';
 import { subscriptionOf } from '../../subscription';
 import { addonEntitlement, requireAddon } from '../../addons';
 import { settingsOf } from '../realestate/common';
+import { shopIn } from '../shop/orders';
 import type { AppEnv, Deps } from '../../types';
 
 export const WEB_THEMES = ['classic', 'modern', 'minimal', 'bold'] as const;
@@ -180,7 +181,8 @@ export function webRoutes(d: Deps) {
   r.put('/site', async (c) => {
     const a = actor(c, 'website', 'manage');
     await requireAddon(d.db, a.organizationId, 'website');
-    if (!(await siteOf(a))) throw new HttpError(404, 'SITE_NOT_FOUND');
+    const before = await siteOf(a);
+    if (!before) throw new HttpError(404, 'SITE_NOT_FOUND');
     const b = await c.req.json<Record<string, any>>().catch(() => ({} as Record<string, any>));
     const set: Record<string, unknown> = { updatedAt: new Date() };
     if (b.lang !== undefined) set.lang = ['ar', 'en'].includes(b.lang) ? b.lang : bad('BAD_LANG');
@@ -188,7 +190,8 @@ export function webRoutes(d: Deps) {
     if (b.tagline !== undefined) set.tagline = two(b.tagline, 160);
     if (b.about !== undefined) set.about = two(b.about);
     if (b.theme !== undefined) set.theme = themeIn(b.theme);
-    if (b.settings !== undefined) set.settings = settingsIn(b.settings);
+    // a shop's checkout rules ride along: kept as they are unless they were sent (then checked like everything else)
+    if (b.settings !== undefined) set.settings = { ...settingsIn(b.settings), ...(b.settings?.shop ? { shop: shopIn(b.settings.shop) } : before.settings?.shop ? { shop: before.settings.shop } : {}) };
     if (b.logoId !== undefined) set.logoId = b.logoId || null;
     if (b.faviconId !== undefined) set.faviconId = b.faviconId || null;
     if (b.subdomain !== undefined) set.subdomain = b.subdomain ? subdomainIn(b.subdomain) : null;

@@ -15,7 +15,11 @@ import { addonEntitlement } from '../../addons';
 import { W, pick, webFrame, waHref, telHref, moneyIqd, sectionHeading, inquiryDialog, INQUIRY_SCRIPT, esc, attr, icon, fill, type Lang } from './theme';
 import { designFor } from './designs';
 import { actor } from '../sys-common';
-import { onInquiry, connectWhatsapp } from '../../connect/core';
+import { onInquiry, onOrder, connectWhatsapp } from '../../connect/core';
+import { shopItems, shopOrderByCode, shopProductPage } from './shop-data';
+import { shopChrome, shopFooter, shopHeader, shopProduct as shopProductHtml } from './shop';
+import { cartIn, placeOrder, priceCart } from '../shop/cart';
+import { HttpError } from '../../principal';
 import type { AppEnv, Deps } from '../../types';
 
 const RESERVED = new Set(['www', 'api', 'app', 'admin', 'account', 'studio', 'mail', 'ftp', 'cdn', 'static', 'assets', 'demo', 'test', 'systems', 'tools', 'business']);
@@ -252,8 +256,21 @@ ${wa ? `<a class="btn wa" style="max-width:320px;margin:0 auto" href="${attr(waH
   const siteFor = async (sub: string, lang: Lang) => (sub === SAMPLE_SUB ? sampleSite(lang) : await siteRow(sub));
   const validSub = (sub: string) => !!sub && !RESERVED.has(sub) && /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/.test(sub);
 
-  /** `draft`: the owner's preview: the site as it is now (not as published), rendered the same way, never cached. */
-  async function serve(c: Context, slug: string, filters: WebsiteListingFilter = {}, draft?: any) {
+  // a shop's own pages: the catalogue, the checkout and an order (not stored pages: every shop has them)
+  const SHOP_PAGES: Record<string, any> = {
+    products: { id: 'shop-products', slug: 'products', kind: 'custom', title: { ar: 'المنتجات', en: 'Products' }, sections: [{ id: 'shop-catalogue', type: 'products' }], seo: {} },
+    checkout: { id: 'shop-checkout', slug: 'checkout', kind: 'custom', title: { ar: 'إتمام الطلب', en: 'Checkout' }, sections: [{ id: 'shop-co', type: 'checkout' }], seo: { noindex: true } },
+    order: { id: 'shop-order', slug: 'order', kind: 'custom', title: { ar: 'طلبك', en: 'Your order' }, sections: [{ id: 'shop-ord', type: 'order' }], seo: { noindex: true } },
+  };
+  const productFilters = (c: Context): WebsiteListingFilter => {
+    const q = (c.req.query('q') ?? '').trim().slice(0, 80).replace(/[%_]/g, ''), category = (c.req.query('c') ?? '').trim().slice(0, 60);
+    const sort = c.req.query('sort') === 'price-asc' ? 'price-asc' as const : c.req.query('sort') === 'price-desc' ? 'price-desc' as const : undefined;
+    return { ...(q ? { q } : {}), ...(category ? { category } : {}), ...(sort ? { sort } : {}) };
+  };
+
+  /** `draft`: the owner's preview: the site as it is now (not as published), rendered the same way, never cached.
+   *  `order`: a shop's order page, by the code in its link. */
+  async function serve(c: Context, slug: string, filters: WebsiteListingFilter = {}, draft?: any, order?: string) {
     const sub = draft ? (draft.subdomain ?? 'site') : subOf(c);
     if (!draft && !validSub(sub)) return html(messagePage('ar', null, 'notFound', null), 404, 'no-store');
     const sample = !draft && sub === SAMPLE_SUB;
@@ -270,9 +287,12 @@ ${wa ? `<a class="btn wa" style="max-width:320px;margin:0 auto" href="${attr(waH
       return html(messagePage(lang, site.theme, 'notReady', wa), 200, 'no-store');
     }
     const t = W[lang], design = designFor(site.vertical);
-    const pageOf = (pages: any[]) => (slug === '' ? pages.find((p) => p.slug === '') : pages.find((p) => p.slug === slug)) ?? (slug === 'properties' ? PROPERTIES_PAGE : null);
+    const shopPage = site.vertical === 'store' ? SHOP_PAGES[slug] ?? null : null;
+    const pageOf = (pages: any[]) => (['checkout', 'order'].includes(slug) && shopPage ? shopPage : null)
+      ?? (slug === '' ? pages.find((p) => p.slug === '') : pages.find((p) => p.slug === slug)) ?? (slug === 'properties' ? PROPERTIES_PAGE : shopPage);
     // which pages need the live listings: the ones that show them, and (for a design that stages them) the hero and the office
-    const needsListings = (page: any) => { const types = new Set((page.sections ?? []).map((s: any) => s.type)); return adapter.sections.some((x) => types.has(x)) || (design.id === 'estate' && (types.has('hero') || types.has('about'))); };
+    const needsListings = (page: any) => { const types = new Set((page.sections ?? []).map((s: any) => s.type)); return adapter.sections.some((x) => types.has(x)) || ((design.id === 'estate' || design.id === 'shop') && (types.has('hero') || types.has('about'))); };
+    const ownFilters = slug === 'properties' || slug === 'products' ? filters : {};
     // with Hemlo Connect live, the site's WhatsApp buttons open the Connect number, so chats land in the team's inbox
     const connectWa = sample || draft ? null : await connectWhatsapp(d, site.organizationId).catch(() => null);
     const built = sample ? (() => {
@@ -293,15 +313,17 @@ ${wa ? `<a class="btn wa" style="max-width:320px;margin:0 auto" href="${attr(waH
       const contact = { phone: cs.phone ?? null, whatsapp: cs.whatsapp ?? null, email: cs.email ?? null, address: cs.address ?? null, mapUrl: cs.mapUrl ?? null };
       if (site.vertical === 'realestate') { const s = await settingsOf(tx, site.organizationId); contact.phone ??= s.phone; contact.whatsapp ??= s.whatsapp ?? s.phone; contact.email ??= s.email; contact.address ??= s.address; }
       if (connectWa) contact.whatsapp = connectWa;
-      const content = needsListings(page) ? await adapter.load(tx, d, site.organizationId, lang, origin, slug === 'properties' ? filters : {}) : { listings: [] };
-      return { pages, page, name: pick(config.name, lang) || o?.name || 'Hemlo', tagline: pick(config.tagline, lang), about: config.about, logo, contact, products: [], listings: content.listings };
+      const content = needsListings(page) ? await adapter.load(tx, d, site.organizationId, lang, origin, ownFilters) : { listings: [] as WebsiteListing[] };
+      const theOrder = slug === 'order' && order ? await shopOrderByCode(tx, d, site.organizationId, order) : null;
+      if (slug === 'order' && !theOrder) return null;
+      return { pages, page, name: pick(config.name, lang) || o?.name || 'Hemlo', tagline: pick(config.tagline, lang), about: config.about, logo, contact, products: content.products ?? [], listings: content.listings, order: theOrder };
     });
     if (!built) return html(messagePage(lang, site.theme, 'notFound', site.settings?.contact?.whatsapp ?? null), 404, 'no-store');
 
     const publishedSite = { ...site, ...config };
     const basePath = new URL(origin).pathname.replace(/\/$/, '');
     const ctx: Ctx = { d, org: site.organizationId, site: publishedSite, lang, origin, t, basePath, pageSlug: slug, filters, logo: built.logo, name: built.name, tagline: built.tagline,
-      contact: built.contact, products: built.products, listings: built.listings, n: 0, onPhoto: false, design, pages: built.pages, sample };
+      contact: built.contact, products: built.products, listings: built.listings, n: 0, onPhoto: false, design, pages: built.pages, sample, order: (built as any).order ?? null };
     const other: Lang = lang === 'ar' ? 'en' : 'ar';
     const altHref = `${origin}/${slug}${other === (config.lang === 'en' ? 'en' : 'ar') ? '' : `?lang=${other}`}`;
     const content = (built.page.sections ?? []).filter((sec: any) => !sec.hidden).map((sec: any, i: number) => sectionHtml(ctx, sec, i === 0)).join('');
@@ -318,12 +340,12 @@ ${wa ? `<a class="btn wa" style="max-width:320px;margin:0 auto" href="${attr(waH
     if (built.contact.phone) jsonld[0].telephone = built.contact.phone;
     if (built.logo) jsonld[0].logo = built.logo;
     if (built.contact.address) jsonld[0].address = { '@type': 'PostalAddress', streetAddress: built.contact.address, addressCountry: 'IQ' };
-    const robots = draft || sample || seo.noindex || (slug === 'properties' && Object.keys(filters).length > 0) ? 'noindex' : 'index';
+    const robots = draft || sample || seo.noindex || ((slug === 'properties' || slug === 'products') && Object.keys(filters).length > 0) ? 'noindex' : 'index';
     // in the preview, links stay put (it is a picture of the site) and fonts come from the API's own address
     const still = `document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a,form button[type=submit]');if(a){e.preventDefault()}},true);document.addEventListener('submit',function(e){e.preventDefault()},true);`;
     return html(webFrame({ lang, title, description, canonical, alt: altHref, image: built.listings[0]?.cover ?? null, robots, theme: config.theme, body,
       bodyClass: [ctx.onPhoto ? 'on-photo' : '', bar ? 'has-bar' : ''].join(' ').trim() || undefined, script: draft ? script + still : script, jsonld, design,
-      fontBase: draft ? `${d.env.API_URL ?? ''}/v1/web/pub/_hemlo/fonts` : `${basePath}/_hemlo/fonts` }), 200, draft ? 'no-store' : undefined);
+      fontBase: draft ? `${d.env.API_URL ?? ''}/v1/web/pub/_hemlo/fonts` : `${basePath}/_hemlo/fonts` }), 200, draft || slug === 'order' ? 'no-store' : undefined);
   }
 
   async function serveProperty(c: Context, slug: string) {
@@ -383,6 +405,52 @@ ${wa ? `<a class="btn wa" style="max-width:320px;margin:0 auto" href="${attr(waH
       bodyClass: bar ? 'has-bar' : undefined, script, jsonld, design, fontBase: `${basePath}/_hemlo/fonts` }), 200);
   }
 
+  /** A published shop with a live Website add-on, by the request's address (or nothing). */
+  async function liveShop(c: Context) {
+    const sub = subOf(c);
+    if (!validSub(sub) || sub === SAMPLE_SUB) return null;
+    const site: any = await siteRow(sub);
+    if (!site || site.status !== 'published' || site.vertical !== 'store') return null;
+    if (!(await addonEntitlement(d.db, site.organizationId, 'website')).active) return null;
+    return { site, sub };
+  }
+
+  /** A shop's product page: photos, price, a quantity and "add to bag", and more from the shop. */
+  async function serveShopProduct(c: Context, slug: string) {
+    const live = await liveShop(c);
+    const lang0: Lang = c.req.query('lang') === 'en' ? 'en' : 'ar';
+    if (!live) return html(messagePage(lang0, null, 'notFound', null), 404, 'no-store');
+    const { site, sub } = live, config = site.publishedSnapshot ?? site, lang = langOf(c, config);
+    const origin = originOf(c, sub), design = designFor(site.vertical), basePath = new URL(origin).pathname.replace(/\/$/, '');
+    const connectWa = await connectWhatsapp(d, site.organizationId).catch(() => null);
+    const data = await withOrg(d.db, site.organizationId, async (tx) => {
+      const p = await shopProductPage(tx, d, site.organizationId, slug);
+      if (!p) return null;
+      const [org] = await tx.select({ name: organization.name }).from(organization).where(eq(organization.id, site.organizationId));
+      const [ss] = await tx.select({ logoId: sysSettings.logoId }).from(sysSettings).where(eq(sysSettings.organizationId, site.organizationId));
+      const logo = (await fileUrl(d.env, site.organizationId, config.logoId)) ?? (ss?.logoId ? await fileUrl(d.env, site.organizationId, ss.logoId) : null);
+      const cs = config.settings?.contact ?? {};
+      const contact = { phone: cs.phone ?? null, whatsapp: connectWa ?? cs.whatsapp ?? null, email: cs.email ?? null, address: cs.address ?? null, mapUrl: cs.mapUrl ?? null };
+      const pool = await shopItems(tx, d, site.organizationId, { limit: 60 });
+      const similar = [...pool.filter((x) => x.category && x.category === p.category), ...pool].filter((x, i, all) => x.id !== p.id && all.findIndex((y) => y.id === x.id) === i).slice(0, 4);
+      return { p, name: pick(config.name, lang) || org?.name || 'Hemlo', logo, contact, similar };
+    });
+    if (!data) return html(messagePage(lang, site.theme, 'notFound', null), 404, 'no-store');
+    const pages = (site.publishedSnapshot?.pages ?? []).slice(0, 5);
+    const t = W[lang], ctx: Ctx = { d, org: site.organizationId, site: { ...site, ...config, settings: site.settings }, lang, origin, t, basePath, pageSlug: `product:${slug}`, filters: {},
+      logo: data.logo, name: data.name, tagline: pick(config.tagline, lang), contact: data.contact, products: data.similar, listings: [], n: 0, onPhoto: false, design, pages };
+    const canonical = `${origin}/products/${encodeURIComponent(slug)}`;
+    const other: Lang = lang === 'ar' ? 'en' : 'ar', altHref = `${canonical}${other === (config.lang === 'en' ? 'en' : 'ar') ? '' : `?lang=${other}`}`;
+    const { main, bar } = shopProductHtml(ctx, data.p, data.similar, canonical);
+    const body = `${shopHeader(ctx, 'products', altHref)}${main}${shopFooter(ctx)}${bar}${shopChrome(ctx, altHref)}${inquiryDialog(lang, data.name)}`;
+    const p = data.p;
+    const jsonld = { '@context': 'https://schema.org', '@type': 'Product', name: p.name, url: canonical, ...(p.photos.length ? { image: p.photos.slice(0, 5) } : {}),
+      ...(p.description ? { description: p.description.slice(0, 300) } : {}), offers: { '@type': 'Offer', price: p.price, priceCurrency: 'IQD', availability: `https://schema.org/${p.stock === 'out' ? 'OutOfStock' : 'InStock'}` } };
+    return html(webFrame({ lang, title: `${p.name} · ${data.name}`, description: (p.description ?? `${p.name} · ${data.name}`).slice(0, 300), canonical, alt: altHref, image: p.photos[0] ?? null,
+      robots: 'index', theme: config.theme, body, bodyClass: bar ? 'has-bar' : undefined,
+      script: INQUIRY_SCRIPT({ send: t.send, sending: t.sending, badPhone: t.badPhone, failed: t.failed, page: `product:${slug}`, endpoint: `${basePath}/inquiry` }), jsonld, design, fontBase: `${basePath}/_hemlo/fonts` }), 200);
+  }
+
   /** The owner's live preview of their site as it is now, published or not (the dashboard draws it in a frame). */
   r.get('/_hemlo/preview', async (c) => {
     const a = actor(c, 'website', 'manage');
@@ -423,6 +491,44 @@ ${wa ? `<a class="btn wa" style="max-width:320px;margin:0 auto" href="${attr(waH
     return new Response(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`, { headers: { 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'public, max-age=30, s-maxage=30' } });
   });
 
+  // ---- a shop: the catalogue, a product, the checkout, an order ----
+  r.get('/products', (c) => serve(c, 'products', productFilters(c)));
+  r.get('/products/:slug', (c) => serveShopProduct(c, c.req.param('slug').toLowerCase()));
+  r.get('/checkout', (c) => serve(c, 'checkout'));
+  r.get('/order/:code', (c) => { const code = c.req.param('code').toLowerCase(); return /^[a-z0-9]{8,20}$/.test(code) ? serve(c, 'order', {}, undefined, code) : serve(c, 'order'); });
+
+  /** The bag priced by the shop (today's prices, what's in stock, the delivery fee): the browser never decides a price. */
+  r.post('/cart/quote', async (c) => {
+    const live = await liveShop(c);
+    if (!live) return c.json({ error: 'NOT_FOUND' }, 404);
+    const b = await c.req.json<any>().catch(() => ({}));
+    try {
+      const q = await withOrg(d.db, live.site.organizationId, (tx) => priceCart(tx, live.site.organizationId, live.site.settings?.shop, cartIn(b.lines), { city: typeof b.city === 'string' ? b.city : null, delivery: b.delivery }));
+      const lines = await Promise.all(q.lines.map(async (l) => ({ ...l, image: l.imageId ? await fileUrl(d.env, live.site.organizationId, l.imageId) : null, imageId: undefined, left: undefined })));
+      return c.json({ ...q, lines }, 200, { 'cache-control': 'no-store' });
+    } catch (e) { return c.json({ error: e instanceof HttpError ? e.code : 'BAD_CART' }, e instanceof HttpError ? e.status as any : 400); }
+  });
+
+  /** An order: priced again by the shop, filed in its System, and the customer hears on WhatsApp (Hemlo Connect). */
+  r.post('/checkout', async (c) => {
+    const live = await liveShop(c);
+    if (!live) return c.json({ error: 'NOT_FOUND' }, 404);
+    const b = await c.req.json<any>().catch(() => ({}));
+    if (b.hp) return c.json({ error: 'BAD_CART' }, 400);
+    const ip = c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+    const key = `order-${await hmac(d.env.AUTH_SECRET, `ip:${ip}`)}`, now = Date.now();
+    const rr = (await d.db.execute(sql`insert into rate_limit (id, key, count, last_request) values (${newId()}, ${key}, 1, ${now})
+      on conflict (key) do update set count = case when rate_limit.last_request < ${now - 3600_000} then 1 else rate_limit.count + 1 end,
+        last_request = case when rate_limit.last_request < ${now - 3600_000} then ${now} else rate_limit.last_request end returning count`)) as any;
+    if (Number((Array.isArray(rr) ? rr : rr?.rows ?? [])[0]?.count ?? 0) > 8) return c.json({ error: 'TOO_MANY' }, 429);
+    try {
+      const order = await withOrg(d.db, live.site.organizationId, (tx) => placeOrder(tx, live.site.organizationId, live.site.settings?.shop, b));
+      const tell = () => onOrder(d, live.site.organizationId, order.id).catch((e) => console.error('[shop order]', e instanceof Error ? e.message : e));
+      if (d.later) d.later(tell); else await tell();
+      return c.json({ code: order.code, number: order.number }, 201);
+    } catch (e) { return c.json({ error: e instanceof HttpError ? e.code : 'ORDER_FAILED' }, e instanceof HttpError ? e.status as any : 500); }
+  });
+
   r.get('/properties', (c) => serve(c, 'properties', listingFilters(c)));
   r.get('/properties/:slug', (c) => serveProperty(c, c.req.param('slug').toLowerCase()));
   r.get('/', (c) => serve(c, ''));
@@ -460,7 +566,7 @@ ${wa ? `<a class="btn wa" style="max-width:320px;margin:0 auto" href="${attr(waH
     const filed = await withOrg(d.db, site.organizationId, (tx) => adapter.createInquiry(tx, { organizationId: site.organizationId, name, phone, email, message, lang: site.lang, page, propertySlug }));
     // Hemlo Connect: the visitor hears back on WhatsApp within seconds (after this response, never slowing it)
     const answer = () => onInquiry(d, site.organizationId, filed.leadId, filed.about).catch((e) => console.error('[connect inquiry]', e instanceof Error ? e.message : e));
-    if (d.later) d.later(answer); else await answer();
+    if (site.vertical === 'realestate') { if (d.later) d.later(answer); else await answer(); } // a shop's message waits in its inbox for a person
     return c.json({ ok: true }, 201);
   });
 

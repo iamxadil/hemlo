@@ -9,6 +9,7 @@ import { HttpError } from '../../principal';
 import { withCovers, PUBLIC_STATUSES } from '../realestate/properties';
 import { activity, coverFirst, photosOf, priceText } from '../realestate/common';
 import type { Lang } from './theme';
+import { storeWebsiteAdapter, type ShopItem } from './shop-data';
 
 export type WebsiteListing = {
   slug: string; title: string; area: string | null; city: string | null; type: string; purpose: string; status: string;
@@ -17,7 +18,7 @@ export type WebsiteListing = {
   fresh: boolean;
 };
 export type WebsiteInquiry = { organizationId: string; name: string; phone: string; email: string | null; message: string | null; lang: string; page?: string; propertySlug?: string };
-export type WebsiteListingFilter = { q?: string; purpose?: string; type?: string; city?: string; area?: string; place?: string; currency?: string; min?: number; max?: number; sort?: 'new' | 'price-asc' | 'price-desc'; limit?: number };
+export type WebsiteListingFilter = { category?: string; q?: string; purpose?: string; type?: string; city?: string; area?: string; place?: string; currency?: string; min?: number; max?: number; sort?: 'new' | 'price-asc' | 'price-desc'; limit?: number };
 export type WebsiteProperty = {
   slug: string; title: string; type: string; purpose: string; status: string; price: string; currency: string; negotiable: boolean;
   city: string | null; area: string | null; size: number | null; land: number | null; bedrooms: number | null; bathrooms: number | null;
@@ -33,7 +34,7 @@ export interface WebsiteAdapter {
   publicProjection: readonly string[];
   /** Source mutations that change a rendered page; the API uses the shared short cache policy. */
   refreshOn: readonly string[];
-  load(tx: Database, deps: Deps, organizationId: string, lang: Lang, origin: string, filter?: WebsiteListingFilter): Promise<{ listings: WebsiteListing[] }>;
+  load(tx: Database, deps: Deps, organizationId: string, lang: Lang, origin: string, filter?: WebsiteListingFilter): Promise<{ listings: WebsiteListing[]; products?: ShopItem[] }>;
   loadProperty(tx: Database, deps: Deps, organizationId: string, lang: Lang, slug: string): Promise<WebsiteProperty | null>;
   sitemapSlugs(tx: Database): Promise<string[]>;
   /** Files the inquiry; says who it came from and what about, so Connect can answer on WhatsApp. */
@@ -128,5 +129,5 @@ export const realEstateWebsiteAdapter: WebsiteAdapter = {
   },
 };
 
-const adapters: Readonly<Record<string, WebsiteAdapter>> = { realestate: realEstateWebsiteAdapter };
+const adapters: Readonly<Record<string, WebsiteAdapter>> = { realestate: realEstateWebsiteAdapter, store: storeWebsiteAdapter };
 export const websiteAdapterFor = (edition: string): WebsiteAdapter | null => adapters[edition] ?? null;
