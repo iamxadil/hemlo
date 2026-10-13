@@ -19,6 +19,47 @@ import './re.css';
 
 const PRIMARY = ['today', 'properties', 'leads', 'agenda', 'deals'];
 const PHONE = ['today', 'properties', 'leads', 'agenda'];
+/** Hemlo's own products sit apart from the agency's daily pages: their own colour, a line on what they do, and where the agency stands. */
+const PRODUCTS = ['connect', 'marketing', 'website'];
+const PW = {
+  ar: { group: 'منتجات Hemlo', connect: ['Connect', 'واتساب ومساعد ذكي'], marketing: ['AI Studio', 'تسويق بالذكاء الاصطناعي'], website: ['Website', 'موقع وكالتك على الإنترنت'], on: 'مفعّل', new: 'جديد', add: 'أضِف' },
+  en: { group: 'Hemlo products', connect: ['Connect', 'WhatsApp and an AI assistant'], marketing: ['AI Studio', 'Marketing by AI'], website: ['Website', 'Your agency online'], on: 'On', new: 'New', add: 'Add' },
+  ckb: { group: 'بەرهەمەکانی Hemlo', connect: ['Connect', 'واتساپ و یاریدەدەری زیرەک'], marketing: ['AI Studio', 'بازاڕکردن بە زیرەکی دەستکرد'], website: ['Website', 'ئاژانسەکەت لەسەر ئینتەرنێت'], on: 'چالاکە', new: 'نوێ', add: 'زیادکردن' },
+} as const;
+
+/** Where the agency stands with each product, from the add-ons it has (no answer yet: no badge). */
+function useProductState(lang: string) {
+  const q = useQuery<{ addons: any[] }>({ queryKey: ['billing-addons'], queryFn: () => api('/v1/billing/addons'), staleTime: 60_000, retry: false });
+  const w = PW[lang as keyof typeof PW] ?? PW.ar;
+  const on = (code: string) => !!q.data?.addons.some((x) => x.code === code && (x.entitlement?.active || x.included));
+  const badge: Record<string, [string, boolean]> = {};
+  if (q.data) {
+    const tier = on('ai-studio') ? 'Studio' : on('connect-pro') ? 'Pro' : 'Basic';
+    badge.connect = [tier, tier !== 'Basic'];
+    badge.marketing = on('ai-studio') ? [w.on, true] : [w.new, false];
+    badge.website = on('website') ? [w.on, true] : [w.add, false];
+  }
+  return { w, badge };
+}
+
+function Products({ pages, onPage, phone, onPick }: { pages: Page[]; onPage(p: Page): boolean; phone?: boolean; onPick?(): void }) {
+  const { lang } = useR();
+  const { w, badge } = useProductState(lang);
+  const list = PRODUCTS.map((path) => pages.find((p) => p.path === path)).filter(Boolean) as Page[];
+  if (!list.length) return null;
+  return (
+    <div className={`re-pro${phone ? ' phone' : ''}`}>
+      <p className="re-pro-h"><HMark className="re-pro-m" />{w.group}</p>
+      {list.map((p) => { const [name, sub] = (w as any)[p.path] as [string, string]; const b = badge[p.path]; return (
+        <a key={p.path} className={`re-pro-i ${p.path}`} href={`#/${p.path}`} onClick={onPick} aria-current={onPage(p) ? 'page' : undefined}>
+          <span className="re-pro-t"><Icon n={p.icon} /></span>
+          <span className="re-pro-x"><b>{name}</b><small>{sub}</small></span>
+          {b && <span className={`re-pro-b${b[1] ? ' on' : ''}`}>{b[0]}</span>}
+        </a>
+      ); })}
+    </div>
+  );
+}
 type Add = null | 'menu' | 'lead' | 'viewing' | 'owner';
 
 export function ReShell({ pages, current, label, banner, signOut, signOutLabel, orgs, choose }: {
@@ -40,7 +81,7 @@ export function ReShell({ pages, current, label, banner, signOut, signOutLabel, 
 
   const notices = useQuery<{ notices: any[]; unread: number }>({ queryKey: ['re-notices'], queryFn: () => api('/v1/re/notices'), refetchInterval: 60_000, staleTime: 30_000 });
   const primary = pages.filter((p) => PRIMARY.includes(p.path));
-  const secondary = pages.filter((p) => !PRIMARY.includes(p.path) && !p.hidden && p.path !== 'more');
+  const secondary = pages.filter((p) => !PRIMARY.includes(p.path) && !PRODUCTS.includes(p.path) && !p.hidden && p.path !== 'more');
   const parent: Record<string, string> = { property: 'properties', studio: 'properties', lead: 'leads' };
   const onPage = (p: Page) => p.path === current.path || parent[current.path] === p.path;
   const View = current.view;
@@ -59,6 +100,7 @@ export function ReShell({ pages, current, label, banner, signOut, signOutLabel, 
           <div className="re-side-sep" />
           {secondary.filter((p) => p.path !== 'settings' && p.path !== 'plan').map((p) => <a key={p.path} className="re-nav" href={`#/${p.path}`} aria-current={onPage(p) ? 'page' : undefined}><Icon n={p.icon} /><span>{label(p)}</span></a>)}
         </nav>
+        <Products pages={pages} onPage={onPage} />
         <div className="re-side-foot">
           {secondary.filter((p) => p.path === 'settings' || p.path === 'plan').map((p) => <a key={p.path} className="re-nav" href={`#/${p.path}`} aria-current={onPage(p) ? 'page' : undefined}><Icon n={p.icon} /><span>{label(p)}</span></a>)}
           <button className="re-nav" onClick={() => setMore(true)}><span className="re-av" style={{ width: '1.6rem', height: '1.6rem', fontSize: '.7rem', background: 'rgb(255 255 255 / .1)' }}>{initials(me.user.name)}</span><span className="truncate">{me.user.name}</span></button>
@@ -85,7 +127,7 @@ export function ReShell({ pages, current, label, banner, signOut, signOutLabel, 
       </nav>
       {/* phones: "more" lives in the menu behind the avatar-less dock; a long press is not discoverable, so it's on the Today page too */}
 
-      {find && <Finder onClose={() => setFind(false)} pages={[...primary, ...secondary]} label={label} />}
+      {find && <Finder onClose={() => setFind(false)} pages={[...primary, ...pages.filter((p) => PRODUCTS.includes(p.path)), ...secondary]} label={label} />}
       {add === 'menu' && (
         <Panel onClose={() => setAdd(null)}>
           {([
@@ -96,6 +138,7 @@ export function ReShell({ pages, current, label, banner, signOut, signOutLabel, 
           ] as const).filter((x) => x[3]).map(([k, icon, text, , run]) => (
             <button key={k} className="re-menu-item" onClick={run}><span className="ic"><RIcon n={icon} /></span>{text}</button>
           ))}
+          <div className="md:hidden"><Products pages={pages} onPage={onPage} phone onPick={() => setAdd(null)} /></div>
           <div className="re-side-sep" style={{ background: 'var(--line)' }} />
           {secondary.map((p) => <a key={p.path} className="re-menu-item md:hidden" href={`#/${p.path}`} onClick={() => setAdd(null)}><span className="ic" style={{ background: 'var(--sunken)', color: 'var(--fg-2)' }}><Icon n={p.icon} /></span>{label(p)}</a>)}
         </Panel>
