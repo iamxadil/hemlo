@@ -95,7 +95,7 @@ const siteUrl = (subdomain: string | null, _base: string) => {
 
 /** The starter site for a new business: a home page that leads with what they sell, plus about and contact.
  *  The hero carries no words of its own: it shows the site's name and tagline, so it follows them when they change. */
-function starterPages(vertical: string, _name: Two) {
+export function starterPages(vertical: string, _name: Two) {
   const aboutTitle = { ar: 'من نحن', en: 'About us' }, contactTitle = { ar: 'تواصل معنا', en: 'Contact' };
   const lead = vertical === 'realestate' ? { type: 'listings', title: { ar: 'عقاراتنا', en: 'Our properties' } }
     : vertical === 'store' ? { type: 'products', title: { ar: 'منتجاتنا', en: 'Our products' } }
@@ -117,6 +117,11 @@ export function webRoutes(d: Deps) {
   async function orgFace(org: string) {
     const [o] = await withSystem(d.db, (tx) => tx.select({ slug: organization.slug, name: organization.name }).from(organization).where(eq(organization.id, org)));
     return o ?? null;
+  }
+  /** A demo's site stays a preview: it never goes live on a public address. */
+  async function demoOrg(org: string) {
+    const [o] = await withSystem(d.db, (tx) => tx.select({ metadata: organization.metadata }).from(organization).where(eq(organization.id, org)));
+    return /"demo":true/.test(String(o?.metadata ?? ''));
   }
   async function siteOf(a: Actor) {
     const [site] = await inWeb(a, (tx) => tx.select().from(webSite).where(eq(webSite.organizationId, a.organizationId)));
@@ -199,6 +204,7 @@ export function webRoutes(d: Deps) {
   r.post('/site/publish', async (c) => {
     const a = actor(c, 'website', 'manage');
     await requireAddon(d.db, a.organizationId, 'website');
+    if (await demoOrg(a.organizationId)) throw new HttpError(403, 'NOT_IN_DEMO');
     const site = await siteOf(a);
     if (!site) throw new HttpError(404, 'SITE_NOT_FOUND');
     const [row] = await inWeb(a, async (tx) => {

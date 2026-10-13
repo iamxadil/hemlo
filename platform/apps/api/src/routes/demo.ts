@@ -12,6 +12,7 @@ import { seedDemoClinic, DEMO_CLINIC } from '../demo-dental';
 import { seedDemoGym, DEMO_GYM } from '../demo-gym';
 import { seedDemoRealEstate, DEMO_AGENCY } from '../demo-realestate';
 import { seedDemoSchool, DEMO_SCHOOL } from '../demo-school';
+import { addonOffer } from '../addons';
 import type { AppEnv, Deps } from '../types';
 import { fileKey, type FileStore } from '../files';
 
@@ -35,6 +36,7 @@ export async function isDemoOrg(d: Deps, orgId: string | null | undefined) {
 const ORG_TABLES = ['sch_attendance', 'sch_payment', 'sch_charge', 'sch_fee_plan', 'sch_enrollment', 'sch_student_guardian', 'sch_guardian', 'sch_student', 'sch_class', 'sch_grade', 'sch_year', 'sch_settings', 're_report', 're_notice', 're_stat', 're_activity', 're_payment', 're_offer', 're_deal', 're_followup', 're_viewing', 're_collection_item', 're_collection',
   're_contract', 're_lead_property', 're_lead', 're_document', 're_media', 're_property', 're_owner', 're_agent', 're_branch', 're_settings', 'gym_measure', 'gym_booking', 'gym_class', 'gym_checkin', 'gym_membership', 'gym_member', 'gym_plan', 'gym_trainer', 'gym_settings', 'dent_access_log', 'dent_image', 'dent_consent', 'dent_installment', 'dent_perio', 'dent_lab_order', 'dent_rx', 'dent_visit_item', 'dent_visit', 'dent_plan_item', 'dent_plan',
   'dent_finding', 'dent_appointment', 'dent_patient', 'dent_procedure', 'dent_dentist', 'dent_chair', 'dent_settings', 'hemlo_subscription',
+  'connect_job', 'connect_message', 'connect_conversation', 'connect_recipe', 'connect_channel', 'web_page', 'web_site', 'hemlo_addon_payment', 'hemlo_addon_request', 'hemlo_addon_entitlement',
   'sys_reminder', 'sys_return_line', 'sys_return', 'sys_sale_line', 'sys_sale', 'sys_ledger', 'sys_stock_move', 'sys_purchase_line', 'sys_purchase', 'sys_supplier_ledger', 'sys_supplier',
   'ai_usage', 'sys_expense', 'sys_file', 'sys_shift', 'sys_sequence', 'sys_customer', 'sys_product', 'sys_settings', 'sys_fib_payment', 'counter_lock', 'counter_pin', 'counter_device', 'staff_invite', 'auth_event',
   'invitation', 'member'];
@@ -109,7 +111,10 @@ export function demoRoutes(d: Deps) {
       metadata: JSON.stringify({ demo: true, kind, city: lang === 'ar' ? 'بغداد' : 'Baghdad' }) };
     const owner = { id: newId(), organizationId: org.id, userId: user.id, role: 'owner', createdAt: new Date() };
     const first: Parameters<typeof seedDemoShop>[4] = [[organization, [org]], [member, [owner]]];
-    const seeded: Record<string, number> = await withOrg(d.db, org.id, (tx): Promise<Record<string, number>> => (dental ? seedDemoClinic(tx, org.id, user.id, owner.id, lang, first) : gym ? seedDemoGym(tx, org.id, user.id, owner.id, lang, first) : estate ? seedDemoRealEstate(tx, org.id, user.id, owner.id, lang, first, d.env.SYSTEM_URL) : school ? seedDemoSchool(tx, org.id, user.id, owner.id, lang, first) : seedDemoShop(tx, org.id, user.id, lang, first)));
+    // the real estate demo has Website and Connect Pro on (the bundle), so a visitor tries them rather than being asked to buy
+    const offer = estate ? await addonOffer(d.db, 'web-connect') : null;
+    const bundle = offer?.active ? { id: offer.id, price: offer.priceMonth ?? 0 } : null;
+    const seeded: Record<string, number> = await withOrg(d.db, org.id, (tx): Promise<Record<string, number>> => (dental ? seedDemoClinic(tx, org.id, user.id, owner.id, lang, first) : gym ? seedDemoGym(tx, org.id, user.id, owner.id, lang, first) : estate ? seedDemoRealEstate(tx, org.id, user.id, owner.id, lang, first, d.env.SYSTEM_URL, { bundle, subdomain: org.slug }) : school ? seedDemoSchool(tx, org.id, user.id, owner.id, lang, first) : seedDemoShop(tx, org.id, user.id, lang, first)));
     mark('shop');
     const session = await ctx.internalAdapter.createSession(user.id, false, { activeOrganizationId: org.id, loginMethod: 'demo' } as any);
     mark('session');

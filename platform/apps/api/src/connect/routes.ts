@@ -19,6 +19,7 @@ import { withCovers } from '../routes/realestate/properties';
 import { reProperty, reLeadProperty } from '@hemlo/db/schema';
 import { demoReply, type DemoTurn } from './demo';
 import { GRAPH, metaWa, parseWebhook, validSignature, WaError } from './wa';
+import { isDemoOrg } from '../routes/demo';
 import type { AppEnv, Deps } from '../types';
 
 const rowsOf = (r: any): any[] => (Array.isArray(r) ? r : r?.rows ?? []);
@@ -240,6 +241,7 @@ export function connectRoutes(d: Deps) {
    *  number with Meta, subscribes the webhook, and submits Connect's message templates for approval. */
   r.post('/channel/meta', async (c) => {
     const a = configure(c);
+    if (await isDemoOrg(d, a.organizationId)) throw new HttpError(403, 'NOT_IN_DEMO');
     await needPlan(a.organizationId);
     const b = await c.req.json<{ code?: string; token?: string; phoneNumberId?: string; wabaId?: string; pin?: string }>().catch(() => ({} as any));
     const phoneNumberId = /^\d{5,30}$/.test(String(b.phoneNumberId ?? '')) ? String(b.phoneNumberId) : bad('BAD_PHONE_ID');

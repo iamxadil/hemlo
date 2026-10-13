@@ -88,6 +88,7 @@ const studioCopy = (lang: string) => lang === 'en' ? {
   contactHint: 'How visitors reach you. WhatsApp is the button people press most.', buttons: 'Buttons on the site',
   addressHint: 'Letters, numbers and hyphens. Your site moves to the new address as soon as you save it.', saveAddress: 'Save address',
   firstLang: 'First language', home: 'Home', properties: 'Properties', about: 'About', contactPage: 'Contact', unpublish: 'Take offline',
+  demo: 'Demo preview', demoNote: 'In the demo your site stays a preview. On your own account, Publish puts it live at your own address.',
 } : {
   tabs: { design: 'التصميم', words: 'النصوص', contact: 'التواصل', address: 'العنوان', pages: 'الصفحات' } as Record<Tab, string>,
   saving: 'يُحفظ…', saved: 'محفوظ', draft: 'تعديلات لم تُنشر', live: 'منشور', notLive: 'لم يُنشر بعد', open: 'افتح الموقع', copy: 'انسخ الرابط', copied: 'نُسخ الرابط',
@@ -97,6 +98,7 @@ const studioCopy = (lang: string) => lang === 'en' ? {
   contactHint: 'كيف يصل إليك الزوار. واتساب هو الزر الأكثر استخداماً.', buttons: 'الأزرار في الموقع',
   addressHint: 'أحرف إنجليزية وأرقام وشرطات. ينتقل موقعك إلى العنوان الجديد فور حفظه.', saveAddress: 'احفظ العنوان',
   firstLang: 'اللغة الأولى', home: 'الرئيسية', properties: 'العقارات', about: 'من نحن', contactPage: 'تواصل', unpublish: 'أوقف النشر',
+  demo: 'معاينة تجريبية', demoNote: 'في النسخة التجريبية يبقى موقعك معاينة. في حسابك الحقيقي، زر النشر يضعه على عنوانك الخاص.',
 };
 
 /** Changes go out a moment after you stop typing, merged into one request; the cached dashboard is patched in place. */
@@ -134,8 +136,9 @@ function useWide() {
 }
 
 function Studio({ data, site }: { data: Dashboard; site: SiteT }) {
-  const { w, toast, err, lang } = useW();
+  const { w, toast, err, lang, sys } = useW();
   const S = studioCopy(lang);
+  const demo = !!sys.business.demo;
   const qc = useQueryClient();
   const save = useAutosave();
   const [tab, setTab] = useState<Tab>('design');
@@ -164,14 +167,14 @@ function Studio({ data, site }: { data: Dashboard; site: SiteT }) {
       <header className="ws-bar panel">
         <div className="ws-bar-l">
           <HwBadge />
-          <span className={`web-pill ${live ? 'ok' : 'warn'}`}><i />{live ? S.live : S.notLive}</span>
-          {data.url && <a className="ws-url" href={data.url} target="_blank" rel="noopener" dir="ltr">{data.url.replace(/^https:\/\//, '')}</a>}
-          {data.url && <button className="btn btn-ghost btn-sm" onClick={copy} aria-label={S.copy}><Icon n="clip" /></button>}
+          {demo ? <span className="web-pill" title={S.demoNote}><i />{S.demo}</span> : <span className={`web-pill ${live ? 'ok' : 'warn'}`}><i />{live ? S.live : S.notLive}</span>}
+          {data.url && !demo && <a className="ws-url" href={data.url} target="_blank" rel="noopener" dir="ltr">{data.url.replace(/^https:\/\//, '')}</a>}
+          {data.url && !demo && <button className="btn btn-ghost btn-sm" onClick={copy} aria-label={S.copy}><Icon n="clip" /></button>}
         </div>
         <div className="ws-bar-r">
           {status}
           {live && data.url && <a className="btn btn-secondary btn-sm" href={data.url} target="_blank" rel="noopener"><Icon n="globe" />{S.open}</a>}
-          {(!live || data.hasUnpublishedChanges) && <button className="btn btn-accent btn-sm" disabled={publish.isPending} onClick={() => publish.mutate()}><Icon n="sparkle" />{publish.isPending ? w.publishing : live ? w.publishChanges : w.publish}</button>}
+          {demo ? <span className="sub ws-demo-note">{S.demoNote}</span> : (!live || data.hasUnpublishedChanges) && <button className="btn btn-accent btn-sm" disabled={publish.isPending} onClick={() => publish.mutate()}><Icon n="sparkle" />{publish.isPending ? w.publishing : live ? w.publishChanges : w.publish}</button>}
           {live && <button className="btn btn-ghost btn-sm" disabled={unpublish.isPending} onClick={() => unpublish.mutate()}>{S.unpublish}</button>}
         </div>
       </header>

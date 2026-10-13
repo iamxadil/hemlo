@@ -460,6 +460,25 @@ describe('the demo agency', () => {
     expect(String(page.json)).toContain('Villa with a garden in Dream City');
     expect((await v.post('/v1/demo/end', {}, auth)).status).toBe(204);
   });
+
+  it('comes with Website and Connect Pro on, to use rather than to buy, and none of it reaches the public', async () => {
+    const v = new Browser(t.app);
+    const auth = { authorization: `Bearer ${(await v.post('/v1/demo/start', { lang: 'en', kind: 'realestate' })).json.token}` };
+    const web = (await v.get('/v1/web/site', auth)).json;
+    expect(web.entitlement.active).toBe(true);
+    expect(web.site).toMatchObject({ vertical: 'realestate', status: 'setup' });
+    expect(web.site.name.en).toBe('Al-Waha Real Estate');
+    expect(web.pages.length).toBeGreaterThan(2);
+    expect((await v.req('PUT', '/v1/web/site', { tagline: { en: 'Homes in Erbil' } }, auth)).status).toBe(200); // shaping it works
+    expect((await v.post('/v1/web/site/publish', {}, auth)).status).toBe(403);                            // going live does not
+    const cx = (await v.get('/v1/connect', auth)).json;
+    expect(cx).toMatchObject({ plan: 'connect-pro', canConfigure: true, channel: { provider: 'sandbox' } });
+    const inbox = (await v.get('/v1/connect/conversations', auth)).json.conversations;
+    expect(inbox.length).toBe(5);
+    expect(inbox.some((c: any) => c.unread > 0)).toBe(true);
+    expect((await v.post('/v1/connect/channel/meta', { phoneNumberId: '12345', wabaId: '12345', token: 'x'.repeat(30) }, auth)).status).toBe(403);
+    expect((await v.post('/v1/demo/end', {}, auth)).status).toBe(204); // and leaving takes all of it with it
+  });
 });
 
 describe('many demo agencies', () => {

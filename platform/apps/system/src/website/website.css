@@ -135,3 +135,4 @@ button.web-page:hover { background: var(--sunken); }
 .ws-sheet { position: fixed; inset: 0; z-index: 100; padding-top: max(.8rem, env(safe-area-inset-top)); display: grid; grid-template-rows: auto 1fr; gap: .6rem; padding: .8rem; background: var(--bg, var(--surface)); animation: ws-in .2s ease; overflow: auto; }
 .ws-sheet-h { display: flex; align-items: center; justify-content: space-between; gap: .6rem; }
 .ws-sheet .ws-stage { padding: .5rem; }
+.ws-demo-note { max-inline-size: 26rem; font-size: .78rem; line-height: 1.5; }
