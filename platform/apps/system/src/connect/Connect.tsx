@@ -9,7 +9,8 @@ import { api } from '../lib/api';
 import { useApp, go } from '../lib/app';
 import { Empty, Icon, Sheet } from '../components/ui';
 import { HwBadge } from '../components/HwBadge';
-import { copyOf, type Copy } from './words';
+import { copyOf } from './words';
+import { shopCopy, type ShopCopy } from './shop-words';
 import './connect.css';
 
 type Plan = 'connect' | 'connect-pro' | 'ai-studio' | null;
@@ -24,12 +25,14 @@ type Channel = { provider: 'sandbox' | 'meta'; status: string; displayPhone: str
 type QuickReply = { title: string; text: string };
 type Overview = { plan: Plan; ai: AiState; messaging: { state: 'ok' | 'low' | 'out'; pct: number }; offers: Offer[]; canConfigure: boolean; channel: Channel | null;
   signup: { appId: string; configId: string } | null; recipes: Recipe[]; counts: { unread: number; waiting: number; chats: number }; week: { sent: number; pending: number; missed: number };
-  summary: { chats: number; replies: number; viewings: number; replySeconds: number | null } };
+  summary: { chats: number; replies: number; viewings: number; orders?: number; replySeconds: number | null } };
 type Conv = { id: string; phone: string; name: string | null; leadId: string | null; leadName: string | null; leadStatus: string | null; status: string; handoff: boolean; optedOut: boolean;
   unread: number; lastMessageAt: string; preview: string | null; open: boolean };
 type Msg = { id: string; direction: 'in' | 'out'; author: 'customer' | 'agent' | 'ai' | 'automation'; kind: string; body: string; recipe: string | null; status: string; error: string | null; meta: any; createdAt: string; pending?: boolean };
-type Thread = { conversation: Conv & { lastInboundAt: string | null }; messages: Msg[]; lead: any; more: boolean };
+type Thread = { conversation: Conv & { lastInboundAt: string | null }; messages: Msg[]; lead: any; customer?: { id: string; name: string; phone: string | null; balance: number } | null;
+  orders?: { id: string; number: number; status: string; total: number; createdAt: string }[]; more: boolean };
 type Tab = 'inbox' | 'automations' | 'settings';
+type CC = ShopCopy & { shop?: boolean };
 
 /** Wide enough for the list and the chat side by side (the CSS breakpoint); on a phone a chat opens full screen. */
 const useWide = () => {
@@ -45,8 +48,10 @@ const useVisible = () => {
 };
 
 export function Connect() {
-  const { lang, errorText } = useApp();
-  const C = copyOf(lang);
+  const { lang, errorText, sys } = useApp();
+  // a shop (any system that isn't an agency): the same screen, in a shop's words, with products and orders
+  const shop = sys.business.kind !== 'realestate';
+  const C = useMemo<CC>(() => (shop ? { ...copyOf(lang), ...shopCopy(lang), shop: true } : { ...copyOf(lang), ...shopCopy(lang), ...copyOf(lang), shop: false }) as CC, [lang, shop]);
   const q = useQuery<Overview>({ queryKey: ['connect'], queryFn: () => api('/v1/connect'), staleTime: 30_000 });
   const [tab, setTab] = useState<Tab>('inbox');
   const [plans, setPlans] = useState(false);
@@ -84,7 +89,7 @@ export function Connect() {
 }
 
 /** When the assistant has reached a limit: until when it rests (it comes back by itself), and that chats wait for a person. */
-function AiNotice({ o, C }: { o: Overview; C: Copy }) {
+function AiNotice({ o, C }: { o: Overview; C: CC }) {
   const { dateTime } = useApp();
   if (!hasAi(o.plan) || o.ai.open || !o.ai.resetsAt || !o.channel?.ai) return null;
   return <p className="cx-notice"><Icon n="clock" />{C.aiPaused(o.ai.reason ?? 'day', dateTime(o.ai.resetsAt))}</p>;
@@ -92,7 +97,7 @@ function AiNotice({ o, C }: { o: Overview; C: Copy }) {
 
 // ------------------------------------------------------------------------------------------------- the tiers
 /** Basic (free with the System), Pro and AI Studio: what each adds, its price, and asking for it (the owner). */
-function Offers({ o, C, bare }: { o: Overview; C: Copy; bare?: boolean }) {
+function Offers({ o, C, bare }: { o: Overview; C: CC; bare?: boolean }) {
   const { money, toast, errorText, t } = useApp();
   const qc = useQueryClient();
   const [cycle, setCycle] = useState<'month' | 'year'>('month');
@@ -145,7 +150,7 @@ function Offers({ o, C, bare }: { o: Overview; C: Copy; bare?: boolean }) {
 }
 
 // ------------------------------------------------------------------------------------------------- connecting
-function Setup({ o, C }: { o: Overview; C: Copy }) {
+function Setup({ o, C }: { o: Overview; C: CC }) {
   const { toast, errorText } = useApp();
   const qc = useQueryClient();
   const [manual, setManual] = useState(false);
@@ -181,7 +186,7 @@ function Setup({ o, C }: { o: Overview; C: Copy }) {
 }
 
 /** Meta's Embedded Signup: the owner logs in with Facebook, picks or creates the WhatsApp number, and we get a code. */
-function SignupButton({ signup, C, onDone }: { signup: { appId: string; configId: string }; C: Copy; onDone(): void }) {
+function SignupButton({ signup, C, onDone }: { signup: { appId: string; configId: string }; C: CC; onDone(): void }) {
   const { toast, errorText } = useApp();
   const [busy, setBusy] = useState(false);
   const ids = useRef<{ phoneNumberId?: string; wabaId?: string }>({});
@@ -216,7 +221,7 @@ function loadFb(appId: string): Promise<any> {
   return fbLoading;
 }
 
-function ManualConnect({ C, onClose, onDone }: { C: Copy; onClose(): void; onDone(): void }) {
+function ManualConnect({ C, onClose, onDone }: { C: CC; onClose(): void; onDone(): void }) {
   const { toast, errorText } = useApp();
   const [f, setF] = useState({ phoneNumberId: '', wabaId: '', token: '' });
   const save = useMutation({ mutationFn: () => api('/v1/connect/channel/meta', { body: f }), onSuccess: () => { toast(C.connectedToast); onDone(); }, onError: (e) => toast(errorText(e), 'bad') });
@@ -235,7 +240,7 @@ function ManualConnect({ C, onClose, onDone }: { C: Copy; onClose(): void; onDon
 }
 
 // ------------------------------------------------------------------------------------------------- the inbox
-function Inbox({ o, C }: { o: Overview; C: Copy }) {
+function Inbox({ o, C }: { o: Overview; C: CC }) {
   const visible = useVisible();
   const [filter, setFilter] = useState<'all' | 'unread' | 'waiting' | 'mine'>('all');
   const [search, setSearch] = useState('');
@@ -276,7 +281,7 @@ function Inbox({ o, C }: { o: Overview; C: Copy }) {
 }
 
 /** What Connect did this week, in four numbers: the reason the owner keeps paying for it. */
-function WeekStrip({ s, C }: { s: Overview['summary']; C: Copy }) {
+function WeekStrip({ s, C }: { s: Overview['summary']; C: CC }) {
   const { num, lang } = useApp();
   if (!s || (!s.chats && !s.replies)) return null;
   const t = s.replySeconds;
@@ -284,14 +289,14 @@ function WeekStrip({ s, C }: { s: Overview['summary']; C: Copy }) {
   return (
     <div className="cx-weekstrip" aria-label={C.thisWeek}>
       <span className="cx-ws-k">{C.thisWeek}</span>
-      {([[s.chats, C.wsChats], [s.replies, C.wsReplies], [s.viewings, C.wsViewings]] as [number, string][]).map(([v, l]) => <span key={l}><b>{num(v)}</b>{l}</span>)}
+      {([[s.chats, C.wsChats], [s.replies, C.wsReplies], C.shop ? [s.orders ?? 0, C.wsOrders] : [s.viewings, C.wsViewings]] as [number, string][]).map(([v, l]) => <span key={l}><b>{num(v)}</b>{l}</span>)}
       <span><b dir={lang === 'en' ? undefined : 'auto'}>{speed}</b>{C.wsSpeed}</span>
     </div>
   );
 }
 
 const initials = (s: string) => s.replace(/^\+/, '').trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase().slice(0, 2);
-function Row({ c, on, C, onOpen }: { c: Conv; on: boolean; C: Copy; onOpen(): void }) {
+function Row({ c, on, C, onOpen }: { c: Conv; on: boolean; C: CC; onOpen(): void }) {
   const { time, date } = useApp();
   const name = c.leadName || c.name || c.phone;
   const today = new Date(c.lastMessageAt).toDateString() === new Date().toDateString();
@@ -311,7 +316,7 @@ function Row({ c, on, C, onOpen }: { c: Conv; on: boolean; C: Copy; onOpen(): vo
   );
 }
 
-function ThreadView({ id, C, o, onBack }: { id: string; C: Copy; o: Overview; onBack(): void }) {
+function ThreadView({ id, C, o, onBack }: { id: string; C: CC; o: Overview; onBack(): void }) {
   const { toast, errorText, dateTime, lang } = useApp();
   const visible = useVisible();
   const qc = useQueryClient();
@@ -353,7 +358,7 @@ function ThreadView({ id, C, o, onBack }: { id: string; C: Copy; o: Overview; on
   }, [q.data?.messages]);
   if (q.isLoading) return <div className="grid gap-3 p-4"><div className="skeleton h-12" /><div className="skeleton h-64" /></div>;
   if (!q.data) return <Empty icon="alert" text={errorText(q.error)} />;
-  const c = q.data.conversation, lead = q.data.lead, name = lead?.name || c.name || c.phone;
+  const c = q.data.conversation, lead = q.data.lead, customer = q.data.customer, name = lead?.name || customer?.name || c.name || c.phone;
   const assistant = hasAi(o.plan) && o.channel?.ai;
   return (
     <>
@@ -367,12 +372,14 @@ function ThreadView({ id, C, o, onBack }: { id: string; C: Copy; o: Overview; on
         <div className="cx-th-acts">
           {tools && <button className="btn btn-ghost btn-sm" disabled={assist.isPending} onClick={() => assist.mutate('summary')} aria-label={C.summary} title={C.summary}><Icon n="sparkle" /><span className="cx-wide-only">{assist.isPending && assist.variables === 'summary' ? C.thinking : C.summary}</span></button>}
           {lead && <button className="btn btn-ghost btn-sm" onClick={() => go(`#/lead?id=${lead.id}`)} aria-label={C.openLead} title={C.openLead}><Icon n="user" /><span className="cx-wide-only">{C.openLead}</span></button>}
+          {customer && <button className="btn btn-ghost btn-sm" onClick={() => go(`#/customers?id=${customer.id}`)} aria-label={C.openCustomer} title={C.openCustomer}><Icon n="user" /><span className="cx-wide-only">{C.openCustomer}</span></button>}
           {assistant && (c.handoff
             ? <button className="btn btn-secondary btn-sm" disabled={hand.isPending} onClick={() => hand.mutate(false)}><Icon n="sparkle" />{C.giveBack}</button>
             : <button className="btn btn-secondary btn-sm" disabled={hand.isPending} onClick={() => hand.mutate(true)}>{C.takeOver}</button>)}
         </div>
       </header>
       {lead && <LeadStrip lead={lead} C={C} />}
+      {C.shop && (customer || q.data.orders?.length) ? <CustomerStrip customer={customer ?? null} orders={q.data.orders ?? []} C={C} /> : null}
       {brief && <div className="cx-brief"><b><Icon n="sparkle" />{C.summaryTitle}</b><p>{brief}</p><button className="cx-x" onClick={() => setBrief(null)} aria-label={C.back}>×</button></div>}
       <div className="cx-msgs">
         {groups.map((g) => (
@@ -392,7 +399,7 @@ function ThreadView({ id, C, o, onBack }: { id: string; C: Copy; o: Overview; on
             <form onSubmit={(e) => { e.preventDefault(); const t = text.trim(); if (t && !send.isPending) send.mutate(t); }}>
               <span className="cx-tools">
                 <button type="button" className="cx-tool" aria-pressed={tool === 'quick'} aria-label={C.quick} title={C.quick} onClick={() => setTool(tool === 'quick' ? null : 'quick')}><Icon n="sparkle" /></button>
-                <button type="button" className="cx-tool" aria-label={C.sendListing} title={C.sendListing} onClick={() => setTool('listing')}><Icon n="home" /></button>
+                <button type="button" className="cx-tool" aria-label={C.shop ? C.sendProduct : C.sendListing} title={C.shop ? C.sendProduct : C.sendListing} onClick={() => setTool('listing')}><Icon n={C.shop ? 'products' : 'home'} /></button>
                 {tools && <button type="button" className={`cx-tool ${assist.isPending && assist.variables === 'suggest' ? 'busy' : ''}`} disabled={assist.isPending} aria-label={C.suggest} title={C.suggest} onClick={() => assist.mutate('suggest')}><Icon n="pen" /></button>}
               </span>
               <textarea ref={area} rows={1} value={text} placeholder={C.write} onChange={(e) => setText(e.target.value)}
@@ -401,13 +408,14 @@ function ThreadView({ id, C, o, onBack }: { id: string; C: Copy; o: Overview; on
             </form>
           </>}
       </footer>
-      {tool === 'listing' && <ListingPick convId={id} C={C} onClose={() => setTool(null)} onSent={() => { setTool(null); void qc.invalidateQueries({ queryKey: key }); void qc.invalidateQueries({ queryKey: ['connect-convs'] }); }} />}
+      {tool === 'listing' && (() => { const done = () => { setTool(null); void qc.invalidateQueries({ queryKey: key }); void qc.invalidateQueries({ queryKey: ['connect-convs'] }); };
+        return C.shop ? <ProductPick convId={id} C={C} onClose={() => setTool(null)} onSent={done} /> : <ListingPick convId={id} C={C} onClose={() => setTool(null)} onSent={done} />; })()}
     </>
   );
 }
 
 /** Saved answers, one tap each (the agency's own, or a few to start with). */
-function QuickPick({ o, C, onPick, onClose }: { o: Overview; C: Copy; onPick(t: string): void; onClose(): void }) {
+function QuickPick({ o, C, onPick, onClose }: { o: Overview; C: CC; onPick(t: string): void; onClose(): void }) {
   const list = o.channel?.persona.quick?.length ? o.channel.persona.quick : C.quickDefaults;
   useEffect(() => { const on = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); }; window.addEventListener('keydown', on); return () => window.removeEventListener('keydown', on); }, [onClose]);
   return (
@@ -418,8 +426,42 @@ function QuickPick({ o, C, onPick, onClose }: { o: Overview; C: Copy; onPick(t: 
   );
 }
 
+/** One of the shop's products, into the chat: its name, price and (when it's online) its page. */
+function ProductPick({ convId, C, onClose, onSent }: { convId: string; C: CC; onClose(): void; onSent(): void }) {
+  const { lang, toast, errorText, money } = useApp();
+  const [q, setQ] = useState('');
+  const [term, setTerm] = useState('');
+  useEffect(() => { const t = setTimeout(() => setTerm(q.trim()), 220); return () => clearTimeout(t); }, [q]);
+  const list = useQuery<{ products: { id: string; name: string; category: string | null; price: number; stock: number; trackStock: boolean; online: boolean; image: string | null }[] }>({
+    queryKey: ['connect-products', term], queryFn: () => api(`/v1/connect/products?q=${encodeURIComponent(term)}`), placeholderData: keepPreviousData, staleTime: 60_000 });
+  const send = useMutation({ mutationFn: (productId: string) => api(`/v1/connect/conversations/${convId}/product`, { body: { productId, lang: lang === 'en' ? 'en' : 'ar' } }),
+    onSuccess: () => { toast(C.productSent); onSent(); }, onError: (e) => toast(errorText(e), 'bad') });
+  return createPortal(
+    <Sheet title={C.sendProduct} sub={C.sendProductSub} onClose={onClose}>
+      <div className="grid gap-3">
+        <div className="cx-search"><Icon n="search" /><input autoFocus placeholder={C.productSearch} value={q} onChange={(e) => setQ(e.target.value)} /></div>
+        <div className="cx-plist">
+          {list.isLoading ? <div className="skeleton h-40" /> : list.data?.products.length ? list.data.products.map((p) => (
+            <button key={p.id} disabled={send.isPending} onClick={() => send.mutate(p.id)}>
+              {p.image ? <img src={p.image} alt="" loading="lazy" /> : <span className="ph" />}
+              <span className="min-w-0 flex-1"><b>{p.name}</b><small>{[p.category, p.trackStock ? `${p.stock}` : null].filter(Boolean).join(' · ')}</small></span>
+              <em dir="ltr">{money(p.price)}</em>
+            </button>
+          )) : <p className="sub">{C.noProducts}</p>}
+        </div>
+      </div>
+    </Sheet>, document.body);
+}
+
+/** A shop's customer at a glance: what they owe in the book, and their latest online orders. */
+function CustomerStrip({ customer, orders, C }: { customer: { balance: number } | null; orders: { id: string; number: number; status: string; total: number }[]; C: CC }) {
+  const { money } = useApp();
+  return <div className="cx-strip">{customer && customer.balance > 0 && <span className="warn">{C.owes} {money(customer.balance)}</span>}
+    {orders.map((o) => <a key={o.id} href={`#/orders?id=${o.id}`}>{C.orderWord} #{o.number} · {C.status[o.status] ?? o.status}</a>)}</div>;
+}
+
 /** One of the agency's homes, into the chat: its title, price and page. */
-function ListingPick({ convId, C, onClose, onSent }: { convId: string; C: Copy; onClose(): void; onSent(): void }) {
+function ListingPick({ convId, C, onClose, onSent }: { convId: string; C: CC; onClose(): void; onSent(): void }) {
   const { lang, toast, errorText } = useApp();
   const [q, setQ] = useState(''), [term, setTerm] = useState('');
   useEffect(() => { const t = window.setTimeout(() => setTerm(q.trim()), 250); return () => window.clearTimeout(t); }, [q]);
@@ -445,7 +487,7 @@ function ListingPick({ convId, C, onClose, onSent }: { convId: string; C: Copy; 
   );
 }
 
-function LeadStrip({ lead, C }: { lead: any; C: Copy }) {
+function LeadStrip({ lead, C }: { lead: any; C: CC }) {
   const { money } = useApp();
   const budget = lead.budgetMax ? <bdi dir="ltr">≤ {lead.currency === 'USD' ? `$${Number(lead.budgetMax).toLocaleString('en-US')}` : money(Number(lead.budgetMax))}</bdi> : null;
   const bits = [lead.purpose === 'rent' ? C.rent : C.buy, ...(lead.types ?? []).slice(0, 2).map((t: string) => C.types[t] ?? t), ...(lead.areas ?? []).slice(0, 2),
@@ -453,7 +495,7 @@ function LeadStrip({ lead, C }: { lead: any; C: Copy }) {
   return <div className="cx-strip">{bits.map((b, i) => <span key={i}>{b}</span>)}{!lead.consent && <span className="muted">{C.noConsent}</span>}</div>;
 }
 
-function Bubble({ m, C }: { m: Msg; C: Copy }) {
+function Bubble({ m, C }: { m: Msg; C: CC }) {
   const { time } = useApp();
   const out = m.direction === 'out';
   const by = m.author === 'ai' ? <><Icon n="sparkle" />{C.byAi}</> : m.author === 'automation' ? <><Icon n="clock" />{C.recipes[m.recipe ?? ''] ?? C.byAuto}</> : null;
@@ -469,7 +511,7 @@ function Bubble({ m, C }: { m: Msg; C: Copy }) {
 }
 const linkify = (s: string) => s.split(/(https?:\/\/[^\s]+)/g).map((part, i) => (/^https?:\/\//.test(part) ? <a key={i} href={part} target="_blank" rel="noopener" dir="ltr">{part.replace(/^https?:\/\//, '')}</a> : part));
 
-function Simulator({ C, onClose, onSent }: { C: Copy; onClose(): void; onSent(id: string): void }) {
+function Simulator({ C, onClose, onSent }: { C: CC; onClose(): void; onSent(id: string): void }) {
   const { toast, errorText } = useApp();
   const qc = useQueryClient();
   const [f, setF] = useState({ name: C.simName, phone: '+9647700000001', text: C.simText });
@@ -493,7 +535,7 @@ function Simulator({ C, onClose, onSent }: { C: Copy; onClose(): void; onSent(id
 }
 
 // ------------------------------------------------------------------------------------------------- automations
-function Automations({ o, C }: { o: Overview; C: Copy }) {
+function Automations({ o, C }: { o: Overview; C: CC }) {
   const { toast, errorText, dateTime } = useApp();
   const qc = useQueryClient();
   const log = useQuery<{ jobs: any[] }>({ queryKey: ['connect-log'], queryFn: () => api('/v1/connect/activity'), staleTime: 15_000 });
@@ -520,6 +562,7 @@ function Automations({ o, C }: { o: Overview; C: Copy }) {
             <div className="cx-r-m">
               <b>{C.recipes[r.key]}{r.plan === 'connect-pro' && <span className="cx-tag pro">Pro</span>}{r.marketing && <span className="cx-tag">{C.consentTag}</span>}</b>
               <p>{C.recipeBody[r.key]}</p>
+              {r.key === 'debt_reminder' && r.allowed && <label className="cx-inline">{C.debtMin}<select className="input" value={r.settings.min ?? 10000} onChange={(e) => set.mutate({ key: r.key, enabled: r.on, settings: { min: Number(e.target.value) } })}>{[5000, 10000, 25000, 50000, 100000].map((n) => <option key={n} value={n}>{n.toLocaleString('en-US')}</option>)}</select></label>}
               {r.key === 'cold_lead' && r.allowed && <label className="cx-inline">{C.coldDays}<select className="input" value={r.settings.days ?? 21} onChange={(e) => set.mutate({ key: r.key, enabled: r.on, settings: { days: Number(e.target.value) } })}>{[14, 21, 30, 45, 60].map((n) => <option key={n} value={n}>{n}</option>)}</select></label>}
               {o.channel?.provider === 'meta' && r.template && !r.approved && <span className="cx-tag warn">{C.awaitingApproval}</span>}
             </div>
@@ -544,7 +587,7 @@ function Automations({ o, C }: { o: Overview; C: Copy }) {
 }
 
 // ------------------------------------------------------------------------------------------------- settings
-function Settings({ o, C }: { o: Overview; C: Copy }) {
+function Settings({ o, C }: { o: Overview; C: CC }) {
   const { toast, errorText } = useApp();
   const qc = useQueryClient();
   const ch = o.channel!;
@@ -587,7 +630,7 @@ function Settings({ o, C }: { o: Overview; C: Copy }) {
 }
 
 /** The agency's saved answers: a title to find it, and the text it puts in the chat. */
-function QuickEditor({ ch, C }: { ch: Channel; C: Copy }) {
+function QuickEditor({ ch, C }: { ch: Channel; C: CC }) {
   const { toast, errorText } = useApp();
   const qc = useQueryClient();
   const [rows, setRows] = useState<QuickReply[]>(() => (ch.persona.quick?.length ? ch.persona.quick : C.quickDefaults).map((x) => ({ ...x })));

@@ -62,12 +62,20 @@ export function Products() {
   );
 }
 
+/** The online shop's words for a product (a store with Hemlo Website). */
+const SHOP_W = {
+  ar: { online: 'اعرضه في متجرك على الإنترنت', onlineHint: 'يظهر في موقعك بصورته وسعره، ويطلبه الزبون بالدفع عند الاستلام.', desc: 'وصف قصير', descHint: 'الحجم، المكونات، لمن يناسب…' },
+  en: { online: 'Show it in your online shop', onlineHint: 'It appears on your website with its photo and price, and customers order it with cash on delivery.', desc: 'A short description', descHint: 'Size, ingredients, who it suits…' },
+  ckb: { online: 'لە دوکانە ئۆنلاینەکەتدا پیشانی بدە', onlineHint: 'بە وێنە و نرخەکەیەوە لە ماڵپەڕەکەتدا دەردەکەوێت، و کڕیار بە پارەدان لە کاتی وەرگرتن داوای دەکات.', desc: 'وەسفێکی کورت', descHint: 'قەبارە، پێکهاتە، بۆ کێ دەگونجێت…' },
+};
+
 function ProductForm({ product, onClose }: { product?: Product; onClose(): void }) {
-  const { t, toast, errorText } = useApp();
+  const { t, toast, errorText, lang, sys } = useApp();
+  const shopW = SHOP_W[lang] ?? SHOP_W.ar, isShop = !sys.business.kind || sys.business.kind === 'store';
   const qc = useQueryClient();
   const [f, setF] = useState({ name: product?.name ?? '', barcode: product?.barcode ?? '', category: product?.category ?? '', unit: product?.unit ?? 'piece',
     price: product?.price ?? null as number | null, cost: product?.cost ?? null as number | null, stock: '', lowStock: product?.lowStock != null ? String(product.lowStock) : '', trackStock: product?.trackStock ?? true,
-    packSize: product?.packSize ? String(product.packSize) : '', packBarcode: product?.packBarcode ?? '', packPrice: product?.packPrice ?? null as number | null, scaleCode: product?.scaleCode ?? '' });
+    packSize: product?.packSize ? String(product.packSize) : '', packBarcode: product?.packBarcode ?? '', packPrice: product?.packPrice ?? null as number | null, scaleCode: product?.scaleCode ?? '', online: !!(product as any)?.online, description: (product as any)?.description ?? '' });
   const [showPack, setShowPack] = useState(!!product?.packSize);
   const [image, setImage] = useState<{ id: string | null; url: string | null; changed: boolean }>({ id: product?.imageId ?? null, url: product?.imageUrl ?? null, changed: false });
   const [error, setError] = useState('');
@@ -76,7 +84,7 @@ function ProductForm({ product, onClose }: { product?: Product; onClose(): void 
     mutationFn: () => {
       const body = { name: f.name, barcode: toLatin(f.barcode) || null, category: f.category || null, unit: f.unit, price: f.price, cost: f.cost, lowStock: f.lowStock ? Number(toLatin(f.lowStock)) : null, trackStock: f.trackStock,
         packSize: f.packSize ? Number(toLatin(f.packSize)) : null, packBarcode: f.packSize ? toLatin(f.packBarcode) || null : null, packPrice: f.packSize ? f.packPrice : null,
-        scaleCode: toLatin(f.scaleCode).replace(/\D/g, '') || null, ...(image.changed ? { imageId: image.id } : {}) };
+        scaleCode: toLatin(f.scaleCode).replace(/\D/g, '') || null, ...(image.changed ? { imageId: image.id } : {}), ...(isShop ? { online: f.online, description: f.description.trim() || null } : {}) };
       return product ? api(`/v1/sys/products/${product.id}`, { method: 'PATCH', body }) : api('/v1/sys/products', { body: { ...body, stock: f.stock ? Number(toLatin(f.stock)) : 0 } });
     },
     onSuccess: (r: any) => { qc.invalidateQueries({ queryKey: ['products'] }); toast(t.products.saved); product ? onClose() : go(`#/products?id=${r.product.id}`); },
@@ -108,6 +116,11 @@ function ProductForm({ product, onClose }: { product?: Product; onClose(): void 
         {!product && <label className="field">{t.products.stock}<input className="input" dir="ltr" inputMode="decimal" value={f.stock} onChange={(e) => set('stock', e.target.value)} placeholder="0" /></label>}
         <label className="field">{t.products.lowStock}{opt}<input className="input" dir="ltr" inputMode="decimal" value={f.lowStock} onChange={(e) => set('lowStock', e.target.value)} placeholder="0" /></label>
       </div>}
+      {isShop && <section className="grid gap-3 rounded-2xl border border-[var(--line)] p-3">
+        <label className="flex items-start gap-3"><input type="checkbox" className="mt-1 h-4 w-4 accent-[var(--accent)]" checked={f.online} onChange={(e) => set('online', e.target.checked)} />
+          <span><b className="block font-medium">{shopW.online}</b><span className="sub">{shopW.onlineHint}</span></span></label>
+        {f.online && <label className="field">{shopW.desc}{opt}<textarea className="input" rows={3} maxLength={2000} placeholder={shopW.descHint} value={f.description} onChange={(e) => set('description', e.target.value)} /></label>}
+      </section>}
       {(f.unit === 'kg' || f.unit === 'g') && <label className="field">{t.tillSettings.scaleCode}{opt}<input className="input" dir="ltr" inputMode="numeric" placeholder="00042" value={f.scaleCode} onChange={(e) => set('scaleCode', e.target.value)} /><small>{t.tillSettings.scaleHint}</small></label>}
       {!showPack ? <button className="link-arrow justify-self-start text-sm" onClick={() => setShowPack(true)}>+ {t.pack.section}</button> : (
         <section className="grid gap-3 rounded-2xl border border-[var(--line)] p-3">

@@ -231,3 +231,6 @@
 @media (prefers-reduced-motion: reduce) { .cx-brief { animation: none; } .cx-tool.busy svg { animation: none; opacity: .5; } }
 :root[data-theme="dark"] .cx-brief { color: #D9C7EA; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .cx-brief { color: #D9C7EA; } }
+
+/* buttons' icons at one size in every system's frame (an agency's sets it in its own stylesheet; a shop's doesn't) */
+.cx :is(.btn, .icon-btn) > svg { width: 1.1rem; height: 1.1rem; flex: none; }

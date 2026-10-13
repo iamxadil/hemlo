@@ -79,4 +79,26 @@ const ckb: W = {
     DAILY_LIMIT: 'سنووری ئەمڕۆ تەواو بوو.', IMAGE_PROVIDER_MISSING: 'وێنەی پۆست هێشتا چالاک نییە.', VIDEO_PROVIDER_MISSING: 'ڤیدیۆ هێشتا بەردەست نییە.', COSTS_NOT_SET: 'وێنە ئێستا بەردەست نییە.',
     AI_FAILED: 'ئێستا سەرنەکەوت. دواتر هەوڵ بدەرەوە.', AI_BUSY: 'خزمەتگوزارییەکە سەرقاڵە.', AI_UNAVAILABLE: 'خزمەتگوزارییەکە بەردەست نییە.', PICK_LISTINGS: 'لانیکەم یەک خانووبەرە هەڵبژێرە.' },
 };
-export const wordsOf = (lang: string): W => (lang === 'en' ? en : lang === 'ckb' ? ckb : ar);
+const SHOP: Record<'ar' | 'en' | 'ckb', Partial<W>> = {
+  ar: { heroTitle: 'تسويق متجرك، من منتجاتك الحقيقية', heroBody: 'حملات ونصوص وتصاميم بالعربية والإنكليزية، تكتب من منتجاتك وأسعارك فقط، بلا عروض أو أرقام مخترعة.',
+    pickListings: 'اختر المنتجات (حتى 6)', noListings: 'أضف منتجاً أولاً لتكتب له حملة.',
+    goals: [['launch', 'منتج جديد'], ['offer', 'عرض'], ['season', 'مناسبة أو موسم'], ['bestseller', 'الأكثر مبيعاً'], ['brand', 'التعريف بالمتجر']],
+    notePh: 'مثلاً: هدية مناسبة لعيد الأم', campaignEmpty: 'اختر منتجاً أو أكثر، والهدف والقنوات، وتظهر الحملة هنا بالعربية والإنكليزية.', checkNumbers: 'فيها رقم لم نجده في بيانات المنتج: راجعه قبل النشر.',
+    focusPh: 'مثلاً: هدايا رمضان هذا الشهر', forListing: 'لمنتج (اختياري)', noListing: 'بلا منتج محدد', describePh: 'مثلاً: زجاجة عطر ذهبية على رخام أبيض بضوء ناعم',
+    imagesEmpty: 'صور تسويقية لمنشوراتك. أضف اسم متجرك وسعرك عليها في تطبيق التصميم الذي تحبه.', imagesSoonBody: 'يفعّلها فريق Hemlo لمتجرك قريباً. حتى ذلك الحين، استخدم الحملات وخطة المحتوى.' },
+  en: { heroTitle: 'Marketing for your shop, from your real products', heroBody: 'Campaigns, copy and designs in Arabic and English, written from your products and prices only: no made-up offers or numbers.',
+    pickListings: 'Pick products (up to 6)', noListings: 'Add a product first to write a campaign for it.',
+    goals: [['launch', 'New product'], ['offer', 'An offer'], ['season', 'An occasion or season'], ['bestseller', 'Bestseller'], ['brand', 'Your shop']],
+    notePh: 'E.g. a good gift for Mother’s Day', campaignEmpty: 'Pick one or more products, a goal and channels, and the campaign shows here in Arabic and English.', checkNumbers: 'It has a number we didn’t find in the product: check it before posting.',
+    focusPh: 'E.g. Ramadan gifts this month', forListing: 'For a product (optional)', noListing: 'No particular product', describePh: 'E.g. a gold perfume bottle on white marble, soft light',
+    imagesEmpty: 'Marketing images for your posts. Add your shop’s name and price on top in the design app you like.', imagesSoonBody: 'Hemlo’s team switches them on for your shop soon. Until then, use campaigns and the content plan.' },
+  ckb: { heroTitle: 'بازاڕکردنی دوکانەکەت، لە بەرهەمە ڕاستەقینەکانت', heroBody: 'هەڵمەت و دەق و دیزاین بە عەرەبی و ئینگلیزی، تەنها لە بەرهەم و نرخەکانت.',
+    pickListings: 'بەرهەم هەڵبژێرە (تا ٦)', noListings: 'سەرەتا بەرهەمێک زیاد بکە.',
+    goals: [['launch', 'بەرهەمی نوێ'], ['offer', 'ئۆفەر'], ['season', 'بۆنە یان وەرز'], ['bestseller', 'زۆرترین فرۆشراو'], ['brand', 'دوکانەکەت']],
+    forListing: 'بۆ بەرهەمێک (ئارەزوومەندانە)', noListing: 'بێ بەرهەمێکی دیاریکراو' },
+};
+/** shop: any system that isn't an agency (its products instead of listings). */
+export const wordsOf = (lang: string, shop = false): W & { shop: boolean } => {
+  const base = lang === 'en' ? en : lang === 'ckb' ? ckb : ar;
+  return shop ? { ...base, ...SHOP[lang === 'en' ? 'en' : lang === 'ckb' ? 'ckb' : 'ar'], shop: true } : { ...base, shop: false };
+};

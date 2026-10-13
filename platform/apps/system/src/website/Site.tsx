@@ -87,7 +87,7 @@ const studioCopy = (lang: string) => lang === 'en' ? {
   wordsHint: 'Your name, a line about you, and a short story. Both languages show on the site.',
   contactHint: 'How visitors reach you. WhatsApp is the button people press most.', buttons: 'Buttons on the site',
   addressHint: 'Letters, numbers and hyphens. Your site moves to the new address as soon as you save it.', saveAddress: 'Save address',
-  firstLang: 'First language', home: 'Home', properties: 'Properties', about: 'About', contactPage: 'Contact', unpublish: 'Take offline',
+  firstLang: 'First language', home: 'Home', properties: 'Properties', products: 'Products', checkout: 'Checkout', about: 'About', contactPage: 'Contact', unpublish: 'Take offline',
   demo: 'Demo preview', demoNote: 'In the demo your site stays a preview. On your own account, Publish puts it live at your own address.',
 } : {
   tabs: { design: 'التصميم', words: 'النصوص', contact: 'التواصل', address: 'العنوان', pages: 'الصفحات' } as Record<Tab, string>,
@@ -97,7 +97,7 @@ const studioCopy = (lang: string) => lang === 'en' ? {
   wordsHint: 'اسمك، وسطر عنك، ونبذة قصيرة. تظهر اللغتان في الموقع.',
   contactHint: 'كيف يصل إليك الزوار. واتساب هو الزر الأكثر استخداماً.', buttons: 'الأزرار في الموقع',
   addressHint: 'أحرف إنجليزية وأرقام وشرطات. ينتقل موقعك إلى العنوان الجديد فور حفظه.', saveAddress: 'احفظ العنوان',
-  firstLang: 'اللغة الأولى', home: 'الرئيسية', properties: 'العقارات', about: 'من نحن', contactPage: 'تواصل', unpublish: 'أوقف النشر',
+  firstLang: 'اللغة الأولى', home: 'الرئيسية', properties: 'العقارات', products: 'المنتجات', checkout: 'إتمام الطلب', about: 'من نحن', contactPage: 'تواصل', unpublish: 'أوقف النشر',
   demo: 'معاينة تجريبية', demoNote: 'في النسخة التجريبية يبقى موقعك معاينة. في حسابك الحقيقي، زر النشر يضعه على عنوانك الخاص.',
 };
 
@@ -192,10 +192,10 @@ function Studio({ data, site }: { data: Dashboard; site: SiteT }) {
             {tab === 'pages' && <Pages pages={data.pages} kinds={data.pageKinds} sectionTypes={data.sectionTypes} onChanged={() => { void qc.invalidateQueries({ queryKey: ['web-site'] }); save.bump(); }} />}
           </div>
         </section>
-        {wide && <section className="ws-view"><Preview version={save.version} focus={focus} S={S} /></section>}
+        {wide && <section className="ws-view"><Preview version={save.version} focus={focus} S={S} vertical={data.vertical} /></section>}
       </div>
       {!wide && <button className="ws-fab btn btn-accent" onClick={() => setSheet(true)}><Icon n="globe" />{S.preview}</button>}
-      {sheet && !wide && createPortal(<div className="ws-sheet"><div className="ws-sheet-h"><b>{S.previewDraft}</b><button className="btn btn-secondary btn-sm" onClick={() => setSheet(false)}>{S.close}</button></div><Preview version={save.version} focus={focus} S={S} phoneOnly /></div>, document.body)}
+      {sheet && !wide && createPortal(<div className="ws-sheet"><div className="ws-sheet-h"><b>{S.previewDraft}</b><button className="btn btn-secondary btn-sm" onClick={() => setSheet(false)}>{S.close}</button></div><Preview version={save.version} focus={focus} S={S} vertical={data.vertical} phoneOnly /></div>, document.body)}
     </div>
   );
 }
@@ -221,7 +221,7 @@ function DesignTab({ draft, change, vertical, presets, S }: TabProps & { vertica
       <div className="field">{S.mode}
         <div className="seg w-fit">{([false, true] as const).map((d) => <button key={String(d)} aria-pressed={!!theme.dark === d} onClick={() => set({ dark: d })}>{d ? S.darkMode : S.light}</button>)}</div>
       </div>
-      {vertical !== 'realestate' && <>
+      {vertical !== 'realestate' && vertical !== 'store' && <>
         <div className="field">{S.presets}
           <div className="web-themes">{presets.map((p) => <button key={p} className="web-swatch" aria-pressed={(theme.preset ?? 'classic') === p} onClick={() => set({ preset: p })}><span className="art"><i /><i className="b" /><i className="b" /></span><b>{w.themes[p] ?? p}</b></button>)}</div>
         </div>
@@ -296,7 +296,7 @@ function AddressTab({ site, url, S, onSaved }: { site: SiteT; url: string | null
 }
 
 /** The real site, in a frame: computer or phone, Arabic or English, any page. Reloads (keeping its scroll) on every save. */
-function Preview({ version, focus, S, phoneOnly = false }: { version: number; focus: string | null; S: SCopy; phoneOnly?: boolean }) {
+function Preview({ version, focus, S, vertical, phoneOnly = false }: { version: number; focus: string | null; S: SCopy; vertical: string; phoneOnly?: boolean }) {
   const [device, setDevice] = useState<'desktop' | 'phone'>(phoneOnly ? 'phone' : 'desktop');
   const [plang, setPlang] = useState<'ar' | 'en'>('ar');
   const [page, setPage] = useState('');
@@ -328,7 +328,8 @@ function Preview({ version, focus, S, phoneOnly = false }: { version: number; fo
   const room = Math.max(420, vh - (phoneOnly ? 130 : 230));
   const W = device === 'desktop' ? 1280 : 390, fit = Math.max(width, 200), scale = device === 'desktop' ? Math.min(1, fit / W) : Math.min(1, fit / W, room / 844);
   const H = device === 'desktop' ? Math.round(room / scale) : 844;
-  const pages: [string, string][] = [['', S.home], ['properties', S.properties], ['about', S.about], ['contact', S.contactPage]];
+  const pages: [string, string][] = vertical === 'store' ? [['', S.home], ['products', S.products], ['about', S.about], ['contact', S.contactPage], ['checkout', S.checkout]]
+    : [['', S.home], ['properties', S.properties], ['about', S.about], ['contact', S.contactPage]];
   return (
     <div className="ws-prev">
       <div className="ws-prev-bar">

@@ -744,11 +744,23 @@ const I = {
       const LIMS = Object.keys(t.billing.addonLimits);
       const lim = Object.fromEntries(LIMS.map((k) => [k, h('input', { class: 'input', type: 'number', min: '0', step: '1', dir: 'ltr', value: a.limits?.[k] ?? '' }) as HTMLInputElement])) as Record<string, HTMLInputElement>;
       const sort = h('input', { class: 'input', type: 'number', dir: 'ltr', value: a.sort ?? 0 }) as HTMLInputElement;
+      // a shop's own price and allowances (hemlo_addon.editions.store); empty keeps the row's own
+      const so = a.editions?.store ?? {};
+      const sMonth = inp(so.priceMonth), sYear = inp(so.priceYear);
+      const sLim = Object.fromEntries(LIMS.map((k) => [k, h('input', { class: 'input', type: 'number', min: '0', step: '1', dir: 'ltr', value: so.limits?.[k] ?? '' }) as HTMLInputElement])) as Record<string, HTMLInputElement>;
+      const storeOwn = () => {
+        const limits = Object.fromEntries(LIMS.filter((k) => sLim[k].value !== '').map((k) => [k, Number(sLim[k].value)]));
+        const e: any = { ...(so.description ? { description: so.description } : {}) };
+        if (sMonth.value !== '') e.priceMonth = Number(sMonth.value);
+        if (sYear.value !== '') e.priceYear = Number(sYear.value);
+        if (Object.keys(limits).length) e.limits = limits;
+        return Object.keys(e).length ? { ...(a.editions ?? {}), store: e } : Object.fromEntries(Object.entries(a.editions ?? {}).filter(([k]) => k !== 'store'));
+      };
       const err = h('p', { class: 'text-sm text-bad' });
       const save = drawerSave(t.plan.save, err, async () => {
         await api(`/v1/admin/addons/${a.code}`, { method: 'PATCH', body: { priceMonth: month.value === '' ? null : Number(month.value), priceYear: year.value === '' ? null : Number(year.value),
           compatibleEditions: eds.filter((x) => x.c.checked).map((x) => x.e), public: pub.c.checked, active: active.c.checked, sort: Number(sort.value) || 0,
-          limits: Object.fromEntries(LIMS.filter((k) => lim[k].value !== '').map((k) => [k, Number(lim[k].value)])) } });
+          limits: Object.fromEntries(LIMS.filter((k) => lim[k].value !== '').map((k) => [k, Number(lim[k].value)])), editions: storeOwn() } });
         toast(t.billing.addonSaved); closeDrawer(); showBilling(true);
       });
       drawer().replaceChildren(addonHead(words(a.name), words(a.description)), h('div', { class: 'drawer-b grid gap-4' },
@@ -756,6 +768,9 @@ const I = {
         h('div', {}, h('p', { class: 'sec-t', text: t.billing.compatible }), h('div', { class: 'flex flex-wrap gap-4' }, ...eds.map((x) => x.el))),
         h('div', {}, h('p', { class: 'sec-t', text: t.billing.addonLimitsT }), h('div', { class: 'grid grid-cols-2 gap-3' }, ...LIMS.map((k) => drawerField(t.billing.addonLimits[k], lim[k]))),
           h('p', { class: 'sub mt-1', text: t.billing.addonLimitsHint })),
+        a.compatibleEditions.includes('store') ? h('div', { class: 'panel p-3 grid gap-3' }, h('div', {}, h('p', { class: 'sec-t', text: t.billing.storeOwn }), h('p', { class: 'sub', text: t.billing.storeOwnHint })),
+          h('div', { class: 'grid grid-cols-2 gap-3' }, drawerField(t.billing.perMonth, sMonth), drawerField(t.billing.perYear, sYear)),
+          h('div', { class: 'grid grid-cols-2 gap-3' }, ...LIMS.map((k) => drawerField(t.billing.addonLimits[k], sLim[k])))) : null,
         a.includes?.length ? h('p', { class: 'sub', text: `${t.billing.includes}: ${a.includes.join(' · ')}` }) : null,
         h('div', { class: 'grid grid-cols-2 gap-3' }, drawerField(t.billing.sort, sort)),
         h('div', { class: 'flex flex-wrap gap-4' }, pub.el, active.el), err), h('div', { class: 'drawer-f' }, save));

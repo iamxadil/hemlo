@@ -8,6 +8,7 @@ import {
   sysProduct, sysCustomer, sysSale, sysSaleLine, sysLedger, sysStockMove, sysSequence, sysShift, sysSupplier, sysPurchase, sysPurchaseLine,
   sysSupplierLedger, sysExpense, sysSettings,
 } from '@hemlo/db/schema';
+import { shopAddOns, type ShopGrants } from './demo-shop';
 
 type Lang = 'ar' | 'en';
 // [ar name, en name, category(ar|en), unit, price, cost, stock on the shelf now, lowStock, packSize?, packPrice?, scaleCode?, trackStock?]
@@ -103,7 +104,7 @@ export async function insertAll(tx: Database, batches: Batch[]) {
 }
 
 /** `first`: rows to write ahead of the shop's own (the business and its owner), in the same statement. */
-export async function seedDemoShop(tx: Database, org: string, userId: string, lang: Lang, first: Batch[] = []) {
+export async function seedDemoShop(tx: Database, org: string, userId: string, lang: Lang, first: Batch[] = [], addons?: ShopGrants) {
   const r = rng(20260930);
   const pick = <T,>(a: T[]) => a[Math.floor(r() * a.length)];
   const L = (ar: string, en: string) => (lang === 'ar' ? ar : en);
@@ -225,6 +226,9 @@ export async function seedDemoShop(tx: Database, org: string, userId: string, la
     moves.push({ id: newId(), organizationId: org, productId: e.productId, at: new Date(e.at), kind: e.kind, qty: e.qty, stock: left, saleId: e.saleId ?? null, cost: e.cost ?? null, note: e.note ?? null, userId });
   }
 
+  // the add-ons a demo has on (online store, Connect): they set the products' online fields before they're written
+  const extra = addons?.grants.length ? shopAddOns(org, userId, lang, products, customers, addons) : [];
+
   // ---- write it all, in one statement ----
   await insertAll(tx, [
     ...first,
@@ -234,7 +238,8 @@ export async function seedDemoShop(tx: Database, org: string, userId: string, la
     [sysCustomer, customers], [sysSupplier, suppliers], [sysShift, shifts],
     [sysSale, sales], [sysSaleLine, lines], [sysLedger, ledger],
     [sysPurchase, purchases], [sysPurchaseLine, pLines], [sysSupplierLedger, sLedger], [sysExpense, expenses],
-    [sysSequence, [{ organizationId: org, name: 'sale', value: number }, { organizationId: org, name: 'purchase', value: purchases.length }]],
+    [sysSequence, [{ organizationId: org, name: 'sale', value: number }, { organizationId: org, name: 'purchase', value: purchases.length }, ...(extra.length ? [{ organizationId: org, name: 'order', value: 3 }] : [])]],
+    ...extra,
   ]);
   return { products: products.length, sales: sales.length };
 }

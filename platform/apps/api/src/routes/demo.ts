@@ -37,7 +37,7 @@ const ORG_TABLES = ['sch_attendance', 'sch_payment', 'sch_charge', 'sch_fee_plan
   're_contract', 're_lead_property', 're_lead', 're_document', 're_media', 're_property', 're_owner', 're_agent', 're_branch', 're_settings', 'gym_measure', 'gym_booking', 'gym_class', 'gym_checkin', 'gym_membership', 'gym_member', 'gym_plan', 'gym_trainer', 'gym_settings', 'dent_access_log', 'dent_image', 'dent_consent', 'dent_installment', 'dent_perio', 'dent_lab_order', 'dent_rx', 'dent_visit_item', 'dent_visit', 'dent_plan_item', 'dent_plan',
   'dent_finding', 'dent_appointment', 'dent_patient', 'dent_procedure', 'dent_dentist', 'dent_chair', 'dent_settings', 'hemlo_subscription',
   'connect_job', 'connect_message', 'connect_conversation', 'connect_recipe', 'connect_channel', 'web_page', 'web_site', 'hemlo_addon_payment', 'hemlo_addon_request', 'hemlo_addon_entitlement',
-  'sys_reminder', 'sys_return_line', 'sys_return', 'sys_sale_line', 'sys_sale', 'sys_ledger', 'sys_stock_move', 'sys_purchase_line', 'sys_purchase', 'sys_supplier_ledger', 'sys_supplier',
+  'shop_order_line', 'shop_order', 'sys_reminder', 'sys_return_line', 'sys_return', 'sys_sale_line', 'sys_sale', 'sys_ledger', 'sys_stock_move', 'sys_purchase_line', 'sys_purchase', 'sys_supplier_ledger', 'sys_supplier',
   'ai_usage', 'sys_expense', 'sys_file', 'sys_shift', 'sys_sequence', 'sys_customer', 'sys_product', 'sys_settings', 'sys_fib_payment', 'counter_lock', 'counter_pin', 'counter_device', 'staff_invite', 'auth_event',
   'invitation', 'member'];
 const USER_TABLES = ['session', 'account', 'passkey', 'known_device', 'auth_event', 'member'];
@@ -112,8 +112,8 @@ export function demoRoutes(d: Deps) {
     const owner = { id: newId(), organizationId: org.id, userId: user.id, role: 'owner', createdAt: new Date() };
     const first: Parameters<typeof seedDemoShop>[4] = [[organization, [org]], [member, [owner]]];
     // the real estate demo has Website and AI Studio (with Connect Pro) on, so a visitor tries them rather than being asked to buy
-    const grants = estate ? (await Promise.all(['website', 'ai-studio'].map((code) => addonOffer(d.db, code)))).filter((o) => o?.active).map((o) => ({ id: o!.id, price: o!.priceMonth ?? 0 })) : [];
-    const seeded: Record<string, number> = await withOrg(d.db, org.id, (tx): Promise<Record<string, number>> => (dental ? seedDemoClinic(tx, org.id, user.id, owner.id, lang, first) : gym ? seedDemoGym(tx, org.id, user.id, owner.id, lang, first) : estate ? seedDemoRealEstate(tx, org.id, user.id, owner.id, lang, first, d.env.SYSTEM_URL, { grants, subdomain: org.slug }) : school ? seedDemoSchool(tx, org.id, user.id, owner.id, lang, first) : seedDemoShop(tx, org.id, user.id, lang, first)));
+    const grants = estate || kind === 'store' ? (await Promise.all(['website', 'ai-studio'].map((code) => addonOffer(d.db, code)))).filter((o) => o?.active).map((o) => ({ id: o!.id, price: o!.priceMonth ?? 0 })) : [];
+    const seeded: Record<string, number> = await withOrg(d.db, org.id, (tx): Promise<Record<string, number>> => (dental ? seedDemoClinic(tx, org.id, user.id, owner.id, lang, first) : gym ? seedDemoGym(tx, org.id, user.id, owner.id, lang, first) : estate ? seedDemoRealEstate(tx, org.id, user.id, owner.id, lang, first, d.env.SYSTEM_URL, { grants, subdomain: org.slug }) : school ? seedDemoSchool(tx, org.id, user.id, owner.id, lang, first) : seedDemoShop(tx, org.id, user.id, lang, first, { grants, subdomain: org.slug })));
     mark('shop');
     const session = await ctx.internalAdapter.createSession(user.id, false, { activeOrganizationId: org.id, loginMethod: 'demo' } as any);
     mark('session');

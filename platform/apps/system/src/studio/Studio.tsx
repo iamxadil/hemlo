@@ -8,6 +8,7 @@ import { useApp } from '../lib/app';
 import { Empty, Icon } from '../components/ui';
 import { HwBadge } from '../components/HwBadge';
 import { wordsOf, type W } from './words';
+type SW = W & { shop: boolean };
 import './studio.css';
 
 type State = { active: boolean; offer: { code: string; name: Record<string, string>; description: Record<string, string>; priceMonth: number | null; priceYear: number | null } | null;
@@ -18,8 +19,8 @@ type Campaign = { headline: { ar: string; en: string }; ar: Record<string, any>;
 type Tab = 'campaign' | 'plan' | 'images' | 'video';
 
 export function Studio() {
-  const { lang, errorText } = useApp();
-  const w = wordsOf(lang);
+  const { lang, errorText, sys } = useApp();
+  const w = wordsOf(lang, sys.business.kind !== 'realestate');
   const q = useQuery<State>({ queryKey: ['studio'], queryFn: () => api('/v1/studio'), staleTime: 30_000 });
   const [tab, setTab] = useState<Tab>('campaign');
   if (q.isLoading) return <div className="grid gap-4"><div className="skeleton h-24" /><div className="skeleton h-80" /></div>;
@@ -82,14 +83,19 @@ function Offer({ s, w }: { s: State; w: W }) {
   );
 }
 
-const useListings = () => useQuery<{ properties: Listing[] }>({ queryKey: ['studio-listings'], queryFn: () => api('/v1/re/properties?status=live&limit=24'), staleTime: 60_000 });
-const errOf = (w: W, errorText: (e: unknown) => string) => (e: any) => (e?.code && w.errors[e.code]) || errorText(e);
+/** What the business sells, in one shape: an agency's live listings, or a shop's products (the ones online first). */
+const useListings = (shop = false) => useQuery<{ properties: Listing[] }>({ queryKey: ['studio-listings', shop], staleTime: 60_000,
+  queryFn: async () => shop
+    ? { properties: ((await api<{ products: any[] }>('/v1/sys/products')).products).sort((a, b) => Number(b.online) - Number(a.online)).slice(0, 48)
+      .map((p, i) => ({ id: p.id, ref: i + 1, title: p.name, titleEn: null, cover: p.imageUrl ?? null, area: p.category ?? null, city: null })) }
+    : api('/v1/re/properties?status=live&limit=24') });
+const errOf = (w: SW, errorText: (e: unknown) => string) => (e: any) => (e?.code && w.errors[e.code]) || errorText(e);
 
 // ------------------------------------------------------------------------------------------------- a campaign
-function CampaignTab({ w }: { w: W }) {
+function CampaignTab({ w }: { w: SW }) {
   const { lang, toast, errorText } = useApp();
   const qc = useQueryClient();
-  const list = useListings();
+  const list = useListings(w.shop);
   const [picked, setPicked] = useState<string[]>([]);
   const [goal, setGoal] = useState('sell');
   const [channels, setChannels] = useState<Channel[]>(['whatsapp', 'instagram', 'facebook']);
@@ -146,13 +152,13 @@ function CampaignTab({ w }: { w: W }) {
 }
 
 // ------------------------------------------------------------------------------------------------- a content plan
-function PlanTab({ w }: { w: W }) {
+function PlanTab({ w }: { w: SW }) {
   const { lang, toast, errorText } = useApp();
   const qc = useQueryClient();
   const [weeks, setWeeks] = useState(4);
   const [focus, setFocus] = useState('');
   const run = useMutation({
-    mutationFn: () => api<{ plan: { weeks: { title: string; posts: { day: string; channel: string; idea: string; ref: number }[] }[] } }>('/v1/studio/plan', { body: { weeks, focus, lang: lang === 'en' ? 'en' : 'ar' } }),
+    mutationFn: () => api<{ plan: { weeks: { title: string; posts: { day: string; channel: string; idea: string; ref: number }[] }[] }; items?: { ref: number; title: string }[] }>('/v1/studio/plan', { body: { weeks, focus, lang: lang === 'en' ? 'en' : 'ar' } }),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ['studio'] }), onError: (e) => toast(errOf(w, errorText)(e), 'bad'),
   });
   return (
@@ -168,7 +174,7 @@ function PlanTab({ w }: { w: W }) {
           : run.data ? <div className="st-weeks">{run.data.plan.weeks.map((wk, i) => (
             <article key={i} className="panel st-week" style={{ ['--i' as string]: i }}>
               <b>{wk.title}</b>
-              <ul>{wk.posts.map((p, j) => <li key={j}><span className="st-day">{p.day}</span><span className="st-ch">{w.channelNames[p.channel as Channel] ?? p.channel}</span><p>{p.idea}{p.ref ? <small> · #{p.ref}</small> : null}</p></li>)}</ul>
+              <ul>{wk.posts.map((p, j) => <li key={j}><span className="st-day">{p.day}</span><span className="st-ch">{w.channelNames[p.channel as Channel] ?? p.channel}</span><p>{p.idea}{p.ref ? <small> · {w.shop ? run.data!.items?.find((x) => x.ref === p.ref)?.title ?? `#${p.ref}` : `#${p.ref}`}</small> : null}</p></li>)}</ul>
             </article>))}</div>
           : <div className="panel st-empty"><Icon n="calendar" /><p>{w.planEmpty}</p></div>}
       </section>
@@ -177,10 +183,10 @@ function PlanTab({ w }: { w: W }) {
 }
 
 // ------------------------------------------------------------------------------------------------- post images
-function ImagesTab({ w }: { w: W }) {
+function ImagesTab({ w }: { w: SW }) {
   const { lang, toast, errorText } = useApp();
   const qc = useQueryClient();
-  const list = useListings();
+  const list = useListings(w.shop);
   const [propertyId, setPropertyId] = useState('');
   const [prompt, setPrompt] = useState('');
   const [style, setStyle] = useState('photo');
@@ -194,7 +200,7 @@ function ImagesTab({ w }: { w: W }) {
       <section className="panel st-form">
         <label className="field">{w.forListing}<select className="input" value={propertyId} onChange={(e) => setPropertyId(e.target.value)}>
           <option value="">{w.noListing}</option>
-          {list.data?.properties.map((p) => <option key={p.id} value={p.id}>#{p.ref} · {(lang === 'en' && p.titleEn) || p.title}</option>)}
+          {list.data?.properties.map((p) => <option key={p.id} value={p.id}>{w.shop ? p.title : `#${p.ref} · ${(lang === 'en' && p.titleEn) || p.title}`}</option>)}
         </select></label>
         <label className="field">{w.describe}<textarea className="input" rows={3} value={prompt} maxLength={600} placeholder={w.describePh} onChange={(e) => setPrompt(e.target.value)} /></label>
         <h3>{w.style}</h3>

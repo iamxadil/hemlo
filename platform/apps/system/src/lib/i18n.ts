@@ -11,7 +11,7 @@ export const readLang = (): Lang => { const l = document.documentElement.lang; r
 
 const ar = {
   app: 'هيملو · الأنظمة', iqd: 'د.ع', switchTo: 'English',
-  nav: { home: 'اليوم', sell: 'البيع', products: 'البضاعة', customers: 'الدفتر', sales: 'المبيعات', website: 'موقعك', connect: 'المحادثات', signOut: 'تسجيل الخروج', account: 'حسابك', business: 'إدارة العمل' },
+  nav: { home: 'اليوم', sell: 'البيع', products: 'البضاعة', customers: 'الدفتر', sales: 'المبيعات', website: 'موقعك', connect: 'المحادثات', orders: 'الطلبات', signOut: 'تسجيل الخروج', account: 'حسابك', business: 'إدارة العمل' },
   gate: {
     loading: 'جارٍ التحميل…', signInTitle: 'سجّل الدخول لمتجرك', signInBody: 'هيملو للمتاجر: البيع والبضاعة والدفتر في مكان واحد.', signIn: 'تسجيل الدخول',
     signInSchool: 'سجّل الدخول لمدرستك', signInSchoolBody: 'هيملو للمدارس: الطلاب والحضور والأقساط وأولياء الأمور في مكان واحد.', signInRe: 'سجّل الدخول لمكتبك العقاري', signInReBody: 'هيملو للعقارات: العقارات وصفحاتها، الزبائن، المعاينات والصفقات في مكان واحد.', signInGym: 'سجّل الدخول لناديك', signInGymBody: 'هيملو للأندية الرياضية: المشتركون والتجديد والباب في مكان واحد.',
@@ -249,7 +249,7 @@ const en: typeof ar = {
     trial: 'Free trial · {n} days left', lastDay: 'Last day of your free trial', continue: 'Continue with Hemlo',
     ended: 'Your free trial has ended.', endedPaid: 'Your plan has ended.', grace: 'Payment due · {n} days of grace left', choose: 'Choose your plan', endedBody: 'Your records are safe and open, but nothing can be added or changed until it’s activated.',
   },
-  nav: { home: 'Today', sell: 'Sell', products: 'Products', customers: 'Debt book', sales: 'Sales', website: 'Website', connect: 'Conversations', signOut: 'Sign out', account: 'Your account', business: 'Manage business' },
+  nav: { home: 'Today', sell: 'Sell', products: 'Products', customers: 'Debt book', sales: 'Sales', website: 'Website', connect: 'Conversations', orders: 'Orders', signOut: 'Sign out', account: 'Your account', business: 'Manage business' },
   gate: {
     loading: 'Loading…', signInTitle: 'Sign in to your shop', signInBody: 'Hemlo Store: selling, stock and the debt book in one place.', signIn: 'Sign in',
     signInSchool: 'Sign in to your school', signInSchoolBody: 'Hemlo School: students, attendance, fees and parents in one place.', signInRe: 'Sign in to your agency', signInReBody: 'Hemlo Real Estate: listings and their pages, buyers, viewings and deals in one place.', signInGym: 'Sign in to your gym', signInGymBody: 'Hemlo Gym: members, renewals and the door in one place.',
